@@ -1,2 +1,7 @@
 Nothing interesting here yet...
 Move on.
+
+git submodule init
+git submodule update
+cmake .
+make
