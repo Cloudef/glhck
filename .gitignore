@@ -1,0 +1,19 @@
+# Binaries and other crap
+*.log
+*.exe
+*.o
+*.a
+
+# Build and local
+local
+build
+
+# CMake
+CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+install_manifest.txt
+
+# Submodules
+lib/glfw/src

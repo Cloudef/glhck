@@ -1,0 +1,15 @@
+PROJECT(SOIL)
+
+SET(SOIL_SRC
+   src/SOIL.c
+   src/image_DXT.c
+   src/image_helper.c
+   src/stb_image_aug.c
+   )
+SET(SOIL_INC
+   src/SOIL.h)
+
+FILE(COPY ${SOIL_INC} DESTINATION ${INCLUDE_DIR})
+ADD_DEFINITIONS(-fPIC)
+ADD_LIBRARY(SOIL ${SOIL_SRC})
+TARGET_LINK_LIBRARIES(SOIL)

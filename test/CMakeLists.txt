@@ -1,0 +1,22 @@
+SET(TEST_LINK
+   glhck
+   glfw
+   GL)
+
+IF(UNIX)
+   LIST(APPEND TEST_LINK X11 Xxf86vm Xrandr rt)
+ENDIF(UNIX)
+
+IF(USE_GLES MATCHES 0)
+   LIST(APPEND TEST_LINK GLEW)
+ENDIF(USE_GLES MATCHES 0)
+
+SET(TEST_EXE
+   display)
+
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_OUT_DIR})
+foreach(test ${TEST_EXE})
+   PROJECT(${test})
+   ADD_EXECUTABLE(${test} src/${test}.c)
+   TARGET_LINK_LIBRARIES(${test} ${TEST_LINK})
+endforeach(test)
