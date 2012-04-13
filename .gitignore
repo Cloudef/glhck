@@ -20,3 +20,4 @@ install_manifest.txt
 
 # Submodules
 lib/glfw/src
+lib/kazmath/src
