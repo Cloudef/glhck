@@ -10,17 +10,8 @@
 /* debug hook function */
 static glhckDebugHookFunc _glhckDebugHook = NULL;
 
-#define TRACE_CHANNEL "TRACE"
-#define DRAW_CHANNEL  "DRAW"
-#define ALL_CHANNEL   "ALL"
-#define CLI_SWITCH    "DEBUG"
-
-typedef struct _glhckDebugChannel
-{
-   const char  *name;
-   char        active;
-} _glhckDebugChannel;
-
+/* list all ignored functions when
+ * GLHCK_CHANNEL_DRAW switch is active */
 static const char *_drawFuncs[] = {
    "glhckRender",
    "glhckObjectDraw",
@@ -30,97 +21,27 @@ static const char *_drawFuncs[] = {
 };
 
 /* list all debug channels */
-static _glhckDebugChannel _channel[] =
+__GLHCKtrace _traceChannels[] =
 {
-   /* special DRAW channel,
+   { GLHCK_CHANNEL_GLHCK,    0 },
+   { GLHCK_CHANNEL_IMPORT,   0 },
+   { GLHCK_CHANNEL_OBJECT,   0 },
+   { GLHCK_CHANNEL_GEOMETRY, 0 },
+   { GLHCK_CHANNEL_TEXTURE,  0 },
+   { GLHCK_CHANNEL_ALLOC,    0 },
+   { GLHCK_CHANNEL_RENDER,   0 },
+
+   /* special channel,
     * will stop bloating output with
     * all drawing commands. */
-   { DRAW_CHANNEL,      0 },
+   { GLHCK_CHANNEL_DRAW,   0 },
 
-   /* TRACING */
-   { TRACE_CHANNEL,     0 },
+   /* trace channel */
+   { GLHCK_CHANNEL_TRACE,  0 },
 
    /* <end of list> */
-   { NULL,              0 },
+   { NULL,                 0 },
 };
-
-static void _glhckRed(void)
-{
-#ifdef __unix__
-   printf("\33[31m");
-#endif
-
-#ifdef _WIN32
-   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_RED
-   |FOREGROUND_INTENSITY);
-#endif
-}
-
-static void _glhckGreen(void)
-{
-#ifdef __unix__
-   printf("\33[32m");
-#endif
-
-#ifdef _WIN32
-   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN
-   |FOREGROUND_INTENSITY);
-#endif
-}
-
-static void _glhckYellow(void)
-{
-#ifdef __unix__
-   printf("\33[33m");
-#endif
-
-#ifdef _WIN32
-   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN
-   |FOREGROUND_RED|FOREGROUND_INTENSITY);
-#endif
-}
-
-static void _glhckBlue(void)
-{
-#ifdef __unix__
-   printf("\33[34m");
-#endif
-
-#ifdef _WIN32
-   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_BLUE
-   |FOREGROUND_GREEN|FOREGROUND_INTENSITY);
-#endif
-}
-
-static void _glhckWhite(void)
-{
-#ifdef __unix__
-   printf("\33[37m");
-#endif
-
-#ifdef _WIN32
-   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_RED
-   |FOREGROUND_GREEN|FOREGROUND_BLUE);
-#endif
-}
-
-static void _glhckNormal(void)
-{
-#ifdef __unix__
-   printf("\33[0m");
-#endif
-
-#ifdef _WIN32
-   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_RED
-   |FOREGROUND_GREEN|FOREGROUND_BLUE);
-#endif
-}
 
 /* \brief is a draw function? */
 static int _glhckTraceIsDrawFunction(const char *function)
@@ -136,9 +57,9 @@ static int _glhckTraceIsDrawFunction(const char *function)
 static int _glhckTraceIsActive(const char *name)
 {
    int i;
-   for (i = 0; _channel[i].name; ++i)
-      if (!_glhckStrupcmp(_channel[i].name, name))
-            return _channel[i].active;
+   for (i = 0; _GLHCKlibrary.trace[i].name; ++i)
+      if (!_glhckStrupcmp(_GLHCKlibrary.trace[i].name, name))
+            return _GLHCKlibrary.trace[i].active;
    return 0;
 }
 
@@ -146,11 +67,12 @@ static int _glhckTraceIsActive(const char *name)
 static void _glhckTraceSet(const char *name, int active)
 {
    int i;
-   for(i = 0; _channel[i].name ; ++i)
-      if (!_glhckStrupcmp(name, _channel[i].name) ||
-         (!_glhckStrupcmp(name, ALL_CHANNEL) &&
-          !_glhckStrupcmp(name, TRACE_CHANNEL)))
-      _channel[i].active = active;
+   for(i = 0; _GLHCKlibrary.trace[i].name ; ++i)
+      if (!_glhckStrupcmp(name, _GLHCKlibrary.trace[i].name)                  ||
+         (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL)                            &&
+          _glhckStrupcmp(_GLHCKlibrary.trace[i].name, GLHCK_CHANNEL_TRACE)    &&
+          _glhckStrupcmp(_GLHCKlibrary.trace[i].name, GLHCK_CHANNEL_DRAW)))
+      _GLHCKlibrary.trace[i].active = active;
 }
 
 /* \brief init debug system */
@@ -159,10 +81,13 @@ void _glhckTraceInit(int argc, char **argv)
    int i, count;
    char *match, **split;
 
+   /* init */
+   _GLHCKlibrary.trace = _traceChannels;
+
    i = 0; match = NULL;
    for(i = 0, match = NULL; i != argc; ++i) {
-      if (!_glhckStrnupcmp(argv[i], CLI_SWITCH"=", strlen(CLI_SWITCH"="))) {
-         match = argv[i] + strlen(CLI_SWITCH"=");
+      if (!_glhckStrnupcmp(argv[i], GLHCK_CHANNEL_SWITCH"=", strlen(GLHCK_CHANNEL_SWITCH"="))) {
+         match = argv[i] + strlen(GLHCK_CHANNEL_SWITCH"=");
          break;
       }
    }
@@ -180,37 +105,21 @@ void _glhckTraceInit(int argc, char **argv)
    _glhckStrsplitClear(&split);
 }
 
-/* \brief colored puts */
-static void _glhckPuts(const char *buffer)
-{
-   int i;
-   size_t len;
-
-   len = strlen(buffer);
-   for (i = 0; i != len; ++i) {
-           if (buffer[i] == '\1') _glhckRed();
-      else if (buffer[i] == '\2') _glhckGreen();
-      else if (buffer[i] == '\3') _glhckYellow();
-      else if (buffer[i] == '\4') _glhckBlue();
-      else if (buffer[i] == '\5') _glhckWhite();
-      else printf("%c", buffer[i]);
-   }
-   _glhckNormal();
-   printf("\n");
-   fflush(stdout);
-}
-
 /* \brief output trace info */
-void _glhckTrace(const char *function, const char *fmt, ...)
+void _glhckTrace(const char *channel, const char *function, const char *fmt, ...)
 {
    va_list args;
    char buffer[LINE_MAX];
 
-   if (!_glhckTraceIsActive(TRACE_CHANNEL))
+   if (!_GLHCKlibrary.trace) return;
+   if (!_glhckTraceIsActive(GLHCK_CHANNEL_TRACE))
       return;
 
-   if (!_glhckTraceIsActive(DRAW_CHANNEL) &&
+   if (!_glhckTraceIsActive(GLHCK_CHANNEL_DRAW) &&
         _glhckTraceIsDrawFunction(function))
+      return;
+
+   if (!_glhckTraceIsActive(channel))
       return;
 
    va_start(args, fmt);
@@ -238,6 +147,8 @@ void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLev
 
    _glhckDebugHook(file, line, func, level, buffer);
 }
+
+/* public api */
 
 /* \brief set debug hook */
 GLHCKAPI void glhckSetDebugHook(glhckDebugHookFunc func)
