@@ -17,10 +17,18 @@
    GLHCKGLOBAL char _glhckInitialized;
 #endif
 
-/* hooks in debug mode*/
-#ifndef NDEBUG
-void* malloc(size_t);
-#endif /* NDEBUG */
+/* tracing channels */
+#define GLHCK_CHANNEL_GLHCK      "GLHCK"
+#define GLHCK_CHANNEL_IMPORT     "IMPORT"
+#define GLHCK_CHANNEL_OBJECT     "OBJECT"
+#define GLHCK_CHANNEL_GEOMETRY   "GEOMETRY"
+#define GLHCK_CHANNEL_TEXTURE    "TEXTURE"
+#define GLHCK_CHANNEL_ALLOC      "ALLOC"
+#define GLHCK_CHANNEL_RENDER     "RENDER"
+#define GLHCK_CHANNEL_TRACE      "TRACE"
+#define GLHCK_CHANNEL_DRAW       "DRAW"
+#define GLHCK_CHANNEL_ALL        "ALL"
+#define GLHCK_CHANNEL_SWITCH     "DEBUG"
 
 /* return variables used throughout library */
 typedef enum _glhckReturnValue {
@@ -114,14 +122,33 @@ typedef struct __GLHCKrender
    struct __GLHCKrenderAPI api;
 } __GLHCKrender;
 
+typedef struct __GLHCKtrace
+{
+   const char  *name;
+   char        active;
+} __GLHCKtrace;
+
+#ifndef NDEBUG
+typedef struct __GLHCKalloc {
+   const char           *channel;
+   void                 *ptr;
+   size_t               size;
+   struct __GLHCKalloc  *next;
+} __GLHCKalloc;
+#endif
+
 typedef struct __GLHCKlibrary
 {
-   struct __GLHCKtexture texture;
-   struct __GLHCKrender  render;
+   struct __GLHCKtexture   texture;
+   struct __GLHCKrender    render;
+   struct __GLHCKtrace     *trace;
+#ifndef NDEBUG
+   struct __GLHCKalloc     *alloc;
+#endif
 } __GLHCKlibrary;
 
 /* define global object */
-GLHCKGLOBAL __GLHCKlibrary _GLHCKlibrary;
+GLHCKGLOBAL struct __GLHCKlibrary _GLHCKlibrary;
 
 typedef struct _glhckTexturePacker
 {
@@ -134,6 +161,11 @@ typedef struct _glhckTexturePacker
    short             total_area;
 } _glhckTexturePacker;
 
+/* tracking allocation macros */
+#define _glhckMalloc(x)    __glhckMalloc(GLHCK_CHANNEL, x)
+#define _glhckCalloc(x,y)  __glhcKCalloc(GLHCK_CHANNEL, x, y)
+#define _glhckCopy(x,y)    __glhckCopy(GLHCK_CHANNEL, x, y)
+
 /* tracing && debug macros */
 #define THIS_FILE ((strrchr(__FILE__, '/') ?: __FILE__ - 1) + 1)
 #define TRACE_FMT       "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \3%s\2()"
@@ -141,20 +173,32 @@ typedef struct _glhckTexturePacker
 #define RET_FMT(fmt)    "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \3%s\2()\4 => \2(\5"fmt"\2)"
 
 #define DEBUG(level, fmt, ...)   _glhckPassDebug(THIS_FILE, __LINE__, __func__, level, fmt, ##__VA_ARGS__)
-#define TRACE()                  _glhckTrace(__func__, TRACE_FMT,      THIS_FILE, __LINE__, __func__)
-#define CALL(args, ...)          _glhckTrace(__func__, CALL_FMT(args), THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
-#define RET(args, ...)           _glhckTrace(__func__, RET_FMT(args),  THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
+#define TRACE()                  _glhckTrace(GLHCK_CHANNEL, __func__, TRACE_FMT,      THIS_FILE, __LINE__, __func__)
+#define CALL(args, ...)          _glhckTrace(GLHCK_CHANNEL, __func__, CALL_FMT(args), THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
+#define RET(args, ...)           _glhckTrace(GLHCK_CHANNEL, __func__, RET_FMT(args),  THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
 
 /* private api */
 
 /* internal allocation functions */
-void* _glhckMalloc(size_t size);
-void* _glhckCalloc(unsigned int items, size_t size);
-void* _glhckRealloc(void *ptr, unsigned int old_items, unsigned int items, size_t size);
-void* _glhckCopy(void *ptr, size_t size);
+void* __glhckMalloc(const char *channel, size_t size);
+void* __glhckCalloc(const char *channel, size_t nmemb, size_t size);
+void* __glhckCopy(const char *channel, void *ptr, size_t nmemb);
+void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size);
 void  _glhckFree(void *ptr);
 
+#ifndef NDEBUG
+/* tracking functions */
+void _glhckTrackTerminate(void);
+#endif
+
 /* util functions */
+void  _glhckRed(void);
+void  _glhckGreen(void);
+void  _glhckBlue(void);
+void  _glhckYellow(void);
+void  _glhckWhite(void);
+void  _glhckNormal(void);
+void  _glhckPuts(const char *buffer);
 int   _glhckStrsplit(char ***dst, char *str, char *token);
 void  _glhckStrsplitClear(char ***dst);
 char* _glhckStrupstr(const char *hay, const char *needle);
@@ -174,7 +218,7 @@ void _glhckTextureCacheRelease(void);
 
 /* tracing && debug functions */
 void _glhckTraceInit(int argc, char **argv);
-void _glhckTrace(const char *function, const char *fmt, ...);
+void _glhckTrace(const char *channel, const char *function, const char *fmt, ...);
 void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *fmt, ...);
 
 #endif /* _internal_h_ */
