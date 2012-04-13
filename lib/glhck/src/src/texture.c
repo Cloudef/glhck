@@ -221,8 +221,8 @@ GLHCKAPI int glhckTextureFree(_glhckTexture *texture)
    assert(texture);
    CALL("%p", texture);
 
-   /* there is still references to this textureect alive */
-   if (--texture->refCounter != 0) { RET("%d", texture->refCounter); return texture->refCounter; }
+   /* there is still references to this texture alive */
+   if (--texture->refCounter != 0) goto success;
 
    DEBUG(GLHCK_DBG_CRAP, "FREE %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
@@ -238,8 +238,9 @@ GLHCKAPI int glhckTextureFree(_glhckTexture *texture)
    /* free */
    _glhckFree(texture);
 
-   RET("%d", RETURN_OK);
-   return RETURN_OK;
+success:
+   RET("%d", texture->refCounter);
+   return texture->refCounter;
 }
 
 /* Create GL Texture manually.
