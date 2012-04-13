@@ -6,7 +6,11 @@ SET(GLUE_DESCRIPTION "A dead simple OpenGL/GLES framework")
 SET(LIB_OUT_DIR ${CMAKE_BINARY_DIR}/build/lib)
 SET(TEST_OUT_DIR ${CMAKE_BINARY_DIR}/build/test)
 SET(INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
+SET(GLHCK_INCLUDE_DIR ${CMAKE_BINARY_DIR}/lib/glhck/src/include)
 include_directories(${INCLUDE_DIR})
+
+# Debug build
+SET(CMAKE_BUILD_TYPE Debug)
 
 # Turns on/off GLEW linking on tests
 SET(USE_GLES 0)
