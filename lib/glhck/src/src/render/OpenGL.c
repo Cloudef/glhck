@@ -90,6 +90,9 @@ static unsigned int createTexture(const unsigned char *const buffer,
 static void terminate(void)
 {
    TRACE();
+
+   /* this tells library that we are no longer alive. */
+   GLHCK_RENDER_TERMINATE(RENDER_NAME);
 }
 
 /* OpenGL bindings */
