@@ -88,6 +88,16 @@ extern "C" {
 #endif
 
 /* public api below */
+typedef enum glhckPrecision {
+   GLHCK_UNSIGNED_BYTE,
+   GLHCK_BYTE,
+   GLHCK_UNSIGNED_SHORT,
+   GLHCK_SHORT,
+   GLHCK_INT,
+   GLHCK_UNSIGNED_INT,
+   GLHCK_FLOAT
+} glhckPrecision;
+
 typedef enum glhckDebugLevel {
    GLHCK_DBG_ERROR,
    GLHCK_DBG_WARNING,
@@ -129,12 +139,24 @@ GLHCKAPI void glhckTerminate(void);
 /* display */
 GLHCKAPI int glchkCreateDisplay(int width, int height, glhckRenderType renderType);
 GLHCKAPI void glhckCloseDisplay(void);
+GLHCKAPI void glhckRender(void);
+
+/* objects */
+GLHCKAPI glhckObject* glhckObjectNew(void);
+GLHCKAPI short glhckObjectFree(glhckObject *object);
+GLHCKAPI int glhckObjectInsertVertices(glhckObject *object,
+      glhckPrecision precision, unsigned int count, const void *vertices);
+GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
+      glhckPrecision precision, unsigned int count, const void *indices);
+
+/* geometry */
+GLHCKAPI glhckObject* glhckCubeNew(int size);
 
 /* textures */
 GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
 GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
-GLHCKAPI int glhckTextureFree(glhckTexture *texture);
+GLHCKAPI short glhckTextureFree(glhckTexture *texture);
 GLHCKAPI int glhckTextureCreate(glhckTexture *texture, unsigned char *data,
                               int width, int height, int channels, unsigned int flags);
 GLHCKAPI int glhckTextureSave(glhckTexture *texture, const char *path);
