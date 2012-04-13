@@ -1,10 +1,7 @@
 #include "internal.h"
 #include "import/import.h"
-#include "../include/SOIL.h"
-#include <assert.h> /* for assert */
-
-/* TODO:
- * Move SOIL texture upload to renderer */
+#include "../include/SOIL.h"  /* for image saving */
+#include <assert.h>           /* for assert */
 
 /* ---- TEXTURE CACHE ---- */
 
@@ -145,11 +142,14 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
                   GLHCK_TEXTURE_DXT;
 
       /* import image */
-      if (_glhckImportImage(texture, file, flags) != RETURN_OK)
+      if (_glhckImportImage(texture, file) != RETURN_OK)
          goto fail;
 
-      texture->size = texture->width * texture->height * texture->channels;
+      /* upload texture */
+      if (_GLHCKlibrary.render.api.uploadTexture(texture, flags) != RETURN_OK)
+         goto fail;
 
+      /* insert to cache */
       _glhckTextureCacheInsert(texture);
       DEBUG(GLHCK_DBG_CRAP, "NEW %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
    }
@@ -256,11 +256,10 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
          width, height, channels, flags);
 
    /* create texture */
-   object =
-   SOIL_create_OGL_texture(
-      data, width, height, channels,
-      texture->object?texture->object:0,
-      flags);
+   object = _GLHCKlibrary.render.api.createTexture(
+         data, width, height, channels,
+         texture->object?texture->object:0,
+         flags);
 
    if (!object)
       goto fail;
