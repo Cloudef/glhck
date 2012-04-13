@@ -229,29 +229,26 @@ fail:
 }
 
 /* Import using SOIL */
-int _glhckImportImage(_glhckTexture *texture, const char *file, unsigned int flags)
+int _glhckImportImage(_glhckTexture *texture, const char *file)
 {
-   int channels = 0;
-   CALL("%p, %s, %u", texture, file, flags);
+   CALL("%p, %s", texture, file);
    DEBUG(GLHCK_DBG_CRAP, "Image: %s", file);
 
    /* load using SOIL */
-   texture->object = SOIL_load_OGL_texture_EX
+   texture->data = SOIL_load_image
       (
             file,
-            &texture->data,
             &texture->width,
             &texture->height,
             &texture->channels,
-            0,
-            texture->object?texture->object:0,
-            flags
+            0
       );
 
    /* check succes */
-   if (!texture->object)
+   if (!texture->data)
       goto fail;
 
+   texture->size = texture->width * texture->height * texture->channels;
    RET("%d", RETURN_OK);
    return RETURN_OK;
 

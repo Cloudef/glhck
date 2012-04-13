@@ -27,7 +27,7 @@ int _glhckImportAssimp(_glhckObject *object, const char *file, int animated);
  * 1. pointer to texture object
  * 2. filename
  */
-int _glhckImportImage(_glhckTexture *object, const char *file, unsigned int flags);
+int _glhckImportImage(_glhckTexture *object, const char *file);
 
 /* Common helper functions.'
  * don't add here if it does not apply to other formats or importers */
