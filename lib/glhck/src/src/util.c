@@ -1,5 +1,110 @@
 #include "internal.h"
+#include <stdio.h> /* for printf  */
 #include <ctype.h> /* for toupper */
+
+/* \brief output in red */
+inline void _glhckRed(void)
+{
+#ifdef __unix__
+   printf("\33[31m");
+#endif
+
+#ifdef _WIN32
+   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_RED
+   |FOREGROUND_INTENSITY);
+#endif
+}
+
+/* \brief output in green */
+inline void _glhckGreen(void)
+{
+#ifdef __unix__
+   printf("\33[32m");
+#endif
+
+#ifdef _WIN32
+   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN
+   |FOREGROUND_INTENSITY);
+#endif
+}
+
+/* \brief output in blue */
+inline void _glhckBlue(void)
+{
+#ifdef __unix__
+   printf("\33[34m");
+#endif
+
+#ifdef _WIN32
+   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_BLUE
+   |FOREGROUND_GREEN|FOREGROUND_INTENSITY);
+#endif
+}
+
+/* \brief output in yellow */
+inline void _glhckYellow(void)
+{
+#ifdef __unix__
+   printf("\33[33m");
+#endif
+
+#ifdef _WIN32
+   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN
+   |FOREGROUND_RED|FOREGROUND_INTENSITY);
+#endif
+}
+
+/* \brief output in white */
+inline void _glhckWhite(void)
+{
+#ifdef __unix__
+   printf("\33[37m");
+#endif
+
+#ifdef _WIN32
+   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_RED
+   |FOREGROUND_GREEN|FOREGROUND_BLUE);
+#endif
+}
+
+/* \brief reset output color */
+inline void _glhckNormal(void)
+{
+#ifdef __unix__
+   printf("\33[0m");
+#endif
+
+#ifdef _WIN32
+   HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_RED
+   |FOREGROUND_GREEN|FOREGROUND_BLUE);
+#endif
+}
+
+/* \brief colored puts */
+void _glhckPuts(const char *buffer)
+{
+   int i;
+   size_t len;
+
+   len = strlen(buffer);
+   for (i = 0; i != len; ++i) {
+           if (buffer[i] == '\1') _glhckRed();
+      else if (buffer[i] == '\2') _glhckGreen();
+      else if (buffer[i] == '\3') _glhckYellow();
+      else if (buffer[i] == '\4') _glhckBlue();
+      else if (buffer[i] == '\5') _glhckWhite();
+      else printf("%c", buffer[i]);
+   }
+   _glhckNormal();
+   printf("\n");
+   fflush(stdout);
+}
 
 /* \brief split string */
 int _glhckStrsplit(char ***dst, char *str, char *token)
@@ -27,8 +132,7 @@ int _glhckStrsplit(char ***dst, char *str, char *token)
          (*dst)[i+1]=NULL;
          i++;
 
-         if (!*ptr)
-            break;
+         if (!*ptr) break;
          start=ptr;
       }
    }
@@ -38,8 +142,7 @@ int _glhckStrsplit(char ***dst, char *str, char *token)
 
 /* \brief free split */
 void _glhckStrsplitClear(char ***dst) {
-   if ((*dst)[0])
-      free((*dst)[0]);
+   if ((*dst)[0]) free((*dst)[0]);
    free((*dst));
 }
 
@@ -58,10 +161,11 @@ int _glhckStrnupcmp(const char *hay, const char *needle, size_t len)
 {
    size_t i;
    for (i = 0; i != len; ++i)
-      if (hay[i] != needle[i]) return 1;
+      if (toupper(hay[i]) != toupper(needle[i])) return 1;
    return 0;
 }
 
+/* \brief strstr strings in uppercase */
 char* _glhckStrupstr(const char *hay, const char *needle)
 {
    size_t i, r, p, len, len2;
