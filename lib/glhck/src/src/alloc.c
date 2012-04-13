@@ -4,39 +4,103 @@
 #include <malloc.h>  /* for malloc */
 #include <dlfcn.h>   /* for dlsym  */
 
-/* TODO:
- * When doing build with NDEBUG undefined,
- * add allocation tracking and keep memory graphs,
- * so we can track memory usage of library */
+/* tracing channel for this file */
+#define GLHCK_CHANNEL GLHCK_CHANNEL_ALLOC
 
+/* allocation tracking on debug build */
 #ifndef NDEBUG
-
 #define GLHCK_ALLOC_CRITICAL 100 * 1048576 /* 100 MiB */
 #define GLHCK_ALLOC_HIGH     80  * 1048576 /* 80  MiB */
 #define GLHCK_ALLOC_AVERAGE  40  * 1048576 /* 40  MiB */
 
-static void* (*_glhckRealMalloc)(size_t size) = NULL;
-
-/* \brief internal malloc hook */
-void* malloc(size_t size)
+/* \brief add new data to tracking */
+static void trackAlloc(const char *channel, void *ptr, size_t size)
 {
-   if (!_glhckRealMalloc) _glhckRealMalloc = dlsym(RTLD_NEXT, "malloc");
+   __GLHCKalloc *data;
 
-   /* tracking code here */
+   /* real alloc failed */
+   if (!ptr) return;
+   data = _GLHCKlibrary.alloc;
 
-   return _glhckRealMalloc(size);
+   /* track */
+   if (!data)
+      data = _GLHCKlibrary.alloc = malloc(sizeof(__GLHCKalloc));
+   else {
+      for (; data && data->next; data = data->next);
+      data = data->next = malloc(sizeof(__GLHCKalloc));
+   }
+
+   /* alloc failed */
+   if (!data)
+      return;
+
+   /* init */
+   memset(data, 0, sizeof(__GLHCKalloc));
+   data->size = size;
+   data->ptr = ptr;
+   data->channel = channel;
 }
 
-#endif /* DEBUG */
+/* \brief internal realloc hook */
+static void trackRealloc(void *ptr, void *ptr2, size_t size)
+{
+   __GLHCKalloc *data = _GLHCKlibrary.alloc;
+
+   /* find */
+   for (; data; data = data->next)
+      if (data->ptr == ptr) {
+         data->ptr  = ptr2;
+         data->size = size;
+      }
+}
+
+/* \brief internal free hook */
+static void trackFree(void *ptr)
+{
+   __GLHCKalloc *found, *data = _GLHCKlibrary.alloc;
+
+   /* find */
+   for (; data && data->next &&
+          data->next->ptr != ptr;
+          data = data->next);
+
+   /* free */
+   if ((found = data->next)) {
+      data->next = found->next;
+      free(found);
+   }
+}
+
+/* \brief terminate all tracking */
+void _glhckTrackTerminate(void)
+{
+   __GLHCKalloc *next, *data = _GLHCKlibrary.alloc;
+
+   for (; data; data = next) {
+      next = data->next;
+      free(data);
+   }
+
+   _GLHCKlibrary.alloc = NULL;
+}
+#endif /* NDEBUG */
+
+/* Use _glhckMalloc and _glhckCalloc and _glhckCopy macros instead
+ * of __glhckMalloc and __glhckCalloc and _glhckCopy.
+ * They will assign GLCHK_CHANNEL automatically.
 
 /* \brief internal malloc function. */
-void* _glhckMalloc(size_t size)
+void* __glhckMalloc(const char *channel, size_t size)
 {
    void *ptr;
-   CALL("%zu", size);
+   CALL("%s, %zu", channel, size);
 
    if (!(ptr = malloc(size)))
       goto fail;
+
+#ifndef NDEBUG
+   trackAlloc(channel, ptr, size);
+#endif
 
    RET("%p", ptr);
    return ptr;
@@ -48,60 +112,38 @@ fail:
 }
 
 /* \brief internal calloc function. */
-void* _glhckCalloc(unsigned int items, size_t size)
+void* __glhckCalloc(const char *channel, size_t nmemb, size_t size)
 {
    void *ptr;
-   CALL("%zu", size);
+   CALL("%s, %zu, %zu", channel, nmemb, size);
 
-   if (!(ptr = calloc(items, size)))
+   if (!(ptr = calloc(nmemb, size)))
       goto fail;
 
-   RET("%p", ptr);
-   return ptr;
-
-fail:
-   DEBUG(GLHCK_DBG_ERROR, "Failed to allocate %zu bytes",
-         (size_t)items * size);
-   RET("%p", NULL);
-   return NULL;
-}
-
-/* \brief internal realloc function. */
-void* _glhckRealloc(void *ptr, unsigned int old_items, unsigned int items, size_t size)
-{
-   void *ptr2;
-   assert(ptr);
-   CALL("%p, %u, %u, %zu", ptr, old_items, items, size);
-
-   if (!(ptr2 = realloc(ptr, (size_t)items * size))) {
-      if (!(ptr2 = _glhckMalloc(items * size)))
-         goto fail;
-      memcpy(ptr2, ptr, old_items * size);
-      free(ptr);
-      ptr = ptr2;
-   } else ptr = ptr2;
+#ifndef NDEBUG
+   trackAlloc(channel, ptr, nmemb * size);
+#endif
 
    RET("%p", ptr);
    return ptr;
 
 fail:
-   DEBUG(GLHCK_DBG_ERROR, "Failed to reallocate %zu bytes",
-         ((size_t)items * size) - ((size_t)old_items * size));
+   DEBUG(GLHCK_DBG_ERROR, "Failed to allocate %zu bytes", nmemb * size);
    RET("%p", NULL);
    return NULL;
 }
 
 /* \brief internal memcpy function. */
-void* _glhckCopy(void *ptr, size_t size)
+void* __glhckCopy(const char *channel, void *ptr, size_t nmemb)
 {
    void *ptr2;
    assert(ptr);
-   CALL("%p, %zu", ptr, size);
+   CALL("%p, %zu", ptr, nmemb);
 
-   if (!(ptr2 = _glhckMalloc(size)))
+   if (!(ptr2 = __glhckMalloc(channel, nmemb)))
       goto fail;
 
-   memcpy(ptr2, ptr, size);
+   memcpy(ptr2, ptr, nmemb);
    RET("%p", ptr2);
    return ptr2;
 
@@ -110,52 +152,109 @@ fail:
    return NULL;
 }
 
+/* \brief internal realloc function. */
+void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size)
+{
+   void *ptr2;
+   assert(ptr);
+   CALL("%p, %zu, %zu, %zu", ptr, omemb, nmemb, size);
+
+   if (!(ptr2 = realloc(ptr, nmemb * size))) {
+      if (!(ptr2 = malloc(nmemb * size)))
+         goto fail;
+      memcpy(ptr2, ptr, omemb * size);
+      free(ptr);
+   }
+
+#ifndef NDEBUG
+   trackRealloc(ptr, ptr2, size);
+#endif
+
+   RET("%p", ptr2);
+   return ptr2;
+
+fail:
+   DEBUG(GLHCK_DBG_ERROR, "Failed to reallocate %zu bytes",
+         nmemb * size - omemb * size);
+   RET("%p", NULL);
+   return NULL;
+}
+
 /* \brief internal free function. */
 void _glhckFree(void *ptr)
 {
+   assert(ptr);
    CALL("%p", ptr);
-   if (!ptr) return;
+
+#ifndef NDEBUG
+   trackFree(ptr);
+#endif
+
    free(ptr);
 }
 
+/* public api */
+
 /* \brief output memory usage graph */
-#if 0
-void glue_memory_graph(void)
+GLHCKAPI void glhckMemoryGraph(void)
 {
    TRACE();
-#ifdef DEBUG
+#ifndef NDEBUG
+   __GLHCKalloc *data;
+   __GLHCKtrace *trace;
    unsigned int i;
+   size_t allocChannel, allocTotal;
 
-   dlPuts("");
-   logWhite(); dlPuts("--- Memory Graph ---");
-   i = 0; DL_ALLOC[ALLOC_TOTAL] = 0;
-   for (; i != ALLOC_LAST; ++i)
-   {
-      if (i == ALLOC_TOTAL)
-      { logWhite(); dlPuts("--------------------"); }
+   if (!(trace = _GLHCKlibrary.trace))
+      goto no_trace;
 
-      if (DL_ALLOC[i] >= ALLOC_CRITICAL)     logRed();
-      else if (DL_ALLOC[i] >= ALLOC_HIGH)    logBlue();
-      else if (DL_ALLOC[i] >= ALLOC_AVERAGE) logYellow();
-      else logGreen();
-      dlPrint("%13s : ",    DL_ALLOCN[i]); logWhite();
-      if (DL_ALLOC[i] / 1048576 != 0)
-         dlPrint("%.2f MiB\n", (float)DL_ALLOC[i] / 1048576);
-      else if (DL_ALLOC[i] / 1024 != 0)
-         dlPrint("%.2f KiB\n", (float)DL_ALLOC[i] / 1024);
+   puts("");
+   puts("--- Memory Graph ---");
+
+   allocTotal = 0;
+   for (i = 0;;++i) {
+      allocChannel = 0;
+
+      if (trace[i].name) {
+         for (data = _GLHCKlibrary.alloc;
+              data; data = data->next)
+            if (data->channel == trace[i].name)
+               allocChannel += data->size;
+      } else {
+         allocChannel = allocTotal;
+         puts("--------------------");
+      }
+
+      /* set color */
+      if (allocChannel >= GLHCK_ALLOC_CRITICAL)       _glhckRed();
+      else if (allocChannel >= GLHCK_ALLOC_HIGH)      _glhckBlue();
+      else if (allocChannel >= GLHCK_ALLOC_AVERAGE)   _glhckYellow();
+      else _glhckGreen();
+
+      printf("%-13s : ", trace[i].name?trace[i].name:"Total");
+      if (allocChannel / 1048576 != 0)
+         printf("%-4.2f MiB\n", (float)allocChannel / 1048576);
+      else if (allocChannel / 1024 != 0)
+         printf("%-4.2f KiB\n", (float)allocChannel / 1024);
       else
-         dlPrint("%lu B\n", DL_ALLOC[i]);
+         printf("%-4lu B\n", allocChannel);
 
-      /* increase total */
-      DL_ALLOC[ALLOC_TOTAL] += DL_ALLOC[i];
+      /* reset color */
+      _glhckNormal();
+
+      if (!trace[i].name) break;
+      allocTotal += allocChannel;
    }
-   dlPuts("--------------------"); logNormal();
-   dlPuts("");
 
+   puts("--------------------");
+   puts("");
+   return;
+
+no_trace:
+   DEBUG(GLHCK_DBG_ERROR, "Memory graph needs tracing enabled.");
 #else
-   glue_puts("-- Memory graph only available on debug build --");
+   puts("-- Memory graph only available on debug build --");
 #endif
 }
-#endif
 
 /* vim: set ts=8 sw=3 tw=0 :*/
