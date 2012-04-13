@@ -6,6 +6,7 @@
 #include <stdio.h>   /* for sscanf */
 #include <GL/glew.h> /* for opengl */
 
+#define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #define RENDER_NAME "OpenGL Renderer"
 #define GL_DEBUG 1
 
