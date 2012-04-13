@@ -161,7 +161,7 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
    return texture;
 
 fail:
-   glhckTextureFree(texture);
+   if (texture) glhckTextureFree(texture);
    RET("%p", NULL);
    return NULL;
 }
@@ -197,7 +197,7 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
    return texture;
 
 fail:
-   glhckTextureFree(texture);
+   if (texture) glhckTextureFree(texture);
    RET("%p", NULL);
    return NULL;
 }
