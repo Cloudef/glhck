@@ -230,6 +230,7 @@ GLHCKAPI void glhckBindTexturei(unsigned int texture);
 
 /* trace && debug */
 GLHCKAPI void glhckSetDebugHook(glhckDebugHookFunc func);
+GLHCKAPI void glhckMemoryGraph(void);
 
 /* Define cleanup */
 #ifdef GLHCK_WINGDIAPI_DEFINED
