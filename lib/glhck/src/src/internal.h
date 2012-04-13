@@ -23,12 +23,12 @@ void* malloc(size_t);
 #endif /* NDEBUG */
 
 /* return variables used throughout library */
-typedef enum glhckReturnValue {
+typedef enum _glhckReturnValue {
    RETURN_FAIL    =  0,
    RETURN_OK      =  1,
    RETURN_TRUE    =  1,
    RETURN_FALSE   =  !RETURN_TRUE
-} glhckReturnValue;
+} _glhckReturnValue;
 
 /* glhck object structs */
 typedef struct _glhckTexture
@@ -41,8 +41,24 @@ typedef struct _glhckTexture
    short refCounter;
 } _glhckTexture;
 
+typedef struct __GLHCKobjectGeometry
+{
+   glhckPrecision   verticesPrecision;
+   glhckPrecision   coordsPrecision;
+   glhckPrecision   normalsPrecision;
+   glhckPrecision   colorsPrecision;
+   glhckPrecision   indicesPrecision;
+   void              *vertices;
+   void              *coords;
+   void              *normals;
+   void              *colors;
+   void              *indices;
+} __GLHCKobjectGeometry;
+
 typedef struct _glhckObject
 {
+   struct __GLHCKobjectGeometry  geometry;
+   short                         refCounter;
 } _glhckObject;
 
 /* library global data */
@@ -60,6 +76,8 @@ typedef struct __GLHCKtexture
 
 /* render api */
 typedef void (*__GLHCKrenderAPIterminate)        (void);
+typedef void (*__GLHCKrenderAPIrender)           (void);
+typedef void (*__GLHCKrenderAPIobjectDraw)       (_glhckObject *object);
 
 /* object generation */
 typedef void (*__GLHCKrenderAPIgenerateTextures) (unsigned int count, unsigned int *objects);
@@ -83,6 +101,8 @@ typedef void (*__GLHCKrenderAPIbindBuffer)       (unsigned int object);
 typedef struct __GLHCKrenderAPI
 {
    __GLHCKrenderAPIterminate        terminate;
+   __GLHCKrenderAPIrender           render;
+   __GLHCKrenderAPIobjectDraw       objectDraw;
    __GLHCKrenderAPIgenerateTextures generateTextures;
    __GLHCKrenderAPIdeleteTextures   deleteTextures;
    __GLHCKrenderAPIgenerateBuffers  generateBuffers;
@@ -127,9 +147,9 @@ typedef struct _glhckTexturePacker
 #define RET_FMT(fmt)    "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \3%s\2()\4 => \2(\5"fmt"\2)"
 
 #define DEBUG(level, fmt, ...)   _glhckPassDebug(THIS_FILE, __LINE__, __func__, level, fmt, ##__VA_ARGS__)
-#define TRACE()                  _glhckTrace(TRACE_FMT,      THIS_FILE, __LINE__, __func__)
-#define CALL(args, ...)          _glhckTrace(CALL_FMT(args), THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
-#define RET(args, ...)           _glhckTrace(RET_FMT(args),  THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
+#define TRACE()                  _glhckTrace(__func__, TRACE_FMT,      THIS_FILE, __LINE__, __func__)
+#define CALL(args, ...)          _glhckTrace(__func__, CALL_FMT(args), THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
+#define RET(args, ...)           _glhckTrace(__func__, RET_FMT(args),  THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
 
 /* private api */
 
@@ -160,7 +180,7 @@ void _glhckTextureCacheRelease(void);
 
 /* tracing && debug functions */
 void _glhckTraceInit(int argc, char **argv);
-void _glhckTrace(const char *fmt, ...);
+void _glhckTrace(const char *function, const char *fmt, ...);
 void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *fmt, ...);
 
 #endif /* _internal_h_ */
