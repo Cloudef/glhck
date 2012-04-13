@@ -48,8 +48,8 @@ static int _glhckTextureCacheInsert(_glhckTexture *texture)
    if (!cache)
       goto fail;
 
-   /* init */
-   cache->next = NULL;
+   /* init cache */
+   memset(cache, 0, sizeof(__GLHCKtextureCache));
 
    RET("%d", RETURN_OK);
    return RETURN_OK;
@@ -113,19 +113,15 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
    CALL("%s, %u", file, flags);
 
    /* check if texture is in cache */
-   if ((texture = _glhckTextureCacheCheck(file))) {
-      RET("%p", texture);
-      return texture;
-   }
+   if ((texture = _glhckTextureCacheCheck(file)))
+      goto success;
 
    /* allocate texture */
    if (!(texture = (_glhckTexture*)_glhckMalloc(sizeof(_glhckTexture))))
       goto fail;
 
-   /* init texture textureect */
-   texture->object = 0;
-   texture->file   = NULL;
-   texture->data   = NULL;
+   /* init texture */
+   memset(texture, 0, sizeof(_glhckTexture));
 
    /* If file is passed, then try import it */
    if (file) {
@@ -157,6 +153,7 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
    /* increase ref counter */
    texture->refCounter++;
 
+success:
    RET("%p", texture);
    return texture;
 
