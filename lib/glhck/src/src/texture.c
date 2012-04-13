@@ -3,10 +3,12 @@
 #include "../include/SOIL.h"  /* for image saving */
 #include <assert.h>           /* for assert */
 
+/* tracing channel for this file */
+#define GLHCK_CHANNEL GLHCK_CHANNEL_TEXTURE
+
 /* ---- TEXTURE CACHE ---- */
 
-/* check if texture is in chache
- * returns reference if found */
+/* \brief check if texture is in cache, returns reference if found */
 static _glhckTexture* _glhckTextureCacheCheck(const char *file)
 {
    __GLHCKtextureCache *cache;
@@ -25,7 +27,7 @@ nothing:
    return NULL;
 }
 
-/* insert texture to cache */
+/* \brief insert texture to cache */
 static int _glhckTextureCacheInsert(_glhckTexture *texture)
 {
    __GLHCKtextureCache *cache;
@@ -59,7 +61,7 @@ fail:
    return RETURN_FAIL;
 }
 
-/* remove texture from cache */
+/* \brief remove texture from cache */
 static int _glhckTextureCacheRemove(_glhckTexture *texture)
 {
    __GLHCKtextureCache *cache, *found;
@@ -76,9 +78,10 @@ static int _glhckTextureCacheRemove(_glhckTexture *texture)
       for (; cache && cache->next &&
              cache->next->texture != texture;
              cache = cache->next);
-      found = cache->next;
-      cache->next = found->next;
-      _glhckFree(found);
+      if ((found = cache->next)) {
+         cache->next = found->next;
+         _glhckFree(found);
+      }
    }
 
 _return:
@@ -86,7 +89,7 @@ _return:
    return RETURN_OK;
 }
 
-/* release texture cache */
+/* \brief release texture cache */
 void _glhckTextureCacheRelease(void)
 {
    __GLHCKtextureCache *cache, *next;
@@ -105,7 +108,7 @@ void _glhckTextureCacheRelease(void)
 
 /* ---- PUBLIC API ---- */
 
-/* Allocate texture
+/* \brief Allocate texture
  * Takes filename as argument, pass NULL to use user data */
 GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
 {
@@ -163,7 +166,7 @@ fail:
    return NULL;
 }
 
-/* Copy texture */
+/* \brief copy texture */
 GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
 {
    _glhckTexture *texture;
@@ -199,7 +202,7 @@ fail:
    return NULL;
 }
 
-/* Reference texture */
+/* \brief reference texture */
 GLHCKAPI _glhckTexture* glhckTextureRef(_glhckTexture *texture)
 {
    assert(texture);
@@ -215,7 +218,7 @@ GLHCKAPI _glhckTexture* glhckTextureRef(_glhckTexture *texture)
    return texture;
 }
 
-/* Free texture */
+/* \brief free texture */
 GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
 {
    assert(texture);
@@ -243,8 +246,7 @@ success:
    return texture->refCounter;
 }
 
-/* Create GL Texture manually.
- * Flags are SOIL flags */
+/* \brief create texture manually. */
 GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
       int width, int height, int channels, unsigned int flags)
 {
@@ -280,7 +282,7 @@ fail:
    return RETURN_FAIL;
 }
 
-/* Save texture to file in TGA format */
+/* \brief save texture to file in TGA format */
 GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
 {
    assert(texture);
@@ -303,7 +305,7 @@ fail:
    return RETURN_FAIL;
 }
 
-/* bind texture */
+/* \brief bind texture */
 GLHCKAPI void glhckTextureBind(_glhckTexture *texture)
 {
    CALL("%p", texture);
@@ -321,7 +323,7 @@ GLHCKAPI void glhckTextureBind(_glhckTexture *texture)
    _GLHCKlibrary.texture.bind = texture->object;
 }
 
-/* bind using ID */
+/* \brief bind using ID */
 GLHCKAPI void glhckBindTexture(unsigned int texture)
 {
    CALL("%u", texture);
