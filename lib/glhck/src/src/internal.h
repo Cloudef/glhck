@@ -43,16 +43,10 @@ typedef struct _glhckTexture
 
 typedef struct __GLHCKobjectGeometry
 {
-   glhckPrecision   verticesPrecision;
-   glhckPrecision   coordsPrecision;
-   glhckPrecision   normalsPrecision;
-   glhckPrecision   colorsPrecision;
-   glhckPrecision   indicesPrecision;
-   void              *vertices;
-   void              *coords;
-   void              *normals;
-   void              *colors;
-   void              *indices;
+   struct glhckVertexData     *vertexData;
+   struct glhckTextureData    *textureData;
+   GLHCK_CAST_INDEX           *indices;
+   unsigned int               indicesCount;
 } __GLHCKobjectGeometry;
 
 typedef struct _glhckObject
