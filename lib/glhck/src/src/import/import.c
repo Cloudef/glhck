@@ -4,6 +4,9 @@
 #include <unistd.h> /* for access   */
 #include <libgen.h> /* for dirname  */
 
+/* tracing channel for this file */
+#define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
+
 /* I used to have own image importers,
  * but then I stumbled against SOIL which seems to do a lots
  * of stuff with it's tiny size, so why reinvent the wheel?
@@ -51,6 +54,8 @@ typedef enum _glhckModelFormat
  * to figure out which format it is.
  *
  * returned char array must be freed */
+
+/* \brief parse header from file */
 static char* parse_header(const char *file)
 {
    char *MAGIC_HEADER, bit = '\0';
@@ -121,13 +126,13 @@ static char* parse_header(const char *file)
    return MAGIC_HEADER;
 
 parse_fail:
-   free(MAGIC_HEADER);
+   _glhckFree(MAGIC_HEADER);
 fail:
    RET("%p", NULL);
    return NULL;
 }
 
-/* check against known model format headers */
+/* \brief check against known model format headers */
 static _glhckModelFormat model_format(const char *MAGIC_HEADER)
 {
    CALL("%s", MAGIC_HEADER);
@@ -171,6 +176,8 @@ static _glhckModelFormat model_format(const char *MAGIC_HEADER)
  * And let it fill the object structure
  * Return the object
  */
+
+/* \brief import model file */
 int _glhckImportModel(_glhckObject *object, const char *file, int animated)
 {
    _glhckModelFormat fileFormat;
@@ -187,7 +194,7 @@ int _glhckImportModel(_glhckObject *object, const char *file, int animated)
       goto fail;
 
    /* figure out the model format */
-   fileFormat = model_format(header); free(header); /* free header after use */
+   fileFormat = model_format(header); _glhckFree(header); /* free header after use */
    if (fileFormat == M_NOT_FOUND)
       goto fail;
 
@@ -228,7 +235,7 @@ fail:
    return importReturn;
 }
 
-/* Import using SOIL */
+/* \brief import using SOIL */
 int _glhckImportImage(_glhckTexture *texture, const char *file)
 {
    CALL("%p, %s", texture, file);
@@ -261,6 +268,7 @@ fail:
 
 /* ------------------ PORTABILTY ------------------ */
 
+/* \brief portable basename */
 char *gnu_basename(char *path)
 {
     char *base;
@@ -272,7 +280,9 @@ char *gnu_basename(char *path)
 
 /* ------------ SHARED FUNCTIONS ---------------- */
 
-/* maybe we could have a _default_ texture for missing files? */
+/* \brief helper function for importers.
+ * helps finding texture files.
+ * maybe we could have a _default_ texture for missing files? */
 char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_path)
 {
    char *textureFile, *modelFolder;
