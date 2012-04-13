@@ -2,6 +2,9 @@
 #include "internal.h"
 #include "render/render.h"
 
+/* tracing channel for this file */
+#define GLHCK_CHANNEL GLHCK_CHANNEL_GLHCK
+
 /* \brief initialize */
 GLHCKAPI int glhckInit(int argc, char **argv)
 {
@@ -93,4 +96,7 @@ GLHCKAPI void glhckTerminate(void)
    if (!_glhckInitialized) return;
    glhckCloseDisplay();
    _glhckTextureCacheRelease();
+#ifndef NDEBUG
+   _glhckTrackTerminate();
+#endif
 }
