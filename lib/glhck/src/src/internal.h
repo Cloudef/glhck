@@ -30,6 +30,21 @@ typedef enum glhckReturnValue {
    RETURN_FALSE   =  !RETURN_TRUE
 } glhckReturnValue;
 
+/* glhck object structs */
+typedef struct _glhckTexture
+{
+   char *file;
+   unsigned int object, flags;
+   unsigned char *data;
+   int width, height, channels;
+   size_t size;
+   short refCounter;
+} _glhckTexture;
+
+typedef struct _glhckObject
+{
+} _glhckObject;
+
 /* library global data */
 typedef struct __GLHCKtextureCache
 {
@@ -54,6 +69,13 @@ typedef void (*__GLHCKrenderAPIdeleteBuffers)    (unsigned int count, unsigned i
 
 /* textures */
 typedef void (*__GLHCKrenderAPIbindTexture)      (unsigned int object);
+typedef int  (*__GLHCKrenderAPIuploadTexture)    (_glhckTexture *texture, unsigned int flags);
+
+typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *const buffer,
+                                                       int width, int height, int channels,
+                                                       unsigned int reuse_texture_ID,
+                                                       unsigned int flags);
+
 
 /* buffers */
 typedef void (*__GLHCKrenderAPIbindBuffer)       (unsigned int object);
@@ -66,6 +88,8 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIgenerateBuffers  generateBuffers;
    __GLHCKrenderAPIdeleteBuffers    deleteBuffers;
    __GLHCKrenderAPIbindTexture      bindTexture;
+   __GLHCKrenderAPIuploadTexture    uploadTexture;
+   __GLHCKrenderAPIcreateTexture    createTexture;
    __GLHCKrenderAPIbindBuffer       bindBuffer;
 } __GLHCKrenderAPI;
 
@@ -95,20 +119,6 @@ typedef struct _glhckTexturePacker
    short             longest_edge;
    short             total_area;
 } _glhckTexturePacker;
-
-typedef struct _glhckTexture
-{
-   char *file;
-   unsigned int object, flags;
-   unsigned char *data;
-   int width, height, channels;
-   size_t size;
-   short refCounter;
-} _glhckTexture;
-
-typedef struct _glhckObject
-{
-} _glhckObject;
 
 /* tracing && debug macros */
 #define THIS_FILE ((strrchr(__FILE__, '/') ?: __FILE__ - 1) + 1)
