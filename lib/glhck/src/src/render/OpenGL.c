@@ -1,11 +1,21 @@
 #include "../internal.h"
 #include "../../include/SOIL.h"
+#include "../../include/kazmath/kazmath.h"
 #include "render.h"
+#include <limits.h>
 #include <stdio.h>   /* for sscanf */
 #include <GL/glew.h> /* for opengl */
 
 #define RENDER_NAME "OpenGL Renderer"
+#define GL_DEBUG 1
 
+/* global data */
+typedef struct __OpenGLrender {
+   unsigned int indicesCount;
+} __OpenGLrender;
+static __OpenGLrender _OpenGL;
+
+/* helper macros */
 #define DECLARE_GL_GEN_FUNC(x,y)                                     \
 static void x(unsigned int count, unsigned int *objects)             \
 {                                                                    \
@@ -18,6 +28,57 @@ static void x(unsigned int object)                                   \
 {                                                                    \
    CALL("%d", object);                                               \
    y;                                                                \
+}
+
+#define GL_ERROR(x)                                                  \
+{                                                                    \
+GLenum error;                                                        \
+if (GL_DEBUG) {                                                      \
+   if ((error = glGetError())                                        \
+         != GL_NO_ERROR)                                             \
+      DEBUG(GLHCK_DBG_ERROR, "GL @%-20s %-20s >> %s",                \
+            __func__, x,                                             \
+            error==GL_INVALID_ENUM?                                  \
+            "GL_INVALID_ENUM":                                       \
+            error==GL_INVALID_VALUE?                                 \
+            "GL_INVALID_VALUE":                                      \
+            error==GL_INVALID_OPERATION?                             \
+            "GL_INVALID_OPERATION":                                  \
+            error==GL_STACK_OVERFLOW?                                \
+            "GL_STACK_OVERFLOW":                                     \
+            error==GL_STACK_UNDERFLOW?                               \
+            "GL_STACK_UNDERFLOW":                                    \
+            error==GL_OUT_OF_MEMORY?                                 \
+            "GL_OUT_OF_MEMORY":                                      \
+            error==GL_TABLE_TOO_LARGE?                               \
+            "GL_TABLE_TOO_LARGE":                                    \
+            error==GL_INVALID_OPERATION?                             \
+            "GL_INVALID_OPERATION":                                  \
+            "GL_UNKNOWN_ERROR");                                     \
+}                                                                    \
+}
+
+static void geometryPointer(__GLHCKobjectGeometry *geometry)
+{
+   /* vertex data */
+   if (geometry->vertexData) {
+      glVertexPointer(3, GLHCK_PRECISION_VERTEX,
+            sizeof(glhckVertexData), &geometry->vertexData[0].vertex);
+      glNormalPointer(GLHCK_PRECISION_VERTEX,
+            sizeof(glhckVertexData), &geometry->vertexData[0].normal);
+#if GLHCK_VERTEXDATA_COLOR
+      glColorPointer(4, GLHCK_PRECISION_COLOR,
+            sizeof(glhckVertexData), &geometry->vertexData[0].color);
+#endif
+      GL_ERROR("glVertexPointer()");
+   }
+
+   /* texture data */
+   if (geometry->textureData) {
+      glTexCoordPointer(2, GLHCK_PRECISION_COORD,
+            sizeof(glhckTextureData), &geometry->textureData[0].coord);
+      GL_ERROR("glVertexPointer()");
+   }
 }
 
 static int renderInfo(void)
@@ -89,12 +150,43 @@ static unsigned int createTexture(const unsigned char *const buffer,
 
 static void render(void)
 {
+   kmMat4 projection;
    TRACE();
+
+   /* reset stats */
+   _OpenGL.indicesCount  = 0;
 }
 
 static void objectDraw(_glhckObject *object)
 {
+   kmMat4 projection;
+   unsigned int i;
    CALL("%p", object);
+
+   glMatrixMode(GL_PROJECTION);
+   kmMat4PerspectiveProjection(&projection, 35, 1, 0.1f, 300);
+   glLoadMatrixf((float*)&projection);
+   glMatrixMode(GL_MODELVIEW);
+   glLoadIdentity();
+   glTranslatef(0,0,-10.0f);
+
+   glEnableClientState(GL_VERTEX_ARRAY);
+   GL_ERROR("glEnableClientState()");
+
+   glColor3f(1,1,1);
+   GL_ERROR("glColor3f()");
+
+   geometryPointer(&object->geometry);
+
+   glDrawElements(GL_TRIANGLE_STRIP, object->geometry.indicesCount,
+         GLHCK_PRECISION_INDEX,
+         &object->geometry.indices[0]);
+   GL_ERROR("glDrawElements()");
+
+   glDisableClientState(GL_VERTEX_ARRAY);
+   GL_ERROR("glDisableClientState()");
+
+   _OpenGL.indicesCount  += object->geometry.indicesCount;
 }
 
 static void terminate(void)
@@ -126,6 +218,9 @@ void _glhckRenderOpenGL(void)
    /* output information */
    if (renderInfo() != RETURN_OK)
       goto fail;
+
+   /* reset global data */
+   memset(&_OpenGL, 0, sizeof(__OpenGLrender));
 
    /* register api functions */
    GLHCK_RENDER_FUNC(generateTextures, _glGenTextures);
