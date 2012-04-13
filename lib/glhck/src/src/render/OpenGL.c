@@ -1,4 +1,5 @@
 #include "../internal.h"
+#include "../../include/SOIL.h"
 #include "render.h"
 #include <stdio.h>   /* for sscanf */
 #include <GL/glew.h> /* for opengl */
@@ -53,6 +54,39 @@ fail:
    return RETURN_FAIL;
 }
 
+static int uploadTexture(_glhckTexture *texture, unsigned int flags)
+{
+   CALL("%p, %d", texture, flags);
+   texture->object = SOIL_create_OGL_texture(
+         texture->data,
+         texture->width, texture->height,
+         texture->channels,
+         texture->object?texture->object:0,
+         flags);
+
+   RET("%d", texture->object?RETURN_OK:RETURN_FAIL);
+   return texture->object?RETURN_OK:RETURN_FAIL;
+}
+
+static unsigned int createTexture(const unsigned char *const buffer,
+      int width, int height, int channels,
+      unsigned int reuse_texture_ID,
+      unsigned int flags)
+{
+   unsigned int object;
+   CALL("%p, %d, %d, %d, %d, %d", buffer,
+         width, height, channels,
+         reuse_texture_ID, flags);
+
+   object = SOIL_create_OGL_texture(
+      buffer, width, height, channels,
+      reuse_texture_ID,
+      flags);
+
+   RET("%d", object?RETURN_OK:RETURN_FAIL);
+   return object?RETURN_OK:RETURN_FAIL;
+}
+
 static void terminate(void)
 {
    TRACE();
@@ -86,6 +120,8 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(generateBuffers, _glGenBuffers);
    GLHCK_RENDER_FUNC(deleteBuffers, _glDeleteBuffers);
    GLHCK_RENDER_FUNC(bindTexture, _glBindTexture);
+   GLHCK_RENDER_FUNC(uploadTexture, uploadTexture);
+   GLHCK_RENDER_FUNC(createTexture, createTexture);
 
    /* terminate function */
    GLHCK_RENDER_FUNC(terminate, terminate);
