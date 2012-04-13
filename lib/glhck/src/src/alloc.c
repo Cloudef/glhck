@@ -4,6 +4,11 @@
 #include <malloc.h>  /* for malloc */
 #include <dlfcn.h>   /* for dlsym  */
 
+/* TODO:
+ * When doing build with NDEBUG undefined,
+ * add allocation tracking and keep memory graphs,
+ * so we can track memory usage of library */
+
 #ifndef NDEBUG
 
 #define GLHCK_ALLOC_CRITICAL 100 * 1048576 /* 100 MiB */
