@@ -11,18 +11,32 @@
 static glhckDebugHookFunc _glhckDebugHook = NULL;
 
 #define TRACE_CHANNEL "TRACE"
+#define DRAW_CHANNEL  "DRAW"
 #define ALL_CHANNEL   "ALL"
 #define CLI_SWITCH    "DEBUG"
 
-typedef struct glhckDebugChannel
+typedef struct _glhckDebugChannel
 {
    const char  *name;
    char        active;
-} glhckDebugChannel;
+} _glhckDebugChannel;
+
+static const char *_drawFuncs[] = {
+   "glhckRender",
+   "glhckObjectDraw",
+   "objectDraw",
+   "render",
+   NULL,
+};
 
 /* list all debug channels */
-static glhckDebugChannel _channel[] =
+static _glhckDebugChannel _channel[] =
 {
+   /* special DRAW channel,
+    * will stop bloating output with
+    * all drawing commands. */
+   { DRAW_CHANNEL,      0 },
+
    /* TRACING */
    { TRACE_CHANNEL,     0 },
 
@@ -108,10 +122,20 @@ static void _glhckNormal(void)
 #endif
 }
 
+/* \brief is a draw function? */
+static int _glhckTraceIsDrawFunction(const char *function)
+{
+   int i;
+   for (i = 0; _drawFuncs[i]; ++i)
+      if (!strcmp(_drawFuncs[i], function))
+         return RETURN_TRUE;
+   return RETURN_FALSE;
+}
+
 /* \brief channel is active? */
 static int _glhckTraceIsActive(const char *name)
 {
-   int i = 0;
+   int i;
    for (i = 0; _channel[i].name; ++i)
       if (!_glhckStrupcmp(_channel[i].name, name))
             return _channel[i].active;
@@ -177,12 +201,16 @@ static void _glhckPuts(const char *buffer)
 }
 
 /* \brief output trace info */
-void _glhckTrace(const char *fmt, ...)
+void _glhckTrace(const char *function, const char *fmt, ...)
 {
    va_list args;
    char buffer[LINE_MAX];
 
    if (!_glhckTraceIsActive(TRACE_CHANNEL))
+      return;
+
+   if (!_glhckTraceIsActive(DRAW_CHANNEL) &&
+        _glhckTraceIsDrawFunction(function))
       return;
 
    va_start(args, fmt);
