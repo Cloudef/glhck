@@ -87,6 +87,16 @@ static unsigned int createTexture(const unsigned char *const buffer,
    return object?RETURN_OK:RETURN_FAIL;
 }
 
+static void render(void)
+{
+   TRACE();
+}
+
+static void objectDraw(_glhckObject *object)
+{
+   CALL("%p", object);
+}
+
 static void terminate(void)
 {
    TRACE();
@@ -125,6 +135,10 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(bindTexture, _glBindTexture);
    GLHCK_RENDER_FUNC(uploadTexture, uploadTexture);
    GLHCK_RENDER_FUNC(createTexture, createTexture);
+
+   /* drawing functions */
+   GLHCK_RENDER_FUNC(render, render);
+   GLHCK_RENDER_FUNC(objectDraw, objectDraw);
 
    /* terminate function */
    GLHCK_RENDER_FUNC(terminate, terminate);
