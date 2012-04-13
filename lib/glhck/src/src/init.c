@@ -62,7 +62,7 @@ fail:
 }
 
 /* \brief close the virutal display */
-GLHCKAPI void glhckCloseDisplay()
+GLHCKAPI void glhckCloseDisplay(void)
 {
    TRACE();
 
@@ -72,6 +72,18 @@ GLHCKAPI void glhckCloseDisplay()
 
    _GLHCKlibrary.render.api.terminate();
    _GLHCKlibrary.render.type = GLHCK_RENDER_NONE;
+}
+
+/* \brief render scene using renderer */
+GLHCKAPI void glhckRender(void)
+{
+   TRACE();
+
+   /* can't render */
+   if (!_glhckInitialized || !_GLHCKlibrary.render.name)
+      return;
+
+   _GLHCKlibrary.render.api.render();
 }
 
 /* \brief frees virtual display and deinits glue framework */
