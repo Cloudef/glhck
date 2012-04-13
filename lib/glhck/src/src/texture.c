@@ -216,7 +216,7 @@ GLHCKAPI _glhckTexture* glhckTextureRef(_glhckTexture *texture)
 }
 
 /* Free texture */
-GLHCKAPI int glhckTextureFree(_glhckTexture *texture)
+GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
 {
    assert(texture);
    CALL("%p", texture);
