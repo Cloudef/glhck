@@ -5,7 +5,9 @@ SET(GLHCK_SRC
    src/src/alloc.c
    src/src/trace.c
    src/src/util.c
+   src/src/object.c
    src/src/texture.c
+   src/src/geometry/cube.c
    src/src/render/OpenGL.c
    src/src/import/import.c)
 
