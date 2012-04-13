@@ -1,3 +1,6 @@
 [submodule "lib/glfw/src"]
 	path = lib/glfw/src
 	url = https://github.com/elmindreda/glfw.git
+[submodule "lib/kazmath/src"]
+	path = lib/kazmath/src
+	url = https://github.com/Kazade/kazmath.git
