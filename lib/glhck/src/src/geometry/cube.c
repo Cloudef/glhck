@@ -1,7 +1,12 @@
 #include "../internal.h"
 
+/* tracing channel for this file */
+#define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
+
+/* temporary macro */
 #define LENGTH(X) (sizeof X / sizeof X[0])
 
+/* \brief create new cube object */
 GLHCKAPI _glhckObject* glhckCubeNew(int size)
 {
    _glhckObject *object;
