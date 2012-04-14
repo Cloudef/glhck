@@ -48,6 +48,7 @@ int main(int argc, char **argv)
 
    int i = 0;
    cube = glhckCubeNew(1);
+   glhckMemoryGraph();
 
    glfwSetWindowCloseCallback(close_callback);
    while (RUNNING && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
