@@ -99,4 +99,5 @@ GLHCKAPI void glhckTerminate(void)
 #ifndef NDEBUG
    _glhckTrackTerminate();
 #endif
+   _glhckInitialized = 0;
 }
