@@ -6,6 +6,13 @@
 /* temporary macro */
 #define LENGTH(X) (sizeof X / sizeof X[0])
 
+/* do we need color element? */
+#ifdef GLHCK_VERTEXDATA_COLOR
+#  define COLOR(r,g,b,a) { r, g, b, a }
+#else
+#  define COLOR(r,g,b,a)
+#endif
+
 /* \brief create new cube object */
 GLHCKAPI _glhckObject* glhckCubeNew(int size)
 {
@@ -15,35 +22,35 @@ GLHCKAPI _glhckObject* glhckCubeNew(int size)
       {
          { -1, -1,  1 },       /* vertices */
          {  0,  0,  0 },       /* normals  */
-         {  0,  0,  0,  0 }    /* color    */
+    COLOR(0,  0,  0,  0)       /* color    */
       },{
          {  1, -1,  1 },
          {  0,  0,  0 },
-         {  0,  0,  0,  0 },
+    COLOR(0,  0,  0,  0)
       },{
          { -1,  1,  1 },
          {  0,  0,  0 },
-         {  0,  0,  0,  0 },
+    COLOR(0,  0,  0,  0)
       },{
          {  1,  1,  1 },
          {  0,  0,  0 },
-         {  0,  0,  0,  0 },
+    COLOR(0,  0,  0,  0)
       },{
          { -1, -1, -1 },
          {  0,  0,  0 },
-         {  0,  0,  0,  0 },
+    COLOR(0,  0,  0,  0)
       },{
          {  1, -1, -1 },
          {  0,  0,  0 },
-         {  0,  0,  0,  0 },
+    COLOR(0,  0,  0,  0)
       },{
          { -1,  1, -1 },
          {  0,  0,  0 },
-         {  0,  0,  0,  0 },
+    COLOR(0,  0,  0,  0)
       },{
          {  1,  1, -1 },
          {  0,  0,  0 },
-         {  0,  0,  0,  0 },
+    COLOR(0,  0,  0,  0)
       }
    };
 
