@@ -1,9 +1,29 @@
 #define _init_c_
 #include "internal.h"
 #include "render/render.h"
+#include <assert.h> /* for assert */
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GLHCK
+
+/* \brief macro and function for checking render api calls */
+#define GLHCK_API_CHECK(x) \
+if (!render->api.x) DEBUG(GLHCK_DBG_ERROR, "[%s] missing render API function: %s", render->name, __STRING(x))
+static void _glhckCheckRenderApi(__GLHCKrender *render)
+{
+   GLHCK_API_CHECK(terminate);
+   GLHCK_API_CHECK(resize);
+   GLHCK_API_CHECK(render);
+   GLHCK_API_CHECK(objectDraw);
+   GLHCK_API_CHECK(generateTextures);
+   GLHCK_API_CHECK(deleteTextures);
+   GLHCK_API_CHECK(bindTexture);
+   GLHCK_API_CHECK(uploadTexture);
+   GLHCK_API_CHECK(createTexture);
+   GLHCK_API_CHECK(bindBuffer);
+}
+
+/* public api */
 
 /* \brief initialize */
 GLHCKAPI int glhckInit(int argc, char **argv)
@@ -30,11 +50,12 @@ success:
 }
 
 /* \brief creates virtual display and inits renderer */
-GLHCKAPI int glhckCreateDisplay(int width, int height, glhckRenderType renderType)
+GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderType)
 {
    CALL("%d, %d, %d", width, height, renderType);
 
-   if (!_glhckInitialized)
+   if (!_glhckInitialized ||
+       width <= 0 && height <= 0)
       goto fail;
 
    /* autodetect */
@@ -43,7 +64,7 @@ GLHCKAPI int glhckCreateDisplay(int width, int height, glhckRenderType renderTyp
 
    /* close display if created already */
    if (_GLHCKlibrary.render.type == renderType) goto success;
-   else glhckCloseDisplay();
+   else glhckDisplayClose();
 
    /* init renderer */
    if (renderType == GLHCK_RENDER_OPENGL)
@@ -53,6 +74,12 @@ GLHCKAPI int glhckCreateDisplay(int width, int height, glhckRenderType renderTyp
    if (!_GLHCKlibrary.render.name)
       goto fail;
 
+   /* check render api and output warnings,
+    * if any function is missing */
+   _glhckCheckRenderApi(&_GLHCKlibrary.render);
+
+   /* resize display */
+   glhckDisplayResize(width, height);
    _GLHCKlibrary.render.type = renderType;
 
 success:
@@ -65,7 +92,7 @@ fail:
 }
 
 /* \brief close the virutal display */
-GLHCKAPI void glhckCloseDisplay(void)
+GLHCKAPI void glhckDisplayClose(void)
 {
    TRACE();
 
@@ -75,6 +102,21 @@ GLHCKAPI void glhckCloseDisplay(void)
 
    _GLHCKlibrary.render.api.terminate();
    _GLHCKlibrary.render.type = GLHCK_RENDER_NONE;
+}
+
+/* \brief resize virtual display */
+GLHCKAPI void glhckDisplayResize(int width, int height)
+{
+   assert(width > 0 && height > 0);
+   CALL("%d, %d", width, height);
+
+   /* nothing to resize */
+   if (!_glhckInitialized || !_GLHCKlibrary.render.name)
+      return;
+
+   _GLHCKlibrary.render.width  = width;
+   _GLHCKlibrary.render.height = height;
+   _GLHCKlibrary.render.api.resize(width, height);
 }
 
 /* \brief render scene using renderer */
@@ -94,7 +136,7 @@ GLHCKAPI void glhckTerminate(void)
 {
    TRACE();
    if (!_glhckInitialized) return;
-   glhckCloseDisplay();
+   glhckDisplayClose();
    _glhckTextureCacheRelease();
 #ifndef NDEBUG
    _glhckTrackTerminate();
