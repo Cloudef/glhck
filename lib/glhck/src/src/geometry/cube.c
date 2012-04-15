@@ -14,45 +14,142 @@
 #endif
 
 /* \brief create new cube object */
-GLHCKAPI _glhckObject* glhckCubeNew(int size)
+GLHCKAPI _glhckObject* glhckCubeNew(size_t size)
 {
    _glhckObject *object;
 
    static const glhckVertexData vertices[] = {
       {
+         /* FRONT */
          { -1, -1,  1 },       /* vertices */
          {  0,  0,  0 },       /* normals  */
-         { -1, -1     },       /* uv coord */
+         {  0,  0     },       /* uv coord */
     COLOR(0,  0,  0,  0)       /* color    */
       },{
          {  1, -1,  1 },
          {  0,  0,  0 },
-         {  1, -1     },
+         {  1,  0     },
     COLOR(0,  0,  0,  0)
       },{
          { -1,  1,  1 },
          {  0,  0,  0 },
-         { -1,  1     },
+         {  0,  1     },
     COLOR(0,  0,  0,  0)
       },{
          {  1,  1,  1 },
          {  0,  0,  0 },
          {  1,  1     },
     COLOR(0,  0,  0,  0)
+       /* RIGHT */
       },{
-         { -1, -1, -1 },
+         {  1,  1,  1 },
          {  0,  0,  0 },
-         { -1, -1     },
+         {  0,  1     },
+    COLOR(0,  0,  0,  0)
+      },{
+         {  1, -1,  1 },
+         {  0,  0,  0 },
+         {  0,  0     },
+    COLOR(0,  0,  0,  0)
+      },{
+         {  1,  1, -1 },
+         {  0,  0,  0 },
+         {  1,  1     },
     COLOR(0,  0,  0,  0)
       },{
          {  1, -1, -1 },
          {  0,  0,  0 },
-         {  1, -1     },
+         {  1,  0     },
+    COLOR(0,  0,  0,  0)
+       /* BACK */
+      },{
+         {  1, -1, -1 },
+         {  0,  0,  0 },
+         {  0,  0     },
+    COLOR(0,  0,  0,  0)
+      },{
+         { -1, -1, -1 },
+         {  0,  0,  0 },
+         {  1,  0     },
+    COLOR(0,  0,  0,  0)
+      },{
+         {  1,  1, -1 },
+         {  0,  0,  0 },
+         {  0,  1     },
     COLOR(0,  0,  0,  0)
       },{
          { -1,  1, -1 },
          {  0,  0,  0 },
-         { -1,  1     },
+         {  1,  1     },
+    COLOR(0,  0,  0,  0)
+       /* LEFT */
+      },{
+         { -1,  1, -1 },
+         {  0,  0,  0 },
+         {  0,  1     },
+    COLOR(0,  0,  0,  0)
+      },{
+         { -1, -1, -1 },
+         {  0,  0,  0 },
+         {  0,  0     },
+    COLOR(0,  0,  0,  0)
+      },{
+         { -1,  1,  1 },
+         {  0,  0,  0 },
+         {  1,  1     },
+    COLOR(0,  0,  0,  0)
+      },{
+         { -1, -1,  1 },
+         {  0,  0,  0 },
+         {  1,  0     },
+    COLOR(0,  0,  0,  0)
+       /* BOTTOM */
+      },{
+         { -1, -1,  1 },
+         {  0,  0,  0 },
+         {  0,  1     },
+    COLOR(0,  0,  0,  0)
+      },{
+         { -1, -1, -1 },
+         {  0,  0,  0 },
+         {  0,  0     },
+    COLOR(0,  0,  0,  0)
+      },{
+         {  1, -1,  1 },
+         {  0,  0,  0 },
+         {  1,  1     },
+    COLOR(0,  0,  0,  0)
+      },{
+         {  1, -1, -1 },
+         {  0,  0,  0 },
+         {  1,  0     },
+    COLOR(0,  0,  0,  0)
+      /* DEGENERATE */
+      },{
+         {  1, -1, -1 },
+         {  0,  0,  0 },
+         {  1,  0     },
+    COLOR(0,  0,  0,  0)
+      },{
+         { -1,  1,  1 },
+         {  0,  0,  0 },
+         {  0,  0     },
+    COLOR(0,  0,  0,  0)
+      /* TOP */
+      },{
+         { -1,  1,  1 },
+         {  0,  0,  0 },
+         {  0,  0     },
+    COLOR(0,  0,  0,  0)
+      },{
+         {  1,  1,  1 },
+         {  0,  0,  0 },
+         {  1,  0     },
+    COLOR(0,  0,  0,  0)
+      },{
+         { -1,  1, -1 },
+         {  0,  0,  0 },
+         {  0,  1     },
     COLOR(0,  0,  0,  0)
       },{
          {  1,  1, -1 },
@@ -60,10 +157,6 @@ GLHCKAPI _glhckObject* glhckCubeNew(int size)
          {  1,  1     },
     COLOR(0,  0,  0,  0)
       }
-   };
-
-   static const unsigned short indices[] = {
-      0, 1, 2, 3, 7, 1, 5, 4, 7, 6, 2, 4, 0, 1
    };
 
    CALL("%d", size);
@@ -74,13 +167,11 @@ GLHCKAPI _glhckObject* glhckCubeNew(int size)
 
    /* insert vertices to object's geometry */
    if (glhckObjectInsertVertexData(object,
-            8, &vertices[0]) != RETURN_OK)
+            LENGTH(vertices), &vertices[0]) != RETURN_OK)
       goto fail;
 
-   /* insert indices to object's geometry */
-   if (glhckObjectInsertIndices(object,
-            LENGTH(indices), &indices[0]) != RETURN_OK)
-      goto fail;
+   /* assigning indices would be waste
+    * on the cube geometry */
 
    RET("%p", object);
    return object;
