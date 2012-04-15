@@ -8,7 +8,6 @@
 #endif
 
 #include "../include/GL/glhck.h"
-#include <stdlib.h> /* for size_t  */
 #include <string.h> /* for strrchr */
 
 #if defined(_init_c_)
@@ -53,7 +52,7 @@ typedef struct __GLHCKobjectGeometry
 {
    struct glhckVertexData     *vertexData;
    GLHCK_CAST_INDEX           *indices;
-   unsigned int               indicesCount;
+   size_t                     indicesCount, vertexCount;
 } __GLHCKobjectGeometry;
 
 typedef struct _glhckObject
