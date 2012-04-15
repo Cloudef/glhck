@@ -52,7 +52,6 @@ typedef struct _glhckTexture
 typedef struct __GLHCKobjectGeometry
 {
    struct glhckVertexData     *vertexData;
-   struct glhckTextureData    *textureData;
    GLHCK_CAST_INDEX           *indices;
    unsigned int               indicesCount;
 } __GLHCKobjectGeometry;
@@ -78,6 +77,7 @@ typedef struct __GLHCKtexture
 
 /* render api */
 typedef void (*__GLHCKrenderAPIterminate)        (void);
+typedef void (*__GLHCKrenderAPIresize)           (int width, int height);
 typedef void (*__GLHCKrenderAPIrender)           (void);
 typedef void (*__GLHCKrenderAPIobjectDraw)       (_glhckObject *object);
 
@@ -103,6 +103,7 @@ typedef void (*__GLHCKrenderAPIbindBuffer)       (unsigned int object);
 typedef struct __GLHCKrenderAPI
 {
    __GLHCKrenderAPIterminate        terminate;
+   __GLHCKrenderAPIresize           resize;
    __GLHCKrenderAPIrender           render;
    __GLHCKrenderAPIobjectDraw       objectDraw;
    __GLHCKrenderAPIgenerateTextures generateTextures;
@@ -117,6 +118,7 @@ typedef struct __GLHCKrenderAPI
 
 typedef struct __GLHCKrender
 {
+   int width, height;
    const char              *name;
    glhckRenderType         type;
    struct __GLHCKrenderAPI api;
