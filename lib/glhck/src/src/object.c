@@ -65,15 +65,15 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
 /* \brief insert vertex data into object */
 GLHCKAPI int glhckObjectInsertVertexData(
       _glhckObject *object,
-      unsigned int count,
+      size_t memb,
       const glhckVertexData *vertexData)
 {
    glhckVertexData *new;
    assert(object);
-   CALL("%p, %d, %p", object, count, vertexData);
+   CALL("%p, %zu, %p", object, memb, vertexData);
 
    /* allocate new buffer */
-   if (!(new = (glhckVertexData*)_glhckMalloc(count *
+   if (!(new = (glhckVertexData*)_glhckMalloc(memb *
                sizeof(glhckVertexData))))
       goto fail;
 
@@ -82,9 +82,10 @@ GLHCKAPI int glhckObjectInsertVertexData(
       _glhckFree(object->geometry.vertexData);
 
    /* assign new buffer */
-   memcpy(new, vertexData, count *
+   memcpy(new, vertexData, memb *
          sizeof(glhckVertexData));
    object->geometry.vertexData = new;
+   object->geometry.vertexCount = memb;
 
    RET("%d", RETURN_OK);
    return RETURN_OK;
@@ -97,15 +98,15 @@ fail:
 /* \brief insert index data into object */
 GLHCKAPI int glhckObjectInsertIndices(
       _glhckObject *object,
-      unsigned int count,
+      size_t memb,
       const GLHCK_CAST_INDEX *indices)
 {
    GLHCK_CAST_INDEX *new;
    assert(object);
-   CALL("%p, %d, %p", object, count, indices);
+   CALL("%p, %zu, %p", object, memb, indices);
 
    /* allocate new buffer */
-   if (!(new = (GLHCK_CAST_INDEX*)_glhckMalloc(count *
+   if (!(new = (GLHCK_CAST_INDEX*)_glhckMalloc(memb *
                sizeof(GLHCK_CAST_INDEX))))
       goto fail;
 
@@ -114,10 +115,10 @@ GLHCKAPI int glhckObjectInsertIndices(
       _glhckFree(object->geometry.indices);
 
    /* assign new buffer */
-   memcpy(new, indices, count *
+   memcpy(new, indices, memb *
          sizeof(GLHCK_CAST_INDEX));
    object->geometry.indices = new;
-   object->geometry.indicesCount = count;
+   object->geometry.indicesCount = memb;
 
    RET("%d", RETURN_OK);
    return RETURN_OK;
