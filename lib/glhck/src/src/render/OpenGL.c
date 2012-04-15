@@ -12,7 +12,7 @@
 
 /* global data */
 typedef struct __OpenGLrender {
-   unsigned int indicesCount;
+   size_t indicesCount;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
 
@@ -103,24 +103,33 @@ static void render(void)
    TRACE();
 
    /* reset stats */
-   _OpenGL.indicesCount  = 0;
+   _OpenGL.indicesCount = 0;
 }
 
 /* \brief pass interleaved vertex data to OpenGL nicely. */
 static inline void geometryPointer(__GLHCKobjectGeometry *geometry)
 {
    /* vertex data */
-   if (geometry->vertexData) {
-      GL_CALL(glVertexPointer(3, GLHCK_PRECISION_VERTEX,
-               sizeof(glhckVertexData), &geometry->vertexData[0].vertex));
-      GL_CALL(glNormalPointer(GLHCK_PRECISION_VERTEX,
-               sizeof(glhckVertexData), &geometry->vertexData[0].normal));
-      GL_CALL(glTexCoordPointer(2, GLHCK_PRECISION_COORD,
+   GL_CALL(glVertexPointer(3, GLHCK_PRECISION_VERTEX,
+            sizeof(glhckVertexData), &geometry->vertexData[0].vertex));
+   GL_CALL(glNormalPointer(GLHCK_PRECISION_VERTEX,
+            sizeof(glhckVertexData), &geometry->vertexData[0].normal));
+   GL_CALL(glTexCoordPointer(2, GLHCK_PRECISION_COORD,
             sizeof(glhckVertexData), &geometry->vertexData[0].coord));
 #if GLHCK_VERTEXDATA_COLOR
-      GL_CALL(glColorPointer(4, GLHCK_PRECISION_COLOR,
-               sizeof(glhckVertexData), &geometry->vertexData[0].color));
+   GL_CALL(glColorPointer(4, GLHCK_PRECISION_COLOR,
+            sizeof(glhckVertexData), &geometry->vertexData[0].color));
 #endif
+}
+
+/* \brief draw interleaved geometry */
+static inline void geometryDraw(__GLHCKobjectGeometry *geometry)
+{
+   if (geometry->indices) {
+      GL_CALL(glDrawElements(GL_TRIANGLE_STRIP, geometry->indicesCount,
+               GLHCK_PRECISION_INDEX, &geometry->indices[0]));
+   } else {
+      GL_CALL(glDrawArrays(GL_TRIANGLE_STRIP, 0, geometry->vertexCount));
    }
 }
 
@@ -134,6 +143,14 @@ static void objectDraw(_glhckObject *object)
    kmMat4 projection;
    unsigned int i;
    CALL("%p", object);
+
+   /* no point drawing without vertex data */
+   if (!object->geometry.vertexData)
+      return;
+
+   /* GL_CALL(glEnable(GL_DEPTH_TEST)); */
+   GL_CALL(glCullFace(GL_BACK));
+   GL_CALL(glEnable(GL_CULL_FACE));
 
    GL_CALL(glMatrixMode(GL_PROJECTION));
    kmMat4PerspectiveProjection(&projection, 35,
@@ -150,8 +167,7 @@ static void objectDraw(_glhckObject *object)
    GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
 
    geometryPointer(&object->geometry);
-   GL_CALL(glDrawElements(GL_TRIANGLE_STRIP, object->geometry.indicesCount,
-            GLHCK_PRECISION_INDEX, &object->geometry.indices[0]));
+   geometryDraw(&object->geometry);
 
    GL_CALL(glDisableClientState(GL_TEXTURE_COORD_ARRAY));
    GL_CALL(glDisableClientState(GL_VERTEX_ARRAY));
