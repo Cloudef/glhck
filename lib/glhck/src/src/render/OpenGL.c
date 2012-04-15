@@ -12,7 +12,7 @@
 
 /* global data */
 typedef struct __OpenGLrender {
-   size_t indicesCount;
+   size_t   indicesCount;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
 
@@ -64,6 +64,9 @@ static inline void GL_ERROR(const char *func, const char *glfunc)
 }
 #endif
 
+/* ---- Render API ---- */
+
+/* \brief upload texture to renderer */
 static int uploadTexture(_glhckTexture *texture, unsigned int flags)
 {
    CALL("%p, %d", texture, flags);
@@ -78,6 +81,7 @@ static int uploadTexture(_glhckTexture *texture, unsigned int flags)
    return texture->object?RETURN_OK:RETURN_FAIL;
 }
 
+/* \brief create texture from data and upload it */
 static unsigned int createTexture(const unsigned char *const buffer,
       int width, int height, int channels,
       unsigned int reuse_texture_ID,
@@ -97,6 +101,7 @@ static unsigned int createTexture(const unsigned char *const buffer,
    return object?RETURN_OK:RETURN_FAIL;
 }
 
+/* \brief render scene */
 static void render(void)
 {
    kmMat4 projection;
@@ -140,7 +145,6 @@ static inline void geometryDraw(__GLHCKobjectGeometry *geometry)
  * We also need sorting and other crap... */
 static void objectDraw(_glhckObject *object)
 {
-   kmMat4 projection;
    unsigned int i;
    CALL("%p", object);
 
@@ -152,11 +156,6 @@ static void objectDraw(_glhckObject *object)
    GL_CALL(glCullFace(GL_BACK));
    GL_CALL(glEnable(GL_CULL_FACE));
 
-   GL_CALL(glMatrixMode(GL_PROJECTION));
-   kmMat4PerspectiveProjection(&projection, 35,
-         (float)_GLHCKlibrary.render.width/
-         (float)_GLHCKlibrary.render.height, 0.1f, 300);
-   GL_CALL(glLoadMatrixf((float*)&projection));
    GL_CALL(glMatrixMode(GL_MODELVIEW));
    GL_CALL(glLoadIdentity());
    GL_CALL(glTranslatef(0,0,-10.0f));
@@ -174,6 +173,32 @@ static void objectDraw(_glhckObject *object)
 
    _OpenGL.indicesCount += object->geometry.indicesCount;
 }
+
+/* \brief set projection matrix */
+static void setProjection(float *m)
+{
+   CALL("%p", m);
+   GL_CALL(glMatrixMode(GL_PROJECTION));
+   GL_CALL(glLoadMatrixf(m));
+}
+
+/* \brief resize viewport */
+static void resize(int width, int height)
+{
+   kmMat4 projection;
+   CALL("%d, %d", width, height);
+
+   /* set viewport */
+   GL_CALL(glViewport(0, 0, width, height));
+
+   /* use this as default projection for now */
+   kmMat4PerspectiveProjection(&projection, 35,
+         (float)_GLHCKlibrary.render.width/
+         (float)_GLHCKlibrary.render.height, 0.1f, 300);
+   setProjection((float*)&projection);
+}
+
+/* ---- Initialization ---- */
 
 /* \brief get render information */
 static int renderInfo(void)
@@ -212,15 +237,21 @@ fail:
    return RETURN_FAIL;
 }
 
-/* \brief resize viewport */
-static void resize(int width, int height)
+/* \brief init renderers global state */
+static int renderInit(void)
 {
-   CALL("%d, %d", width, height);
-   GL_CALL(glViewport(0, 0, width, height));
+   /* init global data */
+   memset(&_OpenGL, 0, sizeof(__OpenGLrender));
+
+   /* set viewport and default projection */
+   resize(_GLHCKlibrary.render.width, _GLHCKlibrary.render.height);
+
+   RET("%d", RETURN_OK);
+   return RETURN_OK;
 }
 
 /* \brief terminate renderer */
-static void terminate(void)
+static void renderTerminate(void)
 {
    TRACE();
 
@@ -235,13 +266,15 @@ DECLARE_GL_GEN_FUNC(_glGenBuffers, glGenBuffers)
 DECLARE_GL_GEN_FUNC(_glDeleteBuffers, glDeleteBuffers)
 DECLARE_GL_BIND_FUNC(_glBindTexture, glBindTexture(GL_TEXTURE_2D, object))
 
+/* ---- Main ---- */
+
+/* \brief renderer main function */
 void _glhckRenderOpenGL(void)
 {
    TRACE();
 
    /* init OpenGL context */
    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-   resize(_GLHCKlibrary.render.width, _GLHCKlibrary.render.height);
 
    /* we use GLEW */
    if (glewInit() != GLEW_OK)
@@ -252,7 +285,8 @@ void _glhckRenderOpenGL(void)
       goto fail;
 
    /* reset global data */
-   memset(&_OpenGL, 0, sizeof(__OpenGLrender));
+   if (renderInit() != RETURN_OK)
+      goto fail;
 
    /* register api functions */
    GLHCK_RENDER_FUNC(generateTextures, _glGenTextures);
@@ -264,12 +298,13 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(createTexture, createTexture);
 
    /* drawing functions */
+   GLHCK_RENDER_FUNC(setProjection, setProjection);
    GLHCK_RENDER_FUNC(render, render);
    GLHCK_RENDER_FUNC(objectDraw, objectDraw);
 
    /* common */
    GLHCK_RENDER_FUNC(resize, resize);
-   GLHCK_RENDER_FUNC(terminate, terminate);
+   GLHCK_RENDER_FUNC(terminate, renderTerminate);
 
    /* this also tells library that everything went OK,
     * so do it last */
