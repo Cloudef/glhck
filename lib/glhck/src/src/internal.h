@@ -77,6 +77,7 @@ typedef struct __GLHCKtexture
 /* render api */
 typedef void (*__GLHCKrenderAPIterminate)        (void);
 typedef void (*__GLHCKrenderAPIresize)           (int width, int height);
+typedef void (*__GLHCKrenderAPIsetProjection)    (float *m);
 typedef void (*__GLHCKrenderAPIrender)           (void);
 typedef void (*__GLHCKrenderAPIobjectDraw)       (_glhckObject *object);
 
@@ -103,6 +104,7 @@ typedef struct __GLHCKrenderAPI
 {
    __GLHCKrenderAPIterminate        terminate;
    __GLHCKrenderAPIresize           resize;
+   __GLHCKrenderAPIsetProjection    setProjection;
    __GLHCKrenderAPIrender           render;
    __GLHCKrenderAPIobjectDraw       objectDraw;
    __GLHCKrenderAPIgenerateTextures generateTextures;
