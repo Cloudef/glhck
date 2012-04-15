@@ -3,6 +3,7 @@
 #include <limits.h> /* for PATH_MAX */
 #include <unistd.h> /* for access   */
 #include <libgen.h> /* for dirname  */
+#include <malloc.h> /* for free     */
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
