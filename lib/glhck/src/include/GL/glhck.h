@@ -182,15 +182,11 @@ typedef struct glhckVertexData
 {
    struct glhckVertex3d vertex;
    struct glhckVertex3d normal;
+   struct glhckCoord2d  coord;
 #if GLHCK_VERTEXDATA_COLOR
    struct glhckColor4d  color;
 #endif
 } glhckVertexData;
-
-typedef struct glhckTextureData
-{
-   struct glhckCoord2d coord;
-} glhckTextureData;
 
 typedef struct _glhckTexture glhckTexture;
 typedef struct _glhckObject  glhckObject;
@@ -202,8 +198,11 @@ GLHCKAPI int glchkInit(int argc, char **argv);
 GLHCKAPI void glhckTerminate(void);
 
 /* display */
-GLHCKAPI int glchkCreateDisplay(int width, int height, glhckRenderType renderType);
-GLHCKAPI void glhckCloseDisplay(void);
+GLHCKAPI int glchkDisplayCreate(int width, int height, glhckRenderType renderType);
+GLHCKAPI void glhckDisplayClose(void);
+GLHCKAPI void glhckDisplayResize(int width, int height);
+
+/* render */
 GLHCKAPI void glhckRender(void);
 
 /* objects */
