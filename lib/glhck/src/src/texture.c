@@ -129,7 +129,7 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
    /* If file is passed, then try import it */
    if (file) {
       /* copy filename */
-      if (!(texture->file = strdup(file)))
+      if (!(texture->file = _glhckStrdup(file)))
          goto fail;
 
       /* default flags if not any specified */
@@ -147,6 +147,14 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
       /* upload texture */
       if (_GLHCKlibrary.render.api.uploadTexture(texture, flags) != RETURN_OK)
          goto fail;
+
+      /* we know the size of image data from SOIL,
+       * add it to tracking.
+       *
+       * Maybe solve this different way later? */
+#ifndef NDEBUG
+      _glhckTrackFake(texture, sizeof(_glhckTexture) + texture->size);
+#endif
 
       /* insert to cache */
       _glhckTextureCacheInsert(texture);
@@ -180,13 +188,10 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
    /* copy */
    _GLHCKlibrary.render.api.generateTextures(1, &texture->object);
 
-   if (!(texture->file = strdup(src->file)))
+   if (!(texture->file = _glhckStrdup(src->file)))
       goto fail;
 
    glhckTextureCreate(texture, src->data, src->width, src->height, src->channels, src->flags);
-   if (!(texture->data = _glhckCopy(src->data, src->size)))
-      goto fail;
-
    DEBUG(GLHCK_DBG_CRAP, "COPY %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
    /* increase ref counter */
@@ -235,8 +240,8 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
    /* delete texture if there is one */
    if (texture->object)
       _GLHCKlibrary.render.api.deleteTextures(1, &texture->object);
-   if (texture->data)     _glhckFree(texture->data);
-   if (texture->file)     _glhckFree(texture->file);
+   if (texture->data) _glhckFree(texture->data);
+   if (texture->file) _glhckFree(texture->file);
 
    /* free */
    _glhckFree(texture);
@@ -269,8 +274,8 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
    texture->width    = width;
    texture->height   = height;
    texture->channels = channels;
-   texture->data     = data;
    texture->size     = width * height * channels;
+   texture->data     = _glhckCopy(data, texture->size);
 
    DEBUG(GLHCK_DBG_CRAP, "NEW %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
