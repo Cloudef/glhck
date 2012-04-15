@@ -45,7 +45,7 @@ int main(int argc, char **argv)
    RUNNING = 1;
 
 #if 1
-   if (!(texture = glhckTextureNew("test.png",
+   if (!(texture = glhckTextureNew("../media/glhck.png",
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
    glhckTextureBind(texture);
