@@ -10,6 +10,11 @@ int close_callback(GLFWwindow window)
    return 1;
 }
 
+void resize_callback(GLFWwindow window, int width, int height)
+{
+   glhckDisplayResize(width, height);
+}
+
 int main(int argc, char **argv)
 {
    GLFWwindow window;
@@ -34,12 +39,12 @@ int main(int argc, char **argv)
    if (!glhckInit(argc, argv))
       return EXIT_FAILURE;
 
-   if (!glhckCreateDisplay(800, 480, 0))
+   if (!glhckDisplayCreate(800, 480, 0))
       return EXIT_FAILURE;
 
    RUNNING = 1;
 
-#if 0
+#if 1
    if (!(texture = glhckTextureNew("test.png",
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
@@ -51,6 +56,7 @@ int main(int argc, char **argv)
    glhckMemoryGraph();
 
    glfwSetWindowCloseCallback(close_callback);
+   glfwSetWindowSizeCallback(resize_callback);
    while (RUNNING && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
       last  =  now;
       now   =  glfwGetTime();
@@ -59,8 +65,7 @@ int main(int argc, char **argv)
       glfwPollEvents();
 
       /* glhck drawing */
-      for (i = 0; i != 3500; ++i)
-         glhckObjectDraw(cube);
+      glhckObjectDraw(cube);
       glhckRender();
 
       /* Actual swap and clear */
