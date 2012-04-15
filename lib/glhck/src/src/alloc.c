@@ -237,7 +237,7 @@ GLHCKAPI void glhckMemoryGraph(void)
       else if (allocChannel / 1024 != 0)
          printf("%-4.2f KiB\n", (float)allocChannel / 1024);
       else
-         printf("%-4lu B\n", allocChannel);
+         printf("%-4zu B\n", allocChannel);
 
       /* reset color */
       _glhckNormal();
