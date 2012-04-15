@@ -1,6 +1,7 @@
 #include "internal.h"
-#include <stdio.h> /* for printf  */
-#include <ctype.h> /* for toupper */
+#include <stdio.h>  /* for printf  */
+#include <ctype.h>  /* for toupper */
+#include <malloc.h> /* for free    */
 
 /* \brief output in red */
 inline void _glhckRed(void)
