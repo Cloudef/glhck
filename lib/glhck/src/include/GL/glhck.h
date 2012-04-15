@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <stddef.h> /* for default typedefs */
+
 /* System specific defines, stolen from glfw.
  * Thanks for the nice library guys. */
 
@@ -209,12 +211,12 @@ GLHCKAPI void glhckRender(void);
 GLHCKAPI glhckObject* glhckObjectNew(void);
 GLHCKAPI short glhckObjectFree(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertexData(glhckObject *object,
-      unsigned int count, const glhckVertexData *vertexData);
+      size_t memb, const glhckVertexData *vertexData);
 GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
-      unsigned int count, const GLHCK_CAST_INDEX *indices);
+      size_t memb, const GLHCK_CAST_INDEX *indices);
 
 /* geometry */
-GLHCKAPI glhckObject* glhckCubeNew(int size);
+GLHCKAPI glhckObject* glhckCubeNew(size_t size);
 
 /* textures */
 GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
