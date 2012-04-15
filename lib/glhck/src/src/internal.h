@@ -165,6 +165,7 @@ typedef struct _glhckTexturePacker
 /* tracking allocation macros */
 #define _glhckMalloc(x)    __glhckMalloc(GLHCK_CHANNEL, x)
 #define _glhckCalloc(x,y)  __glhcKCalloc(GLHCK_CHANNEL, x, y)
+#define _glhckStrdup(x)    __glhckStrdup(GLHCK_CHANNEL, x)
 #define _glhckCopy(x,y)    __glhckCopy(GLHCK_CHANNEL, x, y)
 
 /* tracing && debug macros */
@@ -183,12 +184,14 @@ typedef struct _glhckTexturePacker
 /* internal allocation functions */
 void* __glhckMalloc(const char *channel, size_t size);
 void* __glhckCalloc(const char *channel, size_t nmemb, size_t size);
+char* __glhckStrdup(const char *channel, const char *s);
 void* __glhckCopy(const char *channel, void *ptr, size_t nmemb);
 void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size);
 void  _glhckFree(void *ptr);
 
 #ifndef NDEBUG
 /* tracking functions */
+void _glhckTrackFake(void *ptr, size_t size);
 void _glhckTrackTerminate(void);
 #endif
 
