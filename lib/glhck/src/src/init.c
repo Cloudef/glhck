@@ -1,6 +1,7 @@
 #define _init_c_
 #include "internal.h"
 #include "render/render.h"
+#include <stdlib.h> /* for atexit */
 #include <assert.h> /* for assert */
 
 /* tracing channel for this file */
@@ -13,6 +14,7 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
 {
    GLHCK_API_CHECK(terminate);
    GLHCK_API_CHECK(resize);
+   GLHCK_API_CHECK(setProjection);
    GLHCK_API_CHECK(render);
    GLHCK_API_CHECK(objectDraw);
    GLHCK_API_CHECK(generateTextures);
@@ -66,6 +68,9 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    if (_GLHCKlibrary.render.type == renderType) goto success;
    else glhckDisplayClose();
 
+   /* resize display */
+   glhckDisplayResize(width, height);
+
    /* init renderer */
    if (renderType == GLHCK_RENDER_OPENGL)
       _glhckRenderOpenGL();
@@ -77,9 +82,6 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    /* check render api and output warnings,
     * if any function is missing */
    _glhckCheckRenderApi(&_GLHCKlibrary.render);
-
-   /* resize display */
-   glhckDisplayResize(width, height);
    _GLHCKlibrary.render.type = renderType;
 
 success:
