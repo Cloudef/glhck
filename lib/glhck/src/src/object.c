@@ -44,7 +44,6 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
 
    /* free geometry */
    ifree(object->geometry.vertexData);
-   ifree(object->geometry.textureData);
    ifree(object->geometry.indices);
 
    /* free */
