@@ -71,6 +71,16 @@ static void trackFree(void *ptr)
    }
 }
 
+/* \brief add known allocate data to tracking
+ * (from seperate library for example)
+ *
+ * NOTE: This won't allocate new node,
+ * instead it modifies size of already allocated node. */
+void _glhckTrackFake(void *ptr, size_t size)
+{
+   trackRealloc(ptr, ptr, size);
+}
+
 /* \brief terminate all tracking */
 void _glhckTrackTerminate(void)
 {
@@ -129,6 +139,27 @@ void* __glhckCalloc(const char *channel, size_t nmemb, size_t size)
 
 fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to allocate %zu bytes", nmemb * size);
+   RET("%p", NULL);
+   return NULL;
+}
+
+/* \brief internal strdup function. */
+char* __glhckStrdup(const char *channel, const char *s)
+{
+   char *s2;
+   CALL("%s, %s", channel, s);
+   if (!(s2 = strdup(s)))
+      goto fail;
+
+#ifndef NDEBUG
+   trackAlloc(channel, s2, strlen(s) + 1);
+#endif
+
+   RET("%s", s2);
+   return s2;
+
+fail:
+   DEBUG(GLHCK_DBG_ERROR, "Failed to strdup '%s'", s);
    RET("%p", NULL);
    return NULL;
 }
