@@ -173,6 +173,9 @@ GLHCKAPI _glhckObject* glhckCubeNew(size_t size)
    /* assigning indices would be waste
     * on the cube geometry */
 
+   /* scale the cube */
+   glhckObjectScalef(object, size, size, size);
+
    RET("%p", object);
    return object;
 
