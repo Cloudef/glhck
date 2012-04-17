@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <stddef.h> /* for default typedefs */
+#include <kazmath/kazmath.h> /* glhck needs kazmath */
 
 /* System specific defines, stolen from glfw.
  * Thanks for the nice library guys. */
@@ -214,6 +215,20 @@ GLHCKAPI int glhckObjectInsertVertexData(glhckObject *object,
       size_t memb, const glhckVertexData *vertexData);
 GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
       size_t memb, const GLHCK_CAST_INDEX *indices);
+
+/* object control */
+GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
+GLHCKAPI void glhckObjectPositionf(glhckObject *object,
+      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckObjectMove(glhckObject *object, const kmVec3 *move);
+GLHCKAPI void glhckObjectMovef(glhckObject *object,
+      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate);
+GLHCKAPI void glhckObjectRotatef(glhckObject *object,
+      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale);
+GLHCKAPI void glhckObjectScalef(glhckObject *object,
+      const kmScalar x, const kmScalar y, const kmScalar z);
 
 /* geometry */
 GLHCKAPI glhckObject* glhckCubeNew(size_t size);
