@@ -25,6 +25,7 @@
 #define GLHCK_CHANNEL_ALLOC      "ALLOC"
 #define GLHCK_CHANNEL_RENDER     "RENDER"
 #define GLHCK_CHANNEL_TRACE      "TRACE"
+#define GLHCK_CHANNEL_TRANSFORM  "TRANSFORM"
 #define GLHCK_CHANNEL_DRAW       "DRAW"
 #define GLHCK_CHANNEL_ALL        "ALL"
 #define GLHCK_CHANNEL_SWITCH     "DEBUG"
@@ -55,9 +56,19 @@ typedef struct __GLHCKobjectGeometry
    size_t                     indicesCount, vertexCount;
 } __GLHCKobjectGeometry;
 
+typedef struct __GLHCKobjectView
+{
+   kmVec3   translation;
+   kmVec3   rotation;
+   kmVec3   scaling;
+   kmMat4   matrix;
+   char     update;
+} __GLHCKobjectView;
+
 typedef struct _glhckObject
 {
    struct __GLHCKobjectGeometry  geometry;
+   struct __GLHCKobjectView      view;
    short                         refCounter;
 } _glhckObject;
 
