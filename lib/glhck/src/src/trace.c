@@ -11,12 +11,23 @@
 static glhckDebugHookFunc _glhckDebugHook = NULL;
 
 /* list all ignored functions when
- * GLHCK_CHANNEL_DRAW switch is active */
+ * GLHCK_CHANNEL_DRAW switch is not active */
 static const char *_drawFuncs[] = {
    "glhckRender",
    "glhckObjectDraw",
    "objectDraw",
    "render",
+   NULL,
+};
+
+/* list all ignored functions when
+ * GLHCK_CHANNEL_TRANSFORM switch is not active */
+static const char *_transformFuncs[] = {
+   "_glhckObjectUpdateMatrix",
+   "glhckObjectPosition",
+   "glhckObjectMove",
+   "glhckObjectRotate",
+   "glhckObjectScale",
    NULL,
 };
 
@@ -31,10 +42,12 @@ __GLHCKtrace _traceChannels[] =
    { GLHCK_CHANNEL_ALLOC,    0 },
    { GLHCK_CHANNEL_RENDER,   0 },
 
-   /* special channel,
-    * will stop bloating output with
-    * all drawing commands. */
-   { GLHCK_CHANNEL_DRAW,   0 },
+   /* special channels,
+    * will stop bloating output,
+    * with commands that might be executed,
+    * every game loop */
+   { GLHCK_CHANNEL_TRANSFORM, 0 },
+   { GLHCK_CHANNEL_DRAW,      0 },
 
    /* trace channel */
    { GLHCK_CHANNEL_TRACE,  0 },
@@ -44,11 +57,11 @@ __GLHCKtrace _traceChannels[] =
 };
 
 /* \brief is a draw function? */
-static int _glhckTraceIsDrawFunction(const char *function)
+static int _glhckTraceIsFunction(const char **list, const char *function)
 {
    int i;
-   for (i = 0; _drawFuncs[i]; ++i)
-      if (!strcmp(_drawFuncs[i], function))
+   for (i = 0; list[i]; ++i)
+      if (!strcmp(list[i], function))
          return RETURN_TRUE;
    return RETURN_FALSE;
 }
@@ -68,9 +81,10 @@ static void _glhckTraceSet(const char *name, int active)
 {
    int i;
    for(i = 0; _GLHCKlibrary.trace[i].name ; ++i)
-      if (!_glhckStrupcmp(name, _GLHCKlibrary.trace[i].name)                  ||
-         (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL)                            &&
-          _glhckStrupcmp(_GLHCKlibrary.trace[i].name, GLHCK_CHANNEL_TRACE)    &&
+      if (!_glhckStrupcmp(name, _GLHCKlibrary.trace[i].name)                   ||
+         (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL)                             &&
+          _glhckStrupcmp(_GLHCKlibrary.trace[i].name, GLHCK_CHANNEL_TRACE)     &&
+          _glhckStrupcmp(_GLHCKlibrary.trace[i].name, GLHCK_CHANNEL_TRANSFORM) &&
           _glhckStrupcmp(_GLHCKlibrary.trace[i].name, GLHCK_CHANNEL_DRAW)))
       _GLHCKlibrary.trace[i].active = active;
 }
@@ -116,7 +130,11 @@ void _glhckTrace(const char *channel, const char *function, const char *fmt, ...
       return;
 
    if (!_glhckTraceIsActive(GLHCK_CHANNEL_DRAW) &&
-        _glhckTraceIsDrawFunction(function))
+        _glhckTraceIsFunction(_drawFuncs, function))
+      return;
+
+   if (!_glhckTraceIsActive(GLHCK_CHANNEL_TRANSFORM) &&
+        _glhckTraceIsFunction(_transformFuncs, function))
       return;
 
    if (!_glhckTraceIsActive(channel))
