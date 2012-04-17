@@ -1,6 +1,5 @@
 #include "../internal.h"
 #include "../../include/SOIL.h"
-#include "../../include/kazmath/kazmath.h"
 #include "render.h"
 #include <limits.h>
 #include <stdio.h>   /* for sscanf */
@@ -157,9 +156,7 @@ static void objectDraw(_glhckObject *object)
    GL_CALL(glEnable(GL_CULL_FACE));
 
    GL_CALL(glMatrixMode(GL_MODELVIEW));
-   GL_CALL(glLoadIdentity());
-   GL_CALL(glTranslatef(0,0,-10.0f));
-   GL_CALL(glRotatef(25,45,15,1));
+   glLoadMatrixf((float*)&object->view.matrix);
 
    GL_CALL(glEnable(GL_TEXTURE_2D));
    GL_CALL(glEnableClientState(GL_VERTEX_ARRAY));
