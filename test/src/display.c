@@ -20,6 +20,7 @@ int main(int argc, char **argv)
    GLFWwindow window;
    glhckTexture *texture;
    glhckObject *cube;
+   float spin = 0;
 
    unsigned int   now          = 0;
    unsigned int   last         = 0;
@@ -53,6 +54,7 @@ int main(int argc, char **argv)
 
    int i = 0;
    cube = glhckCubeNew(1);
+   glhckObjectPositionf(cube, 0, 0, -10.0f);
    glhckMemoryGraph();
 
    glfwSetWindowCloseCallback(close_callback);
@@ -63,6 +65,9 @@ int main(int argc, char **argv)
       delta =  now - last;
 
       glfwPollEvents();
+
+      /* rotate */
+      glhckObjectRotatef(cube, 0, spin+=0.01f, 0);
 
       /* glhck drawing */
       glhckObjectDraw(cube);
