@@ -9,9 +9,31 @@
 #define RENDER_NAME "OpenGL Renderer"
 #define GL_DEBUG 1
 
+#if GLHCK_VERTEXDATA_COLOR
+#  define GLHCK_ATTRIB_COUNT 2 /* 4 */
+#else
+#  define GLHCK_ATTRIB_COUNT 2 /* 3 */
+#endif
+
+const GLenum _glhckAttribName[] = {
+   GL_VERTEX_ARRAY,
+   GL_TEXTURE_COORD_ARRAY,
+   GL_NORMAL_ARRAY,
+#if GLHCK_VERTEXDATA_COLOR
+   GL_COLOR_ARRAY,
+#endif
+};
+
 /* global data */
+typedef struct __OpenGLstate {
+   char attrib[GLHCK_ATTRIB_COUNT];
+   char cull;
+   char texture;
+} __OpenGLstate;
+
 typedef struct __OpenGLrender {
-   size_t   indicesCount;
+   struct __OpenGLstate    state;
+   size_t                  indicesCount;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
 
@@ -115,14 +137,14 @@ static inline void geometryPointer(__GLHCKobjectGeometry *geometry)
 {
    /* vertex data */
    GL_CALL(glVertexPointer(3, GLHCK_PRECISION_VERTEX,
-            sizeof(glhckVertexData), &geometry->vertexData[0].vertex));
+            sizeof(__GLHCKvertexData), &geometry->vertexData[0].vertex));
    GL_CALL(glNormalPointer(GLHCK_PRECISION_VERTEX,
-            sizeof(glhckVertexData), &geometry->vertexData[0].normal));
+            sizeof(__GLHCKvertexData), &geometry->vertexData[0].normal));
    GL_CALL(glTexCoordPointer(2, GLHCK_PRECISION_COORD,
-            sizeof(glhckVertexData), &geometry->vertexData[0].coord));
+            sizeof(__GLHCKvertexData), &geometry->vertexData[0].coord));
 #if GLHCK_VERTEXDATA_COLOR
    GL_CALL(glColorPointer(4, GLHCK_PRECISION_COLOR,
-            sizeof(glhckVertexData), &geometry->vertexData[0].color));
+            sizeof(__GLHCKvertexData), &geometry->vertexData[0].color));
 #endif
 }
 
@@ -137,11 +159,110 @@ static inline void geometryDraw(__GLHCKobjectGeometry *geometry)
    }
 }
 
-/* \brief draw single object
- * TODO: In future just add to stack,
- * and handle actual drawing on glRender()?
- *
- * We also need sorting and other crap... */
+/* \brief set needed state from object data */
+static inline void materialState(_glhckObject *object)
+{
+   unsigned int i;
+   __OpenGLstate old = _OpenGL.state;
+
+   /* detect code,
+    * we don't have materials yet...
+    * so use everything. */
+   memset(&_OpenGL.state, 1, sizeof(__OpenGLstate));
+
+   /* check culling */
+   if (_OpenGL.state.cull != old.cull) {
+      if (_OpenGL.state.cull) {
+         GL_CALL(glEnable(GL_DEPTH_TEST));
+         GL_CALL(glCullFace(GL_BACK));
+         GL_CALL(glEnable(GL_CULL_FACE));
+      } else {
+         GL_CALL(glDisable(GL_CULL_FACE));
+      }
+   }
+
+   /* check texture */
+   if (_OpenGL.state.texture != old.texture) {
+      if (_OpenGL.state.texture) {
+         GL_CALL(glEnable(GL_TEXTURE_2D));
+      } else {
+         GL_CALL(glDisable(GL_TEXTURE_2D));
+      }
+   }
+
+   /* check attribs */
+   for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i) {
+      if (_OpenGL.state.attrib[i] != old.attrib[i]) {
+         if (_OpenGL.state.attrib[i]) {
+            GL_CALL(glEnableClientState(_glhckAttribName[i]));
+         } else {
+            GL_CALL(glDisableClientState(_glhckAttribName[i]));
+         }
+      }
+   }
+}
+
+/* \brief draw object's bounding box */
+static void drawAABB(_glhckObject *object)
+{
+   unsigned int i = 0;
+   kmVec3 min = object->view.bounding.min;
+   kmVec3 max = object->view.bounding.max;
+   const short points[] = {
+                      min.x, min.y, min.z,
+                      max.x, min.y, min.z,
+                      min.x, min.y, min.z,
+                      min.x, max.y, min.z,
+                      min.x, min.y, min.z,
+                      min.x, min.y, max.z,
+
+                      max.x, max.y, max.z,
+                      min.x, max.y, max.z,
+                      max.x, max.y, max.z,
+                      max.x, min.y, max.z,
+                      max.x, max.y, max.z,
+                      max.x, max.y, min.z,
+
+                      min.x, max.y, min.z,
+                      max.x, max.y, min.z,
+                      min.x, max.y, min.z,
+                      min.x, max.y, max.z,
+
+                      max.x, min.y, min.z,
+                      max.x, max.y, min.z,
+                      max.x, min.y, min.z,
+                      max.x, min.y, max.z,
+
+                      min.x, min.y, max.z,
+                      max.x, min.y, max.z,
+                      min.x, min.y, max.z,
+                      min.x, max.y, max.z  };
+
+   /* disable stuff if enabled */
+   if (_OpenGL.state.texture) {
+      GL_CALL(glDisable(GL_TEXTURE_2D));
+   }
+   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (_OpenGL.state.attrib[i]) {
+         GL_CALL(glDisableClientState(GL_TEXTURE_COORD_ARRAY));
+      }
+
+   GL_CALL(glColor4f(0, 1, 0, 1));
+   GL_CALL(glVertexPointer(3, GL_SHORT, 0, &points[0]));
+   GL_CALL(glDrawArrays(GL_LINES, 0, 24));
+   GL_CALL(glColor4f(1, 1, 1, 1));
+
+   /* re enable stuff we disabled */
+   if (_OpenGL.state.texture) {
+      GL_CALL(glEnable(GL_TEXTURE_2D));
+   }
+   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (_OpenGL.state.attrib[i]) {
+         GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
+      }
+}
+
+/* \brief draw single object */
 static void objectDraw(_glhckObject *object)
 {
    unsigned int i;
@@ -151,22 +272,15 @@ static void objectDraw(_glhckObject *object)
    if (!object->geometry.vertexData)
       return;
 
-   /* GL_CALL(glEnable(GL_DEPTH_TEST)); */
-   GL_CALL(glCullFace(GL_BACK));
-   GL_CALL(glEnable(GL_CULL_FACE));
-
+   /* load view matrix */
    GL_CALL(glMatrixMode(GL_MODELVIEW));
    glLoadMatrixf((float*)&object->view.matrix);
 
-   GL_CALL(glEnable(GL_TEXTURE_2D));
-   GL_CALL(glEnableClientState(GL_VERTEX_ARRAY));
-   GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
-
+   /* set states and draw */
+   materialState(object);
    geometryPointer(&object->geometry);
    geometryDraw(&object->geometry);
-
-   GL_CALL(glDisableClientState(GL_TEXTURE_COORD_ARRAY));
-   GL_CALL(glDisableClientState(GL_VERTEX_ARRAY));
+   drawAABB(object);
 
    _OpenGL.indicesCount += object->geometry.indicesCount;
 }
@@ -239,6 +353,7 @@ static int renderInit(void)
 {
    /* init global data */
    memset(&_OpenGL, 0, sizeof(__OpenGLrender));
+   memset(&_OpenGL.state, 0, sizeof(__OpenGLstate));
 
    /* set viewport and default projection */
    resize(_GLHCKlibrary.render.width, _GLHCKlibrary.render.height);
