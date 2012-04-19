@@ -96,7 +96,7 @@ typedef struct _glhckTexture
 #if GLHCK_PRECISION_COORD == GLHCK_BYTE
 #  define GLHCK_RANGE_COORD 127
 #elif GLHCK_PRECISION_COORD == GLHCK_SHORT
-#  define GLHCK_RANGE_COORD 32768
+#  define GLHCK_RANGE_COORD 32767
 #else
 #  define GLHCK_RANGE_COORD 1
 #endif
