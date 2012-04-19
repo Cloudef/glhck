@@ -195,9 +195,8 @@ int _glhckImportModel(_glhckObject *object, const char *file, int animated)
       goto fail;
 
    /* figure out the model format */
-   fileFormat = model_format(header); _glhckFree(header); /* free header after use */
-   if (fileFormat == M_NOT_FOUND)
-      goto fail;
+   fileFormat = model_format(header);
+   _glhckFree(header);
 
    /* --------- FORMAT IMPORT CALL ----------- */
 
