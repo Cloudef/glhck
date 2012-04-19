@@ -53,8 +53,14 @@ int main(int argc, char **argv)
 #endif
 
    int i = 0;
+
+#if 1
    cube = glhckCubeNew(1);
    glhckObjectPositionf(cube, 0, 0, -10.0f);
+#else
+   cube = glhckModelNew("../media/Cirno.pmd", 1);
+   glhckObjectPositionf(cube, 0, -10.0f, -50.0f);
+#endif
    glhckMemoryGraph();
 
    glfwSetWindowCloseCallback(close_callback);
