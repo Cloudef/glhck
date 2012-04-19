@@ -50,15 +50,13 @@ int main(int argc, char **argv)
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
    glhckTextureBind(texture);
-#endif
-
-   int i = 0;
-
-#if 1
    cube = glhckCubeNew(1);
    glhckObjectPositionf(cube, 0, 0, -10.0f);
 #else
-   cube = glhckModelNew("../media/Cirno.pmd", 1);
+   if (!(texture = glhckTextureNew("../media/Reisen.bmp", 0)))
+      return EXIT_FAILURE;
+   glhckTextureBind(texture);
+   cube = glhckModelNew("../media/Reisen.pmd", 1);
    glhckObjectPositionf(cube, 0, -10.0f, -50.0f);
 #endif
    glhckMemoryGraph();
