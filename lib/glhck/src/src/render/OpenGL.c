@@ -355,6 +355,10 @@ static int renderInit(void)
    memset(&_OpenGL, 0, sizeof(__OpenGLrender));
    memset(&_OpenGL.state, 0, sizeof(__OpenGLstate));
 
+   /* set texture coords according to how glhck wants them */
+   GL_CALL(glMatrixMode(GL_TEXTURE));
+   GL_CALL(glScalef(1.0f/GLHCK_RANGE_COORD, 1.0f/GLHCK_RANGE_COORD, 1.0f));
+
    /* set viewport and default projection */
    resize(_GLHCKlibrary.render.width, _GLHCKlibrary.render.height);
 
