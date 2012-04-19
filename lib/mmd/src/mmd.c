@@ -7,7 +7,7 @@
 
 /* 0 = success */
 typedef enum {
-   RETURN_OK = 0, RETURN_FAIL, RETURN_NOTHING
+   RETURN_OK = 0, RETURN_FAIL = -1
 } mmd_funcReturn;
 
 #define MAGIC_HEADER_SIZE     3
@@ -41,7 +41,7 @@ int mmd_read_header(FILE *f, mmd_header *header)
       return RETURN_FAIL;
    MAGIC_HEADER[ MAGIC_HEADER_SIZE ] = '\0';
 
-   if (!strcmp(MAGIC_HEADER, MAGIC_HEADER_STRING))
+   if (strcmp(MAGIC_HEADER, MAGIC_HEADER_STRING))
       return RETURN_FAIL;
 
    /* FLOAT: version */
@@ -148,7 +148,7 @@ int mmd_read_index_data(FILE *f, mmd_data *mmd)
 }
 
 /* Read material data */
-int mmd_readMaterialData(FILE *f, mmd_data *mmd)
+int mmd_read_material_data(FILE *f, mmd_data *mmd)
 {
    uint32_t i;
 
@@ -286,7 +286,7 @@ int mmd_read_bone_data(FILE *f, mmd_data *mmd)
 }
 
 /* Read IK data */
-int mmd_readIKData(FILE *f, mmd_data *mmd)
+int mmd_read_ik_data(FILE *f, mmd_data *mmd)
 {
    uint32_t i, i2;
 
