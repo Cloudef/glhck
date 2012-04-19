@@ -7,9 +7,11 @@ SET(GLHCK_SRC
    src/src/util.c
    src/src/object.c
    src/src/texture.c
+   src/src/geometry/model.c
    src/src/geometry/cube.c
    src/src/render/OpenGL.c
-   src/src/import/import.c)
+   src/src/import/import.c
+   src/src/import/import_mmd.c)
 
 SET(GLHCK_INC
    src/include/GL/glhck.h)
@@ -18,4 +20,4 @@ FILE(COPY ${GLHCK_INC} DESTINATION ${INCLUDE_DIR}/GL)
 SET(INCLUDE_DIR ${GLHCK_INCLUDE_DIR})
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck dl SOIL kazmath m)
+TARGET_LINK_LIBRARIES(glhck SOIL kazmath MMD dl m)
