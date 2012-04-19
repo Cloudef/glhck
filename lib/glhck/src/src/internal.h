@@ -92,6 +92,15 @@ typedef struct _glhckTexture
 #  define GLHCK_CAST_INDEX unsigned int
 #endif
 
+/* range of coordinates when not native precision */
+#if GLHCK_PRECISION_COORD == GLHCK_BYTE
+#  define GLHCK_RANGE_COORD 127
+#elif GLHCK_PRECISION_COORD == GLHCK_SHORT
+#  define GLHCK_RANGE_COORD 32768
+#else
+#  define GLHCK_RANGE_COORD 1
+#endif
+
 /* check if import index data format is same as internal
  * if true, we can just memcpy the import data without conversion. */
 #define GLHCK_NATIVE_IMPORT_INDEXDATA 0
