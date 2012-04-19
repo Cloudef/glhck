@@ -65,18 +65,15 @@ static void _glhckConvertVertexData(_glhckObject *object, __GLHCKvertexData *int
       const glhckImportVertexData *import, size_t memb)
 {
    size_t i;
-   char no_vconvert, no_tconvert, no_nconvert;
+   char no_vconvert, no_nconvert;
    kmVec3 vmin, vmax,
           nmin, nmax;
-   kmVec2 tmin, tmax;
    CALL("%p, %p, %zu", internal, import, memb);
 
    set3d(vmax, import[0].vertex);
    set3d(vmin, import[0].vertex);
    set3d(nmax, import[0].normal);
    set3d(nmin, import[0].normal);
-   set2d(tmax, import[0].coord);
-   set2d(tmin, import[0].coord);
 
    /* find max && min first */
    for (i = 1; i != memb; ++i) {
@@ -84,27 +81,31 @@ static void _glhckConvertVertexData(_glhckObject *object, __GLHCKvertexData *int
       min3d(vmin, import[i].vertex);
       max3d(nmax, import[i].normal);
       min3d(nmin, import[i].normal);
-      max2d(tmax, import[i].coord);
-      min2d(tmin, import[i].coord);
    }
 
    /* do we need conversion? */
    no_vconvert = 0;
-   if (vmax.x + vmin.x == 0 &&
+   if (vmax.x + nmin.x == 1 &&
+       vmax.y + nmin.y == 1 &&
+       vmax.z + nmin.z == 1 ||
+       vmax.x + vmin.x == 0 &&
        vmax.y + vmin.y == 0 &&
        vmax.z + vmin.z == 0)
       no_vconvert = 1;
 
    no_nconvert = 0;
-   if (nmax.x + nmin.x == 0 &&
+   if (nmax.x + nmin.x == 1 &&
+       nmax.y + nmin.y == 1 &&
+       nmax.z + nmin.z == 1 ||
+       nmax.x + nmin.x == 0 &&
        nmax.y + nmin.y == 0 &&
        nmax.z + nmin.z == 0)
       no_nconvert = 1;
 
-   no_tconvert = 0;
-   if (tmax.x + tmin.x == 1 &&
-       tmax.y + tmin.y == 1)
-      no_tconvert = 1;
+   /* lie about bounds by 1 point so,
+    * we don't get artifacts */
+   vmax.x++; vmax.y++; vmax.z++;
+   vmin.x--; vmin.y--; vmin.z--;
 
    /* do conversion */
    for (i = 0; i != memb; ++i) {
@@ -134,12 +135,8 @@ static void _glhckConvertVertexData(_glhckObject *object, __GLHCKvertexData *int
       memcpy(&internal[i].coord, &import[i].coord,
             sizeof(_glhckCoord2d));
 #else
-      if (no_tconvert) {
-         set2d(internal[i].coord, import[i].coord);
-      } else {
-         convert2d(internal[i].coord, import[i].coord,
-               tmax, tmin, GLHCK_COORD_MAGIC, GLHCK_CAST_COORD);
-      }
+      internal[i].coord.x = import[i].coord.x * GLHCK_RANGE_COORD;
+      internal[i].coord.y = import[i].coord.y * GLHCK_RANGE_COORD;
 #endif
 
       /* color is always unsigned char, memcpy it */
