@@ -30,6 +30,9 @@
 #define GLHCK_CHANNEL_ALL        "ALL"
 #define GLHCK_CHANNEL_SWITCH     "DEBUG"
 
+/* temporary options */
+#define GLHCK_IMPORT_PMD 1
+
 /* return variables used throughout library */
 typedef enum _glhckReturnValue {
    RETURN_FAIL    =  0,
@@ -49,11 +52,78 @@ typedef struct _glhckTexture
    short refCounter;
 } _glhckTexture;
 
+/* precision constants */
+#define GLHCK_BYTE            0x1400
+#define GLHCK_UNSIGNED_BYTE   0x1401
+#define GLHCK_SHORT           0x1402
+#define GLHCK_UNSIGNED_SHORT  0x1403
+#define GLHCK_INT             0x1404
+#define GLHCK_UNSIGNED_INT    0x1405
+#define GLHCK_FLOAT           0x1406
+
+/* internal data format */
+#define GLHCK_PRECISION_VERTEX GLHCK_SHORT
+#define GLHCK_PRECISION_COORD  GLHCK_SHORT
+#define GLHCK_PRECISION_INDEX  GLHCK_UNSIGNED_SHORT
+#define GLHCK_VERTEXDATA_COLOR 0
+
+/* set C casting from internal data format spec */
+#if GLHCK_PRECISION_VERTEX == GLHCK_BYTE
+#  define GLHCK_CAST_VERTEX char
+#elif GLHCK_PRECISION_VERTEX == GLHCK_SHORT
+#  define GLHCK_CAST_VERTEX short
+#else
+#  define GLHCK_CAST_VERTEX kmScalar
+#endif
+
+#if GLHCK_PRECISION_COORD == GLHCK_BYTE
+#  define GLHCK_CAST_COORD char
+#elif GLHCK_PRECISION_COORD == GLHCK_SHORT
+#  define GLHCK_CAST_COORD short
+#else
+#  define GLHCK_CAST_COORD kmScalar
+#endif
+
+#if GLHCK_PRECISION_INDEX == GLHCK_UNSIGNED_BYTE
+#  define GLHCK_CAST_INDEX unsigned char
+#elif GLHCK_PRECISION_INDEX == GLHCK_UNSIGNED_SHORT
+#  define GLHCK_CAST_INDEX unsigned short
+#else
+#  define GLHCK_CAST_INDEX unsigned int
+#endif
+
+/* check if import index data format is same as internal
+ * if true, we can just memcpy the import data without conversion. */
+#define GLHCK_NATIVE_IMPORT_INDEXDATA 0
+#if GLHCK_PRECISION_INDEX == GLHCK_UNSIGNED_INT
+#  undef  GLHCK_NATIVE_IMPORT_INDEXDATA
+#  define GLHCK_NATIVE_IMPORT_INDEXDATA 1
+#endif
+
+typedef struct _glhckVertex3d
+{
+   GLHCK_CAST_VERTEX x, y, z;
+} _glhckVertex3d;
+
+typedef struct _glhckCoord2d {
+   GLHCK_CAST_COORD x, y;
+} _glhckCoord2d;
+
+typedef struct __GLHCKvertexData {
+   struct _glhckVertex3d   vertex;
+   struct _glhckVertex3d   normal;
+   struct _glhckCoord2d    coord;
+#if GLHCK_VERTEXDATA_COLOR
+   struct glhckColor       color;
+#endif
+} __GLHCKvertexData;
+
 typedef struct __GLHCKobjectGeometry
 {
-   struct glhckVertexData     *vertexData;
+   struct __GLHCKvertexData   *vertexData;
    GLHCK_CAST_INDEX           *indices;
    size_t                     indicesCount, vertexCount;
+   kmVec3                     bias, scale;
 } __GLHCKobjectGeometry;
 
 typedef struct __GLHCKobjectView
@@ -62,6 +132,7 @@ typedef struct __GLHCKobjectView
    kmVec3   rotation;
    kmVec3   scaling;
    kmMat4   matrix;
+   kmAABB   bounding;
    char     update;
 } __GLHCKobjectView;
 
