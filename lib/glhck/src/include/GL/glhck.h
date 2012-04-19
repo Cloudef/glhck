@@ -120,76 +120,20 @@ typedef enum glhckTextureFlags
    GLHCK_TEXTURE_DEFAULTS        = 1024
 } glhckTextureFlags;
 
-/* TODO:
- * Move these to saner place,
- * and make them easier to customize */
-#define GLHCK_BYTE            0x1400
-#define GLHCK_UNSIGNED_BYTE   0x1401
-#define GLHCK_SHORT           0x1402
-#define GLHCK_UNSIGNED_SHORT  0x1403
-#define GLHCK_INT             0x1404
-#define GLHCK_UNSIGNED_INT    0x1405
-#define GLHCK_FLOAT           0x1406
-
-#define GLHCK_PRECISION_VERTEX GLHCK_SHORT
-#define GLHCK_PRECISION_COLOR  GLHCK_UNSIGNED_BYTE
-#define GLHCK_PRECISION_COORD  GLHCK_SHORT
-#define GLHCK_PRECISION_INDEX  GLHCK_UNSIGNED_SHORT
-#define GLHCK_VERTEXDATA_COLOR 1
-
-#if GLHCK_PRECISION_VERTEX == GLHCK_BYTE
-#  define GLHCK_CAST_VERTEX char
-#elif GLHCK_PRECISION_VERTEX == GLHCK_SHORT
-#  define GLHCK_CAST_VERTEX short
-#else
-#  define GLHCK_CAST_VERTEX float
-#endif
-
-#if GLHCK_PRECISION_COLOR == GLHCK_UNSIGNED_BYTE
-#  define GLHCK_CAST_COLOR unsigned char
-#else
-#  define GLHCK_CAST_COLOR float
-#endif
-
-#if GLHCK_PRECISION_COORD == GLHCK_BYTE
-#  define GLHCK_CAST_COORD char
-#elif GLHCK_PRECISION_COORD == GLHCK_SHORT
-#  define GLHCK_CAST_COORD short
-#else
-#  define GLHCK_CAST_COORD float
-#endif
-
-#if GLHCK_PRECISION_INDEX == GLHCK_UNSIGNED_BYTE
-#  define GLHCK_CAST_INDEX unsigned char
-#elif GLHCK_PRECISION_INDEX == GLHCK_UNSIGNED_SHORT
-#  define GLHCK_CAST_INDEX unsigned short
-#else
-#  define GLHCK_CAST_INDEX unsigned int
-#endif
-
-typedef struct glhckVertex3d
+typedef struct glhckColor
 {
-   GLHCK_CAST_VERTEX x, y, z;
-} glhckVertex3d;
+   unsigned char r, g, b, a;
+} glhckColor;
 
-typedef struct glhckColor4d
+/* this data is used on import, uses floats,
+ * which will be converted to internal precision */
+typedef struct glhckImportVertexData
 {
-   GLHCK_CAST_COLOR r, g, b, a;
-} glhckColor4d;
-
-typedef struct glhckCoord2d {
-   GLHCK_CAST_COORD u, v;
-} glhckCoord2d;
-
-typedef struct glhckVertexData
-{
-   struct glhckVertex3d vertex;
-   struct glhckVertex3d normal;
-   struct glhckCoord2d  coord;
-#if GLHCK_VERTEXDATA_COLOR
-   struct glhckColor4d  color;
-#endif
-} glhckVertexData;
+   kmVec3 vertex;
+   kmVec3 normal;
+   kmVec2 coord;
+   glhckColor color;
+} glhckImportVertexData;
 
 typedef struct _glhckTexture glhckTexture;
 typedef struct _glhckObject  glhckObject;
@@ -212,9 +156,9 @@ GLHCKAPI void glhckRender(void);
 GLHCKAPI glhckObject* glhckObjectNew(void);
 GLHCKAPI short glhckObjectFree(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertexData(glhckObject *object,
-      size_t memb, const glhckVertexData *vertexData);
+      size_t memb, const glhckImportVertexData *vertexData);
 GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
-      size_t memb, const GLHCK_CAST_INDEX *indices);
+      size_t memb, const unsigned int *indices);
 
 /* object control */
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
@@ -231,6 +175,7 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 
 /* geometry */
+GLHCKAPI glhckObject* glhckModelNew(const char *path, size_t size);
 GLHCKAPI glhckObject* glhckCubeNew(size_t size);
 
 /* textures */
