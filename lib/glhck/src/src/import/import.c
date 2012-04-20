@@ -4,6 +4,7 @@
 #include <unistd.h> /* for access   */
 #include <libgen.h> /* for dirname  */
 #include <malloc.h> /* for free     */
+#include "tc.h"
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
@@ -333,5 +334,107 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
 
 fail:
    RET("%p", NULL);
+   return NULL;
+}
+
+#define ACTC_CHECK_SYNTAX  "%d: "__STRING(func)" returned unexpected "__STRING(c)"\n"
+#define ACTC_CALL_SYNTAX   "%d: "__STRING(func)" failed with %04X\n"
+
+#define ACTC_CHECK(func, c)               \
+{ int r;                                  \
+   r = (func);                            \
+   if (r != c) {                          \
+      fprintf(stderr, ACTC_CHECK_SYNTAX,  \
+            __LINE__);                    \
+      goto fail;                          \
+   }                                      \
+}
+
+#define ACTC_CALL(func)                   \
+{ int r;                                  \
+   r = (func);                            \
+   if (r < 0) {                           \
+      fprintf(stderr, ACTC_CALL_SYNTAX,   \
+            __LINE__, -r);                \
+      goto fail;                          \
+   }                                      \
+}
+
+/* \brief return tristripped indecies for triangle index data */
+unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *out_num_indices)
+{
+   unsigned int v1, v2, v3;
+   unsigned int *out_indices = NULL;
+   size_t i, strips, prim_count, tmp;
+   ACTCData *tc = NULL;
+   assert(num_indices / 3);
+
+   if (!(out_indices = _glhckMalloc(num_indices * sizeof(unsigned int))))
+      goto out_of_memory;
+
+   if (!(tc = actcNew()))
+      goto actc_fail;
+
+   /* paramaters */
+   ACTC_CALL(actcParami(tc, ACTC_OUT_MIN_FAN_VERTS, 2147483647));
+
+   /* input data */
+   i = 0;
+   ACTC_CALL(actcBeginInput(tc));
+   while (i != num_indices) {
+      ACTC_CALL(actcAddTriangle(tc,
+               indices[i++],
+               indices[i++],
+               indices[i++]));
+   }
+   ACTC_CALL(actcEndInput(tc));
+
+   /* output data */
+   tmp = num_indices; i = 0; prim_count = 0;
+   ACTC_CALL(actcBeginOutput(tc));
+   while (actcStartNextPrim(tc, &v1, &v2) != ACTC_DATABASE_EMPTY) {
+      if (i + (prim_count?5:3) > num_indices) {
+         out_indices = _glhckRealloc(out_indices, num_indices,
+               (num_indices += prim_count?5:3), sizeof(unsigned int));
+         if (!out_indices) goto out_of_memory;
+      }
+      if (i > 2) {
+         out_indices[i++] = v3;
+         out_indices[i++] = v1;
+      }
+      out_indices[i++] = v1;
+      out_indices[i++] = v2;
+      while (actcGetNextVert(tc, &v3) != ACTC_PRIM_COMPLETE) {
+         if (i + 1 > num_indices) {
+            out_indices = _glhckRealloc(out_indices, num_indices,
+                  ++num_indices, sizeof(unsigned int));
+            if (!out_indices) goto out_of_memory;
+         }
+         out_indices[i++] = v3;
+      }
+      prim_count++;
+   }
+   ACTC_CALL(actcEndOutput(tc));
+   puts("");
+   printf("%d alloc\n", num_indices);
+   *out_num_indices = i; num_indices = tmp;
+
+   printf("%d indices\n", num_indices);
+   printf("%d out indicies\n", i);
+   printf("%d tristrips\n", prim_count);
+   printf("%d profit\n", num_indices - i);
+
+   actcDelete(tc);
+   return out_indices;
+
+out_of_memory:
+   DEBUG(GLHCK_DBG_ERROR, "Tristripper: out of memory");
+   goto fail;
+actc_fail:
+   DEBUG(GLHCK_DBG_ERROR, "Tristripper: init failed");
+   goto fail;
+fail:
+   if (tc) actcDelete(tc);
+   if (out_indices) free(out_indices);
    return NULL;
 }
