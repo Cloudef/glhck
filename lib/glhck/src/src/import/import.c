@@ -361,7 +361,7 @@ fail:
 }
 
 /* \brief return tristripped indecies for triangle index data */
-unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *out_num_indices)
+unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *out_num_indices, kmScalar normals)
 {
    unsigned int v1, v2, v3;
    unsigned int *out_indices = NULL;

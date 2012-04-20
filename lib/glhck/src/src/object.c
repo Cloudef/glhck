@@ -283,10 +283,11 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
 
    /* free */
    _glhckFree(object);
+   object = NULL;
 
 success:
-   RET("%d", object->refCounter);
-   return object->refCounter;
+   RET("%d", object?object->refCounter:0);
+   return object?object->refCounter:0;
 }
 
 /* \brief draw object */

@@ -12,7 +12,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
    FILE *f;
    size_t i, i2, ix, start, num_faces, num_indices;
    mmd_header header;
-   mmd_data *mmd;
+   mmd_data *mmd = NULL;
    glhckImportVertexData *vertexData = NULL;
    unsigned int *indices = NULL, *strip_indices = NULL;
    CALL("%p, %s, %d", object, file, animated);
@@ -34,6 +34,8 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
 
    if (mmd_read_material_data(f, mmd) != 0)
       goto mmd_import_fail;
+
+   fclose(f);
 
    DEBUG(GLHCK_DBG_CRAP, "V: %d", mmd->num_vertices);
    DEBUG(GLHCK_DBG_CRAP, "I: %d", mmd->num_indices);
@@ -88,6 +90,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
    glhckObjectInsertIndices(object, num_indices, strip_indices);
    _glhckFree(vertexData);
    _glhckFree(strip_indices);
+   mmd_free(mmd);
 
    RET("%d", RETURN_OK);
    return RETURN_OK;
@@ -102,6 +105,7 @@ mmd_no_memory:
    DEBUG(GLHCK_DBG_ERROR, "MMD not enough memory.");
 fail:
    if (f) fclose(f);
+   if (mmd) mmd_free(mmd);
    ifree(vertexData);
    ifree(indices);
    ifree(strip_indices);

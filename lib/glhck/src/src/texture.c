@@ -245,10 +245,11 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
 
    /* free */
    _glhckFree(texture);
+   texture = NULL;
 
 success:
-   RET("%d", texture->refCounter);
-   return texture->refCounter;
+   RET("%d", texture?texture->refCounter:0);
+   return texture?texture->refCounter:0;
 }
 
 /* \brief create texture manually. */

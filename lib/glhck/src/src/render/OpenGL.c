@@ -10,9 +10,9 @@
 #define GL_DEBUG 1
 
 #if GLHCK_VERTEXDATA_COLOR
-#  define GLHCK_ATTRIB_COUNT 2 /* 4 */
+#  define GLHCK_ATTRIB_COUNT 3 /* 4 */
 #else
-#  define GLHCK_ATTRIB_COUNT 2 /* 3 */
+#  define GLHCK_ATTRIB_COUNT 3 /* 3 */
 #endif
 
 const GLenum _glhckAttribName[] = {
@@ -179,8 +179,10 @@ static inline void materialState(_glhckObject *object)
    if (_OpenGL.state.cull != old.cull) {
       if (_OpenGL.state.cull) {
          GL_CALL(glEnable(GL_DEPTH_TEST));
-         //GL_CALL(glCullFace(GL_BACK));
-         //GL_CALL(glEnable(GL_CULL_FACE));
+#if GLHCK_TRISTRIP == 0
+         GL_CALL(glCullFace(GL_BACK));
+         GL_CALL(glEnable(GL_CULL_FACE));
+#endif
       } else {
          GL_CALL(glDisable(GL_CULL_FACE));
       }
