@@ -93,6 +93,8 @@ int main(int argc, char **argv)
       ++frameCounter;
       duration += delta;
    }
+   glhckObjectFree(cube);
+   glhckTextureFree(texture);
 
    glhckTerminate();
    glfwTerminate();
