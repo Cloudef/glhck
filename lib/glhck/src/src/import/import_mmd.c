@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include "../../include/mmd.h"
 
-/* TODO: use indices */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 #define ifree(x) if (x) _glhckFree(x);
 
@@ -11,11 +10,11 @@
 int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
 {
    FILE *f;
-   unsigned int i, i2, ix, start, num_faces;
+   size_t i, i2, ix, start, num_faces, num_indices;
    mmd_header header;
    mmd_data *mmd;
    glhckImportVertexData *vertexData = NULL;
-   unsigned int *indices = NULL;
+   unsigned int *indices = NULL, *strip_indices = NULL;
    CALL("%p, %s, %d", object, file, animated);
 
    if (!(f = fopen((char*)file, "rb")))
@@ -76,12 +75,19 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
       start += num_faces;
    }
 
-   /* insert geometry data */
+#if GLHCK_TRISTRIP
+   if (!(strip_indices = _glhckTriStrip(indices, mmd->num_indices, &num_indices)))
+      goto fail;
+   _glhckFree(indices);
+#else
+   num_indices = mmd->num_indices;
+   strip_indices = indices;
+#endif
 
    glhckObjectInsertVertexData(object, mmd->num_vertices, vertexData);
-   glhckObjectInsertIndices(object, mmd->num_indices, indices);
+   glhckObjectInsertIndices(object, num_indices, strip_indices);
    _glhckFree(vertexData);
-   _glhckFree(indices);
+   _glhckFree(strip_indices);
 
    RET("%d", RETURN_OK);
    return RETURN_OK;
@@ -98,6 +104,7 @@ fail:
    if (f) fclose(f);
    ifree(vertexData);
    ifree(indices);
+   ifree(strip_indices);
    RET("%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
