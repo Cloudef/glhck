@@ -152,8 +152,13 @@ static inline void geometryPointer(__GLHCKobjectGeometry *geometry)
 static inline void geometryDraw(__GLHCKobjectGeometry *geometry)
 {
    if (geometry->indices) {
-      GL_CALL(glDrawElements(GL_TRIANGLE_STRIP, geometry->indicesCount,
+#if GLHCK_TRISTRIP
+      GL_CALL(glDrawElements(GL_TRIANGLE_STRIP , geometry->indicesCount,
                GLHCK_PRECISION_INDEX, &geometry->indices[0]));
+#else
+      GL_CALL(glDrawElements(GL_TRIANGLES , geometry->indicesCount,
+               GLHCK_PRECISION_INDEX, &geometry->indices[0]));
+#endif
    } else {
       GL_CALL(glDrawArrays(GL_TRIANGLE_STRIP, 0, geometry->vertexCount));
    }
@@ -174,8 +179,8 @@ static inline void materialState(_glhckObject *object)
    if (_OpenGL.state.cull != old.cull) {
       if (_OpenGL.state.cull) {
          GL_CALL(glEnable(GL_DEPTH_TEST));
-         GL_CALL(glCullFace(GL_BACK));
-         GL_CALL(glEnable(GL_CULL_FACE));
+         //GL_CALL(glCullFace(GL_BACK));
+         //GL_CALL(glEnable(GL_CULL_FACE));
       } else {
          GL_CALL(glDisable(GL_CULL_FACE));
       }
