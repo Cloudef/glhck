@@ -109,6 +109,8 @@ typedef struct _glhckTexture
 #  define GLHCK_NATIVE_IMPORT_INDEXDATA 1
 #endif
 
+#define GLHCK_TRISTRIP 1
+
 typedef struct _glhckVertex3d
 {
    GLHCK_CAST_VERTEX x, y, z;
