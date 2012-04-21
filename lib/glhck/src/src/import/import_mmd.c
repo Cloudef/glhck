@@ -77,14 +77,13 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
       start += num_faces;
    }
 
-#if GLHCK_TRISTRIP
-   if (!(strip_indices = _glhckTriStrip(indices, mmd->num_indices, &num_indices)))
-      goto fail;
-   _glhckFree(indices);
-#else
-   num_indices = mmd->num_indices;
-   strip_indices = indices;
-#endif
+   /* triangle strip geometry */
+   if (!(strip_indices = _glhckTriStrip(indices, mmd->num_indices, &num_indices))) {
+      /* failed, use non stripped geometry */
+      object->geometry.type   = GLHCK_TRIANGLES;
+      num_indices             = mmd->num_indices;
+      strip_indices           = indices;
+   } else  _glhckFree(indices);
 
    glhckObjectInsertVertexData(object, mmd->num_vertices, vertexData);
    glhckObjectInsertIndices(object, num_indices, strip_indices);
