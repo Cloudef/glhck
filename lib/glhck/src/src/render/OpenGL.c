@@ -3,7 +3,12 @@
 #include "render.h"
 #include <limits.h>
 #include <stdio.h>   /* for sscanf */
-#include <GL/glew.h> /* for opengl */
+
+#ifndef PANDORA
+#  include <GL/glew.h> /* for opengl */
+#else
+#  include <GLES/gl.h> /* for opengl ES */
+#endif
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #define RENDER_NAME "OpenGL Renderer"
@@ -77,8 +82,6 @@ static inline void GL_ERROR(const char *func, const char *glfunc)
             "GL_STACK_UNDERFLOW":
             error==GL_OUT_OF_MEMORY?
             "GL_OUT_OF_MEMORY":
-            error==GL_TABLE_TOO_LARGE?
-            "GL_TABLE_TOO_LARGE":
             error==GL_INVALID_OPERATION?
             "GL_INVALID_OPERATION":
             "GL_UNKNOWN_ERROR");
@@ -406,9 +409,11 @@ void _glhckRenderOpenGL(void)
    /* init OpenGL context */
    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
+#ifndef PANDORA
    /* we use GLEW */
    if (glewInit() != GLEW_OK)
       goto fail;
+#endif
 
    /* output information */
    if (renderInfo() != RETURN_OK)
