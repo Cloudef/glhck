@@ -34,8 +34,17 @@
 	#include <Carbon/Carbon.h>
 	#define APIENTRY
 #else
-	#include <GL/gl.h>
-	#include <GL/glx.h>
+        #ifdef GLES
+            #include <EGL/egl.h>
+            #include <EGL/eglext.h>
+            #include <GLES/gl.h>
+            #include <GLES/glext.h>
+            #define GL_CLAMP GL_CLAMP_TO_EDGE
+        #else
+	    #include <GL/gl.h>
+	    #include <GL/glx.h>
+            #define GLX
+        #endif
 #endif
 
 #include "SOIL.h"
@@ -86,8 +95,10 @@ int query_DXT_capability( void );
 #define SOIL_RGBA_S3TC_DXT1		0x83F1
 #define SOIL_RGBA_S3TC_DXT3		0x83F2
 #define SOIL_RGBA_S3TC_DXT5		0x83F3
+#if !defined(GLES)
 typedef void (APIENTRY * P_SOIL_GLCOMPRESSEDTEXIMAGE2DPROC) (GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid * data);
 P_SOIL_GLCOMPRESSEDTEXIMAGE2DPROC soilGlCompressedTexImage2D = NULL;
+#endif
 unsigned int SOIL_direct_load_DDS(
 		const char *filename,
 		unsigned int reuse_texture_ID,
@@ -1323,6 +1334,7 @@ unsigned int
 				/*	RGBA, use DXT5	*/
 				DDS_data = convert_image_to_DXT5( img, width, height, channels, &DDS_size );
 			}
+#if !defined(GLES)
 			if( DDS_data )
 			{
 				soilGlCompressedTexImage2D(
@@ -1333,6 +1345,7 @@ unsigned int
 				SOIL_free_image_data( DDS_data );
 				/*	printf( "Internal DXT compressor\n" );	*/
 			} else
+#endif
 			{
 				/*	my compression failed, try the OpenGL driver's version	*/
 				glTexImage2D(
@@ -1383,6 +1396,7 @@ unsigned int
 						DDS_data = convert_image_to_DXT5(
 								resampled, MIPwidth, MIPheight, channels, &DDS_size );
 					}
+#if !defined(GLES)
 					if( DDS_data )
 					{
 						soilGlCompressedTexImage2D(
@@ -1392,6 +1406,7 @@ unsigned int
 						check_for_GL_errors( "glCompressedTexImage2D" );
 						SOIL_free_image_data( DDS_data );
 					} else
+#endif
 					{
 						/*	my compression failed, try the OpenGL driver's version	*/
 						glTexImage2D(
@@ -1837,10 +1852,12 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 					S3TC_type, GL_UNSIGNED_BYTE, DDS_data );
 			} else
 			{
+#if !defined(GLES)
 				soilGlCompressedTexImage2D(
 					cf_target, 0,
 					S3TC_type, width, height, 0,
 					DDS_main_size, DDS_data );
+#endif
 			}
 			/*	upload the mipmaps, if we have them	*/
 			for( i = 1; i <= mipmaps; ++i )
@@ -1866,11 +1883,13 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 						S3TC_type, GL_UNSIGNED_BYTE, &DDS_data[byte_offset] );
 				} else
 				{
+#if !defined(GLES)
 					mip_size = ((w+3)/4)*((h+3)/4)*block_size;
 					soilGlCompressedTexImage2D(
 						cf_target, i,
 						S3TC_type, w, h, 0,
 						mip_size, &DDS_data[byte_offset] );
+#endif
 				}
 				/*	and move to the next mipmap	*/
 				byte_offset += mip_size;
@@ -2136,6 +2155,7 @@ int query_cubemap_capability( void )
 
 int query_DXT_capability( void )
 {
+#if !defined(GLES)
 	/*	check for the capability	*/
 	if( has_DXT_capability == SOIL_CAPABILITY_UNKNOWN )
 	{
@@ -2231,4 +2251,7 @@ int query_DXT_capability( void )
 	}
 	/*	let the user know if we can do DXT or not	*/
 	return has_DXT_capability;
+#else
+        return 0;
+#endif
 }
