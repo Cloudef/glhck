@@ -174,13 +174,18 @@ static inline void materialState(_glhckObject *object)
    if (_OpenGL.state.cull != old.cull) {
       if (_OpenGL.state.cull) {
          GL_CALL(glEnable(GL_DEPTH_TEST));
-#if GLHCK_TRISTRIP == 0
          GL_CALL(glCullFace(GL_BACK));
          GL_CALL(glEnable(GL_CULL_FACE));
-#endif
       } else {
          GL_CALL(glDisable(GL_CULL_FACE));
       }
+   }
+
+   /* disable culling for strip geometry
+    * TODO: Fix the stripping to get rid of this */
+   if (_OpenGL.state.cull &&
+       object->geometry.type == GLHCK_TRIANGLE_STRIP) {
+      GL_CALL(glDisable(GL_CULL_FACE));
    }
 
    /* check texture */
@@ -283,6 +288,12 @@ static void objectDraw(_glhckObject *object)
    geometryPointer(&object->geometry);
    geometryDraw(&object->geometry);
    drawAABB(object);
+
+   /* enable the culling back */
+   if (_OpenGL.state.cull &&
+       object->geometry.type == GLHCK_TRIANGLE_STRIP) {
+      GL_CALL(glEnable(GL_CULL_FACE));
+   }
 
    _OpenGL.indicesCount += object->geometry.indicesCount;
 }
