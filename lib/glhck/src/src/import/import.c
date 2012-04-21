@@ -361,12 +361,14 @@ fail:
 }
 
 /* \brief return tristripped indecies for triangle index data */
-unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *out_num_indices, kmScalar normals)
+unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *out_num_indices)
 {
+#if GLHCK_TRISTRIP
    unsigned int v1, v2, v3;
    unsigned int *out_indices = NULL;
    size_t i, strips, prim_count, tmp;
    ACTCData *tc = NULL;
+   CALL("%p, %zu, %p", indices, num_indices, out_num_indices);
    assert(num_indices / 3);
 
    if (!(out_indices = _glhckMalloc(num_indices * sizeof(unsigned int))))
@@ -423,8 +425,9 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
    printf("%d out indicies\n", i);
    printf("%d tristrips\n", prim_count);
    printf("%d profit\n", num_indices - i);
-
    actcDelete(tc);
+
+   RET("%p", out_indices);
    return out_indices;
 
 out_of_memory:
@@ -436,5 +439,11 @@ actc_fail:
 fail:
    if (tc) actcDelete(tc);
    if (out_indices) free(out_indices);
+   RET("%p", NULL);
    return NULL;
+#else
+   /* stripping is disabled.
+    * importers should fallback to GLHCK_TRIANGLES */
+   return NULL;
+#endif
 }
