@@ -370,11 +370,15 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
 {
 #if GLHCK_TRISTRIP
    unsigned int v1, v2, v3;
-   unsigned int *out_indices = NULL;
+   unsigned int *out_indices = NULL, test;
    size_t i, strips, prim_count, tmp;
    ACTCData *tc = NULL;
    CALL("%p, %zu, %p", indices, num_indices, out_num_indices);
-   assert(num_indices / 3);
+
+   /* check if the triangles we got are valid */
+   test = num_indices;
+   while ((test-=3)>3);
+   if (test != 3) goto not_valid;
 
    if (!(out_indices = _glhckMalloc(num_indices * sizeof(unsigned int))))
       goto out_of_memory;
@@ -429,6 +433,9 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
    RET("%p", out_indices);
    return out_indices;
 
+not_valid:
+   DEBUG(GLHCK_DBG_ERROR, "Tristripper: not valid triangle indices");
+   goto fail;
 out_of_memory:
    DEBUG(GLHCK_DBG_ERROR, "Tristripper: out of memory");
    goto fail;
