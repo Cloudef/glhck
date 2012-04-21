@@ -251,6 +251,9 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    memset(&object->geometry, 0, sizeof(__GLHCKobjectGeometry));
    memset(&object->view, 0, sizeof(__GLHCKobjectView));
 
+   /* default geometry type is tristrip */
+   object->geometry.type = GLHCK_TRIANGLE_STRIP;
+
    /* default view matrix */
    glhckObjectScalef(object, 100, 100, 100);
    _glhckObjectUpdateMatrix(object);
