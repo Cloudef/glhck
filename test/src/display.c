@@ -22,8 +22,8 @@ int main(int argc, char **argv)
    glhckObject *cube;
    float spin = 0;
 
-   unsigned int   now          = 0;
-   unsigned int   last         = 0;
+   float          now          = 0;
+   float          last         = 0;
    unsigned int   frameCounter = 0;
    unsigned int   FPS          = 0;
    unsigned int   fpsDelay     = 0;
@@ -71,7 +71,7 @@ int main(int argc, char **argv)
       glfwPollEvents();
 
       /* rotate */
-      glhckObjectRotatef(cube, 0, spin+=0.01f, 0);
+      glhckObjectRotatef(cube, 0, spin+=10.0f*delta, 0);
 
       /* glhck drawing */
       glhckObjectDraw(cube);
@@ -87,6 +87,7 @@ int main(int argc, char **argv)
 
          sprintf(WIN_TITLE, "OpenGL [FPS: %d]", FPS);
          glfwSetWindowTitle(window, WIN_TITLE);
+         printf("FPS: %d\n", FPS);
          frameCounter = 0; fpsDelay = now + 1; duration = 0;
       }
 
