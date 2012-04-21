@@ -378,7 +378,7 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
    /* check if the triangles we got are valid */
    test = num_indices;
    while ((test-=3)>3);
-   if (test != 3) goto not_valid;
+   if (test != 3 && test != 0) goto not_valid;
 
    if (!(out_indices = _glhckMalloc(num_indices * sizeof(unsigned int))))
       goto out_of_memory;
