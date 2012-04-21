@@ -152,15 +152,10 @@ static inline void geometryPointer(__GLHCKobjectGeometry *geometry)
 static inline void geometryDraw(__GLHCKobjectGeometry *geometry)
 {
    if (geometry->indices) {
-#if GLHCK_TRISTRIP
-      GL_CALL(glDrawElements(GL_TRIANGLE_STRIP , geometry->indicesCount,
+      GL_CALL(glDrawElements(geometry->type , geometry->indicesCount,
                GLHCK_PRECISION_INDEX, &geometry->indices[0]));
-#else
-      GL_CALL(glDrawElements(GL_TRIANGLES , geometry->indicesCount,
-               GLHCK_PRECISION_INDEX, &geometry->indices[0]));
-#endif
    } else {
-      GL_CALL(glDrawArrays(GL_TRIANGLE_STRIP, 0, geometry->vertexCount));
+      GL_CALL(glDrawArrays(geometry->type, 0, geometry->vertexCount));
    }
 }
 
