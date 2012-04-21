@@ -360,6 +360,11 @@ fail:
    }                                      \
 }
 
+/* TODO: fix winding of strips (allow using backface culling without artifacts)
+ * - if the length of the first part of the strip is odd, the strip must be reversed
+ * - to reverse the strip, write it in reverse order. If the position of the original face in this new reversed strip is odd, you’re done. Else replicate the first index.
+ */
+
 /* \brief return tristripped indecies for triangle index data */
 unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *out_num_indices)
 {
@@ -395,11 +400,8 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
    tmp = num_indices; i = 0; prim_count = 0;
    ACTC_CALL(actcBeginOutput(tc));
    while (actcStartNextPrim(tc, &v1, &v2) != ACTC_DATABASE_EMPTY) {
-      if (i + (prim_count?5:3) > num_indices) {
-         out_indices = _glhckRealloc(out_indices, num_indices,
-               (num_indices += prim_count?5:3), sizeof(unsigned int));
-         if (!out_indices) goto out_of_memory;
-      }
+      if (i + (prim_count?5:3) > num_indices)
+         goto no_profit;
       if (i > 2) {
          out_indices[i++] = v3;
          out_indices[i++] = v1;
@@ -407,11 +409,8 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
       out_indices[i++] = v1;
       out_indices[i++] = v2;
       while (actcGetNextVert(tc, &v3) != ACTC_PRIM_COMPLETE) {
-         if (i + 1 > num_indices) {
-            out_indices = _glhckRealloc(out_indices, num_indices,
-                  ++num_indices, sizeof(unsigned int));
-            if (!out_indices) goto out_of_memory;
-         }
+         if (i + 1 > num_indices)
+            goto no_profit;
          out_indices[i++] = v3;
       }
       prim_count++;
@@ -436,6 +435,8 @@ out_of_memory:
 actc_fail:
    DEBUG(GLHCK_DBG_ERROR, "Tristripper: init failed");
    goto fail;
+no_profit:
+   DEBUG(GLHCK_DBG_CRAP, "Tripstripper: no profit from stripping, fallback to triangles");
 fail:
    if (tc) actcDelete(tc);
    if (out_indices) free(out_indices);
