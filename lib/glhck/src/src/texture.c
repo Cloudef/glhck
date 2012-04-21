@@ -31,8 +31,8 @@ nothing:
 static int _glhckTextureCacheInsert(_glhckTexture *texture)
 {
    __GLHCKtextureCache *cache;
-   assert(texture);
    CALL("%p", texture);
+   assert(texture);
 
    if (!texture->file)
       goto fail;
@@ -65,8 +65,8 @@ fail:
 static int _glhckTextureCacheRemove(_glhckTexture *texture)
 {
    __GLHCKtextureCache *cache, *found;
-   assert(texture);
    CALL("%p", texture);
+   assert(texture);
 
    if (!(cache = _GLHCKlibrary.texture.cache))
       goto _return;
@@ -178,8 +178,8 @@ fail:
 GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
 {
    _glhckTexture *texture;
-   assert(src);
    CALL("%p", src);
+   assert(src);
 
    /* allocate texture */
    if (!(texture = (_glhckTexture*)_glhckMalloc(sizeof(_glhckTexture))))
@@ -194,8 +194,8 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
    glhckTextureCreate(texture, src->data, src->width, src->height, src->channels, src->flags);
    DEBUG(GLHCK_DBG_CRAP, "COPY %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
-   /* increase ref counter */
-   texture->refCounter++;
+   /* set ref counter to 1 */
+   texture->refCounter = 1;
 
    /* Return texture */
    RET("%p", texture);
@@ -210,8 +210,8 @@ fail:
 /* \brief reference texture */
 GLHCKAPI _glhckTexture* glhckTextureRef(_glhckTexture *texture)
 {
-   assert(texture);
    CALL("%p", texture);
+   assert(texture);
 
    DEBUG(GLHCK_DBG_CRAP, "REFERENCE %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
@@ -226,8 +226,8 @@ GLHCKAPI _glhckTexture* glhckTextureRef(_glhckTexture *texture)
 /* \brief free texture */
 GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
 {
-   assert(texture);
    CALL("%p", texture);
+   assert(texture);
 
    /* there is still references to this texture alive */
    if (--texture->refCounter != 0) goto success;
@@ -257,9 +257,9 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
       int width, int height, int channels, unsigned int flags)
 {
    unsigned int object;
-   assert(texture);
    CALL("%p, %u, %d, %d, %d, %u", texture, data,
          width, height, channels, flags);
+   assert(texture);
 
    /* create texture */
    object = _GLHCKlibrary.render.api.createTexture(
@@ -291,8 +291,8 @@ fail:
 /* \brief save texture to file in TGA format */
 GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
 {
-   assert(texture);
    CALL("%p, %s", texture, path);
+   assert(texture);
 
    if (!SOIL_save_image
       (

@@ -168,8 +168,8 @@ fail:
 void* __glhckCopy(const char *channel, void *ptr, size_t nmemb)
 {
    void *ptr2;
-   assert(ptr);
    CALL("%p, %zu", ptr, nmemb);
+   assert(ptr);
 
    if (!(ptr2 = __glhckMalloc(channel, nmemb)))
       goto fail;
@@ -187,8 +187,8 @@ fail:
 void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size)
 {
    void *ptr2;
-   assert(ptr);
    CALL("%p, %zu, %zu, %zu", ptr, omemb, nmemb, size);
+   assert(ptr);
 
    if (!(ptr2 = realloc(ptr, nmemb * size))) {
       if (!(ptr2 = malloc(nmemb * size)))
@@ -214,8 +214,8 @@ fail:
 /* \brief internal free function. */
 void _glhckFree(void *ptr)
 {
-   assert(ptr);
    CALL("%p", ptr);
+   assert(ptr);
 
 #ifndef NDEBUG
    trackFree(ptr);

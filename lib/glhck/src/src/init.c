@@ -109,8 +109,8 @@ GLHCKAPI void glhckDisplayClose(void)
 /* \brief resize virtual display */
 GLHCKAPI void glhckDisplayResize(int width, int height)
 {
-   assert(width > 0 && height > 0);
    CALL("%d, %d", width, height);
+   assert(width > 0 && height > 0);
 
    /* nothing to resize */
    if (!_glhckInitialized || !_GLHCKlibrary.render.name)
