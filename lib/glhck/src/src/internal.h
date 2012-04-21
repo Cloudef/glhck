@@ -109,6 +109,15 @@ typedef struct _glhckTexture
 #  define GLHCK_NATIVE_IMPORT_INDEXDATA 1
 #endif
 
+/* geometry type */
+#define GLHCK_POINTS          0x0000
+#define GLHCK_LINES           0x0001
+#define GLHCK_LINE_LOOP       0x0002
+#define GLHCK_LINE_STRIP      0x0003
+#define GLHCK_TRIANGLES       0x0004
+#define GLHCK_TRIANGLE_STRIP  0x0005
+
+/* disable triangle stripping? */
 #define GLHCK_TRISTRIP 1
 
 typedef struct _glhckVertex3d
@@ -135,6 +144,7 @@ typedef struct __GLHCKobjectGeometry
    GLHCK_CAST_INDEX           *indices;
    size_t                     indicesCount, vertexCount;
    kmVec3                     bias, scale;
+   unsigned int               type;
 } __GLHCKobjectGeometry;
 
 typedef struct __GLHCKobjectView
