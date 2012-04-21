@@ -4,7 +4,7 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
 #define ifree(x)  if (x) _glhckFree(x);
-#define VEC3(v)   v->x, v->y, v->z
+#define VEC3(v)   v?v->x:-1, v?v->y:-1, v?v->z:-1
 #define VEC3S     "vec3[%f, %f, %f]"
 
 /* conversion defines for vertexdata conversion macro */
@@ -269,11 +269,67 @@ fail:
    return NULL;
 }
 
+/* \brief copy object */
+GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
+{
+   _glhckObject *object;
+   CALL("%p", src);
+   assert(src);
+
+   if (!(object = _glhckMalloc(sizeof(_glhckObject))))
+      goto fail;
+
+   /* copy static data */
+   memcpy(object, src, sizeof(_glhckObject));
+   memcpy(&object->geometry, &src->geometry, sizeof(__GLHCKobjectGeometry));
+   memcpy(&object->view, 0, sizeof(__GLHCKobjectView));
+
+   /* copy vertex data */
+   if (!(object->geometry.vertexData =
+            _glhckCopy(src->geometry.vertexData,
+               src->geometry.vertexCount * sizeof(__GLHCKvertexData))))
+      goto fail;
+
+   /* copy index data */
+   if (!(object->geometry.indices =
+            _glhckCopy(src->geometry.vertexData,
+               src->geometry.indicesCount * sizeof(GLHCK_CAST_INDEX))))
+      goto fail;
+
+   /* set ref counter to 1 */
+   object->refCounter = 1;
+
+   RET("%p", object);
+   return object;
+
+fail:
+   if (object) {
+      ifree(object->geometry.vertexData);
+      ifree(object->geometry.indices);
+   }
+   ifree(object);
+   RET("%p", NULL);
+   return NULL;
+}
+
+/* \brief reference object */
+GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object)
+{
+   CALL("%p", object);
+   assert(object);
+
+   /* increase ref counter */
+   object->refCounter++;
+
+   RET("%p", object);
+   return object;
+}
+
 /* \brief free object */
 GLHCKAPI short glhckObjectFree(glhckObject *object)
 {
-   assert(object);
    CALL("%p", object);
+   assert(object);
 
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
@@ -296,8 +352,8 @@ success:
 /* \brief draw object */
 GLHCKAPI void glhckObjectDraw(glhckObject *object)
 {
-   assert(object);
    CALL("%p", object);
+   assert(object);
 
    /* does view matrix need update? */
    if (object->view.update)
@@ -309,8 +365,8 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
 /* \brief position object */
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position)
 {
-   assert(object && position);
    CALL("%p, "VEC3S, object, VEC3(position));
+   assert(object && position);
 
    object->view.translation = *position;
    object->view.update      = 1;
@@ -327,8 +383,8 @@ GLHCKAPI void glhckObjectPositionf(glhckObject *object,
 /* \brief move object */
 GLHCKAPI void glhckObjectMove(glhckObject *object, const kmVec3 *move)
 {
-   assert(object && move);
    CALL("%p, "VEC3S, object, VEC3(move));
+   assert(object && move);
 
    kmVec3Add(&object->view.translation,
          &object->view.translation, move);
@@ -346,8 +402,8 @@ GLHCKAPI void glhckObjectMovef(glhckObject *object,
 /* \brief rotate object */
 GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate)
 {
-   assert(object && rotate);
    CALL("%p, "VEC3S, object, VEC3(rotate));
+   assert(object && rotate);
 
    object->view.rotation   = *rotate;
    object->view.update     = 1;
@@ -364,8 +420,8 @@ GLHCKAPI void glhckObjectRotatef(glhckObject *object,
 /* \brief scale object */
 GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale)
 {
-   assert(object && scale);
    CALL("%p, "VEC3S, object, VEC3(scale));
+   assert(object && scale);
 
    object->view.scaling = *scale;
    object->view.update  = 1;
@@ -386,8 +442,8 @@ GLHCKAPI int glhckObjectInsertVertexData(
       const glhckImportVertexData *vertexData)
 {
    __GLHCKvertexData *new;
-   assert(object);
    CALL("%p, %zu, %p", object, memb, vertexData);
+   assert(object);
 
    /* allocate new buffer */
    if (!(new = (__GLHCKvertexData*)_glhckMalloc(memb *
@@ -421,8 +477,8 @@ GLHCKAPI int glhckObjectInsertIndices(
       const unsigned int *indices)
 {
    GLHCK_CAST_INDEX *new;
-   assert(object);
    CALL("%p, %zu, %p", object, memb, indices);
+   assert(object);
 
    /* allocate new buffer */
    if (!(new = (GLHCK_CAST_INDEX*)_glhckMalloc(memb *

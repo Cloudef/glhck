@@ -154,6 +154,8 @@ GLHCKAPI void glhckRender(void);
 
 /* objects */
 GLHCKAPI glhckObject* glhckObjectNew(void);
+GLHCKAPI glhckObject* glhckObjectCopy(glhckObject *src);
+GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
 GLHCKAPI short glhckObjectFree(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertexData(glhckObject *object,
       size_t memb, const glhckImportVertexData *vertexData);
