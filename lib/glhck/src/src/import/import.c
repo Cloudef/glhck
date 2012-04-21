@@ -402,7 +402,7 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
    while (actcStartNextPrim(tc, &v1, &v2) != ACTC_DATABASE_EMPTY) {
       if (i + (prim_count?5:3) > num_indices)
          goto no_profit;
-      if (i > 2) {
+      if (prim_count) {
          out_indices[i++] = v3;
          out_indices[i++] = v1;
       }
