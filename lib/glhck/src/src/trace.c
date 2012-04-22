@@ -39,6 +39,8 @@ __GLHCKtrace _traceChannels[] =
    { GLHCK_CHANNEL_OBJECT,   0 },
    { GLHCK_CHANNEL_GEOMETRY, 0 },
    { GLHCK_CHANNEL_TEXTURE,  0 },
+   { GLHCK_CHANNEL_ATLAS,    0 },
+   { GLHCK_CHANNEL_RTT,      0 },
    { GLHCK_CHANNEL_ALLOC,    0 },
    { GLHCK_CHANNEL_RENDER,   0 },
 
