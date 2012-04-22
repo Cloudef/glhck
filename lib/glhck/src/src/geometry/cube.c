@@ -11,7 +11,7 @@ GLHCKAPI _glhckObject* glhckCubeNew(size_t size)
 {
    _glhckObject *object;
 
-   static const glhckImportVertexData vertices[] = {
+   const glhckImportVertexData vertices[] = {
       {
          /* FRONT */
          { -1, -1,  1 },       /* vertices */
