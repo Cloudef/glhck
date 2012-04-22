@@ -11,6 +11,7 @@ SET(GLHCK_SRC
    src/src/rtt.c
    src/src/texture_packer.c
    src/src/geometry/model.c
+   src/src/geometry/plane.c
    src/src/geometry/cube.c
    src/src/render/OpenGL.c
    src/src/import/import.c
