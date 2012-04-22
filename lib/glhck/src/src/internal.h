@@ -22,6 +22,8 @@
 #define GLHCK_CHANNEL_OBJECT     "OBJECT"
 #define GLHCK_CHANNEL_GEOMETRY   "GEOMETRY"
 #define GLHCK_CHANNEL_TEXTURE    "TEXTURE"
+#define GLHCK_CHANNEL_ATLAS      "ATLAS"
+#define GLHCK_CHANNEL_RTT        "RTT"
 #define GLHCK_CHANNEL_ALLOC      "ALLOC"
 #define GLHCK_CHANNEL_RENDER     "RENDER"
 #define GLHCK_CHANNEL_TRACE      "TRACE"
@@ -51,6 +53,37 @@ typedef struct _glhckTexture
    size_t size;
    short refCounter;
 } _glhckTexture;
+
+typedef struct _glhckAtlasArea
+{
+   int x1, y1, x2, y2, rotated;
+} _glhckAtlasArea;
+
+typedef struct _glhckAtlasRect
+{
+   struct _glhckTexture *texture;
+   unsigned short index;
+   struct _glhckAtlasArea packed;
+   struct _glhckAtlasRect *next;
+} _glhckAtlasRect;
+
+typedef struct _glhckAtlas
+{
+   struct _glhckAtlasRect *rect;
+   struct _glhckTexture *texture;
+   short refCounter;
+} _glhckAtlas;
+
+#define GLHCK_COLOR_ATTACHMENT   0x8CE0
+#define GLHCK_DEPTH_ATTACHMENT   0x8D00
+#define GLHCK_STENCIL_ATTACHMENT 0x8D20
+
+typedef struct _glhckRtt
+{
+   unsigned int object;
+   _glhckTexture *texture;
+   short refCounter;
+} _glhckRtt;
 
 /* precision constants */
 #define GLHCK_BYTE            0x1400
@@ -130,50 +163,48 @@ typedef struct _glhckCoord2d {
 } _glhckCoord2d;
 
 typedef struct __GLHCKvertexData {
-   struct _glhckVertex3d   vertex;
-   struct _glhckVertex3d   normal;
-   struct _glhckCoord2d    coord;
+   struct _glhckVertex3d vertex;
+   struct _glhckVertex3d normal;
+   struct _glhckCoord2d coord;
 #if GLHCK_VERTEXDATA_COLOR
-   struct glhckColor       color;
+   struct glhckColor color;
 #endif
 } __GLHCKvertexData;
 
 typedef struct __GLHCKobjectGeometry
 {
-   struct __GLHCKvertexData   *vertexData;
-   GLHCK_CAST_INDEX           *indices;
-   size_t                     indicesCount, vertexCount;
-   kmVec3                     bias, scale;
-   unsigned int               type;
+   struct __GLHCKvertexData *vertexData;
+   GLHCK_CAST_INDEX *indices;
+   size_t indicesCount, vertexCount;
+   kmVec3 bias, scale;
+   unsigned int type;
 } __GLHCKobjectGeometry;
 
 typedef struct __GLHCKobjectView
 {
-   kmVec3   translation;
-   kmVec3   rotation;
-   kmVec3   scaling;
-   kmMat4   matrix;
-   kmAABB   bounding;
-   char     update;
+   kmVec3 translation, rotation, scaling;
+   kmMat4 matrix;
+   kmAABB bounding;
+   char update;
 } __GLHCKobjectView;
 
 typedef struct _glhckObject
 {
-   struct __GLHCKobjectGeometry  geometry;
-   struct __GLHCKobjectView      view;
-   short                         refCounter;
+   struct __GLHCKobjectGeometry geometry;
+   struct __GLHCKobjectView view;
+   short refCounter;
 } _glhckObject;
 
 /* library global data */
 typedef struct __GLHCKtextureCache
 {
-   struct _glhckTexture       *texture;
+   struct _glhckTexture *texture;
    struct __GLHCKtextureCache *next;
 } __GLHCKtextureCache;
 
 typedef struct __GLHCKtexture
 {
-   unsigned int               bind;
+   unsigned int bind;
    struct __GLHCKtextureCache *cache;
 } __GLHCKtexture;
 
@@ -185,10 +216,8 @@ typedef void (*__GLHCKrenderAPIrender)           (void);
 typedef void (*__GLHCKrenderAPIobjectDraw)       (_glhckObject *object);
 
 /* object generation */
-typedef void (*__GLHCKrenderAPIgenerateTextures) (unsigned int count, unsigned int *objects);
-typedef void (*__GLHCKrenderAPIdeleteTextures)   (unsigned int count, unsigned int *objects);
-typedef void (*__GLHCKrenderAPIgenerateBuffers)  (unsigned int count, unsigned int *objects);
-typedef void (*__GLHCKrenderAPIdeleteBuffers)    (unsigned int count, unsigned int *objects);
+typedef void (*__GLHCKrenderAPIgenerateTextures) (size_t count, unsigned int *objects);
+typedef void (*__GLHCKrenderAPIdeleteTextures)   (size_t count, unsigned int *objects);
 
 /* textures */
 typedef void (*__GLHCKrenderAPIbindTexture)      (unsigned int object);
@@ -199,9 +228,11 @@ typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *cons
                                                        unsigned int reuse_texture_ID,
                                                        unsigned int flags);
 
-
-/* buffers */
-typedef void (*__GLHCKrenderAPIbindBuffer)       (unsigned int object);
+/* framebuffer objects */
+typedef void (*__GLHCKrenderAPIgenerateFramebuffers) (size_t count, unsigned int *objects);
+typedef void (*__GLHCKrenderAPIdeleteFramebuffers)   (size_t count, unsigned int *objects);
+typedef void (*__GLHCKrenderAPIbindFramebuffer)      (unsigned int object);
+typedef int (*__GLHCKrenderAPIlinkFramebufferWithTexture) (unsigned int object, unsigned int texture, unsigned int attachment);
 
 typedef struct __GLHCKrenderAPI
 {
@@ -210,46 +241,49 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIsetProjection    setProjection;
    __GLHCKrenderAPIrender           render;
    __GLHCKrenderAPIobjectDraw       objectDraw;
+
    __GLHCKrenderAPIgenerateTextures generateTextures;
    __GLHCKrenderAPIdeleteTextures   deleteTextures;
-   __GLHCKrenderAPIgenerateBuffers  generateBuffers;
-   __GLHCKrenderAPIdeleteBuffers    deleteBuffers;
    __GLHCKrenderAPIbindTexture      bindTexture;
    __GLHCKrenderAPIuploadTexture    uploadTexture;
    __GLHCKrenderAPIcreateTexture    createTexture;
-   __GLHCKrenderAPIbindBuffer       bindBuffer;
+
+   __GLHCKrenderAPIgenerateFramebuffers   generateFramebuffers;
+   __GLHCKrenderAPIdeleteFramebuffers     deleteFramebuffers;
+   __GLHCKrenderAPIbindFramebuffer        bindFramebuffer;
+   __GLHCKrenderAPIlinkFramebufferWithTexture linkFramebufferWithTexture;
 } __GLHCKrenderAPI;
 
 typedef struct __GLHCKrender
 {
    int width, height;
-   const char              *name;
-   glhckRenderType         type;
+   const char *name;
+   glhckRenderType type;
    struct __GLHCKrenderAPI api;
 } __GLHCKrender;
 
 typedef struct __GLHCKtrace
 {
-   const char  *name;
-   char        active;
+   const char *name;
+   char active;
 } __GLHCKtrace;
 
 #ifndef NDEBUG
 typedef struct __GLHCKalloc {
-   const char           *channel;
-   void                 *ptr;
-   size_t               size;
-   struct __GLHCKalloc  *next;
+   const char *channel;
+   void *ptr;
+   size_t size;
+   struct __GLHCKalloc *next;
 } __GLHCKalloc;
 #endif
 
 typedef struct __GLHCKlibrary
 {
-   struct __GLHCKtexture   texture;
-   struct __GLHCKrender    render;
-   struct __GLHCKtrace     *trace;
+   struct __GLHCKtexture texture;
+   struct __GLHCKrender render;
+   struct __GLHCKtrace *trace;
 #ifndef NDEBUG
-   struct __GLHCKalloc     *alloc;
+   struct __GLHCKalloc *alloc;
 #endif
 } __GLHCKlibrary;
 
@@ -258,13 +292,10 @@ GLHCKGLOBAL struct __GLHCKlibrary _GLHCKlibrary;
 
 typedef struct _glhckTexturePacker
 {
-   short             debug_count;
-   struct tpNode     *free_list;
-   short             texture_index;
-   short             texture_count;
-   struct tpTexture  *textures;
-   short             longest_edge;
-   short             total_area;
+   unsigned short debug_count, texture_index, texture_count;
+   unsigned short longest_edge, total_area;
+   struct tpNode *free_list;
+   struct tpTexture *textures;
 } _glhckTexturePacker;
 
 /* tracking allocation macros */
@@ -319,8 +350,8 @@ void  _glhckTexturePackerSetCount(_glhckTexturePacker *tp, short textureCount);
 short _glhckTexturePackerAdd(_glhckTexturePacker *tp, int width, int height);
 int   _glhckTexturePackerPack(_glhckTexturePacker *tp, int *width, int *height, int forcePowerOfTwo, int onePixelBorder);
 int   _glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *x, int *y, int *width, int *height);
-_glhckTexturePacker*  glhckTexturePackerNew(void);
-void                  glhckTexturePackerFree(_glhckTexturePacker *tp);
+_glhckTexturePacker*  _glhckTexturePackerNew(void);
+void                  _glhckTexturePackerFree(_glhckTexturePacker *tp);
 
 /* texture cache*/
 void _glhckTextureCacheRelease(void);
