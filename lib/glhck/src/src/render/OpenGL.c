@@ -44,9 +44,9 @@ static __OpenGLrender _OpenGL;
 
 /* declare gl generation function */
 #define DECLARE_GL_GEN_FUNC(x,y)                                     \
-static void x(unsigned int count, unsigned int *objects)             \
+static void x(size_t count, unsigned int *objects)                   \
 {                                                                    \
-   CALL("%d, %p", count, objects);                                   \
+   CALL("%zu, %p", count, objects);                                  \
    y(count, objects);                                                \
 }
 
@@ -105,6 +105,12 @@ static int uploadTexture(_glhckTexture *texture, unsigned int flags)
    return texture->object?RETURN_OK:RETURN_FAIL;
 }
 
+static inline unsigned int pixelFormat(int channels)
+{
+   return channels==3?GL_RGB:
+          channels==4?GL_RGBA:GL_RGBA;
+}
+
 /* \brief create texture from data and upload it */
 static unsigned int createTexture(const unsigned char *const buffer,
       int width, int height, int channels,
@@ -116,13 +122,58 @@ static unsigned int createTexture(const unsigned char *const buffer,
          width, height, channels,
          reuse_texture_ID, flags);
 
-   object = SOIL_create_OGL_texture(
-      buffer, width, height, channels,
-      reuse_texture_ID,
-      flags);
+   /* user has data, import it */
+   if (buffer) {
+      object = SOIL_create_OGL_texture(
+         buffer, width, height, channels,
+         reuse_texture_ID,
+         flags);
+      goto _return;
+   }
 
+   /* create empty texture */
+   if (!(object = reuse_texture_ID))
+      glGenTextures(1, &object);
+
+   /* fail? */
+   if (!object)
+      goto _return;
+
+   glhckBindTexture(object);
+   glTexImage2D(GL_TEXTURE_2D, 0,
+         pixelFormat(channels), width, height, 0,
+         pixelFormat(channels), GL_UNSIGNED_BYTE, NULL);
+
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
+   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
+
+_return:
    RET("%d", object?RETURN_OK:RETURN_FAIL);
    return object?RETURN_OK:RETURN_FAIL;
+}
+
+static int linkFramebufferWithTexture(unsigned int object,
+      unsigned int texture, unsigned int attachment)
+{
+   CALL("%d, %d", object, texture);
+
+   glBindFramebuffer(GL_FRAMEBUFFER, object);
+   glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
+         GL_TEXTURE_2D, texture, 0);
+   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+   if (glCheckFramebufferStatus(GL_FRAMEBUFFER)
+         != GL_FRAMEBUFFER_COMPLETE)
+      goto fail;
+
+   RET("%d", RETURN_OK);
+   return RETURN_OK;
+
+fail:
+   RET("%d", RETURN_FAIL);
+   return RETURN_FAIL;
 }
 
 /* \brief render scene */
@@ -395,9 +446,11 @@ static void renderTerminate(void)
 /* OpenGL bindings */
 DECLARE_GL_GEN_FUNC(_glGenTextures, glGenTextures)
 DECLARE_GL_GEN_FUNC(_glDeleteTextures, glDeleteTextures)
-DECLARE_GL_GEN_FUNC(_glGenBuffers, glGenBuffers)
-DECLARE_GL_GEN_FUNC(_glDeleteBuffers, glDeleteBuffers)
 DECLARE_GL_BIND_FUNC(_glBindTexture, glBindTexture(GL_TEXTURE_2D, object))
+
+DECLARE_GL_GEN_FUNC(_glGenFramebuffers, glGenFramebuffers);
+DECLARE_GL_GEN_FUNC(_glDeleteFramebuffers, glDeleteFramebuffers);
+DECLARE_GL_BIND_FUNC(_glBindFramebuffer, glBindFramebuffer(GL_FRAMEBUFFER, object))
 
 /* ---- Main ---- */
 
@@ -424,13 +477,19 @@ void _glhckRenderOpenGL(void)
       goto fail;
 
    /* register api functions */
+
+   /* textures */
    GLHCK_RENDER_FUNC(generateTextures, _glGenTextures);
    GLHCK_RENDER_FUNC(deleteTextures, _glDeleteTextures);
-   GLHCK_RENDER_FUNC(generateBuffers, _glGenBuffers);
-   GLHCK_RENDER_FUNC(deleteBuffers, _glDeleteBuffers);
    GLHCK_RENDER_FUNC(bindTexture, _glBindTexture);
    GLHCK_RENDER_FUNC(uploadTexture, uploadTexture);
    GLHCK_RENDER_FUNC(createTexture, createTexture);
+
+   /* framebuffer objects */
+   GLHCK_RENDER_FUNC(generateFramebuffers, _glGenFramebuffers);
+   GLHCK_RENDER_FUNC(deleteFramebuffers, _glDeleteFramebuffers);
+   GLHCK_RENDER_FUNC(bindFramebuffer, _glBindFramebuffer);
+   GLHCK_RENDER_FUNC(linkFramebufferWithTexture, linkFramebufferWithTexture);
 
    /* drawing functions */
    GLHCK_RENDER_FUNC(setProjection, setProjection);
