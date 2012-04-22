@@ -334,8 +334,6 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
-   DEBUG(GLHCK_DBG_CRAP, "FREE object");
-
    /* free geometry */
    ifree(object->geometry.vertexData);
    ifree(object->geometry.indices);
