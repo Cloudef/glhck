@@ -71,7 +71,7 @@ int main(int argc, char **argv)
       glfwPollEvents();
 
       /* rotate */
-      glhckObjectRotatef(cube, 0, spin+=10.0f*delta, 0);
+      glhckObjectRotatef(cube, 0, spin = spin + 10.0f * delta, 0);
 
       /* glhck drawing */
       glhckObjectDraw(cube);
@@ -81,14 +81,15 @@ int main(int argc, char **argv)
       glfwSwapBuffers();
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      if (fpsDelay < glfwGetTime()) {
-         if(duration > 0.0f)
+      if (fpsDelay < now) {
+         if (duration > 0.0f) {
             FPS = (float)frameCounter / duration;
-
-         sprintf(WIN_TITLE, "OpenGL [FPS: %d]", FPS);
-         glfwSetWindowTitle(window, WIN_TITLE);
-         printf("FPS: %d\n", FPS);
-         frameCounter = 0; fpsDelay = now + 1; duration = 0;
+            sprintf(WIN_TITLE, "OpenGL [FPS: %d]", FPS);
+            glfwSetWindowTitle(window, WIN_TITLE);
+            printf("FPS: %d\n", FPS);
+            printf("DELTA: %f\n", delta);
+            frameCounter = 0; fpsDelay = now + 1; duration = 0;
+         }
       }
 
       ++frameCounter;
