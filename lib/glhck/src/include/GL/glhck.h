@@ -120,6 +120,13 @@ typedef enum glhckTextureFlags
    GLHCK_TEXTURE_DEFAULTS        = 1024
 } glhckTextureFlags;
 
+/* rtt modes */
+typedef enum glhckRttMode
+{
+   GLHCK_RTT_RGB,
+   GLHCK_RTT_RGBA
+} glhckRttMode;
+
 typedef struct glhckColor
 {
    unsigned char r, g, b, a;
@@ -129,13 +136,14 @@ typedef struct glhckColor
  * which will be converted to internal precision */
 typedef struct glhckImportVertexData
 {
-   kmVec3 vertex;
-   kmVec3 normal;
+   kmVec3 vertex, normal;
    kmVec2 coord;
    glhckColor color;
 } glhckImportVertexData;
 
 typedef struct _glhckTexture glhckTexture;
+typedef struct _glhckAtlas   glhckAtlas;
+typedef struct _glhckRtt     glhckRtt;
 typedef struct _glhckObject  glhckObject;
 
 typedef void (*glhckDebugHookFunc)(const char *file, int line, const char *function, glhckDebugLevel level, const char *str);
@@ -190,6 +198,20 @@ GLHCKAPI int glhckTextureCreate(glhckTexture *texture, unsigned char *data,
 GLHCKAPI int glhckTextureSave(glhckTexture *texture, const char *path);
 GLHCKAPI void glhckTextureBind(glhckTexture *texture);
 GLHCKAPI void glhckBindTexturei(unsigned int texture);
+
+/* texture atlases */
+GLHCKAPI glhckAtlas* glhckAtlasNew(void);
+GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas);
+GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture);
+GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int border);
+GLHCKAPI int glchkAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
+      const kmVec2 *in, kmVec2 *out);
+
+/* render to texture */
+GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode);
+GLHCKAPI short glhckRttFree(glhckRtt *rtt);
+GLHCKAPI void glhckRttBegin(glhckRtt *rtt);
+GLHCKAPI void glhckRttEnd(glhckRtt *rtt);
 
 /* trace && debug */
 GLHCKAPI void glhckSetDebugHook(glhckDebugHookFunc func);
