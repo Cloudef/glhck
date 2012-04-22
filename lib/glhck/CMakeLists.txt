@@ -7,6 +7,9 @@ SET(GLHCK_SRC
    src/src/util.c
    src/src/object.c
    src/src/texture.c
+   src/src/atlas.c
+   src/src/rtt.c
+   src/src/texture_packer.c
    src/src/geometry/model.c
    src/src/geometry/cube.c
    src/src/render/OpenGL.c
