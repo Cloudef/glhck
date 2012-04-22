@@ -271,12 +271,16 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
       goto fail;
 
    if (texture->data) _glhckFree(texture->data);
+   texture->data = NULL;
+
    texture->object   = object;
    texture->width    = width;
    texture->height   = height;
    texture->channels = channels;
    texture->size     = width * height * channels;
-   texture->data     = _glhckCopy(data, texture->size);
+
+   if (data)
+      texture->data = _glhckCopy(data, texture->size);
 
    DEBUG(GLHCK_DBG_CRAP, "NEW %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
