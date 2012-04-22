@@ -22,7 +22,10 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(bindTexture);
    GLHCK_API_CHECK(uploadTexture);
    GLHCK_API_CHECK(createTexture);
-   GLHCK_API_CHECK(bindBuffer);
+   GLHCK_API_CHECK(generateFramebuffers);
+   GLHCK_API_CHECK(deleteFramebuffers);
+   GLHCK_API_CHECK(bindFramebuffer);
+   GLHCK_API_CHECK(linkFramebufferWithTexture);
 }
 
 /* public api */
