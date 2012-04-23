@@ -211,9 +211,14 @@ typedef struct __GLHCKtexture
 /* render api */
 typedef void (*__GLHCKrenderAPIterminate)        (void);
 typedef void (*__GLHCKrenderAPIresize)           (int width, int height);
-typedef void (*__GLHCKrenderAPIsetProjection)    (float *m);
+typedef void (*__GLHCKrenderAPIsetProjection)    (const kmMat4 *m);
+typedef kmMat4 (*__GLHCKrenderAPIgetProjection)  (void);
 typedef void (*__GLHCKrenderAPIrender)           (void);
 typedef void (*__GLHCKrenderAPIobjectDraw)       (_glhckObject *object);
+
+/* screen control */
+typedef void (*__GLHCKrenderAPIgetPixels)        (int x, int y, int width, int height,
+      int channels, unsigned char *data);
 
 /* object generation */
 typedef void (*__GLHCKrenderAPIgenerateTextures) (size_t count, unsigned int *objects);
@@ -239,8 +244,11 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIterminate        terminate;
    __GLHCKrenderAPIresize           resize;
    __GLHCKrenderAPIsetProjection    setProjection;
+   __GLHCKrenderAPIgetProjection    getProjection;
    __GLHCKrenderAPIrender           render;
    __GLHCKrenderAPIobjectDraw       objectDraw;
+
+   __GLHCKrenderAPIgetPixels        getPixels;
 
    __GLHCKrenderAPIgenerateTextures generateTextures;
    __GLHCKrenderAPIdeleteTextures   deleteTextures;
@@ -353,7 +361,10 @@ int   _glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *x,
 _glhckTexturePacker*  _glhckTexturePackerNew(void);
 void                  _glhckTexturePackerFree(_glhckTexturePacker *tp);
 
-/* texture cache*/
+/* textures */
+void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
+
+/* texture cache */
 void _glhckTextureCacheRelease(void);
 
 /* tracing && debug functions */
