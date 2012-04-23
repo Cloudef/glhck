@@ -15,8 +15,10 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(terminate);
    GLHCK_API_CHECK(resize);
    GLHCK_API_CHECK(setProjection);
+   GLHCK_API_CHECK(getProjection);
    GLHCK_API_CHECK(render);
    GLHCK_API_CHECK(objectDraw);
+   GLHCK_API_CHECK(getPixels);
    GLHCK_API_CHECK(generateTextures);
    GLHCK_API_CHECK(deleteTextures);
    GLHCK_API_CHECK(bindTexture);
