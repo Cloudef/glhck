@@ -45,18 +45,17 @@ int main(int argc, char **argv)
 
    RUNNING = 1;
 
-#if 1
    if (!(texture = glhckTextureNew("../media/glhck.png",
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
    glhckTextureBind(texture);
+
+#if 1
    cube = glhckCubeNew(1);
+   //cube = glhckPlaneNew(1);
    glhckObjectPositionf(cube, 0, 0, -10.0f);
 #else
-   if (!(texture = glhckTextureNew("../media/Reisen.bmp", 0)))
-      return EXIT_FAILURE;
-   glhckTextureBind(texture);
-   cube = glhckModelNew("../media/Reisen.pmd", 1);
+   cube = glhckModelNew("../media/md_m.pmd", 1);
    glhckObjectPositionf(cube, 0, -10.0f, -50.0f);
 #endif
    glhckMemoryGraph();
