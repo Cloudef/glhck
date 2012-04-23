@@ -17,7 +17,7 @@ static _glhckTexture* _glhckTextureCacheCheck(const char *file)
    if (!file)
       goto nothing;
 
-   for(cache = _GLHCKlibrary.texture.cache; cache; cache = cache->next) {
+   for (cache = _GLHCKlibrary.texture.cache; cache; cache = cache->next) {
       if (!strcmp(cache->texture->file, file))
          return glhckTextureRef(cache->texture);
    }
@@ -42,7 +42,7 @@ static int _glhckTextureCacheInsert(_glhckTexture *texture)
       cache = _GLHCKlibrary.texture.cache =
          _glhckMalloc(sizeof(__GLHCKtextureCache));
    } else {
-      for (; cache && cache->next; cache->next);
+      for (; cache && cache->next; cache = cache->next);
       cache = cache->next =
          _glhckMalloc(sizeof(__GLHCKtextureCache));
    }
@@ -52,6 +52,7 @@ static int _glhckTextureCacheInsert(_glhckTexture *texture)
 
    /* init cache */
    memset(cache, 0, sizeof(__GLHCKtextureCache));
+   cache->texture = texture;
 
    RET("%d", RETURN_OK);
    return RETURN_OK;
@@ -104,6 +105,17 @@ void _glhckTextureCacheRelease(void)
    }
 
    _GLHCKlibrary.texture.cache = NULL;
+}
+
+/* \brief set texture data.
+ * NOTE: internal function, so data isn't copied. */
+void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data)
+{
+   CALL("%p, %p", texture, data);
+   assert(texture);
+
+   if (texture->data) _glhckFree(texture->data);
+   texture->data = data;
 }
 
 /* ---- PUBLIC API ---- */
@@ -240,7 +252,8 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
    /* delete texture if there is one */
    if (texture->object)
       _GLHCKlibrary.render.api.deleteTextures(1, &texture->object);
-   if (texture->data) _glhckFree(texture->data);
+
+   _glhckTextureSetData(texture, NULL);
    if (texture->file) _glhckFree(texture->file);
 
    /* free */
@@ -270,8 +283,8 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
    if (!object)
       goto fail;
 
-   if (texture->data) _glhckFree(texture->data);
-   texture->data = NULL;
+   /* remove old texture data */
+   _glhckTextureSetData(texture, NULL);
 
    texture->object   = object;
    texture->width    = width;
@@ -279,8 +292,10 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
    texture->channels = channels;
    texture->size     = width * height * channels;
 
-   if (data)
-      texture->data = _glhckCopy(data, texture->size);
+   if (data) {
+      if (!(texture->data = _glhckCopy(data, texture->size)))
+         goto fail;
+   }
 
    DEBUG(GLHCK_DBG_CRAP, "NEW %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
