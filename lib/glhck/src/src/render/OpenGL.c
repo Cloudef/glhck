@@ -32,13 +32,13 @@ const GLenum _glhckAttribName[] = {
 /* global data */
 typedef struct __OpenGLstate {
    char attrib[GLHCK_ATTRIB_COUNT];
-   char cull;
-   char texture;
+   char cull, texture;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
-   struct __OpenGLstate    state;
-   size_t                  indicesCount;
+   struct __OpenGLstate state;
+   size_t indicesCount;
+   kmMat4 projection;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
 
@@ -47,7 +47,7 @@ static __OpenGLrender _OpenGL;
 static void x(size_t count, unsigned int *objects)                   \
 {                                                                    \
    CALL("%zu, %p", count, objects);                                  \
-   y(count, objects);                                                \
+   GL_CALL(y(count, objects));                                       \
 }
 
 /* declare gl bind function */
@@ -55,7 +55,7 @@ static void x(size_t count, unsigned int *objects)                   \
 static void x(unsigned int object)                                   \
 {                                                                    \
    CALL("%d", object);                                               \
-   y;                                                                \
+   GL_CALL(y);                                                       \
 }
 
 /* check gl errors on debug build */
@@ -88,6 +88,39 @@ static inline void GL_ERROR(const char *func, const char *glfunc)
 }
 #endif
 
+/* check return value of gl function on debug build */
+#ifdef NDEBUG
+#  define GL_CHECK(x) x
+#else
+#  define GL_CHECK(x) GL_CHECK_ERROR(__func__, __STRING(x), x)
+static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc,
+      GLenum error)
+{
+   if (error != GL_NO_ERROR &&
+       error != GL_FRAMEBUFFER_COMPLETE)
+      DEBUG(GLHCK_DBG_ERROR, "GL @%-20s %-20s >> %s",
+            func, glfunc,
+            error==GL_FRAMEBUFFER_UNDEFINED?
+            "GL_FRAMEBUFFER_UNDEFINED":
+            error==GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT?
+            "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT":
+            error==GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER?
+            "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER":
+            error==GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER?
+            "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER":
+            error==GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT?
+            "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT":
+            error==GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE?
+            "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE":
+            error==GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS?
+            "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS":
+            error==GL_FRAMEBUFFER_UNSUPPORTED?
+            "GL_FRAMEBUFFER_UNSUPPORTED":
+            "GL_UNKNOWN_ERROR");
+   return error;
+}
+#endif
+
 /* ---- Render API ---- */
 
 /* \brief upload texture to renderer */
@@ -111,6 +144,15 @@ static inline unsigned int pixelFormat(int channels)
           channels==4?GL_RGBA:GL_RGBA;
 }
 
+static void getPixels(int x, int y, int width, int height,
+      int channels, unsigned char *data)
+{
+   CALL("%d, %d, %d, %d, %p",
+         x, y, width, height, channels, data);
+   GL_CALL(glReadPixels(x, y, width, height,
+            pixelFormat(channels), GL_UNSIGNED_BYTE, data));
+}
+
 /* \brief create texture from data and upload it */
 static unsigned int createTexture(const unsigned char *const buffer,
       int width, int height, int channels,
@@ -132,46 +174,50 @@ static unsigned int createTexture(const unsigned char *const buffer,
    }
 
    /* create empty texture */
-   if (!(object = reuse_texture_ID))
-      glGenTextures(1, &object);
+   if (!(object = reuse_texture_ID)) {
+      GL_CALL(glGenTextures(1, &object));
+   }
 
    /* fail? */
    if (!object)
       goto _return;
 
    glhckBindTexture(object);
-   glTexImage2D(GL_TEXTURE_2D, 0,
-         pixelFormat(channels), width, height, 0,
-         pixelFormat(channels), GL_UNSIGNED_BYTE, NULL);
-
-   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,     GL_CLAMP_TO_EDGE);
-   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,     GL_CLAMP_TO_EDGE);
+   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+   GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0,
+            pixelFormat(channels), width, height, 0,
+            pixelFormat(channels), GL_UNSIGNED_BYTE, NULL));
 
 _return:
-   RET("%d", object?RETURN_OK:RETURN_FAIL);
-   return object?RETURN_OK:RETURN_FAIL;
+   RET("%d", object);
+   return object;
 }
 
 static int linkFramebufferWithTexture(unsigned int object,
       unsigned int texture, unsigned int attachment)
 {
-   CALL("%d, %d", object, texture);
+   CALL("%d, %d, %d", object, texture, attachment);
 
-   glBindFramebuffer(GL_FRAMEBUFFER, object);
-   glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
-         GL_TEXTURE_2D, texture, 0);
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+   GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, object));
+   GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
+         GL_TEXTURE_2D, texture, 0));
 
-   if (glCheckFramebufferStatus(GL_FRAMEBUFFER)
+   if (GL_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER))
          != GL_FRAMEBUFFER_COMPLETE)
-      goto fail;
+      goto fbo_fail;
+
+   GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
    RET("%d", RETURN_OK);
    return RETURN_OK;
 
+fbo_fail:
+   DEBUG(GLHCK_DBG_ERROR, "Framebuffer is not complete");
 fail:
+   glBindFramebuffer(GL_FRAMEBUFFER, 0);
    RET("%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
@@ -354,11 +400,19 @@ static void objectDraw(_glhckObject *object)
 }
 
 /* \brief set projection matrix */
-static void setProjection(float *m)
+static void setProjection(const kmMat4 *m)
 {
    CALL("%p", m);
    GL_CALL(glMatrixMode(GL_PROJECTION));
-   GL_CALL(glLoadMatrixf(m));
+   GL_CALL(glLoadMatrixf((float*)m));
+   memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
+}
+
+static kmMat4 getProjection(void)
+{
+   TRACE();
+   RET("%p", &_OpenGL.projection);
+   return _OpenGL.projection;
 }
 
 /* \brief resize viewport */
@@ -374,7 +428,7 @@ static void resize(int width, int height)
    kmMat4PerspectiveProjection(&projection, 35,
          (float)_GLHCKlibrary.render.width/
          (float)_GLHCKlibrary.render.height, 0.1f, 300);
-   setProjection((float*)&projection);
+   setProjection(&projection);
 }
 
 /* ---- Initialization ---- */
@@ -493,8 +547,12 @@ void _glhckRenderOpenGL(void)
 
    /* drawing functions */
    GLHCK_RENDER_FUNC(setProjection, setProjection);
+   GLHCK_RENDER_FUNC(getProjection, getProjection);
    GLHCK_RENDER_FUNC(render, render);
    GLHCK_RENDER_FUNC(objectDraw, objectDraw);
+
+   /* screen */
+   GLHCK_RENDER_FUNC(getPixels, getPixels);
 
    /* common */
    GLHCK_RENDER_FUNC(resize, resize);
