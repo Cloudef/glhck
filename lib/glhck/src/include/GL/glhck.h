@@ -165,6 +165,7 @@ GLHCKAPI glhckObject* glhckObjectNew(void);
 GLHCKAPI glhckObject* glhckObjectCopy(glhckObject *src);
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
 GLHCKAPI short glhckObjectFree(glhckObject *object);
+GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertexData(glhckObject *object,
       size_t memb, const glhckImportVertexData *vertexData);
 GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
@@ -187,6 +188,8 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
 /* geometry */
 GLHCKAPI glhckObject* glhckModelNew(const char *path, size_t size);
 GLHCKAPI glhckObject* glhckCubeNew(size_t size);
+GLHCKAPI glhckObject* glhckPlaneNew(size_t size);
+GLHCKAPI glhckObject* glhckSpriteNew(const char *file, size_t size);
 
 /* textures */
 GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
@@ -197,19 +200,24 @@ GLHCKAPI int glhckTextureCreate(glhckTexture *texture, unsigned char *data,
                               int width, int height, int channels, unsigned int flags);
 GLHCKAPI int glhckTextureSave(glhckTexture *texture, const char *path);
 GLHCKAPI void glhckTextureBind(glhckTexture *texture);
-GLHCKAPI void glhckBindTexturei(unsigned int texture);
+GLHCKAPI void glhckBindTexture(unsigned int texture);
 
 /* texture atlases */
 GLHCKAPI glhckAtlas* glhckAtlasNew(void);
 GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas);
 GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture);
+GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *atlas);
 GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int border);
-GLHCKAPI int glchkAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
+GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(glhckAtlas *atlas,
+      unsigned short index);
+GLHCKAPI int glhckAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
       const kmVec2 *in, kmVec2 *out);
 
 /* render to texture */
 GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode);
 GLHCKAPI short glhckRttFree(glhckRtt *rtt);
+GLHCKAPI int glhckRttFillData(glhckRtt *rtt);
+GLHCKAPI glhckTexture* glhckRttGetTexture(glhckRtt *rtt);
 GLHCKAPI void glhckRttBegin(glhckRtt *rtt);
 GLHCKAPI void glhckRttEnd(glhckRtt *rtt);
 
