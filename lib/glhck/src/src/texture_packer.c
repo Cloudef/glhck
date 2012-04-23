@@ -28,10 +28,10 @@ static void rect_set(tpRect *rect, int x1, int y1, int x2, int y2)
 static int rect_intersects(tpRect *r1, tpRect *r2)
 {
    assert(r1 && r2);
-   return   r1->x2 < r2->x1 ||
+   return !(r1->x2 < r2->x1 ||
             r1->x1 > r2->x2 ||
             r1->y2 < r2->y1 ||
-            r1->y1 > r2->y2;
+            r1->y1 > r2->y2);
 }
 
 static void texture_set(tpTexture *t, int width, int height)
@@ -48,7 +48,7 @@ static void texture_place(tpTexture *t, int x, int y, int flipped)
 {
    assert(t);
    t->x        = x;        t->y        = y;
-   t->flipped  = flipped;  t->placed   = 0;
+   t->flipped  = flipped;  t->placed   = 1;
 }
 
 static void node_set(tpNode *n, int x, int y, int width, int height)
@@ -66,15 +66,15 @@ static int node_fits(tpNode *n, int width, int height, int *edge_count)
 
    if (width == n->width  || height == n->height ||
        width == n->height || height == n->width) {
-      if (width == n->width)        ec += height == n->height ? 2:1;
-      else if (width == n->height)  ec += height == n->width ? 2:1;
+      if (width == n->width)        ec += (height==n->height) ? 2:1;
+      else if (width == n->height)  ec += (height==n->width)  ? 2:1;
       else if (height == n->width)  ec++;
       else if (height == n->height) ec++;
    }
 
    *edge_count = ec;
-   return (width  <= n->width && height <= n->height) ||
-          (height <= n->width && width  <= n->height);
+   return (width  <= n->width && height <= n->height ||
+           height <= n->width && width  <= n->height);
 }
 
 static void node_get_rect(tpNode *n, tpRect *r)
@@ -155,9 +155,9 @@ static void glhckTexturePackerReset(_glhckTexturePacker *tp)
 static void glhckTexturePackerNodeNew(_glhckTexturePacker *tp, int x, int y, int width, int height)
 {
    tpNode *node;
-   node         = malloc(sizeof(tpNode));
+   node = malloc(sizeof(tpNode));
    node_set(node, x, y, width, height);
-   node->next   = tp->free_list;
+   node->next = tp->free_list;
    tp->free_list = node;
 }
 
@@ -252,7 +252,7 @@ short _glhckTexturePackerAdd(_glhckTexturePacker *tp, int width, int height)
    return tp->texture_index-1;
 }
 
-int glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *in_x, int *in_y, int *in_width, int *in_height)
+int _glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *in_x, int *in_y, int *in_width, int *in_height)
 {
    int ret = 0, x = 0, y = 0, width = 0, height = 0;
    tpTexture *t;
@@ -280,7 +280,7 @@ int glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *in_x,
    return ret;
 }
 
-int glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_height, int force_power_of_two, int one_pixel_border)
+int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_height, int force_power_of_two, int one_pixel_border)
 {
    int width, height;
    int count, i, i2;
@@ -322,7 +322,7 @@ int glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heigh
                most_area    = t->area;
                longest_edge = t->longest_edge;
                index        = i2;
-            } else if(t->longest_edge == longest_edge) {
+            } else if (t->longest_edge == longest_edge) {
                if (t->area > most_area) {
                   most_area = t->area;
                   index     = i2;
@@ -349,7 +349,7 @@ int glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heigh
                edge_count        = ec;
                break;
             }
-            if (search->y < least_y) {
+            else if (search->y < least_y) {
                least_y           = search->y;
                least_x           = search->x;
                previous_best_fit = previous;
@@ -368,86 +368,84 @@ int glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heigh
       }
       assert(best_fit); /* should always find a fit */
 
-      if (best_fit) {
-         validate(tp);
-         switch(edge_count) {
-            case 0:
-               if (t->longest_edge <= best_fit->width) {
-                  flipped  = 0;
-                  wid      = t->width;
-                  hit      = t->height;
+      validate(tp);
+      switch(edge_count) {
+         case 0:
+            if (t->longest_edge <= best_fit->width) {
+               flipped  = 0;
+               wid      = t->width;
+               hit      = t->height;
 
-                  if (hit > wid) {
-                     wid      = t->height;
-                     hit      = t->width;
-                     flipped  = 1;
-                  }
-
-                  texture_place(t, best_fit->x, best_fit->y, flipped);
-                  glhckTexturePackerNodeNew(tp, best_fit->x, best_fit->y + hit, best_fit->width , best_fit->height - hit);
-
-                  best_fit->x        += wid;
-                  best_fit->width    -= wid;
-                  best_fit->height    = hit;
-                  validate(tp);
-               } else {
-                  assert(t->longest_edge <= best_fit->height);
-                  flipped  = 0;
-                  wid      = t->width;
-                  hit      = t->height;
-
-                  if (hit < wid) {
-                     wid      = t->height;
-                     hit      = t->width;
-                     flipped  = 1;
-                  }
-
-                  texture_place(t, best_fit->x, best_fit->y, flipped);
-                  glhckTexturePackerNodeNew(tp, best_fit->x, best_fit->y + hit, best_fit->width, best_fit->height - hit);
-
-                  best_fit->x     += wid;
-                  best_fit->width -= wid;
-                  best_fit->height = hit;
-                  validate(tp);
+               if (hit > wid) {
+                  wid      = t->height;
+                  hit      = t->width;
+                  flipped  = 1;
                }
-               break;
-            case 1:
-               if (t->width == best_fit->width) {
-                  texture_place(t, best_fit->x, best_fit->y, 0);
-                  best_fit->y        += t->height;
-                  best_fit->height   -= t->height;
-                  validate(tp);
-               }
-               else if (t->height == best_fit->height) {
-                  texture_place(t, best_fit->x, best_fit->y, 0);
-                  best_fit->x     += t->width;
-                  best_fit->width -= t->width;
-                  validate(tp);
-               }
-               else if (t->width == best_fit->height) {
-                  texture_place(t, best_fit->x, best_fit->y, 1);
-                  best_fit->x     += t->height;
-                  best_fit->width -= t->height;
-                  validate(tp);
-               }
-               else if (t->height == best_fit->width) {
-                  texture_place(t, best_fit->x, best_fit->y, 1);
-                  best_fit->y        += t->width;
-                  best_fit->height   -= t->width;
-                  validate(tp);
-               }
-               break;
-            case 2:
-               flipped = t->width != best_fit->width || t->height != best_fit->height;
+
                texture_place(t, best_fit->x, best_fit->y, flipped);
-               if (previous_best_fit)  previous_best_fit->next = best_fit->next;
-               else                    tp->free_list = best_fit->next;
-               xfree(best_fit);
+               glhckTexturePackerNodeNew(tp, best_fit->x, best_fit->y + hit, best_fit->width , best_fit->height - hit);
+
+               best_fit->x        += wid;
+               best_fit->width    -= wid;
+               best_fit->height    = hit;
                validate(tp);
-               break;
-         }
-         while (merge_nodes(tp)); /* merge as much as we can */
+            } else {
+               assert(t->longest_edge <= best_fit->height);
+               flipped  = 0;
+               wid      = t->width;
+               hit      = t->height;
+
+               if (hit < wid) {
+                  wid      = t->height;
+                  hit      = t->width;
+                  flipped  = 1;
+               }
+
+               texture_place(t, best_fit->x, best_fit->y, flipped);
+               glhckTexturePackerNodeNew(tp, best_fit->x, best_fit->y + hit, best_fit->width, best_fit->height - hit);
+
+               best_fit->x     += wid;
+               best_fit->width -= wid;
+               best_fit->height = hit;
+               validate(tp);
+            }
+            break;
+         case 1:
+            if (t->width == best_fit->width) {
+               texture_place(t, best_fit->x, best_fit->y, 0);
+               best_fit->y        += t->height;
+               best_fit->height   -= t->height;
+               validate(tp);
+            }
+            else if (t->height == best_fit->height) {
+               texture_place(t, best_fit->x, best_fit->y, 0);
+               best_fit->x     += t->width;
+               best_fit->width -= t->width;
+               validate(tp);
+            }
+            else if (t->width == best_fit->height) {
+               texture_place(t, best_fit->x, best_fit->y, 1);
+               best_fit->x     += t->height;
+               best_fit->width -= t->height;
+               validate(tp);
+            }
+            else if (t->height == best_fit->width) {
+               texture_place(t, best_fit->x, best_fit->y, 1);
+               best_fit->y        += t->width;
+               best_fit->height   -= t->width;
+               validate(tp);
+            }
+            break;
+         case 2:
+            flipped = t->width != best_fit->width || t->height != best_fit->height;
+            texture_place(t, best_fit->x, best_fit->y, flipped);
+            if (previous_best_fit)  previous_best_fit->next = best_fit->next;
+            else                    tp->free_list = best_fit->next;
+            xfree(best_fit);
+            validate(tp);
+            break;
       }
+      while (merge_nodes(tp)); /* merge as much as we can */
    }
 
    height = 0;
