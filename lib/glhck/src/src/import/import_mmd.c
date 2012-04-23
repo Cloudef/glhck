@@ -1,6 +1,7 @@
 #include "../internal.h"
 #include "import.h"
 #include <stdio.h>
+#include <malloc.h>
 #include "../../include/mmd.h"
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
@@ -10,9 +11,12 @@
 int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
 {
    FILE *f;
+   char *texturePath;
    size_t i, i2, ix, start, num_faces, num_indices;
    mmd_header header;
    mmd_data *mmd = NULL;
+   _glhckAtlas *atlas = NULL;
+   _glhckTexture *texture = NULL, **textureList = NULL;
    glhckImportVertexData *vertexData = NULL;
    unsigned int *indices = NULL, *strip_indices = NULL;
    CALL("%p, %s, %d", object, file, animated);
@@ -36,6 +40,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
       goto mmd_import_fail;
 
    fclose(f);
+   f = NULL;
 
    DEBUG(GLHCK_DBG_CRAP, "V: %d", mmd->num_vertices);
    DEBUG(GLHCK_DBG_CRAP, "I: %d", mmd->num_indices);
@@ -46,7 +51,38 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
    if (!(indices = _glhckMalloc(mmd->num_indices * sizeof(unsigned int))))
       goto mmd_no_memory;
 
+   if (!(textureList = _glhckMalloc(mmd->num_materials * sizeof(_glhckTexture*))))
+      goto mmd_no_memory;
+
+   if (!(atlas = glhckAtlasNew()))
+      goto mmd_no_memory;
+
+   /* init texture list */
+   memset(textureList, 0, mmd->num_materials * sizeof(_glhckTexture*));
+
+   /* add all textures to atlas packer */
+   for (i = 0; i != mmd->num_materials; ++i) {
+      if (!(texturePath = _glhckImportTexturePath(mmd->texture[i].file, file)))
+         continue;
+
+      if ((texture = glhckTextureNew(texturePath, 0))) {
+         glhckAtlasInsertTexture(atlas, texture);
+         glhckTextureFree(texture);
+         textureList[i] = texture;
+      }
+
+      free(texturePath);
+   }
+
+   /* pack textures */
+   if (glhckAtlasPack(atlas, 1, 0) != RETURN_OK)
+      goto fail;
+
    /* init */
+   memset(vertexData, 0,
+         mmd->num_vertices * sizeof(glhckImportVertexData));
+
+   /* assign data */
    for (i = 0, start = 0; i != mmd->num_materials; ++i) {
       num_faces = mmd->face[i];
       for (i2 = start; i2 != start + num_faces; ++i2) {
@@ -72,10 +108,24 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
          if (vertexData[ix].coord.y < 0.0f)
             vertexData[ix].coord.y += 1;
 
+         /* if there is packed texture */
+         if (textureList[i])
+            glhckAtlasGetTransformed(atlas, textureList[i],
+                  &vertexData[ix].coord, &vertexData[ix].coord);
+
          indices[i2] = ix;
       }
       start += num_faces;
    }
+
+   /* reference atlas texture
+    * TODO: temporary, assign to object material when we have one */
+   glhckTextureRef(glhckAtlasGetTexture(atlas));
+   glhckTextureBind(glhckAtlasGetTexture(atlas));
+
+   /* we don't need atlas packer anymore */
+   glhckAtlasFree(atlas);
+   _glhckFree(textureList);
 
    /* triangle strip geometry */
    if (!(strip_indices = _glhckTriStrip(indices, mmd->num_indices, &num_indices))) {
@@ -104,7 +154,9 @@ mmd_no_memory:
    DEBUG(GLHCK_DBG_ERROR, "MMD not enough memory.");
 fail:
    if (f) fclose(f);
+   if (atlas) glhckAtlasFree(atlas);
    if (mmd) mmd_free(mmd);
+   ifree(textureList);
    ifree(vertexData);
    ifree(indices);
    ifree(strip_indices);
