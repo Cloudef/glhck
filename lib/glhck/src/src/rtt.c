@@ -17,9 +17,10 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
 
    /* init */
    memset(rtt, 0, sizeof(_glhckRtt));
-   glhckTextureCreate(texture, NULL, width, height,
+   if (!(glhckTextureCreate(texture, NULL, width, height,
          mode==GLHCK_RTT_RGB?3:
-         mode==GLHCK_RTT_RGBA?4:4, 0);
+         mode==GLHCK_RTT_RGBA?4:4, 0)))
+      goto fail;
 
    _GLHCKlibrary.render.api.generateFramebuffers(1, &rtt->object);
    if (!rtt->object)
@@ -69,6 +70,45 @@ success:
    return rtt?rtt->refCounter:0;
 }
 
+/* \brief fill rtt's texture data with current pixels */
+GLHCKAPI int glhckRttFillData(glhckRtt *rtt)
+{
+   unsigned char *data;
+   CALL("%p", rtt);
+   assert(rtt);
+
+   data = _glhckMalloc(rtt->texture->width    *
+                       rtt->texture->height   *
+                       rtt->texture->channels *
+                       sizeof(unsigned char));
+
+   if (!data)
+      goto fail;
+
+   _GLHCKlibrary.render.api.getPixels(0, 0,
+         rtt->texture->width, rtt->texture->height,
+         rtt->texture->channels, data);
+
+   _glhckTextureSetData(rtt->texture, data);
+
+   RET("%d", RETURN_OK);
+   return RETURN_OK;
+
+fail:
+   RET("%d", RETURN_FAIL);
+   return RETURN_FAIL;
+}
+
+/* \brief return rtt's texture */
+GLHCKAPI glhckTexture* glhckRttGetTexture(glhckRtt *rtt)
+{
+   CALL("%p", rtt);
+   assert(rtt);
+
+   RET("%p", rtt->texture);
+   return rtt->texture;
+}
+
 /* \brief start rendering to rtt */
 GLHCKAPI void glhckRttBegin(glhckRtt *rtt)
 {
@@ -81,6 +121,4 @@ GLHCKAPI void glhckRttEnd(glhckRtt *rtt)
 {
    assert(rtt);
    _GLHCKlibrary.render.api.bindFramebuffer(0);
-
-   /* TODO: copy the frame data to texture */
 }
