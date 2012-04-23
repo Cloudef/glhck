@@ -3,7 +3,7 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_ATLAS
 #define VEC2(v)   v?v->x:-1, v?v->y:-1
-#define VEC2S     "vec2[%f, %f, %f]"
+#define VEC2S     "vec2[%f, %f]"
 
 /* \brief get packed area for packed texture */
 static _glhckAtlasArea* _glhckAtlasGetPackedArea(
@@ -163,27 +163,45 @@ _return:
    return RETURN_OK;
 }
 
+/* \brief return combined texture */
+GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *atlas)
+{
+   CALL("%p", atlas);
+   assert(atlas);
+
+   RET("%p", atlas->texture);
+   return atlas->texture;
+}
+
+#include <GL/gl.h>
 /* \brief pack textures to atlas */
 GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int border)
 {
    int width, height;
    unsigned short count;
+   kmMat4 old_projection;
    _glhckTexturePacker *tp;
    _glhckAtlasRect *rect;
    _glhckRtt *rtt = NULL;
+   _glhckObject *plane = NULL;
+   kmMat4 ortho;
    CALL("%p, %d, %d", atlas, power_of_two, border);
 
    /* new texture packer */
    tp = _glhckTexturePackerNew();
 
-   /* add && set indexes to textures &&
-    * count them at same time */
+   /* count textures */
    for (count = 0, rect = atlas->rect;
         rect; rect = rect->next) {
       rect->index = count++;
+   }
+   _glhckTexturePackerSetCount(tp, count);
+
+   /* add textures to packer */
+   for (rect = atlas->rect;
+        rect; rect = rect->next)
       _glhckTexturePackerAdd(tp,
             rect->texture->width, rect->texture->height);
-   }
 
    /* pack textures */
    _glhckTexturePackerPack(tp, &width, &height, power_of_two, border);
@@ -191,15 +209,56 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    if (!(rtt = glhckRttNew(width, height, GLHCK_RTT_RGBA)))
       goto fail;
 
+   if (!(plane = glhckPlaneNew(1)))
+      goto fail;
+
+   kmMat4OrthographicProjection(&ortho, 0, width, 0, height, -1.0f, 1.0f);
+   kmMat4Translation(&ortho, -1, -1, 0);
+
+   _GLHCKlibrary.render.api.resize(width, height);
+   old_projection = _GLHCKlibrary.render.api.getProjection();
+   _GLHCKlibrary.render.api.setProjection(&ortho);
+
    glhckRttBegin(rtt);
    for (rect = atlas->rect; rect; rect = rect->next) {
       rect->packed.rotated = _glhckTexturePackerGetLocation(tp,
             rect->index, &rect->packed.x1, &rect->packed.y1,
-            &rect->packed.y1, &rect->packed.y2);
+            &rect->packed.x2, &rect->packed.y2);
 
-      /* we have all the info, render texture here */
+      /* rotate if need */
+      if (rect->packed.rotated)
+         glhckObjectRotatef(plane, 0, 0, 90);
+      else
+         glhckObjectRotatef(plane, 0, 0, 0);
+
+      /* position */
+      glhckObjectScalef(plane, (float)rect->packed.x2/width, (float)rect->packed.y2/height, 0);
+      glhckObjectPositionf(plane,
+            (float)(rect->packed.x1*2+rect->packed.x2)/width,
+            (float)(rect->packed.y1*2+rect->packed.y2)/height,
+            0);
+
+      /* draw texture */
+      glhckTextureBind(rect->texture);
+      glhckObjectDraw(plane);
    }
+   glhckRender();
+   glhckRttFillData(rtt);
    glhckRttEnd(rtt);
+
+   /* restore old projection && size
+    * TODO: get size from renderer */
+   _GLHCKlibrary.render.api.setProjection(&old_projection);
+   _GLHCKlibrary.render.api.resize(_GLHCKlibrary.render.width,
+         _GLHCKlibrary.render.height);
+
+   /* free plane */
+   glhckObjectFree(plane);
+
+   /* reference rtt's texture */
+   if (atlas->texture) glhckTextureFree(atlas->texture);
+   atlas->texture = glhckTextureRef(glhckRttGetTexture(rtt));
+   glhckTextureSave(atlas->texture, "test.tga");
 
    /* free rtt */
    glhckRttFree(rtt);
@@ -211,14 +270,30 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    return RETURN_OK;
 
 fail:
-   if (tp) _glhckTexturePackerFree(tp);
+   if (plane) glhckObjectFree(plane);
    if (rtt) glhckRttFree(rtt);
+   if (tp) _glhckTexturePackerFree(tp);
    RET("%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
-/* \brief retuirn transformed coordinates of packed texture */
-GLHCKAPI int glchkAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
+/* \brief return pointer to texture by index */
+GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(glhckAtlas *atlas,
+      unsigned short index)
+{
+   _glhckAtlasRect *rect;
+   CALL("%p, %d", atlas, index);
+   assert(atlas);
+
+   for (rect = atlas->rect; rect &&
+        rect->index != index; rect = rect->next);
+
+   RET("%p", rect?rect->texture:NULL);
+   return rect?rect->texture:NULL;
+}
+
+/* \brief return transformed coordinates of packed texture */
+GLHCKAPI int glhckAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
       const kmVec2 *in, kmVec2 *out)
 {
    float atlasWidth, atlasHeight;
@@ -228,6 +303,9 @@ GLHCKAPI int glchkAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
 
    CALL("%p, %p, "VEC2S", "VEC2S, atlas, texture, VEC2(in), VEC2(out));
    assert(atlas && texture && in && out);
+
+   if (!atlas->texture)
+      goto fail;
 
    if (!(packed = _glhckAtlasGetPackedArea(atlas, texture)))
       goto fail;
