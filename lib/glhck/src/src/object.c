@@ -85,9 +85,9 @@ static void _glhckConvertVertexData(_glhckObject *object, __GLHCKvertexData *int
 
    /* do we need conversion? */
    no_vconvert = 0;
-   if (vmax.x + nmin.x == 1 &&
-       vmax.y + nmin.y == 1 &&
-       vmax.z + nmin.z == 1 ||
+   if (vmax.x + vmin.x == 1 &&
+       vmax.y + vmin.y == 1 &&
+       vmax.z + vmin.z == 1 ||
        vmax.x + vmin.x == 0 &&
        vmax.y + vmin.y == 0 &&
        vmax.z + vmin.z == 0)
