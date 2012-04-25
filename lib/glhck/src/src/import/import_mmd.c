@@ -118,10 +118,8 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
       start += num_faces;
    }
 
-   /* reference atlas texture
-    * TODO: temporary, assign to object material when we have one */
-   glhckTextureRef(glhckAtlasGetTexture(atlas));
-   glhckTextureBind(glhckAtlasGetTexture(atlas));
+   /* assign texture ot object */
+   glhckObjectSetTexture(object, glhckAtlasGetTexture(atlas));
 
    /* we don't need atlas packer anymore */
    glhckAtlasFree(atlas);
