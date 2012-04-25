@@ -3,9 +3,6 @@
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
-#define ifree(x)  if (x) _glhckFree(x);
-#define VEC3(v)   v?v->x:-1, v?v->y:-1, v?v->z:-1
-#define VEC3S     "vec3[%f, %f, %f]"
 
 /* conversion defines for vertexdata conversion macro */
 #if GLHCK_PRECISION_VERTEX == GLHCK_BYTE
@@ -305,10 +302,10 @@ GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
 
 fail:
    if (object) {
-      ifree(object->geometry.vertexData);
-      ifree(object->geometry.indices);
+      IFDO(_glhckFree, object->geometry.vertexData);
+      IFDO(_glhckFree, object->geometry.indices);
    }
-   ifree(object);
+   IFDO(_glhckFree, object);
    RET("%p", NULL);
    return NULL;
 }
@@ -336,8 +333,8 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    if (--object->refCounter != 0) goto success;
 
    /* free geometry */
-   ifree(object->geometry.vertexData);
-   ifree(object->geometry.indices);
+   IFDO(_glhckFree, object->geometry.vertexData);
+   IFDO(_glhckFree, object->geometry.indices);
 
    /* free material */
    glhckObjectSetTexture(object, NULL);
@@ -384,8 +381,13 @@ GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position)
    CALL("%p, "VEC3S, object, VEC3(position));
    assert(object && position);
 
-   object->view.translation = *position;
-   object->view.update      = 1;
+   if (object->view.translation.x == position->x &&
+       object->view.translation.y == position->y &&
+       object->view.translation.z == position->z)
+      return;
+
+   kmVec3Assign(&object->view.translation, position);
+   object->view.update = 1;
 }
 
 /* \brief position object (with kmScalar) */
@@ -421,8 +423,13 @@ GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate)
    CALL("%p, "VEC3S, object, VEC3(rotate));
    assert(object && rotate);
 
-   object->view.rotation   = *rotate;
-   object->view.update     = 1;
+   if (object->view.rotation.x == rotate->x &&
+       object->view.rotation.y == rotate->y &&
+       object->view.rotation.z == rotate->z)
+      return;
+
+   kmVec3Assign(&object->view.rotation, rotate);
+   object->view.update = 1;
 }
 
 /* \brief rotate object (with kmScalar) */
@@ -439,8 +446,13 @@ GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale)
    CALL("%p, "VEC3S, object, VEC3(scale));
    assert(object && scale);
 
-   object->view.scaling = *scale;
-   object->view.update  = 1;
+   if (object->view.scaling.x == scale->x &&
+       object->view.scaling.y == scale->y &&
+       object->view.scaling.z == scale->z)
+      return;
+
+   kmVec3Assign(&object->view.scaling, scale);
+   object->view.update = 1;
 }
 
 /* \brief scale object (with kmScalar) */
