@@ -177,7 +177,7 @@ GLHCKAPI void glhckClear(void);
 GLHCKAPI glhckCamera* glhckCameraNew(void);
 GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *camera);
 GLHCKAPI short glhckCameraFree(glhckCamera *camera);
-GLHCKAPI void glhckCameraBind(glhckCamera *camera);
+GLHCKAPI void glhckCameraUpdate(glhckCamera *camera);
 GLHCKAPI void glhckCameraReset(glhckCamera *camera);
 GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov);
 GLHCKAPI void glhckCameraRange(glhckCamera *camera,

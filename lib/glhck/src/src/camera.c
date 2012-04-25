@@ -181,7 +181,7 @@ void _glhckCameraStackUpdate(int width, int height)
       /* update camera */
       _GLHCKlibrary.camera.bind = NULL;
       active->view.update = 1;
-      glhckCameraBind(active);
+      glhckCameraUpdate(active);
    }
 }
 
@@ -263,8 +263,8 @@ success:
    return camera?camera->refCounter:0;
 }
 
-/* \brief bind camera */
-GLHCKAPI void glhckCameraBind(glhckCamera *camera)
+/* \brief update the camera */
+GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
 {
    CALL("%p", camera);
 
