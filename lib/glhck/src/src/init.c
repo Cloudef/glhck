@@ -16,7 +16,8 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(resize);
    GLHCK_API_CHECK(setProjection);
    GLHCK_API_CHECK(getProjection);
-   GLHCK_API_CHECK(render);
+   GLHCK_API_CHECK(setClearColor);
+   GLHCK_API_CHECK(clear);
    GLHCK_API_CHECK(objectDraw);
    GLHCK_API_CHECK(getPixels);
    GLHCK_API_CHECK(generateTextures);
@@ -126,8 +127,8 @@ GLHCKAPI void glhckDisplayResize(int width, int height)
    _GLHCKlibrary.render.api.resize(width, height);
 }
 
-/* \brief render scene using renderer */
-GLHCKAPI void glhckRender(void)
+/* \brief clear scene */
+GLHCKAPI void glhckClear(void)
 {
    TRACE();
 
@@ -135,7 +136,7 @@ GLHCKAPI void glhckRender(void)
    if (!_glhckInitialized || !_GLHCKlibrary.render.name)
       return;
 
-   _GLHCKlibrary.render.api.render();
+   _GLHCKlibrary.render.api.clear();
 }
 
 /* \brief frees virtual display and deinits glue framework */
