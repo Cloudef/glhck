@@ -238,7 +238,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
             0);
 
       /* draw texture */
-      glhckTextureBind(rect->texture);
+      glhckObjectSetTexture(plane, rect->texture);
       glhckObjectDraw(plane);
    }
    glhckRttFillData(rtt);
