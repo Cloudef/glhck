@@ -62,14 +62,34 @@ fail:
 }
 
 /* \brief create new sprite */
-GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, size_t size)
+GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, size_t size, unsigned int flags)
 {
+   _glhckObject *object;
+   _glhckTexture *texture;
    CALL("%s, %zu", file, size);
 
-   /* TODO: create plane and texture it
-    * needs material system */
+   /* load texture */
+   if (!(texture = glhckTextureNew(file, flags)))
+      goto fail;
+
+   /* make plane */
+   if (!(object = glhckPlaneNew(1)))
+      goto fail;
+
+   /* scale keeping aspect ratio */
+   glhckObjectScalef(object,
+         (float)size/texture->width,
+         (float)size/texture->height, 1);
+
+   /* pass reference to object, and free this */
+   glhckObjectSetTexture(object, texture);
+   glhckTextureFree(texture);
+
+   RET("%p", object);
+   return object;
 
 fail:
+   if (texture) glhckTextureFree(texture);
    RET("%p", NULL);
    return NULL;
 }
