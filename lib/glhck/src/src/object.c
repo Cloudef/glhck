@@ -250,6 +250,7 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    memset(object, 0, sizeof(_glhckObject));
    memset(&object->geometry, 0, sizeof(__GLHCKobjectGeometry));
    memset(&object->view, 0, sizeof(__GLHCKobjectView));
+   memset(&object->material, 0, sizeof(__GLHCKobjectMaterial));
 
    /* default geometry type is tristrip */
    object->geometry.type = GLHCK_TRIANGLE_STRIP;
@@ -338,6 +339,9 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    ifree(object->geometry.vertexData);
    ifree(object->geometry.indices);
 
+   /* free material */
+   glhckObjectSetTexture(object, NULL);
+
    /* free */
    _glhckFree(object);
    object = NULL;
@@ -345,6 +349,20 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
 success:
    RET("%d", object?object->refCounter:0);
    return object?object->refCounter:0;
+}
+
+/* \brief set object's texture */
+GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture)
+{
+   CALL("%p, %p", object, texture);
+   assert(object);
+
+   if (object->material.texture)
+      glhckTextureFree(object->material.texture);
+   object->material.texture = NULL;
+
+   if (texture)
+      object->material.texture = glhckTextureRef(texture);
 }
 
 /* \brief draw object */
