@@ -15,8 +15,8 @@ kmVec3* kmVec3RotationToDirection(kmVec3* pOut, const kmVec3* pIn, const kmVec3*
    const kmScalar yr = kmDegreesToRadians(pIn->y);
    const kmScalar zr = kmDegreesToRadians(pIn->z);
    const kmScalar cr = cos(xr), sr = sin(xr);
-   const kmScalar cp = cos(yr), sp = cos(yr);
-   const kmScalar cy = cos(zr), sy = cos(zr);
+   const kmScalar cp = cos(yr), sp = sin(yr);
+   const kmScalar cy = cos(zr), sy = sin(zr);
 
    const kmScalar srsp = sr*sp;
    const kmScalar crsp = cr*sp;
@@ -268,20 +268,18 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
 {
    CALL("%p", camera);
 
-   if (_GLHCKlibrary.camera.bind == camera)
-      return;
-
    /* bind none */
    if (!camera) {
       _GLHCKlibrary.camera.bind = NULL;
       return;
    }
 
-   _GLHCKlibrary.render.api.viewport(
-         camera->view.viewport.x,
-         camera->view.viewport.y,
-         camera->view.viewport.z,
-         camera->view.viewport.w);
+   if (_GLHCKlibrary.camera.bind != camera)
+      _GLHCKlibrary.render.api.viewport(
+            camera->view.viewport.x,
+            camera->view.viewport.y,
+            camera->view.viewport.z,
+            camera->view.viewport.w);
 
    if (camera->view.update) {
       _glhckCameraViewMatrix(camera);
@@ -303,7 +301,7 @@ GLHCKAPI void glhckCameraReset(glhckCamera *camera)
    camera->view.update = 1;
    kmVec3Fill(&camera->view.upVector, 0, 1, 0);
    kmVec3Fill(&camera->view.rotation, 0, 0, 0);
-   kmVec3Fill(&camera->view.target, 0, 0, -10);
+   kmVec3Fill(&camera->view.target, 0, 0, 0);
    kmVec3Fill(&camera->view.translation, 0, 0, 0);
    kmVec4Fill(&camera->view.viewport, 0, 0,
          _GLHCKlibrary.render.width,
