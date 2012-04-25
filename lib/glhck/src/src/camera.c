@@ -158,20 +158,25 @@ void _glhckCameraStackUpdate(int width, int height)
 {
    _glhckCamera *active;
    __GLHCKcameraStack *stack;
+   int diffw, diffh;
    CALL("%d, %d", width, height);
+
+   /* get difference of old dimensions and now */
+   diffw = width  - _GLHCKlibrary.render.width;
+   diffh = height - _GLHCKlibrary.render.height;
 
    for (stack = _GLHCKlibrary.camera.stack;
         stack; stack = stack->next) {
       glhckCameraViewportf(stack->camera,
             stack->camera->view.viewport.x,
             stack->camera->view.viewport.y,
-            width,
-            height);
+            stack->camera->view.viewport.z + diffw,
+            stack->camera->view.viewport.w + diffh);
    }
 
    /* no camera binded, upload default projection */
    if (!(active = _GLHCKlibrary.camera.bind))
-      _glhckDefaultProjection();
+      _glhckDefaultProjection(width, height);
    else {
       /* update camera */
       _GLHCKlibrary.camera.bind = NULL;
