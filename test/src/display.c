@@ -20,6 +20,7 @@ int main(int argc, char **argv)
    GLFWwindow window;
    glhckTexture *texture;
    glhckObject *cube;
+   glhckCamera *camera;
    float spin = 0;
 
    float          now          = 0;
@@ -44,6 +45,13 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
 
    RUNNING = 1;
+
+   /* test camera */
+   if (!(camera = glhckCameraNew()))
+      return EXIT_FAILURE;
+
+   /* bind the camera */
+   glhckCameraBind(camera);
 
    /* this texture is useless when toggling PMD testing */
    if (!(texture = glhckTextureNew("../media/glhck.png",
@@ -97,6 +105,7 @@ int main(int argc, char **argv)
    }
    glhckObjectFree(cube);
    glhckTextureFree(texture);
+   glhckCameraFree(camera);
 
    glhckTerminate();
    glfwTerminate();
