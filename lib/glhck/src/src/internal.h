@@ -415,11 +415,11 @@ _glhckTexturePacker*  _glhckTexturePackerNew(void);
 void                  _glhckTexturePackerFree(_glhckTexturePacker *tp);
 
 /* misc */
-void _glhckDefaultProjection(void);
+void _glhckDefaultProjection(int width, int height);
 
 /* camera */
 void _glhckCameraStackUpdate(int width, int height);
-void _glhckCameraStackReleae(void);
+void _glhckCameraStackRelease(void);
 
 /* textures */
 void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
