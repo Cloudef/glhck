@@ -41,8 +41,8 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
    return rtt;
 
 fail:
-   if (rtt) _glhckFree(rtt);
-   if (texture) glhckTextureFree(texture);
+   IFDO(_glhckFree, rtt);
+   IFDO(glhckTextureFree, texture);
    RET("%p", NULL);
    return NULL;
 }
