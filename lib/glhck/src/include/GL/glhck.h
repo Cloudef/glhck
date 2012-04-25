@@ -157,8 +157,8 @@ GLHCKAPI int glchkDisplayCreate(int width, int height, glhckRenderType renderTyp
 GLHCKAPI void glhckDisplayClose(void);
 GLHCKAPI void glhckDisplayResize(int width, int height);
 
-/* render */
-GLHCKAPI void glhckRender(void);
+/* drawing */
+GLHCKAPI void glhckClear(void);
 
 /* objects */
 GLHCKAPI glhckObject* glhckObjectNew(void);
