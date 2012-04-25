@@ -7,6 +7,7 @@ extern "C" {
 
 #include <stddef.h> /* for default typedefs */
 #include <kazmath/kazmath.h> /* glhck needs kazmath */
+#include <kazmath/vec4.h> /* is not include by kazmat.h */
 
 /* System specific defines, stolen from glfw.
  * Thanks for the nice library guys. */
@@ -156,6 +157,7 @@ typedef struct _glhckTexture glhckTexture;
 typedef struct _glhckAtlas   glhckAtlas;
 typedef struct _glhckRtt     glhckRtt;
 typedef struct _glhckObject  glhckObject;
+typedef struct _glhckCamera  glhckCamera;
 
 typedef void (*glhckDebugHookFunc)(const char *file, int line, const char *function, glhckDebugLevel level, const char *str);
 
@@ -170,6 +172,32 @@ GLHCKAPI void glhckDisplayResize(int width, int height);
 
 /* drawing */
 GLHCKAPI void glhckClear(void);
+
+/* cameras */
+GLHCKAPI glhckCamera* glhckCameraNew(void);
+GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *camera);
+GLHCKAPI short glhckCameraFree(glhckCamera *camera);
+GLHCKAPI void glhckCameraBind(glhckCamera *camera);
+GLHCKAPI void glhckCameraReset(glhckCamera *camera);
+GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov);
+GLHCKAPI void glhckCameraRange(glhckCamera *camera,
+      const kmScalar near, const kmScalar far);
+GLHCKAPI void glhckCameraViewport(glhckCamera *camera, const kmVec4 *viewport);
+GLHCKAPI void glhckCameraViewportf(glhckCamera *camera,
+      const kmScalar x, const kmScalar y,
+      const kmScalar w, const kmScalar h);
+GLHCKAPI void glhckCameraPosition(glhckCamera *camera, const kmVec3 *position);
+GLHCKAPI void glhckCameraPositionf(glhckCamera *camera,
+      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckCameraMove(glhckCamera *camera, const kmVec3 *move);
+GLHCKAPI void glhckCameraMovef(glhckCamera *camera,
+      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckCameraRotate(glhckCamera *camera, const kmVec3 *rotation);
+GLHCKAPI void glhckCameraRotatef(glhckCamera *camera,
+      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckCameraTarget(glhckCamera *camera, const kmVec3 *target);
+GLHCKAPI void glhckCameraTargetf(glhckCamera *camera,
+      const kmScalar x, const kmScalar y, const kmScalar z);
 
 /* objects */
 GLHCKAPI glhckObject* glhckObjectNew(void);
