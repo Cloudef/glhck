@@ -2,8 +2,6 @@
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_ATLAS
-#define VEC2(v)   v?v->x:-1, v?v->y:-1
-#define VEC2S     "vec2[%f, %f]"
 
 /* \brief get packed area for packed texture */
 static _glhckAtlasArea* _glhckAtlasGetPackedArea(
@@ -186,7 +184,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    CALL("%p, %d, %d", atlas, power_of_two, border);
 
    /* new texture packer */
-   tp = _glhckTexturePackerNew();
+   if (!(tp = _glhckTexturePackerNew()))
+      goto fail;
 
    /* count textures */
    for (count = 0, rect = atlas->rect;
@@ -213,7 +212,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    kmMat4OrthographicProjection(&ortho, 0, width, 0, height, -1.0f, 1.0f);
    kmMat4Translation(&ortho, -1, -1, 0);
 
-   _GLHCKlibrary.render.api.resize(width, height);
+   _GLHCKlibrary.render.api.viewport(0, 0, width, height);
    old_projection = _GLHCKlibrary.render.api.getProjection();
    _GLHCKlibrary.render.api.setProjection(&ortho);
 
@@ -247,7 +246,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    /* restore old projection && size
     * TODO: get size from renderer */
    _GLHCKlibrary.render.api.setProjection(&old_projection);
-   _GLHCKlibrary.render.api.resize(_GLHCKlibrary.render.width,
+   _GLHCKlibrary.render.api.viewport(0, 0, _GLHCKlibrary.render.width,
          _GLHCKlibrary.render.height);
 
    /* free plane */
@@ -268,9 +267,9 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    return RETURN_OK;
 
 fail:
-   if (plane) glhckObjectFree(plane);
-   if (rtt) glhckRttFree(rtt);
-   if (tp) _glhckTexturePackerFree(tp);
+   IFDO(glhckObjectFree, plane);
+   IFDO(glhckRttFree, rtt);
+   IFDO(_glhckTexturePackerFree, tp);
    RET("%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
