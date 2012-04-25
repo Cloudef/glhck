@@ -244,7 +244,6 @@ static void setClearColor(const float r, const float g, const float b, const flo
 /* \brief clear scene */
 static void clear(void)
 {
-   kmMat4 projection;
    TRACE();
 
    /* clear buffers, TODO: keep track of em */
@@ -466,19 +465,12 @@ static kmMat4 getProjection(void)
 }
 
 /* \brief resize viewport */
-static void resize(int width, int height)
+static void viewport(int x, int y, int width, int height)
 {
-   kmMat4 projection;
-   CALL("%d, %d", width, height);
+   CALL("%d, %d, %d, %d", x, y, width, height);
 
    /* set viewport */
-   GL_CALL(glViewport(0, 0, width, height));
-
-   /* use this as default projection for now */
-   kmMat4PerspectiveProjection(&projection, 35,
-         (float)_GLHCKlibrary.render.width/
-         (float)_GLHCKlibrary.render.height, 0.1f, 300);
-   setProjection(&projection);
+   GL_CALL(glViewport(x, y, width, height));
 }
 
 /* ---- Initialization ---- */
@@ -525,9 +517,7 @@ static int renderInit(void)
    /* set texture coords according to how glhck wants them */
    GL_CALL(glMatrixMode(GL_TEXTURE));
    GL_CALL(glScalef(1.0f/GLHCK_RANGE_COORD, 1.0f/GLHCK_RANGE_COORD, 1.0f));
-
-   /* set viewport and default projection */
-   resize(_GLHCKlibrary.render.width, _GLHCKlibrary.render.height);
+   GL_CALL(glMatrixMode(GL_MODELVIEW));
 
    RET("%d", RETURN_OK);
    return RETURN_OK;
@@ -602,7 +592,7 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(getPixels, getPixels);
 
    /* common */
-   GLHCK_RENDER_FUNC(resize, resize);
+   GLHCK_RENDER_FUNC(viewport, viewport);
    GLHCK_RENDER_FUNC(terminate, renderTerminate);
 
    /* this also tells library that everything went OK,
