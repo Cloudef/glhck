@@ -9,11 +9,11 @@
 
 /* \brief macro and function for checking render api calls */
 #define GLHCK_API_CHECK(x) \
-if (!render->api.x) DEBUG(GLHCK_DBG_ERROR, "[%s] missing render API function: %s", render->name, __STRING(x))
+if (!render->api.x) DEBUG(GLHCK_DBG_ERROR, "[%s] \1missing render API function: %s", render->name, __STRING(x))
 static void _glhckCheckRenderApi(__GLHCKrender *render)
 {
    GLHCK_API_CHECK(terminate);
-   GLHCK_API_CHECK(resize);
+   GLHCK_API_CHECK(viewport);
    GLHCK_API_CHECK(setProjection);
    GLHCK_API_CHECK(getProjection);
    GLHCK_API_CHECK(setClearColor);
@@ -31,6 +31,20 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(linkFramebufferWithTexture);
 }
 
+/* \brief builds and sends the default projection to renderer */
+void _glhckDefaultProjection(void)
+{
+   kmMat4 projection;
+   TRACE();
+   _GLHCKlibrary.render.api.viewport(0, 0,
+         _GLHCKlibrary.render.width,
+         _GLHCKlibrary.render.height);
+   kmMat4PerspectiveProjection(&projection, 35,
+         (float)_GLHCKlibrary.render.width/
+         (float)_GLHCKlibrary.render.height, 0.1f, 300.0f);
+ _GLHCKlibrary.render.api.setProjection(&projection);
+}
+
 /* public api */
 
 /* \brief initialize */
@@ -46,6 +60,7 @@ GLHCKAPI int glhckInit(int argc, char **argv)
    memset(&_GLHCKlibrary.render,          0, sizeof(__GLHCKrender));
    memset(&_GLHCKlibrary.render.api,      0, sizeof(__GLHCKrenderAPI));
    memset(&_GLHCKlibrary.texture,         0, sizeof(__GLHCKtexture));
+   memset(&_GLHCKlibrary.camera,          0, sizeof(__GLHCKcamera));
 
    /* init trace system */
    _glhckTraceInit(argc, argv);
@@ -60,6 +75,7 @@ success:
 /* \brief creates virtual display and inits renderer */
 GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderType)
 {
+   kmMat4 projection;
    CALL("%d, %d, %d", width, height, renderType);
 
    if (!_glhckInitialized ||
@@ -74,9 +90,6 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    if (_GLHCKlibrary.render.type == renderType) goto success;
    else glhckDisplayClose();
 
-   /* resize display */
-   glhckDisplayResize(width, height);
-
    /* init renderer */
    if (renderType == GLHCK_RENDER_OPENGL)
       _glhckRenderOpenGL();
@@ -89,6 +102,9 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
     * if any function is missing */
    _glhckCheckRenderApi(&_GLHCKlibrary.render);
    _GLHCKlibrary.render.type = renderType;
+
+   /* resize display */
+   glhckDisplayResize(width, height);
 
 success:
    RET("%d", RETURN_OK);
@@ -122,9 +138,15 @@ GLHCKAPI void glhckDisplayResize(int width, int height)
    if (!_glhckInitialized || !_GLHCKlibrary.render.name)
       return;
 
+   if (_GLHCKlibrary.render.width  == width &&
+       _GLHCKlibrary.render.height == height)
+      return;
+
    _GLHCKlibrary.render.width  = width;
    _GLHCKlibrary.render.height = height;
-   _GLHCKlibrary.render.api.resize(width, height);
+
+   /* update all cameras */
+   _glhckCameraStackUpdate(width, height);
 }
 
 /* \brief clear scene */
