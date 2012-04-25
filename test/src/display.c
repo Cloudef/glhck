@@ -74,11 +74,10 @@ int main(int argc, char **argv)
 
       /* glhck drawing */
       glhckObjectDraw(cube);
-      glhckRender();
 
       /* Actual swap and clear */
       glfwSwapBuffers();
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glhckClear();
 
       if (fpsDelay < now) {
          if (duration > 0.0f) {
@@ -101,3 +100,5 @@ int main(int argc, char **argv)
    glfwTerminate();
    return EXIT_SUCCESS;
 }
+
+/* vim: set ts=8 sw=3 tw=0 :*/
