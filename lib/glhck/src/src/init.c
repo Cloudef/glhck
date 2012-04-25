@@ -41,7 +41,7 @@ void _glhckDefaultProjection(void)
          _GLHCKlibrary.render.height);
    kmMat4PerspectiveProjection(&projection, 35,
          (float)_GLHCKlibrary.render.width/
-         (float)_GLHCKlibrary.render.height, 0.1f, 300.0f);
+         (float)_GLHCKlibrary.render.height, 0.1f, 100.0f);
  _GLHCKlibrary.render.api.setProjection(&projection);
 }
 
@@ -168,6 +168,7 @@ GLHCKAPI void glhckTerminate(void)
    if (!_glhckInitialized) return;
    glhckDisplayClose();
    _glhckTextureCacheRelease();
+   _glhckCameraStackRelease();
 #ifndef NDEBUG
    _glhckTrackTerminate();
 #endif
