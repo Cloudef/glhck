@@ -93,7 +93,6 @@ success:
 GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture)
 {
    _glhckAtlasRect *rect;
-   unsigned short count;
    CALL("%p, %p", atlas, texture);
    assert(atlas && texture);
 
@@ -106,12 +105,11 @@ GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture)
       goto success;
 
    /* insert here */
-   count = 0;
    if (!(rect = atlas->rect)) {
       rect = atlas->rect =
          _glhckMalloc(sizeof(_glhckAtlasRect));
    } else {
-      for (; rect && rect->next; rect = rect->next) ++count;
+      for (; rect && rect->next; rect = rect->next);
       rect = rect->next =
          _glhckMalloc(sizeof(_glhckAtlasRect));
    }
@@ -220,6 +218,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    _GLHCKlibrary.render.api.setProjection(&ortho);
 
    glhckRttBegin(rtt);
+   _GLHCKlibrary.render.api.clear();
    for (rect = atlas->rect; rect; rect = rect->next) {
       rect->packed.rotated = _glhckTexturePackerGetLocation(tp,
             rect->index, &rect->packed.x1, &rect->packed.y1,
@@ -242,7 +241,6 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
       glhckTextureBind(rect->texture);
       glhckObjectDraw(plane);
    }
-   glhckRender();
    glhckRttFillData(rtt);
    glhckRttEnd(rtt);
 
