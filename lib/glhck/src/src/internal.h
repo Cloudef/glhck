@@ -7,6 +7,10 @@
 #  define GLHCKGLOBAL extern
 #endif
 
+#if defined(GLHCK_KAZMATH_FLOAT)
+#  define kmScalar float
+#endif
+
 #include "../include/GL/glhck.h"
 #include <string.h> /* for strrchr */
 
@@ -415,6 +419,7 @@ void _glhckDefaultProjection(void);
 
 /* camera */
 void _glhckCameraStackUpdate(int width, int height);
+void _glhckCameraStackReleae(void);
 
 /* textures */
 void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
