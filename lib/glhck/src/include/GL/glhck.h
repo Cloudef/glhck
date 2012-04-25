@@ -91,12 +91,15 @@ extern "C" {
 #endif
 
 /* public api below */
+
+/* debugging level */
 typedef enum glhckDebugLevel {
    GLHCK_DBG_ERROR,
    GLHCK_DBG_WARNING,
    GLHCK_DBG_CRAP,
 } glhckDebugLevel;
 
+/* render type */
 typedef enum glhckRenderType {
    GLHCK_RENDER_NONE,
    GLHCK_RENDER_OPENGL,
@@ -120,6 +123,13 @@ typedef enum glhckTextureFlags
    GLHCK_TEXTURE_DEFAULTS        = 1024
 } glhckTextureFlags;
 
+/* material flags */
+typedef enum glhckMaterialFlags
+{
+   GLHCK_MATERIAL_DRAW_AABB = 1,
+   GLHCK_MATERIAL_WIREFRAME = 2,
+} glhckMaterialFlags;
+
 /* rtt modes */
 typedef enum glhckRttMode
 {
@@ -127,6 +137,7 @@ typedef enum glhckRttMode
    GLHCK_RTT_RGBA
 } glhckRttMode;
 
+/* color struct */
 typedef struct glhckColor
 {
    unsigned char r, g, b, a;
@@ -165,6 +176,7 @@ GLHCKAPI glhckObject* glhckObjectNew(void);
 GLHCKAPI glhckObject* glhckObjectCopy(glhckObject *src);
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
 GLHCKAPI short glhckObjectFree(glhckObject *object);
+GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertexData(glhckObject *object,
       size_t memb, const glhckImportVertexData *vertexData);
