@@ -98,6 +98,23 @@ static void _glhckCameraRemoveStack(_glhckCamera *camera)
 
 }
 
+/* \brief release camera stack */
+void _glhckCameraStackRelease(void)
+{
+   __GLHCKcameraStack *stack, *next;
+   TRACE();
+
+   if (!(stack = _GLHCKlibrary.camera.stack))
+      return;
+
+   for (; stack; stack = next) {
+      next = stack->next;
+      _glhckFree(stack);
+   }
+
+   _GLHCKlibrary.camera.stack = NULL;
+}
+
 /* \brief calculate projection matrix */
 static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
 {
