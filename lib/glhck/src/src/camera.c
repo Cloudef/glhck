@@ -98,26 +98,6 @@ static void _glhckCameraRemoveStack(_glhckCamera *camera)
 
 }
 
-/* \brief update the camera stack after window resize */
-void _glhckCameraStackUpdate(int width, int height)
-{
-   __GLHCKcameraStack *stack;
-   CALL("%d, %d", width, height);
-
-   for (stack = _GLHCKlibrary.camera.stack;
-        stack; stack = stack->next) {
-      glhckCameraViewportf(stack->camera,
-            stack->camera->view.viewport.x,
-            stack->camera->view.viewport.y,
-            width+(width-stack->camera->view.viewport.z),
-            height+(height-stack->camera->view.viewport.w));
-   }
-
-   /* no camera binded, upload default projection */
-   if (!_GLHCKlibrary.camera.bind)
-      _glhckDefaultProjection();
-}
-
 /* \brief calculate projection matrix */
 static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
 {
@@ -127,8 +107,7 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
    kmMat4PerspectiveProjection(
          &camera->view.projection,
          camera->view.fov,
-         (float)camera->view.viewport.z/
-         (float)camera->view.viewport.w,
+         camera->view.viewport.z/camera->view.viewport.w,
          camera->view.near, camera->view.far);
 }
 
@@ -155,6 +134,33 @@ static void _glhckCameraViewMatrix(_glhckCamera *camera)
 
    kmMat4Multiply(&camera->view.matrix,
          &camera->view.projection, &view);
+}
+
+/* \brief update the camera stack after window resize */
+void _glhckCameraStackUpdate(int width, int height)
+{
+   _glhckCamera *active;
+   __GLHCKcameraStack *stack;
+   CALL("%d, %d", width, height);
+
+   for (stack = _GLHCKlibrary.camera.stack;
+        stack; stack = stack->next) {
+      glhckCameraViewportf(stack->camera,
+            stack->camera->view.viewport.x,
+            stack->camera->view.viewport.y,
+            width,
+            height);
+   }
+
+   /* no camera binded, upload default projection */
+   if (!(active = _GLHCKlibrary.camera.bind))
+      _glhckDefaultProjection();
+   else {
+      /* update camera */
+      _GLHCKlibrary.camera.bind = NULL;
+      active->view.update = 1;
+      glhckCameraBind(active);
+   }
 }
 
 /* public api */
@@ -275,7 +281,7 @@ GLHCKAPI void glhckCameraReset(glhckCamera *camera)
    camera->view.update = 1;
    kmVec3Fill(&camera->view.upVector, 0, 1, 0);
    kmVec3Fill(&camera->view.rotation, 0, 0, 0);
-   kmVec3Fill(&camera->view.target, 0, 0, 0);
+   kmVec3Fill(&camera->view.target, 0, 0, -10);
    kmVec3Fill(&camera->view.translation, 0, 0, 0);
    kmVec4Fill(&camera->view.viewport, 0, 0,
          _GLHCKlibrary.render.width,
