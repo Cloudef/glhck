@@ -16,7 +16,7 @@ static const char *_drawFuncs[] = {
    "glhckRender",
    "glhckObjectDraw",
    "objectDraw",
-   "render",
+   "clear",
    NULL,
 };
 
