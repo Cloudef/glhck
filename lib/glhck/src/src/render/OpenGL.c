@@ -32,7 +32,7 @@ const GLenum _glhckAttribName[] = {
 /* global data */
 typedef struct __OpenGLstate {
    char attrib[GLHCK_ATTRIB_COUNT];
-   char cull, texture;
+   char cull, texture, draw_aabb, wireframe;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
@@ -280,6 +280,12 @@ static inline void materialState(_glhckObject *object)
     * we don't have materials yet...
     * so use everything. */
    memset(&_OpenGL.state, 1, sizeof(__OpenGLstate));
+   _OpenGL.state.texture   = object->material.texture?1:0;
+   _OpenGL.state.attrib[1] = _OpenGL.state.texture;
+   _OpenGL.state.draw_aabb =
+      object->material.flags & GLHCK_MATERIAL_DRAW_AABB;
+   _OpenGL.state.wireframe =
+      object->material.flags & GLHCK_MATERIAL_WIREFRAME;
 
    /* check culling */
    if (_OpenGL.state.cull != old.cull) {
@@ -319,6 +325,10 @@ static inline void materialState(_glhckObject *object)
          }
       }
    }
+
+   /* bind texture if used */
+   if (_OpenGL.state.texture)
+      glhckTextureBind(object->material.texture);
 }
 
 /* \brief draw object's bounding box */
@@ -385,6 +395,7 @@ static void drawAABB(_glhckObject *object)
 static void objectDraw(_glhckObject *object)
 {
    unsigned int i;
+   unsigned int old_primitive;
    CALL("%p", object);
 
    /* no point drawing without vertex data */
@@ -398,8 +409,24 @@ static void objectDraw(_glhckObject *object)
    /* set states and draw */
    materialState(object);
    geometryPointer(&object->geometry);
+
+   /* switch to wireframe if requested */
+   if (_OpenGL.state.wireframe) {
+      old_primitive = object->geometry.type;
+      object->geometry.type = object->geometry.type == GLHCK_TRIANGLES
+         ? GLHCK_LINES : GLHCK_LINE_STRIP;
+   }
+
+   /* draw geometry */
    geometryDraw(&object->geometry);
-   drawAABB(object);
+
+   /* restore old primitive type */
+   if (_OpenGL.state.wireframe)
+      object->geometry.type = old_primitive;
+
+   /* draw bounding box, if requested */
+   if (_OpenGL.state.draw_aabb)
+      drawAABB(object);
 
    /* enable the culling back */
    if (_OpenGL.state.cull &&
