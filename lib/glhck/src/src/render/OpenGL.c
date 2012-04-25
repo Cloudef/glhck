@@ -4,10 +4,21 @@
 #include <limits.h>
 #include <stdio.h>   /* for sscanf */
 
-#ifndef PANDORA
+#if !defined(GLES)
 #  include <GL/glew.h> /* for opengl */
 #else
 #  include <GLES/gl.h> /* for opengl ES */
+#  include <GLES/glext.h>
+#  define GL_FRAMEBUFFER_COMPLETE                        GL_FRAMEBUFFER_COMPLETE_OES
+#  define GL_FRAMEBUFFER_UNDEFINED                       GL_FRAMEBUFFER_COMPLETE_OES
+#  define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT           GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_OES
+#  define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER          GL_FRAMEBUFFER_COMPLETE_OES
+#  define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER          GL_FRAMEBUFFER_COMPLETE_OES
+#  define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT   GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_OES
+#  define GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE          GL_FRAMEBUFFER_COMPLETE_OES
+#  define GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS        GL_FRAMEBUFFER_COMPLETE_OES
+#  define GL_FRAMEBUFFER_UNSUPPORTED                     GL_FRAMEBUFFER_UNSUPPORTED_OES
+#  define GL_FRAMEBUFFER                                 GL_FRAMEBUFFER_OES
 #endif
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
@@ -551,7 +562,7 @@ void _glhckRenderOpenGL(void)
    GL_CALL(glClearColor(0,0,0,1));
    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
-#ifndef PANDORA
+#if !defined(GLES)
    /* we use GLEW */
    if (glewInit() != GLEW_OK)
       goto fail;
