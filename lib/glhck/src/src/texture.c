@@ -63,14 +63,14 @@ fail:
 }
 
 /* \brief remove texture from cache */
-static int _glhckTextureCacheRemove(_glhckTexture *texture)
+static void _glhckTextureCacheRemove(_glhckTexture *texture)
 {
    __GLHCKtextureCache *cache, *found;
    CALL("%p", texture);
    assert(texture);
 
    if (!(cache = _GLHCKlibrary.texture.cache))
-      goto _return;
+      return;
 
    if (cache->texture == texture) {
       _GLHCKlibrary.texture.cache = cache->next;
@@ -84,10 +84,6 @@ static int _glhckTextureCacheRemove(_glhckTexture *texture)
          _glhckFree(found);
       }
    }
-
-_return:
-   RET("%d", RETURN_OK);
-   return RETURN_OK;
 }
 
 /* \brief release texture cache */
