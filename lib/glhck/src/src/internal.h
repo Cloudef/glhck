@@ -188,10 +188,17 @@ typedef struct __GLHCKobjectView
    char update;
 } __GLHCKobjectView;
 
+typedef struct __GLHCKobjectMaterial
+{
+   struct _glhckTexture *texture;
+   unsigned int flags;
+} __GLHCKobjectMaterial;
+
 typedef struct _glhckObject
 {
    struct __GLHCKobjectGeometry geometry;
    struct __GLHCKobjectView view;
+   struct __GLHCKobjectMaterial material;
    short refCounter;
 } _glhckObject;
 
