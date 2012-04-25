@@ -45,15 +45,17 @@ int main(int argc, char **argv)
 
    RUNNING = 1;
 
+   /* this texture is useless when toggling PMD testing */
    if (!(texture = glhckTextureNew("../media/glhck.png",
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
-   glhckTextureBind(texture);
 
 #if 1
    cube = glhckCubeNew(1);
    //cube = glhckPlaneNew(1);
+   //cube = glhckSpriteNew("../media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
    glhckObjectPositionf(cube, 0, 0, -10.0f);
+   glhckObjectSetTexture(cube, texture);
 #else
    cube = glhckModelNew("../media/md_m.pmd", 1);
    glhckObjectPositionf(cube, 0, -10.0f, -50.0f);
