@@ -3,6 +3,7 @@ PROJECT(ROOT)
 SET(PROJECT_NAME "GLhck Rendering Engine")
 SET(GLUE_DESCRIPTION "A dead simple OpenGL/GLES rendering engine")
 OPTION(GLHCK_USE_GLES "Build for OpenGL ES" OFF)
+OPTION(GLHCK_KAZMATH_FLOAT "Defines kmScalar as float" ON)
 
 SET(LIB_OUT_DIR ${CMAKE_BINARY_DIR}/build/lib)
 SET(TEST_OUT_DIR ${CMAKE_BINARY_DIR}/build/test)
@@ -36,6 +37,11 @@ IF (PANDORA)
     ADD_DEFINITIONS(-DPANDORA)
     SET(GLHCK_USE_GLES 1)
 ENDIF (PANDORA)
+
+# Use floating point math on kazmath
+IF (GLHCK_KAZMATH_FLOAT)
+   ADD_DEFINITIONS(-DGLHCK_KAZMATH_FLOAT -DkmScalar=float)
+ENDIF ()
 
 # These are propably temporary
 # In the end make renderers load this stuff dynamically(?)
