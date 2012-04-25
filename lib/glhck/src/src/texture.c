@@ -351,7 +351,7 @@ GLHCKAPI void glhckTextureBind(_glhckTexture *texture)
 /* \brief bind using ID */
 GLHCKAPI void glhckBindTexture(unsigned int texture)
 {
-   CALL("%u", texture);
+   CALL("%d", texture);
 
    if (_GLHCKlibrary.texture.bind == texture)
       return;
