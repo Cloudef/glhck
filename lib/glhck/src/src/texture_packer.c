@@ -283,13 +283,14 @@ int _glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *in_x
 int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_height, int force_power_of_two, int one_pixel_border)
 {
    int width, height;
-   int count, i, i2;
+   unsigned short count, i, i2;
    int least_y, least_x;
    int edge_count, ec;
    int index, longest_edge, most_area;
    int flipped, wid, hit, y;
    tpNode *previous_best_fit, *best_fit, *previous, *search;
    tpTexture *t;
+   assert(tp);
 
    if (one_pixel_border) {
       for (i = 0; i != tp->texture_count; ++i) {
@@ -311,7 +312,7 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
    glhckTexturePackerNodeNew(tp, 0, 0, width, height);
 
    for (i = 0; i != tp->texture_count; ++i) {
-      index       = 0;
+      index        = 0;
       longest_edge = 0;
       most_area    = 0;
 
@@ -383,7 +384,7 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
                }
 
                texture_place(t, best_fit->x, best_fit->y, flipped);
-               glhckTexturePackerNodeNew(tp, best_fit->x, best_fit->y + hit, best_fit->width , best_fit->height - hit);
+               glhckTexturePackerNodeNew(tp, best_fit->x, best_fit->y + hit, best_fit->width, best_fit->height - hit);
 
                best_fit->x        += wid;
                best_fit->width    -= wid;
@@ -413,8 +414,8 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
          case 1:
             if (t->width == best_fit->width) {
                texture_place(t, best_fit->x, best_fit->y, 0);
-               best_fit->y        += t->height;
-               best_fit->height   -= t->height;
+               best_fit->y      += t->height;
+               best_fit->height -= t->height;
                validate(tp);
             }
             else if (t->height == best_fit->height) {
@@ -431,8 +432,8 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
             }
             else if (t->height == best_fit->width) {
                texture_place(t, best_fit->x, best_fit->y, 1);
-               best_fit->y        += t->width;
-               best_fit->height   -= t->width;
+               best_fit->y      += t->width;
+               best_fit->height -= t->width;
                validate(tp);
             }
             break;
