@@ -22,6 +22,9 @@ int main(int argc, char **argv)
    glhckObject *cube;
    glhckCamera *camera;
    float spin = 0;
+   int mousex, mousey;
+   kmVec3 cameraPos = { 0, 0, 0 };
+   kmVec3 cameraRot = { 0, 0, 0 };
 
    float          now          = 0;
    float          last         = 0;
@@ -50,9 +53,6 @@ int main(int argc, char **argv)
    if (!(camera = glhckCameraNew()))
       return EXIT_FAILURE;
 
-   /* bind the camera */
-   glhckCameraBind(camera);
-
    /* this texture is useless when toggling PMD testing */
    if (!(texture = glhckTextureNew("../media/glhck.png",
                GLHCK_TEXTURE_DEFAULTS)))
@@ -62,11 +62,12 @@ int main(int argc, char **argv)
    cube = glhckCubeNew(1);
    //cube = glhckPlaneNew(1);
    //cube = glhckSpriteNew("../media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
-   glhckObjectPositionf(cube, 0, 0, -10.0f);
    glhckObjectSetTexture(cube, texture);
+   cameraPos.z = -20.0f;
 #else
    cube = glhckModelNew("../media/md_m.pmd", 1);
-   glhckObjectPositionf(cube, 0, -10.0f, -50.0f);
+   cameraPos.y =  10.0f;
+   cameraPos.z = -40.0f;
 #endif
    glhckMemoryGraph();
 
@@ -78,9 +79,35 @@ int main(int argc, char **argv)
       delta =  now - last;
 
       glfwPollEvents();
+      glfwGetMousePos(window, &mousex, &mousey);
+
+      cameraRot.y = -mousex;
+      cameraRot.x = -mousey;
+
+      if (glfwGetKey(window, GLFW_KEY_W)) {
+         cameraPos.x += cos((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
+         cameraPos.z -= sin((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
+      } else if (glfwGetKey(window, GLFW_KEY_S)) {
+         cameraPos.x -= cos((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
+         cameraPos.z += sin((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
+      }
+
+      if (glfwGetKey(window, GLFW_KEY_A)) {
+         cameraPos.x += cos((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
+         cameraPos.z -= sin((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
+      } else if (glfwGetKey(window, GLFW_KEY_D)) {
+         cameraPos.x -= cos((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
+         cameraPos.z += sin((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
+      }
+
+      /* update the camera */
+      glhckCameraUpdate(camera);
 
       /* rotate */
-      glhckObjectRotatef(cube, 0, spin = spin + 10.0f * delta, 0);
+      glhckCameraPosition(camera, &cameraPos);
+      glhckCameraTargetf(camera, cameraPos.x, cameraPos.y, cameraPos.z + 5);
+      glhckCameraRotate(camera, &cameraRot);
+      //glhckObjectRotatef(cube, 0, spin = spin + 10.0f * delta, 0);
 
       /* glhck drawing */
       glhckObjectDraw(cube);
