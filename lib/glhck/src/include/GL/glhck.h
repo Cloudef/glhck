@@ -201,7 +201,7 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
 GLHCKAPI glhckObject* glhckModelNew(const char *path, size_t size);
 GLHCKAPI glhckObject* glhckCubeNew(size_t size);
 GLHCKAPI glhckObject* glhckPlaneNew(size_t size);
-GLHCKAPI glhckObject* glhckSpriteNew(const char *file, size_t size);
+GLHCKAPI glhckObject* glhckSpriteNew(const char *file, size_t size, unsigned int flags);
 
 /* textures */
 GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
