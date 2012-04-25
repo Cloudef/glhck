@@ -455,3 +455,5 @@ fail:
    return NULL;
 #endif
 }
+
+/* vim: set ts=8 sw=3 tw=0 :*/

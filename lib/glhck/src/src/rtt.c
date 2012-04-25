@@ -122,3 +122,5 @@ GLHCKAPI void glhckRttEnd(glhckRtt *rtt)
    assert(rtt);
    _GLHCKlibrary.render.api.bindFramebuffer(0);
 }
+
+/* vim: set ts=8 sw=3 tw=0 :*/

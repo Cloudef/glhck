@@ -375,3 +375,5 @@ void _glhckTrace(const char *channel, const char *function, const char *fmt, ...
 void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *fmt, ...);
 
 #endif /* _internal_h_ */
+
+/* vim: set ts=8 sw=3 tw=0 :*/

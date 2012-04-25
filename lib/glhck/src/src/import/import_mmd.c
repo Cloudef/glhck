@@ -163,3 +163,5 @@ fail:
    RET("%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
+
+/* vim: set ts=8 sw=3 tw=0 :*/

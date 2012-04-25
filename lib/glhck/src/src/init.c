@@ -151,3 +151,5 @@ GLHCKAPI void glhckTerminate(void)
 #endif
    _glhckInitialized = 0;
 }
+
+/* vim: set ts=8 sw=3 tw=0 :*/

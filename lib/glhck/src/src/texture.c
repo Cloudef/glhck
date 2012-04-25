@@ -359,3 +359,5 @@ GLHCKAPI void glhckBindTexture(unsigned int texture)
    _GLHCKlibrary.render.api.bindTexture(texture);
    _GLHCKlibrary.texture.bind = texture;
 }
+
+/* vim: set ts=8 sw=3 tw=0 :*/

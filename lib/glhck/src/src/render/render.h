@@ -10,3 +10,5 @@
 void _glhckRenderOpenGL(void);
 
 #endif /* __render_h__ */
+
+/* vim: set ts=8 sw=3 tw=0 :*/

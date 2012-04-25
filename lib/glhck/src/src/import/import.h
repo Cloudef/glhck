@@ -44,3 +44,5 @@ char* _glhckImportTexturePath(const char *texture_path, const char *asset_path);
 unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *out_num_indices);
 
 #endif /* __import_h__ */
+
+/* vim: set ts=8 sw=3 tw=0 :*/
