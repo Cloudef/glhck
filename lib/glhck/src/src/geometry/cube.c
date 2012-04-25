@@ -173,7 +173,7 @@ GLHCKAPI _glhckObject* glhckCubeNew(size_t size)
    return object;
 
 fail:
-   if (object) glhckObjectFree(object);
+   IFDO(glhckObjectFree, object);
    RET("%p", NULL);
    return NULL;
 }

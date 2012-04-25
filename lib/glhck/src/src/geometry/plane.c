@@ -56,7 +56,7 @@ GLHCKAPI _glhckObject* glhckPlaneNew(size_t size)
    return object;
 
 fail:
-   if (object) glhckObjectFree(object);
+   IFDO(glhckObjectFree, object);
    RET("%p", NULL);
    return NULL;
 }
@@ -89,7 +89,7 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, size_t size, unsigned in
    return object;
 
 fail:
-   if (texture) glhckTextureFree(texture);
+   IFDO(glhckTextureFree, texture);
    RET("%p", NULL);
    return NULL;
 }

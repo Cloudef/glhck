@@ -23,7 +23,7 @@ GLHCKAPI _glhckObject* glhckModelNew(const char *path, size_t size)
    return object;
 
 fail:
-   if (object) glhckObjectFree(object);
+   IFDO(glhckObjectFree, object);
    RET("%p", NULL);
    return NULL;
 }

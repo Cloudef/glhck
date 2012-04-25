@@ -60,7 +60,7 @@ typedef enum _glhckModelFormat
 /* \brief parse header from file */
 static char* parse_header(const char *file)
 {
-   char *MAGIC_HEADER, bit = '\0';
+   char *MAGIC_HEADER = NULL, bit = '\0';
    FILE *f;
    size_t bytesRead = 0, bytesTotal;
    CALL("%s", file);
@@ -68,7 +68,7 @@ static char* parse_header(const char *file)
    /* open file */
    if (!(f = fopen(file, "rb"))) {
       DEBUG(GLHCK_DBG_ERROR, "File: %s, could not open", file);
-      goto fail;
+      goto read_fail;
    }
 
    /* allocate our header */
@@ -114,13 +114,11 @@ static char* parse_header(const char *file)
    }
 
    /* close the file */
-   fclose(f);
+   fclose(f); f = NULL;
 
    /* if nothing */
-   if (!bytesRead) {
-      DEBUG(GLHCK_DBG_ERROR, "File: %s, failed to parse header", file);
+   if (!bytesRead)
       goto parse_fail;
-   }
 
    MAGIC_HEADER[bytesRead] = '\0';
 
@@ -128,8 +126,13 @@ static char* parse_header(const char *file)
    return MAGIC_HEADER;
 
 parse_fail:
-   _glhckFree(MAGIC_HEADER);
+   DEBUG(GLHCK_DBG_ERROR, "File: %s, failed to parse header", file);
+   goto fail;
+read_fail:
+   DEBUG(GLHCK_DBG_ERROR, "File: %s, failed to open", file);
 fail:
+   IFDO(_glhckFree, MAGIC_HEADER);
+   IFDO(fclose, f);
    RET("%p", NULL);
    return NULL;
 }
@@ -445,8 +448,8 @@ actc_fail:
 no_profit:
    DEBUG(GLHCK_DBG_CRAP, "Tripstripper: no profit from stripping, fallback to triangles");
 fail:
-   if (tc) actcDelete(tc);
-   if (out_indices) free(out_indices);
+   IFDO(actcDelete, tc);
+   IFDO(_glhckFree, out_indices);
    RET("%p", NULL);
    return NULL;
 #else

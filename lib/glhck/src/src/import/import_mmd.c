@@ -5,7 +5,6 @@
 #include "../../include/mmd.h"
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
-#define ifree(x) if (x) _glhckFree(x);
 
 /* \brief import MikuMikuDance PMD file */
 int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
@@ -151,13 +150,13 @@ mmd_import_fail:
 mmd_no_memory:
    DEBUG(GLHCK_DBG_ERROR, "MMD not enough memory.");
 fail:
-   if (f) fclose(f);
-   if (atlas) glhckAtlasFree(atlas);
-   if (mmd) mmd_free(mmd);
-   ifree(textureList);
-   ifree(vertexData);
-   ifree(indices);
-   ifree(strip_indices);
+   IFDO(fclose, f);
+   IFDO(glhckAtlasFree, atlas);
+   IFDO(mmd_free, mmd);
+   IFDO(_glhckFree, textureList);
+   IFDO(_glhckFree, vertexData);
+   IFDO(_glhckFree, indices);
+   IFDO(_glhckFree, strip_indices);
    RET("%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
