@@ -6,6 +6,7 @@ SET(GLHCK_SRC
    src/src/trace.c
    src/src/util.c
    src/src/object.c
+   src/src/camera.c
    src/src/texture.c
    src/src/atlas.c
    src/src/rtt.c
