@@ -32,7 +32,7 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
 }
 
 /* \brief builds and sends the default projection to renderer */
-void _glhckDefaultProjection(void)
+void _glhckDefaultProjection(int width, int height)
 {
    kmMat4 projection;
    TRACE();
@@ -40,8 +40,7 @@ void _glhckDefaultProjection(void)
          _GLHCKlibrary.render.width,
          _GLHCKlibrary.render.height);
    kmMat4PerspectiveProjection(&projection, 35,
-         (float)_GLHCKlibrary.render.width/
-         (float)_GLHCKlibrary.render.height, 0.1f, 100.0f);
+         (float)width/height, 0.1f, 100.0f);
  _GLHCKlibrary.render.api.setProjection(&projection);
 }
 
@@ -142,11 +141,12 @@ GLHCKAPI void glhckDisplayResize(int width, int height)
        _GLHCKlibrary.render.height == height)
       return;
 
-   _GLHCKlibrary.render.width  = width;
-   _GLHCKlibrary.render.height = height;
-
    /* update all cameras */
    _glhckCameraStackUpdate(width, height);
+
+   /* update on library last, so functions know the old values */
+   _GLHCKlibrary.render.width  = width;
+   _GLHCKlibrary.render.height = height;
 }
 
 /* \brief clear scene */
