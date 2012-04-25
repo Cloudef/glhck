@@ -291,6 +291,7 @@ static inline void materialState(_glhckObject *object)
    if (_OpenGL.state.cull != old.cull) {
       if (_OpenGL.state.cull) {
          GL_CALL(glEnable(GL_DEPTH_TEST));
+         GL_CALL(glDepthMask(GL_TRUE));
          GL_CALL(glDepthFunc(GL_LEQUAL));
          GL_CALL(glCullFace(GL_BACK));
          GL_CALL(glEnable(GL_CULL_FACE));
