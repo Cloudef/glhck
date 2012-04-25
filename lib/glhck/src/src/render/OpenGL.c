@@ -415,7 +415,11 @@ static void objectDraw(_glhckObject *object)
 
    /* load view matrix */
    GL_CALL(glMatrixMode(GL_MODELVIEW));
-   glLoadMatrixf((float*)&object->view.matrix);
+#ifdef GLHCK_KAZMATH_FLOAT
+   GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
+#else
+   GL_CALL(glLoadMatrixd((double*)&object->view.matrix));
+#endif
 
    /* set states and draw */
    materialState(object);
@@ -453,7 +457,11 @@ static void setProjection(const kmMat4 *m)
 {
    CALL("%p", m);
    GL_CALL(glMatrixMode(GL_PROJECTION));
+#ifdef GLHCK_KAZMATH_FLOAT
    GL_CALL(glLoadMatrixf((float*)m));
+#else
+   GL_CALL(glLoadMatrixd((double*)m));
+#endif
    memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
 }
 
