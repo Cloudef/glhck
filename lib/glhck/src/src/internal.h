@@ -20,6 +20,7 @@
 #define GLHCK_CHANNEL_GLHCK      "GLHCK"
 #define GLHCK_CHANNEL_IMPORT     "IMPORT"
 #define GLHCK_CHANNEL_OBJECT     "OBJECT"
+#define GLHCK_CHANNEL_CAMERA     "CAMERA"
 #define GLHCK_CHANNEL_GEOMETRY   "GEOMETRY"
 #define GLHCK_CHANNEL_TEXTURE    "TEXTURE"
 #define GLHCK_CHANNEL_ATLAS      "ATLAS"
@@ -202,22 +203,25 @@ typedef struct _glhckObject
    short refCounter;
 } _glhckObject;
 
+typedef struct __GLHCKcameraView
+{
+   kmScalar near, far, fov;
+   kmVec3 translation, target, rotation, upVector;
+   kmVec4 viewport;
+   kmMat4 matrix, projection;
+   char update;
+} __GLHCKcameraView;
+
+typedef struct _glhckCamera
+{
+   struct __GLHCKcameraView view;
+   short refCounter;
+} _glhckCamera;
+
 /* library global data */
-typedef struct __GLHCKtextureCache
-{
-   struct _glhckTexture *texture;
-   struct __GLHCKtextureCache *next;
-} __GLHCKtextureCache;
-
-typedef struct __GLHCKtexture
-{
-   unsigned int bind;
-   struct __GLHCKtextureCache *cache;
-} __GLHCKtexture;
-
 /* render api */
 typedef void (*__GLHCKrenderAPIterminate)        (void);
-typedef void (*__GLHCKrenderAPIresize)           (int width, int height);
+typedef void (*__GLHCKrenderAPIviewport)         (int x, int y, int width, int height);
 typedef void (*__GLHCKrenderAPIsetProjection)    (const kmMat4 *m);
 typedef kmMat4 (*__GLHCKrenderAPIgetProjection)  (void);
 typedef void (*__GLHCKrenderAPIsetClearColor)    (const float r, const float g, const float b, const float a);
@@ -250,7 +254,7 @@ typedef int (*__GLHCKrenderAPIlinkFramebufferWithTexture) (unsigned int object, 
 typedef struct __GLHCKrenderAPI
 {
    __GLHCKrenderAPIterminate        terminate;
-   __GLHCKrenderAPIresize           resize;
+   __GLHCKrenderAPIviewport         viewport;
    __GLHCKrenderAPIsetProjection    setProjection;
    __GLHCKrenderAPIgetProjection    getProjection;
    __GLHCKrenderAPIsetClearColor    setClearColor;
@@ -270,6 +274,30 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIbindFramebuffer        bindFramebuffer;
    __GLHCKrenderAPIlinkFramebufferWithTexture linkFramebufferWithTexture;
 } __GLHCKrenderAPI;
+
+typedef struct __GLHCKtextureCache
+{
+   struct _glhckTexture *texture;
+   struct __GLHCKtextureCache *next;
+} __GLHCKtextureCache;
+
+typedef struct __GLHCKtexture
+{
+   unsigned int bind;
+   struct __GLHCKtextureCache *cache;
+} __GLHCKtexture;
+
+typedef struct __GLHCKcameraStack
+{
+   struct _glhckCamera *camera;
+   struct __GLHCKcameraStack *next;
+} __GLHCKcameraStack;
+
+typedef struct __GLHCKcamera
+{
+   struct _glhckCamera *bind;
+   struct __GLHCKcameraStack *stack;
+} __GLHCKcamera;
 
 typedef struct __GLHCKrender
 {
@@ -296,8 +324,9 @@ typedef struct __GLHCKalloc {
 
 typedef struct __GLHCKlibrary
 {
-   struct __GLHCKtexture texture;
    struct __GLHCKrender render;
+   struct __GLHCKtexture texture;
+   struct __GLHCKcamera camera;
    struct __GLHCKtrace *trace;
 #ifndef NDEBUG
    struct __GLHCKalloc *alloc;
@@ -314,6 +343,17 @@ typedef struct _glhckTexturePacker
    struct tpNode *free_list;
    struct tpTexture *textures;
 } _glhckTexturePacker;
+
+/* helpful macros */
+#define VEC2(v)   v?v->x:-1, v?v->y:-1
+#define VEC2S     "vec2[%f, %f]"
+#define VEC3(v)   v?v->x:-1, v?v->y:-1, v?v->z:-1
+#define VEC3S     "vec3[%f, %f, %f]"
+#define VEC4(v)   v?v->x:-1, v?v->y:-1, v?v->z:-1, v?v->w:-1
+#define VEC4S     "vec3[%f, %f, %f, %f]"
+
+/* if exists then free and set NULL */
+#define IFDO(f, x) if (x) f(x); x = NULL;
 
 /* tracking allocation macros */
 #define _glhckMalloc(x)    __glhckMalloc(GLHCK_CHANNEL, x)
@@ -369,6 +409,12 @@ int   _glhckTexturePackerPack(_glhckTexturePacker *tp, int *width, int *height, 
 int   _glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *x, int *y, int *width, int *height);
 _glhckTexturePacker*  _glhckTexturePackerNew(void);
 void                  _glhckTexturePackerFree(_glhckTexturePacker *tp);
+
+/* misc */
+void _glhckDefaultProjection(void);
+
+/* camera */
+void _glhckCameraStackUpdate(int width, int height);
 
 /* textures */
 void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
