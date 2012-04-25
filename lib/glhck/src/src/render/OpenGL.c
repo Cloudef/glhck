@@ -222,11 +222,22 @@ fail:
    return RETURN_FAIL;
 }
 
-/* \brief render scene */
-static void render(void)
+/* \brief set clear color */
+static void setClearColor(const float r, const float g, const float b, const float a)
+{
+   TRACE();
+   GL_CALL(glClearColor(r, g, b, a));
+}
+
+
+/* \brief clear scene */
+static void clear(void)
 {
    kmMat4 projection;
    TRACE();
+
+   /* clear buffers, TODO: keep track of em */
+   GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
    /* reset stats */
    _OpenGL.indicesCount = 0;
@@ -437,7 +448,7 @@ static void resize(int width, int height)
 static int renderInfo(void)
 {
    char *version, *vendor, *extensions;
-   unsigned int major, minor, patch;
+   unsigned int major = 0, minor = 0, patch = 0;
    int num_parsed;
    TRACE();
 
@@ -447,14 +458,9 @@ static int renderInfo(void)
    if (!version || !vendor)
       goto fail;
 
-   num_parsed = sscanf(version, "%u.%u.%u",
-         &major, &minor, &patch);
-
-   if (num_parsed == 1) {
-      minor = 0;
-      patch = 0;
-   } else if (num_parsed == 2)
-      patch = 0;
+   for (; version &&
+          !sscanf(version, "%d.%d.%d", &major, &minor, &patch);
+          ++version);
 
    DEBUG(3, "%s [%u.%u.%u] [%s]\n", RENDER_NAME, major, minor, patch, vendor);
    extensions = (char*)GL_CALL(glGetString(GL_EXTENSIONS));
@@ -514,6 +520,7 @@ void _glhckRenderOpenGL(void)
    TRACE();
 
    /* init OpenGL context */
+   GL_CALL(glClearColor(0,0,0,1));
    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
 #ifndef PANDORA
@@ -548,7 +555,8 @@ void _glhckRenderOpenGL(void)
    /* drawing functions */
    GLHCK_RENDER_FUNC(setProjection, setProjection);
    GLHCK_RENDER_FUNC(getProjection, getProjection);
-   GLHCK_RENDER_FUNC(render, render);
+   GLHCK_RENDER_FUNC(setClearColor, setClearColor);
+   GLHCK_RENDER_FUNC(clear, clear);
    GLHCK_RENDER_FUNC(objectDraw, objectDraw);
 
    /* screen */
@@ -565,3 +573,5 @@ void _glhckRenderOpenGL(void)
 fail:
    return;
 }
+
+/* vim: set ts=8 sw=3 tw=0 :*/
