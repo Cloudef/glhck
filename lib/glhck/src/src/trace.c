@@ -13,7 +13,7 @@ static glhckDebugHookFunc _glhckDebugHook = NULL;
 /* list all ignored functions when
  * GLHCK_CHANNEL_DRAW switch is not active */
 static const char *_drawFuncs[] = {
-   "glhckRender",
+   "glhckClear",
    "glhckObjectDraw",
    "objectDraw",
    "clear",
