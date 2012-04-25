@@ -213,7 +213,8 @@ typedef void (*__GLHCKrenderAPIterminate)        (void);
 typedef void (*__GLHCKrenderAPIresize)           (int width, int height);
 typedef void (*__GLHCKrenderAPIsetProjection)    (const kmMat4 *m);
 typedef kmMat4 (*__GLHCKrenderAPIgetProjection)  (void);
-typedef void (*__GLHCKrenderAPIrender)           (void);
+typedef void (*__GLHCKrenderAPIsetClearColor)    (const float r, const float g, const float b, const float a);
+typedef void (*__GLHCKrenderAPIclear)            (void);
 typedef void (*__GLHCKrenderAPIobjectDraw)       (_glhckObject *object);
 
 /* screen control */
@@ -245,7 +246,8 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIresize           resize;
    __GLHCKrenderAPIsetProjection    setProjection;
    __GLHCKrenderAPIgetProjection    getProjection;
-   __GLHCKrenderAPIrender           render;
+   __GLHCKrenderAPIsetClearColor    setClearColor;
+   __GLHCKrenderAPIclear            clear;
    __GLHCKrenderAPIobjectDraw       objectDraw;
 
    __GLHCKrenderAPIgetPixels        getPixels;
@@ -301,7 +303,7 @@ GLHCKGLOBAL struct __GLHCKlibrary _GLHCKlibrary;
 typedef struct _glhckTexturePacker
 {
    unsigned short debug_count, texture_index, texture_count;
-   unsigned short longest_edge, total_area;
+   int longest_edge, total_area;
    struct tpNode *free_list;
    struct tpTexture *textures;
 } _glhckTexturePacker;
@@ -356,7 +358,7 @@ int   _glhckStrnupcmp(const char *hay, const char *needle, size_t len);
 /* texture packing functions */
 void  _glhckTexturePackerSetCount(_glhckTexturePacker *tp, short textureCount);
 short _glhckTexturePackerAdd(_glhckTexturePacker *tp, int width, int height);
-int   _glhckTexturePackerPack(_glhckTexturePacker *tp, int *width, int *height, int forcePowerOfTwo, int onePixelBorder);
+int   _glhckTexturePackerPack(_glhckTexturePacker *tp, int *width, int *height, const int force_power_of_two, const int one_pixel_border);
 int   _glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *x, int *y, int *width, int *height);
 _glhckTexturePacker*  _glhckTexturePackerNew(void);
 void                  _glhckTexturePackerFree(_glhckTexturePacker *tp);
