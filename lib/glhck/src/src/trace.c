@@ -10,6 +10,11 @@
 /* debug hook function */
 static glhckDebugHookFunc _glhckDebugHook = NULL;
 
+/* TODO: replace special channels with trace levels
+ * 1: Non frequent call
+ * 2: Average call
+ * 3: Spam call  */
+
 /* list all ignored functions when
  * GLHCK_CHANNEL_DRAW switch is not active */
 static const char *_drawFuncs[] = {
@@ -17,6 +22,8 @@ static const char *_drawFuncs[] = {
    "glhckObjectDraw",
    "objectDraw",
    "clear",
+   "glhckTextureBind",
+   "glhckCameraBind",
    NULL,
 };
 
@@ -37,6 +44,7 @@ __GLHCKtrace _traceChannels[] =
    { GLHCK_CHANNEL_GLHCK,    0 },
    { GLHCK_CHANNEL_IMPORT,   0 },
    { GLHCK_CHANNEL_OBJECT,   0 },
+   { GLHCK_CHANNEL_CAMERA,   0 },
    { GLHCK_CHANNEL_GEOMETRY, 0 },
    { GLHCK_CHANNEL_TEXTURE,  0 },
    { GLHCK_CHANNEL_ATLAS,    0 },
@@ -160,7 +168,7 @@ void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLev
    va_end(args);
 
    if (!_glhckDebugHook) {
-      puts(buffer);
+      _glhckPuts(buffer);
       fflush(stdout);
       return;
    }
