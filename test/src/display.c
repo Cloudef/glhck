@@ -111,8 +111,6 @@ int main(int argc, char **argv)
             cameraPos.z += sin((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
          }
 
-         printf("%.1f, %.1f\n", cameraRot.x, cameraRot.y);
-
          glfwSetMousePos(window, WIDTH/2, HEIGHT/2);
       }
 
