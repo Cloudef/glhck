@@ -40,7 +40,7 @@ ENDIF (PANDORA)
 
 # Use floating point math on kazmath
 IF (GLHCK_KAZMATH_FLOAT)
-   ADD_DEFINITIONS(-DGLHCK_KAZMATH_FLOAT -DkmScalar=float)
+   ADD_DEFINITIONS(-DGLHCK_KAZMATH_FLOAT -DUSE_SINGLE_PRECISION)
 ENDIF ()
 
 # These are propably temporary

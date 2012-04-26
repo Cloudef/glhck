@@ -7,10 +7,6 @@
 #  define GLHCKGLOBAL extern
 #endif
 
-#if defined(GLHCK_KAZMATH_FLOAT)
-#  define kmScalar float
-#endif
-
 #include "../include/GL/glhck.h"
 #include <string.h> /* for strrchr */
 
