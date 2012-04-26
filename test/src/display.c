@@ -4,6 +4,8 @@
 #include "GL/glhck.h"
 
 static int RUNNING = 0;
+static int WIDTH = 800, HEIGHT = 480;
+static int NO_NETWM_ACTIVE_SUPPORT = 1;
 int close_callback(GLFWwindow window)
 {
    RUNNING = 0;
@@ -12,6 +14,7 @@ int close_callback(GLFWwindow window)
 
 void resize_callback(GLFWwindow window, int width, int height)
 {
+   WIDTH = width; HEIGHT = height;
    glhckDisplayResize(width, height);
 }
 
@@ -24,7 +27,7 @@ int main(int argc, char **argv)
    float spin = 0;
    int mousex, mousey;
    kmVec3 cameraPos = { 0, 0, 0 };
-   kmVec3 cameraRot = { 0, 0, 0 };
+   kmVec3 cameraRot = { 180, 180, 0 };
 
    float          now          = 0;
    float          last         = 0;
@@ -38,8 +41,11 @@ int main(int argc, char **argv)
    if (!glfwInit())
       return EXIT_FAILURE;
 
-   if (!(window = glfwOpenWindow(800, 480, GLFW_WINDOWED, "display test", NULL)))
+   if (!(window = glfwOpenWindow(WIDTH, HEIGHT, GLFW_WINDOWED, "display test", NULL)))
       return EXIT_FAILURE;
+
+   /* Turn on VSYNC if driver allows */
+   glfwSwapInterval(1);
 
    if (!glhckInit(argc, argv))
       return EXIT_FAILURE;
@@ -73,31 +79,41 @@ int main(int argc, char **argv)
 
    glfwSetWindowCloseCallback(close_callback);
    glfwSetWindowSizeCallback(resize_callback);
+   glfwSetMousePos(window, WIDTH/2, HEIGHT/2);
    while (RUNNING && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
       last  =  now;
       now   =  glfwGetTime();
       delta =  now - last;
 
-      glfwPollEvents();
-      glfwGetMousePos(window, &mousex, &mousey);
+      /* old version of dwm has no NETWM_ACTIVE support
+       * workaround until I switch to monsterwm */
+      if (NO_NETWM_ACTIVE_SUPPORT ||
+          glfwGetWindowParam(window, GLFW_ACTIVE)) {
+         glfwPollEvents();
+         glfwGetMousePos(window, &mousex, &mousey);
 
-      cameraRot.y = -mousex;
-      cameraRot.x = -mousey;
+         cameraRot.y -= (float)(mousex - WIDTH/2)  / 7;
+         cameraRot.x -= (float)(mousey - HEIGHT/2) / 7;
 
-      if (glfwGetKey(window, GLFW_KEY_W)) {
-         cameraPos.x += cos((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
-         cameraPos.z -= sin((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
-      } else if (glfwGetKey(window, GLFW_KEY_S)) {
-         cameraPos.x -= cos((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
-         cameraPos.z += sin((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
-      }
+         if (glfwGetKey(window, GLFW_KEY_W)) {
+            cameraPos.x += cos((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
+            cameraPos.z -= sin((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
+         } else if (glfwGetKey(window, GLFW_KEY_S)) {
+            cameraPos.x -= cos((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
+            cameraPos.z += sin((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
+         }
 
-      if (glfwGetKey(window, GLFW_KEY_A)) {
-         cameraPos.x += cos((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
-         cameraPos.z -= sin((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
-      } else if (glfwGetKey(window, GLFW_KEY_D)) {
-         cameraPos.x -= cos((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
-         cameraPos.z += sin((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
+         if (glfwGetKey(window, GLFW_KEY_A)) {
+            cameraPos.x += cos((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
+            cameraPos.z -= sin((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
+         } else if (glfwGetKey(window, GLFW_KEY_D)) {
+            cameraPos.x -= cos((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
+            cameraPos.z += sin((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
+         }
+
+         printf("%.1f, %.1f\n", cameraRot.x, cameraRot.y);
+
+         glfwSetMousePos(window, WIDTH/2, HEIGHT/2);
       }
 
       /* update the camera */
@@ -105,7 +121,7 @@ int main(int argc, char **argv)
 
       /* rotate */
       glhckCameraPosition(camera, &cameraPos);
-      glhckCameraTargetf(camera, cameraPos.x, cameraPos.y, cameraPos.z + 5);
+      glhckCameraTargetf(camera, cameraPos.x, cameraPos.y, cameraPos.z + 1);
       glhckCameraRotate(camera, &cameraRot);
       //glhckObjectRotatef(cube, 0, spin = spin + 10.0f * delta, 0);
 
