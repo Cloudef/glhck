@@ -6,3 +6,7 @@
 	path = lib/kazmath/src
         url = https://github.com/Kazade/kazmath.git
         ignore = dirty
+[submodule "lib/GLEW/src"]
+	path = lib/GLEW/src
+        url = https://github.com/LuaDist/glew.git
+        ignore = dirty
