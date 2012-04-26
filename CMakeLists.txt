@@ -17,6 +17,38 @@ SET(GLHCK_TEST_LINK
    glhck
    glfw)
 
+# Build checks
+# Abort git submodule init && git submodule update
+# has not been ran.
+SET(SUBMODULE_ERROR "Run git submodule init && git submodule update first.")
+IF (NOT EXISTS ${CMAKE_BINARY_DIR}/lib/kazmath/src/.git)
+   SET(SUBMODULE_ERROR_THROW 1)
+ELSEIF (NOT EXISTS ${CMAKE_BINARY_DIR}/lib/glfw/src/.git)
+   SET(SUBMODULE_ERROR_THROW 1)
+ENDIF ()
+
+# If on unix try fix the error first
+IF (UNIX)
+IF (SUBMODULE_ERROR_THROW)
+   EXECUTE_PROCESS(COMMAND "git" "submodule" "init"
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      RESULT_VARIABLE git_result)
+   IF (${git_result} == 0)
+      EXECUTE_PROCESS(COMMAND "git" "submodule" "update"
+         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+         RESULT_VARIABLE git_result)
+      IF (${git_result} == 0)
+         SET(SUBMODULE_ERROR_THROW 0)
+      ENDIF ()
+   ENDIF ()
+ENDIF ()
+ENDIF ()
+
+# Throw the error, if unix try fix it first
+IF (SUBMODULE_ERROR_THROW)
+   MESSAGE(FATAL_ERROR ${SUBMODULE_ERROR})
+ENDIF ()
+
 # Debug build
 SET(CMAKE_BUILD_TYPE Debug)
 
