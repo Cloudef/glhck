@@ -33,11 +33,11 @@ IF (SUBMODULE_ERROR_THROW)
    EXECUTE_PROCESS(COMMAND "git" "submodule" "init"
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
       RESULT_VARIABLE git_result)
-   IF (${git_result} == 0)
+   IF (${git_result} MATCHES 0)
       EXECUTE_PROCESS(COMMAND "git" "submodule" "update"
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
          RESULT_VARIABLE git_result)
-      IF (${git_result} == 0)
+      IF (${git_result} MATCHES 0)
          SET(SUBMODULE_ERROR_THROW 0)
       ENDIF ()
    ENDIF ()
