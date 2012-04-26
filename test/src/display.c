@@ -50,7 +50,7 @@ int main(int argc, char **argv)
    if (!glhckInit(argc, argv))
       return EXIT_FAILURE;
 
-   if (!glhckDisplayCreate(800, 480, 0))
+   if (!glhckDisplayCreate(WIDTH, HEIGHT, 0))
       return EXIT_FAILURE;
 
    RUNNING = 1;
