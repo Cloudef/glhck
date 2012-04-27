@@ -85,6 +85,9 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, size_t size, unsigned in
    glhckObjectSetTexture(object, texture);
    glhckTextureFree(texture);
 
+   /* set filename of object */
+   _glhckObjectSetFile(object, file);
+
    RET("%p", object);
    return object;
 

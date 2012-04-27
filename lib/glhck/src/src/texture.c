@@ -110,7 +110,7 @@ void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data)
    CALL("%p, %p", texture, data);
    assert(texture);
 
-   if (texture->data) _glhckFree(texture->data);
+   IFDO(_glhckFree, texture->data);
    texture->data = data;
 }
 
@@ -177,7 +177,7 @@ success:
    return texture;
 
 fail:
-   if (texture) glhckTextureFree(texture);
+   IFDO(glhckTextureFree, texture);
    RET("%p", NULL);
    return NULL;
 }
@@ -196,8 +196,8 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
    /* copy */
    _GLHCKlibrary.render.api.generateTextures(1, &texture->object);
 
-   if (!(texture->file = _glhckStrdup(src->file)))
-      goto fail;
+   if (src->file)
+      texture->file = _glhckStrdup(src->file);
 
    glhckTextureCreate(texture, src->data, src->width, src->height, src->channels, src->flags);
    DEBUG(GLHCK_DBG_CRAP, "COPY %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
@@ -210,7 +210,7 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
    return texture;
 
 fail:
-   if (texture) glhckTextureFree(texture);
+   IFDO(glhckTextureFree, texture);
    RET("%p", NULL);
    return NULL;
 }
@@ -249,8 +249,9 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
    if (texture->object)
       _GLHCKlibrary.render.api.deleteTextures(1, &texture->object);
 
+   /* free */
+   IFDO(_glhckFree, texture->file);
    _glhckTextureSetData(texture, NULL);
-   if (texture->file) _glhckFree(texture->file);
 
    /* free */
    _glhckFree(texture);

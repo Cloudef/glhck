@@ -58,9 +58,7 @@ GLHCKAPI short glhckRttFree(glhckRtt *rtt)
 
    /* free fbo object */
    _GLHCKlibrary.render.api.deleteFramebuffers(1, &rtt->object);
-
-   if (rtt->texture)
-      glhckTextureFree(rtt->texture);
+   IFDO(glhckTextureFree, rtt->texture);
 
    _glhckFree(rtt);
    rtt = NULL;
