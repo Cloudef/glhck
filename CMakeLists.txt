@@ -5,6 +5,10 @@ SET(GLUE_DESCRIPTION "A dead simple OpenGL/GLES rendering engine")
 OPTION(GLHCK_USE_GLES "Build for OpenGL ES" OFF)
 OPTION(GLHCK_KAZMATH_FLOAT "Defines kmScalar as float" ON)
 
+# TODO:
+# Do neater CMake configuration,
+# Current one works but is bubble gum job
+
 SET(LIB_OUT_DIR ${CMAKE_BINARY_DIR}/build/lib)
 SET(TEST_OUT_DIR ${CMAKE_BINARY_DIR}/build/test)
 SET(3RDPARTY_OUT_DIR ${CMAKE_BINARY_DIR}/build/3rdparty)
@@ -13,9 +17,7 @@ SET(GLHCK_TEST_INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
 
 # Tests will be linked and included against these
 SET(GLHCK_TEST_INCL ${GLHCK_TEST_INCLUDE_DIR})
-SET(GLHCK_TEST_LINK
-   glhck
-   glfw)
+SET(GLHCK_TEST_LINK glhck glfw)
 
 # Build checks
 # Abort git submodule init && git submodule update
@@ -55,16 +57,52 @@ SET(CMAKE_BUILD_TYPE Debug)
 # Release build
 # SET(CMAKE_BUILD_TYPE Release)
 
+# Set UNIX depencies
 IF (UNIX)
    FIND_PACKAGE(X11 REQUIRED)
+
+   # X11
    LIST(APPEND GLHCK_TEST_INCL ${X11_X11_INCLUDE_PATH})
    LIST(APPEND GLHCK_TEST_LINK ${X11_X11_LIB})
-   LIST(APPEND GLHCK_TEST_LINK
-      Xrandr
-      Xxf86vm
-      rt)
+
+   # XRandr
+   IF (X11_Xrandr_FOUND)
+      LIST(APPEND GLHCK_TEST_LINK ${X11_Xrandr_LIB})
+   ENDIF ()
+
+   # Xf86vmode
+   IF (X11_xf86vmode_FOUND)
+      LIST(APPEND GLHCK_TEST_INCL ${X11_xf86vmode_INCLUDE_PATH})
+
+      # Workaround CMake bug 0006976
+      IF (X11_xf86vmode_LIB)
+         LIST(APPEND GLHCK_TEST_LINK ${X11_xf86vmode_LIB})
+      ELSE ()
+         LIST(APPEND GLHCK_TEST_LINK Xxf86vm)
+      ENDIF ()
+   ENDIF ()
+
+   # Xkb
+   IF (X11_Xkb_FOUND)
+      LIST(APPEND GLHCK_TEST_INCL ${X11_Xkb_INCLUDE_PATH})
+   ENDIF ()
+
+   # Rt
+   FIND_LIBRARY(RT_LIBRARY rt)
+   MARK_AS_ADVANCED(RT_LIBRARY)
+   IF (RT_LIBRARY)
+      LIST(APPEND GLHCK_TEST_LINK ${RT_LIBRARY})
+   ENDIF ()
+
+   # Math
+   FIND_LIBRARY(MATH_LIBRARY m)
+   MARK_AS_ADVANCED(MATH_LIBRARY)
+   IF (MATH_LIBRARY)
+      LIST(APPEND GLHCK_TEST_LINK ${MATH_LIBRARY})
+   ENDIF ()
 ENDIF (UNIX)
 
+# Pandora related build options
 IF (PANDORA)
     ADD_DEFINITIONS(-DPANDORA)
     SET(GLHCK_USE_GLES 1)
@@ -95,6 +133,7 @@ ELSE ()
    LIST(APPEND GLHCK_TEST_LINK ${OPENGL_gl_LIBRARY} GLEW)
 ENDIF ()
 
+# Do it (tm)
 ADD_SUBDIRECTORY(lib)
 ADD_SUBDIRECTORY(3rdparty)
 ADD_SUBDIRECTORY(test)
