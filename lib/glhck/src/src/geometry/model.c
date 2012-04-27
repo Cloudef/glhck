@@ -19,6 +19,9 @@ GLHCKAPI _glhckObject* glhckModelNew(const char *path, size_t size)
    /* scale the cube */
    glhckObjectScalef(object, size, size, size);
 
+   /* set object's filename */
+   _glhckObjectSetFile(object, path);
+
    RET("%p", object);
    return object;
 

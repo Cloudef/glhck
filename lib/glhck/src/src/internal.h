@@ -197,6 +197,8 @@ typedef struct __GLHCKobjectMaterial
 
 typedef struct _glhckObject
 {
+   char *file;
+   char *data; /* used only by text ATM */
    struct __GLHCKobjectGeometry geometry;
    struct __GLHCKobjectView view;
    struct __GLHCKobjectMaterial material;

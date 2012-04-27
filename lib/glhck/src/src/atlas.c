@@ -75,8 +75,7 @@ GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas)
    _glhckAtlasDropRects(atlas);
 
    /* free atlas texture */
-   if (atlas->texture)
-      glhckTextureFree(atlas->texture);
+   IFDO(glhckTextureFree, atlas->texture);
 
    /* free */
    _glhckFree(atlas);
@@ -253,7 +252,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    glhckObjectFree(plane);
 
    /* reference rtt's texture */
-   if (atlas->texture) glhckTextureFree(atlas->texture);
+   IFDO(glhckTextureFree, atlas->texture);
    atlas->texture = glhckTextureRef(glhckRttGetTexture(rtt));
    glhckTextureSave(atlas->texture, "test.tga");
 

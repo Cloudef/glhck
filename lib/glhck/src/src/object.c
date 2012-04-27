@@ -232,6 +232,24 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
    object->view.update = 0;
 }
 
+/* set object's filename */
+void _glhckObjectSetFile(_glhckObject *object, const char *file)
+{
+   CALL("%p, %s", object, file);
+   assert(object);
+   IFDO(_glhckFree, object->file);
+   if (file) object->file = _glhckStrdup(file);
+}
+
+/* set object's data */
+void _glhckObjectSetData(_glhckObject *object, const char *data)
+{
+   CALL("%p, %s", object, data);
+   assert(object);
+   IFDO(_glhckFree, object->data);
+   if (data) object->data = _glhckStrdup(data);
+}
+
 /* public api */
 
 /* \brief new object */
@@ -282,6 +300,12 @@ GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
    memcpy(&object->geometry, &src->geometry, sizeof(__GLHCKobjectGeometry));
    memcpy(&object->view, 0, sizeof(__GLHCKobjectView));
 
+   /* copy metadata */
+   if (src->file)
+      object->file = _glhckStrdup(src->file);
+   if (src->data)
+      object->data = _glhckStrdup(src->data);
+
    /* copy vertex data */
    if (!(object->geometry.vertexData =
             _glhckCopy(src->geometry.vertexData,
@@ -302,6 +326,8 @@ GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
 
 fail:
    if (object) {
+      IFDO(_glhckFree, object->file);
+      IFDO(_glhckFree, object->data);
       IFDO(_glhckFree, object->geometry.vertexData);
       IFDO(_glhckFree, object->geometry.indices);
    }
@@ -332,6 +358,10 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
+   /* free metadata */
+   IFDO(_glhckFree, object->file);
+   IFDO(_glhckFree, object->data);
+
    /* free geometry */
    IFDO(_glhckFree, object->geometry.vertexData);
    IFDO(_glhckFree, object->geometry.indices);
@@ -354,12 +384,8 @@ GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture)
    CALL("%p, %p", object, texture);
    assert(object);
 
-   if (object->material.texture)
-      glhckTextureFree(object->material.texture);
-   object->material.texture = NULL;
-
-   if (texture)
-      object->material.texture = glhckTextureRef(texture);
+   IFDO(glhckTextureFree, object->material.texture);
+   if (texture) object->material.texture = glhckTextureRef(texture);
 }
 
 /* \brief draw object */
@@ -479,8 +505,7 @@ GLHCKAPI int glhckObjectInsertVertexData(
       goto fail;
 
    /* free old buffer */
-   if (object->geometry.vertexData)
-      _glhckFree(object->geometry.vertexData);
+   IFDO(_glhckFree, object->geometry.vertexData);
 
    /* assign new buffer */
    _glhckConvertVertexData(object, new, vertexData, memb);
@@ -514,8 +539,7 @@ GLHCKAPI int glhckObjectInsertIndices(
       goto fail;
 
    /* free old buffer */
-   if (object->geometry.indices)
-      _glhckFree(object->geometry.indices);
+   IFDO(_glhckFree, object->geometry.indices);
 
    /* assign new buffer */
 #if GLHCK_NATIVE_IMPORT_INDEXDATA
