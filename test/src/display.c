@@ -22,7 +22,7 @@ int main(int argc, char **argv)
 {
    GLFWwindow window;
    glhckTexture *texture;
-   glhckObject *cube;
+   glhckObject *cube = NULL;
    glhckCamera *camera;
    float spin = 0;
    int mousex, mousey;
@@ -68,7 +68,8 @@ int main(int argc, char **argv)
    cube = glhckCubeNew(1);
    //cube = glhckPlaneNew(1);
    //cube = glhckSpriteNew("../media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
-   glhckObjectSetTexture(cube, texture);
+   if (cube) glhckObjectSetTexture(cube, texture);
+   //cube = glhckTextNew("/usr/share/fonts/TTF/mikachan.ttf", 8);
    cameraPos.z = -20.0f;
 #else
    cube = glhckModelNew("../media/md_m.pmd", 1);
