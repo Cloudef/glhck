@@ -93,6 +93,24 @@ extern "C" {
 
 /* public api below */
 
+/* texture format */
+#define GLHCK_RED	      0x1903
+#define GLHCK_GREEN	      0x1904
+#define GLHCK_BLUE	      0x1905
+#define GLHCK_ALPHA	      0x1906
+#define GLHCK_LUMINANCE	      0x1909
+#define GLHCK_LUMINANCE_ALPHA 0x190A
+#define GLHCK_RGB	      0x1907
+#define GLHCK_RGBA	      0x1908
+
+/* geometry type */
+#define GLHCK_POINTS          0x0000
+#define GLHCK_LINES           0x0001
+#define GLHCK_LINE_LOOP       0x0002
+#define GLHCK_LINE_STRIP      0x0003
+#define GLHCK_TRIANGLES       0x0004
+#define GLHCK_TRIANGLE_STRIP  0x0005
+
 /* debugging level */
 typedef enum glhckDebugLevel {
    GLHCK_DBG_ERROR,
@@ -129,6 +147,7 @@ typedef enum glhckMaterialFlags
 {
    GLHCK_MATERIAL_DRAW_AABB = 1,
    GLHCK_MATERIAL_WIREFRAME = 2,
+   GLHCK_MATERIAL_ALPHA     = 4,
 } glhckMaterialFlags;
 
 /* rtt modes */
@@ -237,7 +256,7 @@ GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
 GLHCKAPI short glhckTextureFree(glhckTexture *texture);
 GLHCKAPI int glhckTextureCreate(glhckTexture *texture, unsigned char *data,
-                              int width, int height, int channels, unsigned int flags);
+      int width, int height, unsigned int channels, unsigned int flags);
 GLHCKAPI int glhckTextureSave(glhckTexture *texture, const char *path);
 GLHCKAPI void glhckTextureBind(glhckTexture *texture);
 GLHCKAPI void glhckBindTexture(unsigned int texture);
