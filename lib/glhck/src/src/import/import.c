@@ -239,9 +239,19 @@ fail:
    return importReturn;
 }
 
+/* \brief guess texture format from number of channels
+ * TODO: Not needed when we get rid of SOIL */
+static inline unsigned int _getFormat(unsigned int channels)
+{
+   return channels==2?GLHCK_LUMINANCE_ALPHA:
+          channels==3?GLHCK_RGB:
+          channels==4?GLHCK_RGBA:GLHCK_LUMINANCE;
+}
+
 /* \brief import using SOIL */
 int _glhckImportImage(_glhckTexture *texture, const char *file)
 {
+   unsigned int channels;
    CALL("%p, %s", texture, file);
    DEBUG(GLHCK_DBG_CRAP, "Image: %s", file);
 
@@ -251,7 +261,7 @@ int _glhckImportImage(_glhckTexture *texture, const char *file)
             file,
             &texture->width,
             &texture->height,
-            &texture->channels,
+            &channels,
             0
       );
 
@@ -259,7 +269,8 @@ int _glhckImportImage(_glhckTexture *texture, const char *file)
    if (!texture->data)
       goto fail;
 
-   texture->size = texture->width * texture->height * texture->channels;
+   texture->format = _getFormat(channels);
+   texture->size   = texture->width * texture->height * channels;
    RET("%d", RETURN_OK);
    return RETURN_OK;
 
