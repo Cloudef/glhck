@@ -18,8 +18,7 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
    /* init */
    memset(rtt, 0, sizeof(_glhckRtt));
    if (!(glhckTextureCreate(texture, NULL, width, height,
-         mode==GLHCK_RTT_RGB?3:
-         mode==GLHCK_RTT_RGBA?4:4, 0)))
+         mode==GLHCK_RTT_RGB?GLHCK_RGB:GLHCK_RGBA, 0)))
       goto fail;
 
    _GLHCKlibrary.render.api.generateFramebuffers(1, &rtt->object);
@@ -77,7 +76,7 @@ GLHCKAPI int glhckRttFillData(glhckRtt *rtt)
 
    data = _glhckMalloc(rtt->texture->width    *
                        rtt->texture->height   *
-                       rtt->texture->channels *
+      _glhckNumChannels(rtt->texture->format) *
                        sizeof(unsigned char));
 
    if (!data)
@@ -85,7 +84,7 @@ GLHCKAPI int glhckRttFillData(glhckRtt *rtt)
 
    _GLHCKlibrary.render.api.getPixels(0, 0,
          rtt->texture->width, rtt->texture->height,
-         rtt->texture->channels, data);
+         rtt->texture->format, data);
 
    _glhckTextureSetData(rtt->texture, data);
 
