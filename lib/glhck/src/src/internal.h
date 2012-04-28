@@ -20,6 +20,7 @@
 #define GLHCK_CHANNEL_GLHCK      "GLHCK"
 #define GLHCK_CHANNEL_IMPORT     "IMPORT"
 #define GLHCK_CHANNEL_OBJECT     "OBJECT"
+#define GLHCK_CHANNEL_TEXT       "TEXT"
 #define GLHCK_CHANNEL_CAMERA     "CAMERA"
 #define GLHCK_CHANNEL_GEOMETRY   "GEOMETRY"
 #define GLHCK_CHANNEL_TEXTURE    "TEXTURE"
@@ -48,9 +49,9 @@ typedef enum _glhckReturnValue {
 typedef struct _glhckTexture
 {
    char *file;
-   unsigned int object, flags;
+   unsigned int object, flags, format;
    unsigned char *data;
-   int width, height, channels;
+   int width, height;
    size_t size;
    short refCounter;
 } _glhckTexture;
@@ -143,14 +144,6 @@ typedef struct _glhckRtt
 #  define GLHCK_NATIVE_IMPORT_INDEXDATA 1
 #endif
 
-/* geometry type */
-#define GLHCK_POINTS          0x0000
-#define GLHCK_LINES           0x0001
-#define GLHCK_LINE_LOOP       0x0002
-#define GLHCK_LINE_STRIP      0x0003
-#define GLHCK_TRIANGLES       0x0004
-#define GLHCK_TRIANGLE_STRIP  0x0005
-
 /* disable triangle stripping? */
 #define GLHCK_TRISTRIP 1
 
@@ -232,7 +225,7 @@ typedef void (*__GLHCKrenderAPIobjectDraw)       (_glhckObject *object);
 
 /* screen control */
 typedef void (*__GLHCKrenderAPIgetPixels)        (int x, int y, int width, int height,
-      int channels, unsigned char *data);
+      unsigned int format, unsigned char *data);
 
 /* object generation */
 typedef void (*__GLHCKrenderAPIgenerateTextures) (size_t count, unsigned int *objects);
@@ -243,7 +236,7 @@ typedef void (*__GLHCKrenderAPIbindTexture)      (unsigned int object);
 typedef int  (*__GLHCKrenderAPIuploadTexture)    (_glhckTexture *texture, unsigned int flags);
 
 typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *const buffer,
-                                                       int width, int height, int channels,
+                                                       int width, int height, unsigned int format,
                                                        unsigned int reuse_texture_ID,
                                                        unsigned int flags);
 
@@ -415,11 +408,16 @@ void                  _glhckTexturePackerFree(_glhckTexturePacker *tp);
 /* misc */
 void _glhckDefaultProjection(int width, int height);
 
+/* objects */
+void _glhckObjectSetFile(_glhckObject *object, const char *file);
+void _glhckObjectSetData(_glhckObject *object, const char *data);
+
 /* camera */
 void _glhckCameraStackUpdate(int width, int height);
 void _glhckCameraStackRelease(void);
 
 /* textures */
+unsigned int _glhckNumChannels(unsigned int format);
 void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
 
 /* texture cache */
