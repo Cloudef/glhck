@@ -6,6 +6,10 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_TEXTURE
 
+/* TODO:
+ * keep track of internal and out formats.
+ * this will be useful in future. */
+
 /* ---- TEXTURE CACHE ---- */
 
 /* \brief check if texture is in cache, returns reference if found */
@@ -114,6 +118,14 @@ void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data)
    texture->data = data;
 }
 
+/* \brief returns number of channels needed for texture format */
+inline unsigned int _glhckNumChannels(unsigned int format)
+{
+   return format==GLHCK_LUMINANCE_ALPHA?2:
+          format==GLHCK_RGB?3:
+          format==GLHCK_RGBA?4:1;
+}
+
 /* ---- PUBLIC API ---- */
 
 /* \brief Allocate texture
@@ -199,7 +211,7 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
    if (src->file)
       texture->file = _glhckStrdup(src->file);
 
-   glhckTextureCreate(texture, src->data, src->width, src->height, src->channels, src->flags);
+   glhckTextureCreate(texture, src->data, src->width, src->height, src->format, src->flags);
    DEBUG(GLHCK_DBG_CRAP, "COPY %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
    /* set ref counter to 1 */
@@ -264,16 +276,16 @@ success:
 
 /* \brief create texture manually. */
 GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
-      int width, int height, int channels, unsigned int flags)
+      int width, int height, unsigned int format, unsigned int flags)
 {
    unsigned int object;
    CALL("%p, %u, %d, %d, %d, %u", texture, data,
-         width, height, channels, flags);
+         width, height, format, flags);
    assert(texture);
 
    /* create texture */
    object = _GLHCKlibrary.render.api.createTexture(
-         data, width, height, channels,
+         data, width, height, format,
          texture->object?texture->object:0,
          flags);
 
@@ -286,8 +298,8 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
    texture->object   = object;
    texture->width    = width;
    texture->height   = height;
-   texture->channels = channels;
-   texture->size     = width * height * channels;
+   texture->format   = format;
+   texture->size     = width * height * _glhckNumChannels(format);
 
    if (data) {
       if (!(texture->data = _glhckCopy(data, texture->size)))
@@ -310,11 +322,16 @@ GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
    CALL("%p, %s", texture, path);
    assert(texture);
 
+   /* not correct texture format for saving */
+   if (texture->format != GLHCK_RGB ||
+       texture->format != GLHCK_RGBA)
+      goto fail;
+
    if (!SOIL_save_image
       (
           path,
           SOIL_SAVE_TYPE_TGA,
-          texture->width, texture->height, texture->channels,
+          texture->width, texture->height, _glhckNumChannels(texture->format),
           texture->data
       ))
       goto fail;
