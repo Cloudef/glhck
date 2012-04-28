@@ -43,7 +43,7 @@ const GLenum _glhckAttribName[] = {
 /* global data */
 typedef struct __OpenGLstate {
    char attrib[GLHCK_ATTRIB_COUNT];
-   char cull, texture, draw_aabb, wireframe;
+   char cull, alpha, texture, draw_aabb, wireframe;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
@@ -141,7 +141,7 @@ static int uploadTexture(_glhckTexture *texture, unsigned int flags)
    texture->object = SOIL_create_OGL_texture(
          texture->data,
          texture->width, texture->height,
-         texture->channels,
+      _glhckNumChannels(texture->format),
          texture->object?texture->object:0,
          flags);
 
@@ -149,40 +149,25 @@ static int uploadTexture(_glhckTexture *texture, unsigned int flags)
    return texture->object?RETURN_OK:RETURN_FAIL;
 }
 
-static inline unsigned int pixelFormat(int channels)
-{
-   return channels==3?GL_RGB:
-          channels==4?GL_RGBA:GL_RGBA;
-}
-
 static void getPixels(int x, int y, int width, int height,
-      int channels, unsigned char *data)
+      unsigned int format, unsigned char *data)
 {
    CALL("%d, %d, %d, %d, %p",
-         x, y, width, height, channels, data);
+         x, y, width, height, format, data);
    GL_CALL(glReadPixels(x, y, width, height,
-            pixelFormat(channels), GL_UNSIGNED_BYTE, data));
+            format, GL_UNSIGNED_BYTE, data));
 }
 
 /* \brief create texture from data and upload it */
 static unsigned int createTexture(const unsigned char *const buffer,
-      int width, int height, int channels,
+      int width, int height, unsigned int format,
       unsigned int reuse_texture_ID,
       unsigned int flags)
 {
    unsigned int object;
    CALL("%p, %d, %d, %d, %d, %d", buffer,
-         width, height, channels,
+         width, height, format,
          reuse_texture_ID, flags);
-
-   /* user has data, import it */
-   if (buffer) {
-      object = SOIL_create_OGL_texture(
-         buffer, width, height, channels,
-         reuse_texture_ID,
-         flags);
-      goto _return;
-   }
 
    /* create empty texture */
    if (!(object = reuse_texture_ID)) {
@@ -199,8 +184,8 @@ static unsigned int createTexture(const unsigned char *const buffer,
    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
    GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0,
-            pixelFormat(channels), width, height, 0,
-            pixelFormat(channels), GL_UNSIGNED_BYTE, NULL));
+            format, width, height, 0,
+            format, GL_UNSIGNED_BYTE, buffer));
 
 _return:
    RET("%d", object);
@@ -297,6 +282,11 @@ static inline void materialState(_glhckObject *object)
    _OpenGL.state.wireframe =
       object->material.flags & GLHCK_MATERIAL_WIREFRAME;
 
+   if ((object->material.texture                        &&
+        object->material.texture->format == GLHCK_RGBA) ||
+        object->material.flags & GLHCK_MATERIAL_ALPHA)
+      _OpenGL.state.alpha = 1;
+
    /* check culling */
    if (_OpenGL.state.cull != old.cull) {
       if (_OpenGL.state.cull) {
@@ -315,6 +305,17 @@ static inline void materialState(_glhckObject *object)
    if (_OpenGL.state.cull &&
        object->geometry.type == GLHCK_TRIANGLE_STRIP) {
       GL_CALL(glDisable(GL_CULL_FACE));
+   }
+
+   /* check alpha */
+   if (_OpenGL.state.alpha != old.alpha) {
+      if (_OpenGL.state.alpha) {
+         GL_CALL(glEnable(GL_BLEND));
+         GL_CALL(glBlendFunc(GL_SRC_ALPHA,
+                  GL_ONE_MINUS_SRC_ALPHA));
+      } else {
+         GL_CALL(glDisable(GL_BLEND));
+      }
    }
 
    /* check texture */
@@ -443,7 +444,8 @@ static void objectDraw(_glhckObject *object)
    if (_OpenGL.state.draw_aabb)
       drawAABB(object);
 
-   /* enable the culling back */
+   /* enable the culling back
+    * NOTE: this is a hack*/
    if (_OpenGL.state.cull &&
        object->geometry.type == GLHCK_TRIANGLE_STRIP) {
       GL_CALL(glEnable(GL_CULL_FACE));
