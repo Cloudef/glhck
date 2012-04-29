@@ -2,79 +2,6 @@
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_CAMERA
 
-/* \brief add camera to global stack */
-static int _glhckCameraInsertStack(_glhckCamera *camera)
-{
-   __GLHCKcameraStack *stack;
-   CALL("%p", camera);
-   assert(camera);
-
-   stack = _GLHCKlibrary.camera.stack;
-   if (!stack) {
-      stack = _GLHCKlibrary.camera.stack =
-         _glhckMalloc(sizeof(__GLHCKcameraStack));
-   } else {
-      for (; stack && stack->next; stack = stack->next);
-      stack = stack->next =
-         _glhckMalloc(sizeof(__GLHCKcameraStack));
-   }
-
-   if (!stack)
-      goto fail;
-
-   /* init stack */
-   memset(stack, 0, sizeof(__GLHCKcameraStack));
-   stack->camera = camera;
-
-   RET("%d", RETURN_OK);
-   return RETURN_OK;
-
-fail:
-   RET("%d", RETURN_FAIL);
-   return RETURN_FAIL;
-}
-
-static void _glhckCameraRemoveStack(_glhckCamera *camera)
-{
-   __GLHCKcameraStack *stack, *found;
-   CALL("%p", camera);
-   assert(camera);
-
-   if (!(stack = _GLHCKlibrary.camera.stack))
-      return;
-
-   if (stack->camera == camera) {
-      _GLHCKlibrary.camera.stack = stack->next;
-      _glhckFree(stack);
-   } else {
-      for (; stack && stack->next &&
-             stack->next->camera != camera;
-             stack = stack->next);
-      if ((found = stack->next)) {
-         stack->next = found->next;
-         _glhckFree(found);
-      }
-   }
-
-}
-
-/* \brief release camera stack */
-void _glhckCameraStackRelease(void)
-{
-   __GLHCKcameraStack *stack, *next;
-   TRACE();
-
-   if (!(stack = _GLHCKlibrary.camera.stack))
-      return;
-
-   for (; stack; stack = next) {
-      next = stack->next;
-      _glhckFree(stack);
-   }
-
-   _GLHCKlibrary.camera.stack = NULL;
-}
-
 /* \brief calculate projection matrix */
 static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
 {
@@ -114,10 +41,9 @@ static void _glhckCameraViewMatrix(_glhckCamera *camera)
 }
 
 /* \brief update the camera stack after window resize */
-void _glhckCameraStackUpdate(int width, int height)
+void _glhckCameraWorldUpdate(int width, int height)
 {
-   _glhckCamera *active;
-   __GLHCKcameraStack *stack;
+   _glhckCamera *camera;
    int diffw, diffh;
    CALL("%d, %d", width, height);
 
@@ -125,23 +51,23 @@ void _glhckCameraStackUpdate(int width, int height)
    diffw = width  - _GLHCKlibrary.render.width;
    diffh = height - _GLHCKlibrary.render.height;
 
-   for (stack = _GLHCKlibrary.camera.stack;
-        stack; stack = stack->next) {
-      glhckCameraViewportf(stack->camera,
-            stack->camera->view.viewport.x,
-            stack->camera->view.viewport.y,
-            stack->camera->view.viewport.z + diffw,
-            stack->camera->view.viewport.w + diffh);
+   for (camera = _GLHCKlibrary.world.clist;
+        camera; camera = camera->next) {
+      glhckCameraViewportf(camera,
+            camera->view.viewport.x,
+            camera->view.viewport.y,
+            camera->view.viewport.z + diffw,
+            camera->view.viewport.w + diffh);
    }
 
    /* no camera binded, upload default projection */
-   if (!(active = _GLHCKlibrary.camera.bind))
+   if (!(camera = _GLHCKlibrary.render.draw.camera))
       _glhckDefaultProjection(width, height);
    else {
       /* update camera */
-      _GLHCKlibrary.camera.bind = NULL;
-      active->view.update = 1;
-      glhckCameraUpdate(active);
+      _GLHCKlibrary.render.draw.camera = NULL;
+      camera->view.update = 1;
+      glhckCameraUpdate(camera);
    }
 }
 
@@ -155,10 +81,6 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
 
    /* allocate acmera */
    if (!(camera = _glhckMalloc(sizeof(_glhckCamera))))
-      goto fail;
-
-   /* insert camera to stack */
-   if (_glhckCameraInsertStack(camera) != RETURN_OK)
       goto fail;
 
    /* init */
@@ -175,6 +97,9 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
 
    /* increase reference */
    camera->refCounter++;
+
+   /* insert to world */
+   _glhckWorldInsert(clist, camera, _glhckCamera*);
 
    RET("%p", camera);
    return camera;
@@ -208,11 +133,11 @@ GLHCKAPI short glhckCameraFree(glhckCamera *camera)
    if (--camera->refCounter != 0) goto success;
 
    /* remove camera from global state */
-   if (_GLHCKlibrary.camera.bind == camera)
-      _GLHCKlibrary.camera.bind = NULL;
+   if (_GLHCKlibrary.render.draw.camera == camera)
+      _GLHCKlibrary.render.draw.camera = NULL;
 
-   /* remove camera from stack */
-   _glhckCameraRemoveStack(camera);
+   /* remove camera from world */
+   _glhckWorldRemove(clist, camera, _glhckCamera*);
 
    /* free */
    _glhckFree(camera);
@@ -230,11 +155,11 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
 
    /* bind none */
    if (!camera) {
-      _GLHCKlibrary.camera.bind = NULL;
+      _GLHCKlibrary.render.draw.camera = NULL;
       return;
    }
 
-   if (_GLHCKlibrary.camera.bind != camera)
+   if (_GLHCKlibrary.render.draw.camera != camera)
       _GLHCKlibrary.render.api.viewport(
             camera->view.viewport.x,
             camera->view.viewport.y,
@@ -249,7 +174,7 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
    /* assign camera to global state */
    _GLHCKlibrary.render.api.setProjection(
          &camera->view.matrix);
-   _GLHCKlibrary.camera.bind = camera;
+   _GLHCKlibrary.render.draw.camera = camera;
 }
 
 /* \brief reset camera to default state */
