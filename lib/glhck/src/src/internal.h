@@ -37,6 +37,9 @@
 /* temporary options */
 #define GLHCK_IMPORT_PMD 1
 
+/* maximum draw queue allowed */
+#define GLHCK_MAX_DRAW 32767
+
 /* return variables used throughout library */
 typedef enum _glhckReturnValue {
    RETURN_FAIL    =  0,
@@ -54,6 +57,7 @@ typedef struct _glhckTexture
    int width, height;
    size_t size;
    short refCounter;
+   struct _glhckTexture *next;
 } _glhckTexture;
 
 typedef struct _glhckAtlasArea
@@ -74,6 +78,7 @@ typedef struct _glhckAtlas
    struct _glhckAtlasRect *rect;
    struct _glhckTexture *texture;
    short refCounter;
+   struct _glhckAtlas *next;
 } _glhckAtlas;
 
 #define GLHCK_COLOR_ATTACHMENT   0x8CE0
@@ -85,6 +90,7 @@ typedef struct _glhckRtt
    unsigned int object;
    _glhckTexture *texture;
    short refCounter;
+   struct _glhckRtt *next;
 } _glhckRtt;
 
 /* precision constants */
@@ -152,6 +158,11 @@ typedef struct _glhckVertex3d
    GLHCK_CAST_VERTEX x, y, z;
 } _glhckVertex3d;
 
+typedef struct _glhckVertex2d
+{
+   GLHCK_CAST_VERTEX x, y;
+} _glhckVertex2d;
+
 typedef struct _glhckCoord2d {
    GLHCK_CAST_COORD x, y;
 } _glhckCoord2d;
@@ -196,7 +207,45 @@ typedef struct _glhckObject
    struct __GLHCKobjectView view;
    struct __GLHCKobjectMaterial material;
    short refCounter;
+   struct _glhckObject *next;
 } _glhckObject;
+
+#define GLHCK_TEXT_MAX_ROWS   128
+#define GLHCK_TEXT_VERT_COUNT (6*128)
+
+/* \brief row data of texture */
+typedef struct __GLHCKtextTextureRow {
+   short x, y, h;
+} __GLHCKtextTextureRow;
+
+/* \brief text vertex data */
+typedef struct __GLHCKtextVertexData {
+   struct _glhckVertex2d vertex;
+   struct _glhckCoord2d coord;
+} __GLHCKtextVertexData;
+
+/* \brief text geometry data */
+typedef struct __GLHCKtextGeometry {
+   struct __GLHCKtextVertexData vertexData[GLHCK_TEXT_VERT_COUNT];
+   size_t vertexCount;
+} __GLHCKtextGeometry;
+
+/* \brief special texture for text */
+typedef struct __GLHCKtextTexture {
+   unsigned int object, numRows;
+   struct __GLHCKtextGeometry geometry;
+   struct __GLHCKtextTextureRow rows[GLHCK_TEXT_MAX_ROWS];
+   struct __GLHCKtextTexture *next;
+} __GLHCKtextTexture;
+
+/* \brief text object */
+typedef struct _glhckText {
+   int tw, th;
+   float itw, ith;
+   struct __GLHCKtextFont *fcache;
+   struct __GLHCKtextTexture *tcache;
+   struct _glhckText *next;
+} _glhckText;
 
 typedef struct __GLHCKcameraView
 {
@@ -211,6 +260,7 @@ typedef struct _glhckCamera
 {
    struct __GLHCKcameraView view;
    short refCounter;
+   struct _glhckCamera *next;
 } _glhckCamera;
 
 /* library global data */
@@ -222,6 +272,7 @@ typedef kmMat4 (*__GLHCKrenderAPIgetProjection)  (void);
 typedef void (*__GLHCKrenderAPIsetClearColor)    (const float r, const float g, const float b, const float a);
 typedef void (*__GLHCKrenderAPIclear)            (void);
 typedef void (*__GLHCKrenderAPIobjectDraw)       (_glhckObject *object);
+typedef void (*__GLHCKrenderAPItextDraw)         (_glhckText *text);
 
 /* screen control */
 typedef void (*__GLHCKrenderAPIgetPixels)        (int x, int y, int width, int height,
@@ -234,6 +285,8 @@ typedef void (*__GLHCKrenderAPIdeleteTextures)   (size_t count, unsigned int *ob
 /* textures */
 typedef void (*__GLHCKrenderAPIbindTexture)      (unsigned int object);
 typedef int  (*__GLHCKrenderAPIuploadTexture)    (_glhckTexture *texture, unsigned int flags);
+typedef void (*__GLHCKrenderAPIfillTexture)      (unsigned int texture, unsigned char *data, int x, int y,
+      int width, int height, unsigned int format);
 
 typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *const buffer,
                                                        int width, int height, unsigned int format,
@@ -244,7 +297,8 @@ typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *cons
 typedef void (*__GLHCKrenderAPIgenerateFramebuffers) (size_t count, unsigned int *objects);
 typedef void (*__GLHCKrenderAPIdeleteFramebuffers)   (size_t count, unsigned int *objects);
 typedef void (*__GLHCKrenderAPIbindFramebuffer)      (unsigned int object);
-typedef int (*__GLHCKrenderAPIlinkFramebufferWithTexture) (unsigned int object, unsigned int texture, unsigned int attachment);
+typedef int (*__GLHCKrenderAPIlinkFramebufferWithTexture) (unsigned int object, unsigned int texture,
+      unsigned int attachment);
 
 typedef struct __GLHCKrenderAPI
 {
@@ -255,6 +309,7 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIsetClearColor    setClearColor;
    __GLHCKrenderAPIclear            clear;
    __GLHCKrenderAPIobjectDraw       objectDraw;
+   __GLHCKrenderAPItextDraw         textDraw;
 
    __GLHCKrenderAPIgetPixels        getPixels;
 
@@ -263,6 +318,7 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIbindTexture      bindTexture;
    __GLHCKrenderAPIuploadTexture    uploadTexture;
    __GLHCKrenderAPIcreateTexture    createTexture;
+   __GLHCKrenderAPIfillTexture      fillTexture;
 
    __GLHCKrenderAPIgenerateFramebuffers   generateFramebuffers;
    __GLHCKrenderAPIdeleteFramebuffers     deleteFramebuffers;
@@ -270,29 +326,23 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIlinkFramebufferWithTexture linkFramebufferWithTexture;
 } __GLHCKrenderAPI;
 
-typedef struct __GLHCKtextureCache
-{
-   struct _glhckTexture *texture;
-   struct __GLHCKtextureCache *next;
-} __GLHCKtextureCache;
-
 typedef struct __GLHCKtexture
 {
    unsigned int bind;
-   struct __GLHCKtextureCache *cache;
 } __GLHCKtexture;
-
-typedef struct __GLHCKcameraStack
-{
-   struct _glhckCamera *camera;
-   struct __GLHCKcameraStack *next;
-} __GLHCKcameraStack;
 
 typedef struct __GLHCKcamera
 {
    struct _glhckCamera *bind;
-   struct __GLHCKcameraStack *stack;
 } __GLHCKcamera;
+
+typedef struct __GLHCKrenderDraw
+{
+   unsigned int texture, drawCount;
+   struct _glhckCamera  *camera;
+   struct _glhckObject  *oqueue[GLHCK_MAX_DRAW];
+   struct _glhckTexture *tqueue[GLHCK_MAX_DRAW];
+} __GLHCKrenderDraw;
 
 typedef struct __GLHCKrender
 {
@@ -300,7 +350,18 @@ typedef struct __GLHCKrender
    const char *name;
    glhckRenderType type;
    struct __GLHCKrenderAPI api;
+   struct __GLHCKrenderDraw draw;
 } __GLHCKrender;
+
+typedef struct __GLHCKworld
+{
+   struct _glhckObject  *olist;
+   struct _glhckCamera  *clist;
+   struct _glhckAtlas   *alist;
+   struct _glhckRtt     *rlist;
+   struct _glhckTexture *tlist;
+   struct _glhckText    *tflist;
+} __GLHCKworld;
 
 typedef struct __GLHCKtrace
 {
@@ -320,8 +381,7 @@ typedef struct __GLHCKalloc {
 typedef struct __GLHCKlibrary
 {
    struct __GLHCKrender render;
-   struct __GLHCKtexture texture;
-   struct __GLHCKcamera camera;
+   struct __GLHCKworld world;
    struct __GLHCKtrace *trace;
 #ifndef NDEBUG
    struct __GLHCKalloc *alloc;
@@ -346,6 +406,36 @@ typedef struct _glhckTexturePacker
 #define VEC3S     "vec3[%f, %f, %f]"
 #define VEC4(v)   v?v->x:-1, v?v->y:-1, v?v->z:-1, v?v->w:-1
 #define VEC4S     "vec3[%f, %f, %f, %f]"
+
+/* insert to glhck world */
+#define _glhckWorldInsert(list, object, cast)   \
+{                                               \
+   cast i;                                      \
+   if (!(i = _GLHCKlibrary.world.list))         \
+      _GLHCKlibrary.world.list = object;        \
+   else {                                       \
+      for (; i && i->next; i = i->next);        \
+      i->next = object;                         \
+   }                                            \
+}
+
+/* remove from glhck world */
+#define _glhckWorldRemove(list, object, cast)   \
+{                                               \
+   cast i;                                      \
+   for (i = _GLHCKlibrary.world.list;           \
+       i && i->next != object; i = i->next);    \
+   if (i) i->next = object->next;               \
+   else _GLHCKlibrary.world.list = NULL;        \
+}
+
+/* insert to draw queue */
+#define _glhckQueueInsert(queue, object) \
+{                                        \
+   unsigned int i;                       \
+   for (i = 0; queue[i]; ++i);           \
+   queue[i] = object;                    \
+}
 
 /* if exists then free and set NULL */
 #define IFDO(f, x) if (x) f(x); x = NULL;
@@ -413,15 +503,11 @@ void _glhckObjectSetFile(_glhckObject *object, const char *file);
 void _glhckObjectSetData(_glhckObject *object, const char *data);
 
 /* camera */
-void _glhckCameraStackUpdate(int width, int height);
-void _glhckCameraStackRelease(void);
+void _glhckCameraWorldUpdate(int width, int height);
 
 /* textures */
 unsigned int _glhckNumChannels(unsigned int format);
 void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
-
-/* texture cache */
-void _glhckTextureCacheRelease(void);
 
 /* tracing && debug functions */
 void _glhckTraceInit(int argc, char **argv);
