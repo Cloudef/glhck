@@ -54,6 +54,9 @@ GLHCKAPI glhckAtlas* glhckAtlasNew(void)
    /* increase reference */
    atlas->refCounter++;
 
+   /* insert to world */
+   _glhckWorldInsert(alist, atlas, _glhckAtlas*);
+
    RET("%p", atlas);
    return atlas;
 
@@ -76,6 +79,9 @@ GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas)
 
    /* free atlas texture */
    IFDO(glhckTextureFree, atlas->texture);
+
+   /* remove from world */
+   _glhckWorldRemove(alist, atlas, _glhckAtlas*);
 
    /* free */
    _glhckFree(atlas);
@@ -237,7 +243,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
 
       /* draw texture */
       glhckObjectSetTexture(plane, rect->texture);
-      glhckObjectDraw(plane);
+      glhckObjectRender(plane);
    }
    glhckRttFillData(rtt);
    glhckRttEnd(rtt);
