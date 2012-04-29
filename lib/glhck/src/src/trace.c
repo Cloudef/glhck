@@ -18,12 +18,21 @@ static glhckDebugHookFunc _glhckDebugHook = NULL;
 /* list all ignored functions when
  * GLHCK_CHANNEL_DRAW switch is not active */
 static const char *_drawFuncs[] = {
+   "glhckRender",
    "glhckClear",
    "glhckObjectDraw",
+   "glhckObjectRender",
    "objectDraw",
+   "objectRender",
+   "glhckTextDraw",
+   "glhckTextRender",
+   "textDraw",
    "clear",
    "glhckTextureBind",
    "glhckCameraBind",
+   "setProjection",
+   "glhckBindTexture",
+   "_glBindTexture",
    NULL,
 };
 
@@ -35,6 +44,13 @@ static const char *_transformFuncs[] = {
    "glhckObjectMove",
    "glhckObjectRotate",
    "glhckObjectScale",
+   "glhckCameraUpdate",
+   "_glhckCameraViewMatrix",
+   "glhckCameraPosition",
+   "glhckCameraRotate",
+   "glhckCameraTarget",
+   "_glhckAtlasGetPackedArea",
+   "glhckAtlasGetTransformed",
    NULL,
 };
 
@@ -44,6 +60,7 @@ __GLHCKtrace _traceChannels[] =
    { GLHCK_CHANNEL_GLHCK,    0 },
    { GLHCK_CHANNEL_IMPORT,   0 },
    { GLHCK_CHANNEL_OBJECT,   0 },
+   { GLHCK_CHANNEL_TEXT,     0 },
    { GLHCK_CHANNEL_CAMERA,   0 },
    { GLHCK_CHANNEL_GEOMETRY, 0 },
    { GLHCK_CHANNEL_TEXTURE,  0 },
