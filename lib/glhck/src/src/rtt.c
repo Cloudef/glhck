@@ -36,6 +36,9 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
    /* increase reference */
    rtt->refCounter++;
 
+   /* insert to world */
+   _glhckWorldInsert(rlist, rtt, _glhckRtt*);
+
    RET("%p", rtt);
    return rtt;
 
@@ -59,6 +62,10 @@ GLHCKAPI short glhckRttFree(glhckRtt *rtt)
    _GLHCKlibrary.render.api.deleteFramebuffers(1, &rtt->object);
    IFDO(glhckTextureFree, rtt->texture);
 
+   /* remove from world */
+   _glhckWorldRemove(rlist, rtt, _glhckRtt*);
+
+   /* free */
    _glhckFree(rtt);
    rtt = NULL;
 
