@@ -38,8 +38,8 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
    if (mmd_read_material_data(f, mmd) != 0)
       goto mmd_import_fail;
 
-   fclose(f);
-   f = NULL;
+   /* close file */
+   fclose(f); f = NULL;
 
    DEBUG(GLHCK_DBG_CRAP, "V: %d", mmd->num_vertices);
    DEBUG(GLHCK_DBG_CRAP, "I: %d", mmd->num_indices);
