@@ -152,7 +152,7 @@ static int uploadTexture(_glhckTexture *texture, unsigned int flags)
 static void getPixels(int x, int y, int width, int height,
       unsigned int format, unsigned char *data)
 {
-   CALL("%d, %d, %d, %d, %p",
+   CALL("%d, %d, %d, %d, %d, %p",
          x, y, width, height, format, data);
    GL_CALL(glReadPixels(x, y, width, height,
             format, GL_UNSIGNED_BYTE, data));
@@ -179,8 +179,8 @@ static unsigned int createTexture(const unsigned char *const buffer,
       goto _return;
 
    glhckBindTexture(object);
-   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
    GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0,
@@ -192,6 +192,20 @@ _return:
    return object;
 }
 
+/* \brief fill texture with data */
+static void fillTexture(unsigned int texture,
+      unsigned char *data,
+      int x, int y, int width, int height,
+      unsigned int format)
+{
+   CALL("%d, %p, %d, %d, %d, %d, %d", texture,
+         data, x, y, width, height, format);
+   glhckBindTexture(texture);
+   GL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, x, y,
+            width, height, format, GL_UNSIGNED_BYTE, data));
+}
+
+/* \brief link FBO with texture */
 static int linkFramebufferWithTexture(unsigned int object,
       unsigned int texture, unsigned int attachment)
 {
@@ -238,6 +252,36 @@ static void clear(void)
    _OpenGL.indicesCount = 0;
 }
 
+/* \brief set projection matrix */
+static void setProjection(const kmMat4 *m)
+{
+   CALL("%p", m);
+   GL_CALL(glMatrixMode(GL_PROJECTION));
+#ifdef GLHCK_KAZMATH_FLOAT
+   GL_CALL(glLoadMatrixf((float*)m));
+#else
+   GL_CALL(glLoadMatrixd((double*)m));
+#endif
+   memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
+}
+
+/* \brief get current projection */
+static kmMat4 getProjection(void)
+{
+   TRACE();
+   RET("%p", &_OpenGL.projection);
+   return _OpenGL.projection;
+}
+
+/* \brief resize viewport */
+static void viewport(int x, int y, int width, int height)
+{
+   CALL("%d, %d, %d, %d", x, y, width, height);
+
+   /* set viewport */
+   GL_CALL(glViewport(x, y, width, height));
+}
+
 /* \brief pass interleaved vertex data to OpenGL nicely. */
 static inline void geometryPointer(__GLHCKobjectGeometry *geometry)
 {
@@ -271,20 +315,23 @@ static inline void materialState(_glhckObject *object)
    unsigned int i;
    __OpenGLstate old = _OpenGL.state;
 
-   /* detect code,
-    * we don't have materials yet...
-    * so use everything. */
-   memset(&_OpenGL.state, 1, sizeof(__OpenGLstate));
+   /* always draw vertices */
+   _OpenGL.state.attrib[0] = 1;
+
+   /* need texture? */
    _OpenGL.state.texture   = object->material.texture?1:0;
    _OpenGL.state.attrib[1] = _OpenGL.state.texture;
+
+   /* aabb? */
    _OpenGL.state.draw_aabb =
       object->material.flags & GLHCK_MATERIAL_DRAW_AABB;
+
+   /* wire? */
    _OpenGL.state.wireframe =
       object->material.flags & GLHCK_MATERIAL_WIREFRAME;
 
-   if ((object->material.texture                        &&
-        object->material.texture->format == GLHCK_RGBA) ||
-        object->material.flags & GLHCK_MATERIAL_ALPHA)
+   /* alpha? */
+   if (object->material.flags & GLHCK_MATERIAL_ALPHA)
       _OpenGL.state.alpha = 1;
 
    /* check culling */
@@ -293,9 +340,10 @@ static inline void materialState(_glhckObject *object)
          GL_CALL(glEnable(GL_DEPTH_TEST));
          GL_CALL(glDepthMask(GL_TRUE));
          GL_CALL(glDepthFunc(GL_LEQUAL));
-         GL_CALL(glCullFace(GL_BACK));
+         GL_CALL(glCullFace(GL_FRONT));
          GL_CALL(glEnable(GL_CULL_FACE));
       } else {
+         GL_CALL(glDisable(GL_DEPTH_TEST));
          GL_CALL(glDisable(GL_CULL_FACE));
       }
    }
@@ -385,7 +433,7 @@ static void drawAABB(_glhckObject *object)
    }
    for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
       if (_OpenGL.state.attrib[i]) {
-         GL_CALL(glDisableClientState(GL_TEXTURE_COORD_ARRAY));
+         GL_CALL(glDisableClientState(_glhckAttribName[i]));
       }
 
    GL_CALL(glColor4f(0, 1, 0, 1));
@@ -399,7 +447,7 @@ static void drawAABB(_glhckObject *object)
    }
    for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
       if (_OpenGL.state.attrib[i]) {
-         GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
+         GL_CALL(glEnableClientState(_glhckAttribName[i]));
       }
 }
 
@@ -411,7 +459,8 @@ static void objectDraw(_glhckObject *object)
    CALL("%p", object);
 
    /* no point drawing without vertex data */
-   if (!object->geometry.vertexData)
+   if (!object->geometry.vertexData ||
+       !object->geometry.vertexCount)
       return;
 
    /* load view matrix */
@@ -454,33 +503,67 @@ static void objectDraw(_glhckObject *object)
    _OpenGL.indicesCount += object->geometry.indicesCount;
 }
 
-/* \brief set projection matrix */
-static void setProjection(const kmMat4 *m)
+/* \brief draw text */
+static void textDraw(_glhckText *text)
 {
-   CALL("%p", m);
+   __GLHCKtextTexture *texture;
+   CALL("%p", text);
+
+   /* set states */
+   if (!_OpenGL.state.cull) {
+      _OpenGL.state.cull = 1;
+      GL_CALL(glEnable(GL_CULL_FACE));
+      GL_CALL(glCullFace(GL_FRONT));
+   }
+
+   if (!_OpenGL.state.alpha) {
+      _OpenGL.state.alpha = 1;
+      GL_CALL(glEnable(GL_BLEND));
+      GL_CALL(glBlendFunc(GL_SRC_ALPHA,
+               GL_ONE_MINUS_SRC_ALPHA));
+   }
+
+   if (!_OpenGL.state.texture) {
+      _OpenGL.state.texture = 1;
+      _OpenGL.state.attrib[1] = 1;
+      GL_CALL(glEnable(GL_TEXTURE_2D));
+      GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
+   }
+
+   if (!_OpenGL.state.attrib[0]) {
+      _OpenGL.state.attrib[0] = 1;
+      GL_CALL(glEnableClientState(GL_VERTEX_ARRAY));
+   }
+
+   /* set 2d projection */
    GL_CALL(glMatrixMode(GL_PROJECTION));
-#ifdef GLHCK_KAZMATH_FLOAT
-   GL_CALL(glLoadMatrixf((float*)m));
-#else
-   GL_CALL(glLoadMatrixd((double*)m));
-#endif
-   memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
-}
+   GL_CALL(glLoadIdentity());
+   GL_CALL(glOrtho(0,
+            _GLHCKlibrary.render.width, 0,
+            _GLHCKlibrary.render.height, -1, 1));
 
-static kmMat4 getProjection(void)
-{
-   TRACE();
-   RET("%p", &_OpenGL.projection);
-   return _OpenGL.projection;
-}
+   GL_CALL(glMatrixMode(GL_MODELVIEW));
+   GL_CALL(glLoadIdentity());
 
-/* \brief resize viewport */
-static void viewport(int x, int y, int width, int height)
-{
-   CALL("%d, %d, %d, %d", x, y, width, height);
+   GL_CALL(glDisable(GL_DEPTH_TEST));
+   for (texture = text->tcache; texture;
+        texture = texture->next) {
+      if (!texture->geometry.vertexCount)
+         continue;
+      glhckBindTexture(texture->object);
+      GL_CALL(glVertexPointer(2, GLHCK_PRECISION_VERTEX,
+            sizeof(__GLHCKtextVertexData),
+            &texture->geometry.vertexData[0].vertex));
+      GL_CALL(glTexCoordPointer(2, GLHCK_PRECISION_COORD,
+            sizeof(__GLHCKtextVertexData),
+            &texture->geometry.vertexData[0].coord));
+      GL_CALL(glDrawArrays(GL_TRIANGLES, 0,
+            texture->geometry.vertexCount));
+      texture->geometry.vertexCount = 0;
+   }
+   GL_CALL(glEnable(GL_DEPTH_TEST));
 
-   /* set viewport */
-   GL_CALL(glViewport(x, y, width, height));
+   setProjection(&_OpenGL.projection);
 }
 
 /* ---- Initialization ---- */
@@ -523,6 +606,9 @@ static int renderInit(void)
    /* init global data */
    memset(&_OpenGL, 0, sizeof(__OpenGLrender));
    memset(&_OpenGL.state, 0, sizeof(__OpenGLstate));
+
+   /* save from some headache */
+   GL_CALL(glPixelStorei(GL_UNPACK_ALIGNMENT,1));
 
    /* set texture coords according to how glhck wants them */
    GL_CALL(glMatrixMode(GL_TEXTURE));
@@ -584,6 +670,7 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(bindTexture, _glBindTexture);
    GLHCK_RENDER_FUNC(uploadTexture, uploadTexture);
    GLHCK_RENDER_FUNC(createTexture, createTexture);
+   GLHCK_RENDER_FUNC(fillTexture, fillTexture);
 
    /* framebuffer objects */
    GLHCK_RENDER_FUNC(generateFramebuffers, _glGenFramebuffers);
@@ -597,6 +684,7 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(setClearColor, setClearColor);
    GLHCK_RENDER_FUNC(clear, clear);
    GLHCK_RENDER_FUNC(objectDraw, objectDraw);
+   GLHCK_RENDER_FUNC(textDraw, textDraw);
 
    /* screen */
    GLHCK_RENDER_FUNC(getPixels, getPixels);
