@@ -19,12 +19,14 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(setClearColor);
    GLHCK_API_CHECK(clear);
    GLHCK_API_CHECK(objectDraw);
+   GLHCK_API_CHECK(textDraw);
    GLHCK_API_CHECK(getPixels);
    GLHCK_API_CHECK(generateTextures);
    GLHCK_API_CHECK(deleteTextures);
    GLHCK_API_CHECK(bindTexture);
    GLHCK_API_CHECK(uploadTexture);
    GLHCK_API_CHECK(createTexture);
+   GLHCK_API_CHECK(fillTexture);
    GLHCK_API_CHECK(generateFramebuffers);
    GLHCK_API_CHECK(deleteFramebuffers);
    GLHCK_API_CHECK(bindFramebuffer);
@@ -58,8 +60,8 @@ GLHCKAPI int glhckInit(int argc, char **argv)
    memset(&_GLHCKlibrary,                 0, sizeof(__GLHCKlibrary));
    memset(&_GLHCKlibrary.render,          0, sizeof(__GLHCKrender));
    memset(&_GLHCKlibrary.render.api,      0, sizeof(__GLHCKrenderAPI));
-   memset(&_GLHCKlibrary.texture,         0, sizeof(__GLHCKtexture));
-   memset(&_GLHCKlibrary.camera,          0, sizeof(__GLHCKcamera));
+   memset(&_GLHCKlibrary.render.draw,     0, sizeof(__GLHCKrenderDraw));
+   memset(&_GLHCKlibrary.world,           0, sizeof(__GLHCKworld));
 
    /* init trace system */
    _glhckTraceInit(argc, argv);
@@ -142,7 +144,7 @@ GLHCKAPI void glhckDisplayResize(int width, int height)
       return;
 
    /* update all cameras */
-   _glhckCameraStackUpdate(width, height);
+   _glhckCameraWorldUpdate(width, height);
 
    /* update on library last, so functions know the old values */
    _GLHCKlibrary.render.width  = width;
@@ -154,24 +156,121 @@ GLHCKAPI void glhckClear(void)
 {
    TRACE();
 
-   /* can't render */
+   /* can't clear */
    if (!_glhckInitialized || !_GLHCKlibrary.render.name)
       return;
 
    _GLHCKlibrary.render.api.clear();
 }
 
+/* \brief render scene */
+GLHCKAPI void glhckRender(void)
+{
+   unsigned int ti, oi, ts, os;
+   char kt;
+   _glhckTexture *t;
+   _glhckObject *o;
+   TRACE();
+
+   /* can't render */
+   if (!_glhckInitialized || !_GLHCKlibrary.render.name)
+      return;
+
+   /* nothing to draw */
+   if (!_GLHCKlibrary.render.draw.oqueue[0])
+      return;
+
+   /* draw in sorted texture order */
+   for (ti = 0, ts = 0, os = 0, kt = 0;
+        t = _GLHCKlibrary.render.draw.tqueue[ti]; ++ti) {
+      for (oi = 0; (o = _GLHCKlibrary.render.draw.oqueue[oi]); ++oi) {
+         /* don't draw if not same texture or opaque,
+          * opaque objects are drawn last */
+         if (o->material.texture != t ||
+            (o->material.flags & GLHCK_MATERIAL_ALPHA)) {
+            if (o->material.texture == t) kt = 1; /* don't remove texture from queue */
+            _GLHCKlibrary.render.draw.oqueue[os++] = o; /* assign back to list */
+            continue;
+         }
+
+         /* renders object */
+         glhckObjectRender(o);
+         _GLHCKlibrary.render.draw.oqueue[oi] = NULL;
+      }
+
+      /* check if we need texture again or not */
+      if (kt)  _GLHCKlibrary.render.draw.tqueue[ts++] = t;
+      else     _GLHCKlibrary.render.draw.tqueue[ti]   = NULL;
+
+      /* no texture, time to break
+       * we do this here, so objects with no texture get drawn last */
+      if (!t) break;
+   }
+
+   /* draw opaque objects next,
+    * TODO: this should not be done in texture order,
+    * instead draw from farthest to nearest. (I hate opaque objects) */
+   for (ti = 0, os = 0;
+        t = _GLHCKlibrary.render.draw.tqueue[ti]; ++ti) {
+      for (oi = 0; (o = _GLHCKlibrary.render.draw.oqueue[oi]); ++oi) {
+         /* don't draw if not same texture */
+         if (o->material.texture != t) {
+            _GLHCKlibrary.render.draw.oqueue[os++] = o; /* assign back to list */
+            continue;
+         }
+
+         /* render object */
+         glhckObjectRender(o);
+         _GLHCKlibrary.render.draw.oqueue[oi] = NULL;
+      }
+
+      /* no texture, time to break */
+      if (!t) break;
+   }
+
+   /* good we got no leftovers \o/ */
+   if (!_GLHCKlibrary.render.draw.oqueue[0])
+      return;
+
+   /* something was left un-drawn :o? */
+   memset(_GLHCKlibrary.render.draw.oqueue, 0,
+         GLHCK_MAX_DRAW * sizeof(_glhckObject*));
+}
+
+/* kill a list from world */
+#define _massacre(list, c, n, func)             \
+for (c = _GLHCKlibrary.world.list; c; c = n) {  \
+   n = c->next;                                 \
+   func(c);                                     \
+} _GLHCKlibrary.world.list = NULL;
+
 /* \brief frees virtual display and deinits glue framework */
 GLHCKAPI void glhckTerminate(void)
 {
+   _glhckObject *o, *on;
+   _glhckCamera *c, *cn;
+   _glhckTexture *t, *tn;
+   _glhckAtlas *a, *an;
+   _glhckRtt *r, *rn;
+   _glhckText *tf, *tfn;
    TRACE();
+
    if (!_glhckInitialized) return;
-   glhckDisplayClose();
-   _glhckTextureCacheRelease();
-   _glhckCameraStackRelease();
+
+   /* destroy the world */
+   _massacre(olist, o, on, glhckObjectFree);
+   _massacre(clist, c, cn, glhckCameraFree);
+   _massacre(tlist, t, tn, glhckTextureFree);
+   _massacre(alist, a, an, glhckAtlasFree);
+   _massacre(rlist, r, rn, glhckRttFree);
+   _massacre(tflist, tf, tfn, glhckTextFree);
+
 #ifndef NDEBUG
    _glhckTrackTerminate();
 #endif
+   glhckDisplayClose();
+
+   /* we are done */
    _glhckInitialized = 0;
 }
 
