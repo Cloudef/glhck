@@ -256,14 +256,12 @@ int _glhckImportImage(_glhckTexture *texture, const char *file)
    DEBUG(GLHCK_DBG_CRAP, "Image: %s", file);
 
    /* load using SOIL */
-   texture->data = SOIL_load_image
-      (
-            file,
-            &texture->width,
-            &texture->height,
-            &channels,
-            0
-      );
+   texture->data = SOIL_load_image(
+         file,
+         &texture->width,
+         &texture->height,
+         &channels,
+         0);
 
    /* check succes */
    if (!texture->data)
