@@ -1,61 +1,9 @@
 #include "internal.h"
+#include "helper/vertexdata.h"
 #include <assert.h>  /* for assert */
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
-
-/* conversion defines for vertexdata conversion macro */
-#if GLHCK_PRECISION_VERTEX == GLHCK_BYTE
-#  define GLHCK_VERTEX_MAGIC  255.0f - 127.0f
-#  define GLHCK_BIAS_OFFSET   127.0f / 255.0f
-#  define GLHCK_SCALE_OFFSET  127.0f - 1
-#elif GLHCK_PRECISION_VERTEX == GLHCK_SHORT
-#  define GLHCK_VERTEX_MAGIC  65536.0f - 32768.0f
-#  define GLHCK_BIAS_OFFSET   32768.0f / 65536.0f
-#  define GLHCK_SCALE_OFFSET  65536.0f - 1
-#endif
-
-#if GLHCK_PRECISION_COORD == GLHCK_BYTE
-#  define GLHCK_COORD_MAGIC 127.0f - 255.0f
-#elif GLHCK_PRECISION_COORD == GLHCK_SHORT
-#  define GLHCK_COORD_MAGIC 65536.0f - 32768.0f
-#endif
-
-/* helper macro for vertexdata conversion */
-#define convert2d(dst, src, max, min, magic, cast)                         \
-dst.x = (cast)floorf(((src.x - min.x) / (max.x - min.x)) * magic + 0.5f);  \
-dst.y = (cast)floorf(((src.y - min.y) / (max.y - min.y)) * magic + 0.5f);
-#define convert3d(dst, src, max, min, magic, cast)                         \
-convert2d(dst, src, max, min, magic, cast)                                 \
-dst.z = (cast)floorf(((src.z - min.z) / (max.z - min.z)) * magic + 0.5f);
-
-/* find max && min ranges */
-#define max2d(dst, src) \
-if (src.x > dst.x)      \
-   dst.x = src.x;       \
-if (src.y > dst.y)      \
-   dst.y = src.y;
-#define max3d(dst, src) \
-max2d(dst, src)         \
-if (src.z > dst.z)      \
-   dst.z = src.z;
-#define min2d(dst, src) \
-if (src.x < dst.x)      \
-   dst.x = src.x;       \
-if (src.y < dst.y)      \
-   dst.y = src.y;
-#define min3d(dst, src) \
-min2d(dst, src)         \
-if (src.z < dst.z)      \
-   dst.z = src.z;
-
-/* assign 3d */
-#define set2d(dst, src) \
-dst.x = src.x;          \
-dst.y = src.y;
-#define set3d(dst, src) \
-set2d(dst, src)         \
-dst.z = src.z;
 
 /* \brief convert vertex data to internal format */
 static void _glhckConvertVertexData(_glhckObject *object, __GLHCKvertexData *internal,
@@ -277,6 +225,9 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    /* increase reference */
    object->refCounter++;
 
+   /* insert to world */
+   _glhckWorldInsert(olist, object, _glhckObject*);
+
    RET("%p", object);
    return object;
 
@@ -320,6 +271,9 @@ GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
 
    /* set ref counter to 1 */
    object->refCounter = 1;
+
+   /* insert to world */
+   _glhckWorldInsert(olist, object, _glhckObject*);
 
    RET("%p", object);
    return object;
@@ -369,6 +323,9 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    /* free material */
    glhckObjectSetTexture(object, NULL);
 
+   /* remove from world */
+   _glhckWorldRemove(olist, object, _glhckObject*);
+
    /* free */
    _glhckFree(object);
    object = NULL;
@@ -388,7 +345,7 @@ GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture)
    if (texture) object->material.texture = glhckTextureRef(texture);
 }
 
-/* \brief draw object */
+/* \brief add object to draw queue */
 GLHCKAPI void glhckObjectDraw(glhckObject *object)
 {
    CALL("%p", object);
@@ -398,6 +355,27 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
    if (object->view.update)
       _glhckObjectUpdateMatrix(object);
 
+   /* insert object to drawing queue */
+   _glhckQueueInsert(_GLHCKlibrary.render.draw.oqueue, object);
+
+   /* insert texture to drawing queue */
+   if (object->material.texture) {
+      _glhckQueueInsert(_GLHCKlibrary.render.draw.tqueue,
+            object->material.texture);
+   }
+}
+
+/* \brief render object */
+GLHCKAPI void glhckObjectRender(glhckObject *object)
+{
+   CALL("%p", object);
+   assert(object);
+
+   /* does view matrix need update? */
+   if (object->view.update)
+      _glhckObjectUpdateMatrix(object);
+
+   /* render */
    _GLHCKlibrary.render.api.objectDraw(object);
 }
 
