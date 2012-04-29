@@ -15,96 +15,20 @@
 /* \brief check if texture is in cache, returns reference if found */
 static _glhckTexture* _glhckTextureCacheCheck(const char *file)
 {
-   __GLHCKtextureCache *cache;
+   _glhckTexture *cache;
    CALL("%s", file);
 
    if (!file)
       goto nothing;
 
-   for (cache = _GLHCKlibrary.texture.cache; cache; cache = cache->next) {
-      if (!strcmp(cache->texture->file, file))
-         return glhckTextureRef(cache->texture);
+   for (cache = _GLHCKlibrary.world.tlist; cache; cache = cache->next) {
+      if (cache->file && !strcmp(cache->file, file))
+         return glhckTextureRef(cache);
    }
 
 nothing:
    RET("%p", NULL);
    return NULL;
-}
-
-/* \brief insert texture to cache */
-static int _glhckTextureCacheInsert(_glhckTexture *texture)
-{
-   __GLHCKtextureCache *cache;
-   CALL("%p", texture);
-   assert(texture);
-
-   if (!texture->file)
-      goto fail;
-
-   cache = _GLHCKlibrary.texture.cache;
-   if (!cache) {
-      cache = _GLHCKlibrary.texture.cache =
-         _glhckMalloc(sizeof(__GLHCKtextureCache));
-   } else {
-      for (; cache && cache->next; cache = cache->next);
-      cache = cache->next =
-         _glhckMalloc(sizeof(__GLHCKtextureCache));
-   }
-
-   if (!cache)
-      goto fail;
-
-   /* init cache */
-   memset(cache, 0, sizeof(__GLHCKtextureCache));
-   cache->texture = texture;
-
-   RET("%d", RETURN_OK);
-   return RETURN_OK;
-
-fail:
-   RET("%d", RETURN_FAIL);
-   return RETURN_FAIL;
-}
-
-/* \brief remove texture from cache */
-static void _glhckTextureCacheRemove(_glhckTexture *texture)
-{
-   __GLHCKtextureCache *cache, *found;
-   CALL("%p", texture);
-   assert(texture);
-
-   if (!(cache = _GLHCKlibrary.texture.cache))
-      return;
-
-   if (cache->texture == texture) {
-      _GLHCKlibrary.texture.cache = cache->next;
-      _glhckFree(cache);
-   } else {
-      for (; cache && cache->next &&
-             cache->next->texture != texture;
-             cache = cache->next);
-      if ((found = cache->next)) {
-         cache->next = found->next;
-         _glhckFree(found);
-      }
-   }
-}
-
-/* \brief release texture cache */
-void _glhckTextureCacheRelease(void)
-{
-   __GLHCKtextureCache *cache, *next;
-   TRACE();
-
-   if (!(cache = _GLHCKlibrary.texture.cache))
-      return;
-
-   for (; cache; cache = next) {
-      next = cache->next;
-      _glhckFree(cache);
-   }
-
-   _GLHCKlibrary.texture.cache = NULL;
 }
 
 /* \brief set texture data.
@@ -176,13 +100,15 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
       _glhckTrackFake(texture, sizeof(_glhckTexture) + texture->size);
 #endif
 
-      /* insert to cache */
-      _glhckTextureCacheInsert(texture);
+
       DEBUG(GLHCK_DBG_CRAP, "NEW %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
    }
 
    /* increase ref counter */
    texture->refCounter++;
+
+   /* insert to world */
+   _glhckWorldInsert(tlist, texture, _glhckTexture*);
 
 success:
    RET("%p", texture);
@@ -216,6 +142,9 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
 
    /* set ref counter to 1 */
    texture->refCounter = 1;
+
+   /* insert to world */
+   _glhckWorldInsert(tlist, texture, _glhckTexture*);
 
    /* Return texture */
    RET("%p", texture);
@@ -254,9 +183,6 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
 
    DEBUG(GLHCK_DBG_CRAP, "FREE %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
-   /* remove from cache */
-   _glhckTextureCacheRemove(texture);
-
    /* delete texture if there is one */
    if (texture->object)
       _GLHCKlibrary.render.api.deleteTextures(1, &texture->object);
@@ -264,6 +190,9 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
    /* free */
    IFDO(_glhckFree, texture->file);
    _glhckTextureSetData(texture, NULL);
+
+   /* remove from world */
+   _glhckWorldRemove(tlist, texture, _glhckTexture*);
 
    /* free */
    _glhckFree(texture);
@@ -349,17 +278,17 @@ GLHCKAPI void glhckTextureBind(_glhckTexture *texture)
 {
    CALL("%p", texture);
 
-   if (!texture && _GLHCKlibrary.texture.bind) {
+   if (!texture && _GLHCKlibrary.render.draw.texture) {
       _GLHCKlibrary.render.api.bindTexture(0);
-      _GLHCKlibrary.texture.bind = 0;
+      _GLHCKlibrary.render.draw.texture = 0;
       return;
    }
 
-   if (_GLHCKlibrary.texture.bind == texture->object)
+   if (_GLHCKlibrary.render.draw.texture == texture->object)
       return;
 
    _GLHCKlibrary.render.api.bindTexture(texture->object);
-   _GLHCKlibrary.texture.bind = texture->object;
+   _GLHCKlibrary.render.draw.texture = texture->object;
 }
 
 /* \brief bind using ID */
@@ -367,11 +296,11 @@ GLHCKAPI void glhckBindTexture(unsigned int texture)
 {
    CALL("%d", texture);
 
-   if (_GLHCKlibrary.texture.bind == texture)
+   if (_GLHCKlibrary.render.draw.texture == texture)
       return;
 
    _GLHCKlibrary.render.api.bindTexture(texture);
-   _GLHCKlibrary.texture.bind = texture;
+   _GLHCKlibrary.render.draw.texture = texture;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/
