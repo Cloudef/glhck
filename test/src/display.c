@@ -45,7 +45,7 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
 
    /* Turn on VSYNC if driver allows */
-   glfwSwapInterval(1);
+   // glfwSwapInterval(1);
 
    if (!glhckInit(argc, argv))
       return EXIT_FAILURE;
@@ -58,6 +58,8 @@ int main(int argc, char **argv)
    /* test camera */
    if (!(camera = glhckCameraNew()))
       return EXIT_FAILURE;
+
+   glhckCameraRange(camera, 0.1f, 1000.0f);
 
    /* this texture is useless when toggling PMD testing */
    if (!(texture = glhckTextureNew("../media/glhck.png",
@@ -77,6 +79,12 @@ int main(int argc, char **argv)
    cameraPos.z = -40.0f;
 #endif
    glhckMemoryGraph();
+
+   glhckText *text = glhckTextNew(512, 512);
+   if (!text) return EXIT_FAILURE;
+
+   unsigned int font = glhckTextNewFont(text, "/usr/share/fonts/TTF/ipag.ttf");
+   unsigned int font2 = glhckTextNewFont(text, "/usr/share/fonts/TTF/DejaVuSans.ttf");
 
    glfwSetWindowCloseCallback(close_callback);
    glfwSetWindowSizeCallback(resize_callback);
@@ -126,6 +134,12 @@ int main(int argc, char **argv)
 
       /* glhck drawing */
       glhckObjectDraw(cube);
+      glhckRender();
+
+      glhckTextDraw(text, font, 42, 54, 200, "愛してるGLHCK", NULL);
+      glhckTextDraw(text, font2, 32, 54, 240, "Äöäö DejaVuSans perkele", NULL);
+      glhckTextDraw(text, font, 18, 0, 0, "SADASD", NULL);
+      glhckTextRender(text);
 
       /* Actual swap and clear */
       glfwSwapBuffers();
@@ -145,10 +159,9 @@ int main(int argc, char **argv)
       ++frameCounter;
       duration += delta;
    }
-   glhckObjectFree(cube);
-   glhckTextureFree(texture);
-   glhckCameraFree(camera);
 
+   /* should cleanup all
+    * objects as well */
    glhckTerminate();
    glfwTerminate();
    return EXIT_SUCCESS;
