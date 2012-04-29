@@ -176,6 +176,7 @@ typedef struct _glhckTexture glhckTexture;
 typedef struct _glhckAtlas   glhckAtlas;
 typedef struct _glhckRtt     glhckRtt;
 typedef struct _glhckObject  glhckObject;
+typedef struct _glhckText    glhckText;
 typedef struct _glhckCamera  glhckCamera;
 
 typedef void (*glhckDebugHookFunc)(const char *file, int line, const char *function, glhckDebugLevel level, const char *str);
@@ -189,7 +190,8 @@ GLHCKAPI int glchkDisplayCreate(int width, int height, glhckRenderType renderTyp
 GLHCKAPI void glhckDisplayClose(void);
 GLHCKAPI void glhckDisplayResize(int width, int height);
 
-/* drawing */
+/* rendering */
+GLHCKAPI void glhckRender(void);
 GLHCKAPI void glhckClear(void);
 
 /* cameras */
@@ -225,6 +227,7 @@ GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
 GLHCKAPI short glhckObjectFree(glhckObject *object);
 GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
+GLHCKAPI void glhckObjectRender(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertexData(glhckObject *object,
       size_t memb, const glhckImportVertexData *vertexData);
 GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
@@ -248,7 +251,28 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
 GLHCKAPI glhckObject* glhckModelNew(const char *path, size_t size);
 GLHCKAPI glhckObject* glhckCubeNew(size_t size);
 GLHCKAPI glhckObject* glhckPlaneNew(size_t size);
-GLHCKAPI glhckObject* glhckSpriteNew(const char *file, size_t size, unsigned int flags);
+GLHCKAPI glhckObject* glhckSpriteNew(const char *file, size_t size,
+      unsigned int flags);
+
+/* text */
+GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
+GLHCKAPI void glhckTextFree(glhckText *text);
+GLHCKAPI void glhckTextMetrics(glhckText *text, unsigned int font_id,
+      float size, float *ascender, float *descender, float *lineh);
+GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
+      const char *s, kmVec2 *min, kmVec2 *max);
+GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text,
+      unsigned char *data);
+GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file);
+GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
+      const char *file, int ascent, int descent, int line_gap);
+GLHCKAPI void glhckTextNewGlyph(glhckText *text,
+      unsigned int font_id, const char *s,
+      short size, short base, int x, int y, int w, int h,
+      float xoff, float yoff, float xadvance);
+GLHCKAPI void glhckTextRender(glhckText *text);
+GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
+      float size, float x, float y, const char *s, float *dx);
 
 /* textures */
 GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
@@ -266,7 +290,8 @@ GLHCKAPI glhckAtlas* glhckAtlasNew(void);
 GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas);
 GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture);
 GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *atlas);
-GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int border);
+GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two,
+      const int border);
 GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(glhckAtlas *atlas,
       unsigned short index);
 GLHCKAPI int glhckAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
