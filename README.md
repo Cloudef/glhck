@@ -9,10 +9,10 @@ Move on.
 
 ## Building
 
-git submodule init
-git submodule update
-cmake .
-make
+    git submodule init
+    git submodule update
+    cmake .
+    make
 
 ## Thanks to
 *  [GLEW][] - OpenGL Extension Wrangler
