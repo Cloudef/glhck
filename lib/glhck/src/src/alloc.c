@@ -188,7 +188,6 @@ void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size)
 {
    void *ptr2;
    CALL("%p, %zu, %zu, %zu", ptr, omemb, nmemb, size);
-   assert(ptr);
 
    if (!(ptr2 = realloc(ptr, nmemb * size))) {
       if (!(ptr2 = malloc(nmemb * size)))
