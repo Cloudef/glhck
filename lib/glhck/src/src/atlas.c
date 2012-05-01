@@ -8,17 +8,17 @@ static _glhckAtlasArea* _glhckAtlasGetPackedArea(
       _glhckAtlas *atlas, _glhckTexture *texture)
 {
    _glhckAtlasRect *r;
-   CALL("%p, %p", atlas, texture);
+   CALL(2, "%p, %p", atlas, texture);
    assert(atlas && texture);
 
    /* find packed area */
    for (r = atlas->rect; r; r = r->next)
       if (r->texture == texture) {
-         RET("%p", &r->packed);
+         RET(2, "%p", &r->packed);
          return &r->packed;
       }
 
-   RET("%p", NULL);
+   RET(2, "%p", NULL);
    return NULL;
 }
 
@@ -26,7 +26,7 @@ static _glhckAtlasArea* _glhckAtlasGetPackedArea(
 static void _glhckAtlasDropRects(_glhckAtlas *atlas)
 {
    _glhckAtlasRect *r, *rn;
-   CALL("%p", atlas);
+   CALL(0, "%p", atlas);
    assert(atlas);
 
    /* drop all rects */
@@ -43,7 +43,7 @@ static void _glhckAtlasDropRects(_glhckAtlas *atlas)
 GLHCKAPI glhckAtlas* glhckAtlasNew(void)
 {
    _glhckAtlas *atlas;
-   TRACE();
+   TRACE(0);
 
    if (!(atlas = _glhckMalloc(sizeof(_glhckAtlas))))
       goto fail;
@@ -57,18 +57,18 @@ GLHCKAPI glhckAtlas* glhckAtlasNew(void)
    /* insert to world */
    _glhckWorldInsert(alist, atlas, _glhckAtlas*);
 
-   RET("%p", atlas);
+   RET(0, "%p", atlas);
    return atlas;
 
 fail:
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
 /* \brief free atlas */
 GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas)
 {
-   CALL("%p", atlas);
+   CALL(0, "%p", atlas);
    assert(atlas);
 
    /* there is still references to this atlas alive */
@@ -88,7 +88,7 @@ GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas)
    atlas = NULL;
 
 success:
-   RET("%d", atlas?atlas->refCounter:0);
+   RET(0, "%d", atlas?atlas->refCounter:0);
    return atlas?atlas->refCounter:0;
 }
 
@@ -96,7 +96,7 @@ success:
 GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture)
 {
    _glhckAtlasRect *rect;
-   CALL("%p, %p", atlas, texture);
+   CALL(0, "%p, %p", atlas, texture);
    assert(atlas && texture);
 
    /* find if the texture is already added */
@@ -127,11 +127,11 @@ GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture)
    rect->texture  = glhckTextureRef(texture);
 
 success:
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
@@ -139,7 +139,7 @@ fail:
 GLHCKAPI int glhckAtlasRemoveTexture(glhckAtlas *atlas, glhckTexture *texture)
 {
    _glhckAtlasRect *rect, *found;
-   CALL("%p, %p", atlas, texture);
+   CALL(0, "%p, %p", atlas, texture);
    assert(atlas && texture);
 
    if (!(rect = atlas->rect))
@@ -160,17 +160,17 @@ GLHCKAPI int glhckAtlasRemoveTexture(glhckAtlas *atlas, glhckTexture *texture)
    }
 
 _return:
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 }
 
 /* \brief return combined texture */
 GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *atlas)
 {
-   CALL("%p", atlas);
+   CALL(1, "%p", atlas);
    assert(atlas);
 
-   RET("%p", atlas->texture);
+   RET(1, "%p", atlas->texture);
    return atlas->texture;
 }
 
@@ -186,7 +186,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    _glhckRtt *rtt = NULL;
    _glhckObject *plane = NULL;
    kmMat4 ortho;
-   CALL("%p, %d, %d", atlas, power_of_two, border);
+   CALL(2, "%p, %d, %d", atlas, power_of_two, border);
 
    /* new texture packer */
    if (!(tp = _glhckTexturePackerNew()))
@@ -268,14 +268,14 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    /* free the texture packer */
    _glhckTexturePackerFree(tp);
 
-   RET("%d", RETURN_OK);
+   RET(2, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
    IFDO(glhckObjectFree, plane);
    IFDO(glhckRttFree, rtt);
    IFDO(_glhckTexturePackerFree, tp);
-   RET("%d", RETURN_FAIL);
+   RET(2, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
@@ -284,13 +284,13 @@ GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(glhckAtlas *atlas,
       unsigned short index)
 {
    _glhckAtlasRect *rect;
-   CALL("%p, %d", atlas, index);
+   CALL(1, "%p, %d", atlas, index);
    assert(atlas);
 
    for (rect = atlas->rect; rect &&
         rect->index != index; rect = rect->next);
 
-   RET("%p", rect?rect->texture:NULL);
+   RET(1, "%p", rect?rect->texture:NULL);
    return rect?rect->texture:NULL;
 }
 
@@ -303,7 +303,7 @@ GLHCKAPI int glhckAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
    _glhckAtlasArea *packed;
    kmVec2 center = { 0.5f, 0.5f };
 
-   CALL("%p, %p, "VEC2S", "VEC2S, atlas, texture, VEC2(in), VEC2(out));
+   CALL(2, "%p, %p, "VEC2S", "VEC2S, atlas, texture, VEC2(in), VEC2(out));
    assert(atlas && texture && in && out);
 
    if (!atlas->texture)
@@ -332,11 +332,11 @@ GLHCKAPI int glhckAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
    out->y *= height;
    out->y += y;
 
-   RET("%d", RETURN_OK);
+   RET(2, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
-   RET("%d", RETURN_FAIL);
+   RET(2, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 

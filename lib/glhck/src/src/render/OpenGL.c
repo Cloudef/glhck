@@ -57,7 +57,7 @@ static __OpenGLrender _OpenGL;
 #define DECLARE_GL_GEN_FUNC(x,y)                                     \
 static void x(size_t count, unsigned int *objects)                   \
 {                                                                    \
-   CALL("%zu, %p", count, objects);                                  \
+   CALL(0, "%zu, %p", count, objects);                               \
    GL_CALL(y(count, objects));                                       \
 }
 
@@ -65,7 +65,7 @@ static void x(size_t count, unsigned int *objects)                   \
 #define DECLARE_GL_BIND_FUNC(x,y)                                    \
 static void x(unsigned int object)                                   \
 {                                                                    \
-   CALL("%d", object);                                               \
+   CALL(2, "%d", object);                                            \
    GL_CALL(y);                                                       \
 }
 
@@ -137,7 +137,7 @@ static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc,
 /* \brief upload texture to renderer */
 static int uploadTexture(_glhckTexture *texture, unsigned int flags)
 {
-   CALL("%p, %d", texture, flags);
+   CALL(0, "%p, %d", texture, flags);
    texture->object = SOIL_create_OGL_texture(
          texture->data,
          texture->width, texture->height,
@@ -145,14 +145,14 @@ static int uploadTexture(_glhckTexture *texture, unsigned int flags)
          texture->object?texture->object:0,
          flags);
 
-   RET("%d", texture->object?RETURN_OK:RETURN_FAIL);
+   RET(0, "%d", texture->object?RETURN_OK:RETURN_FAIL);
    return texture->object?RETURN_OK:RETURN_FAIL;
 }
 
 static void getPixels(int x, int y, int width, int height,
       unsigned int format, unsigned char *data)
 {
-   CALL("%d, %d, %d, %d, %d, %p",
+   CALL(1, "%d, %d, %d, %d, %d, %p",
          x, y, width, height, format, data);
    GL_CALL(glReadPixels(x, y, width, height,
             format, GL_UNSIGNED_BYTE, data));
@@ -165,7 +165,7 @@ static unsigned int createTexture(const unsigned char *const buffer,
       unsigned int flags)
 {
    unsigned int object;
-   CALL("%p, %d, %d, %d, %d, %d", buffer,
+   CALL(0, "%p, %d, %d, %d, %d, %d", buffer,
          width, height, format,
          reuse_texture_ID, flags);
 
@@ -188,7 +188,7 @@ static unsigned int createTexture(const unsigned char *const buffer,
             format, GL_UNSIGNED_BYTE, buffer));
 
 _return:
-   RET("%d", object);
+   RET(0, "%d", object);
    return object;
 }
 
@@ -198,7 +198,7 @@ static void fillTexture(unsigned int texture,
       int x, int y, int width, int height,
       unsigned int format)
 {
-   CALL("%d, %p, %d, %d, %d, %d, %d", texture,
+   CALL(1, "%d, %p, %d, %d, %d, %d, %d", texture,
          data, x, y, width, height, format);
    glhckBindTexture(texture);
    GL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, x, y,
@@ -209,7 +209,7 @@ static void fillTexture(unsigned int texture,
 static int linkFramebufferWithTexture(unsigned int object,
       unsigned int texture, unsigned int attachment)
 {
-   CALL("%d, %d, %d", object, texture, attachment);
+   CALL(0, "%d, %d, %d", object, texture, attachment);
 
    GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, object));
    GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, attachment,
@@ -221,21 +221,21 @@ static int linkFramebufferWithTexture(unsigned int object,
 
    GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fbo_fail:
    DEBUG(GLHCK_DBG_ERROR, "Framebuffer is not complete");
 fail:
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
 /* \brief set clear color */
 static void setClearColor(const float r, const float g, const float b, const float a)
 {
-   TRACE();
+   TRACE(1);
    GL_CALL(glClearColor(r, g, b, a));
 }
 
@@ -243,7 +243,7 @@ static void setClearColor(const float r, const float g, const float b, const flo
 /* \brief clear scene */
 static void clear(void)
 {
-   TRACE();
+   TRACE(2);
 
    /* clear buffers, TODO: keep track of em */
    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -255,7 +255,7 @@ static void clear(void)
 /* \brief set projection matrix */
 static void setProjection(const kmMat4 *m)
 {
-   CALL("%p", m);
+   CALL(2, "%p", m);
    GL_CALL(glMatrixMode(GL_PROJECTION));
 #ifdef GLHCK_KAZMATH_FLOAT
    GL_CALL(glLoadMatrixf((float*)m));
@@ -268,15 +268,15 @@ static void setProjection(const kmMat4 *m)
 /* \brief get current projection */
 static kmMat4 getProjection(void)
 {
-   TRACE();
-   RET("%p", &_OpenGL.projection);
+   TRACE(2);
+   RET(2, "%p", &_OpenGL.projection);
    return _OpenGL.projection;
 }
 
 /* \brief resize viewport */
 static void viewport(int x, int y, int width, int height)
 {
-   CALL("%d, %d, %d, %d", x, y, width, height);
+   CALL(2, "%d, %d, %d, %d", x, y, width, height);
 
    /* set viewport */
    GL_CALL(glViewport(x, y, width, height));
@@ -456,7 +456,7 @@ static void objectDraw(_glhckObject *object)
 {
    unsigned int i;
    unsigned int old_primitive;
-   CALL("%p", object);
+   CALL(2, "%p", object);
 
    /* no point drawing without vertex data */
    if (!object->geometry.vertexData ||
@@ -507,7 +507,7 @@ static void objectDraw(_glhckObject *object)
 static void textDraw(_glhckText *text)
 {
    __GLHCKtextTexture *texture;
-   CALL("%p", text);
+   CALL(2, "%p", text);
 
    /* set states */
    if (!_OpenGL.state.cull) {
@@ -574,7 +574,7 @@ static int renderInfo(void)
    char *version, *vendor, *extensions;
    unsigned int major = 0, minor = 0, patch = 0;
    int num_parsed;
-   TRACE();
+   TRACE(0);
 
    version = (char*)GL_CALL(glGetString(GL_VERSION));
    vendor  = (char*)GL_CALL(glGetString(GL_VENDOR));
@@ -592,17 +592,19 @@ static int renderInfo(void)
    if (extensions)
       DEBUG(3, extensions);
 
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
 /* \brief init renderers global state */
 static int renderInit(void)
 {
+   TRACE(0);
+
    /* init global data */
    memset(&_OpenGL, 0, sizeof(__OpenGLrender));
    memset(&_OpenGL.state, 0, sizeof(__OpenGLstate));
@@ -615,14 +617,14 @@ static int renderInit(void)
    GL_CALL(glScalef(1.0f/GLHCK_RANGE_COORD, 1.0f/GLHCK_RANGE_COORD, 1.0f));
    GL_CALL(glMatrixMode(GL_MODELVIEW));
 
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 }
 
 /* \brief terminate renderer */
 static void renderTerminate(void)
 {
-   TRACE();
+   TRACE(0);
 
    /* this tells library that we are no longer alive. */
    GLHCK_RENDER_TERMINATE(RENDER_NAME);
@@ -642,7 +644,7 @@ DECLARE_GL_BIND_FUNC(_glBindFramebuffer, glBindFramebuffer(GL_FRAMEBUFFER, objec
 /* \brief renderer main function */
 void _glhckRenderOpenGL(void)
 {
-   TRACE();
+   TRACE(0);
 
    /* init OpenGL context */
    GL_CALL(glClearColor(0,0,0,1));

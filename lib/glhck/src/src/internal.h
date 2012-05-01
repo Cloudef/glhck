@@ -363,10 +363,16 @@ typedef struct __GLHCKworld
    struct _glhckText    *tflist;
 } __GLHCKworld;
 
-typedef struct __GLHCKtrace
+typedef struct __GLHCKtraceChannel
 {
    const char *name;
    char active;
+} __GLHCKtraceChannel;
+
+typedef struct __GLHCKtrace
+{
+   unsigned char level;
+   struct __GLHCKtraceChannel *channel;
 } __GLHCKtrace;
 
 #ifndef NDEBUG
@@ -382,7 +388,7 @@ typedef struct __GLHCKlibrary
 {
    struct __GLHCKrender render;
    struct __GLHCKworld world;
-   struct __GLHCKtrace *trace;
+   struct __GLHCKtrace trace;
 #ifndef NDEBUG
    struct __GLHCKalloc *alloc;
 #endif
@@ -453,9 +459,9 @@ typedef struct _glhckTexturePacker
 #define RET_FMT(fmt)    "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \3%s\2()\4 => \2(\5"fmt"\2)"
 
 #define DEBUG(level, fmt, ...)   _glhckPassDebug(THIS_FILE, __LINE__, __func__, level, fmt, ##__VA_ARGS__)
-#define TRACE()                  _glhckTrace(GLHCK_CHANNEL, __func__, TRACE_FMT,      THIS_FILE, __LINE__, __func__)
-#define CALL(args, ...)          _glhckTrace(GLHCK_CHANNEL, __func__, CALL_FMT(args), THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
-#define RET(args, ...)           _glhckTrace(GLHCK_CHANNEL, __func__, RET_FMT(args),  THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
+#define TRACE(level)             _glhckTrace(level, GLHCK_CHANNEL, __func__, TRACE_FMT,      THIS_FILE, __LINE__, __func__)
+#define CALL(level, args, ...)   _glhckTrace(level, GLHCK_CHANNEL, __func__, CALL_FMT(args), THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
+#define RET(level, args, ...)    _glhckTrace(level, GLHCK_CHANNEL, __func__, RET_FMT(args),  THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
 
 /* private api */
 
@@ -511,7 +517,7 @@ void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
 
 /* tracing && debug functions */
 void _glhckTraceInit(int argc, char **argv);
-void _glhckTrace(const char *channel, const char *function, const char *fmt, ...);
+void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...);
 void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *fmt, ...);
 
 #endif /* _internal_h_ */

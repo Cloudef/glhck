@@ -35,7 +35,7 @@ static const glhckImportVertexData vertices[] = {
 GLHCKAPI _glhckObject* glhckPlaneNew(size_t size)
 {
    _glhckObject *object;
-   CALL("%d", size);
+   CALL(0, "%d", size);
 
    /* create new object */
    if (!(object = glhckObjectNew()))
@@ -52,12 +52,12 @@ GLHCKAPI _glhckObject* glhckPlaneNew(size_t size)
    /* scale the cube */
    glhckObjectScalef(object, size, size, size);
 
-   RET("%p", object);
+   RET(0, "%p", object);
    return object;
 
 fail:
    IFDO(glhckObjectFree, object);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
@@ -66,7 +66,7 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, size_t size, unsigned in
 {
    _glhckObject *object;
    _glhckTexture *texture;
-   CALL("%s, %zu", file, size);
+   CALL(0, "%s, %zu", file, size);
 
    /* load texture */
    if (!(texture = glhckTextureNew(file, flags)))
@@ -88,12 +88,12 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, size_t size, unsigned in
    /* set filename of object */
    _glhckObjectSetFile(object, file);
 
-   RET("%p", object);
+   RET(0, "%p", object);
    return object;
 
 fail:
    IFDO(glhckTextureFree, texture);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 

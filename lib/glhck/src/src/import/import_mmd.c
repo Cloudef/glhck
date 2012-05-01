@@ -18,7 +18,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
    _glhckTexture *texture = NULL, **textureList = NULL;
    glhckImportVertexData *vertexData = NULL;
    unsigned int *indices = NULL, *strip_indices = NULL;
-   CALL("%p, %s, %d", object, file, animated);
+   CALL(0, "%p, %s, %d", object, file, animated);
 
    if (!(f = fopen((char*)file, "rb")))
       goto read_fail;
@@ -138,7 +138,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
    _glhckFree(strip_indices);
    mmd_free(mmd);
 
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 read_fail:
@@ -157,7 +157,7 @@ fail:
    IFDO(_glhckFree, vertexData);
    IFDO(_glhckFree, indices);
    IFDO(_glhckFree, strip_indices);
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 

@@ -10,53 +10,15 @@
 /* debug hook function */
 static glhckDebugHookFunc _glhckDebugHook = NULL;
 
-/* TODO: replace special channels with trace levels
- * 1: Non frequent call
- * 2: Average call
- * 3: Spam call  */
-
-/* list all ignored functions when
- * GLHCK_CHANNEL_DRAW switch is not active */
-static const char *_drawFuncs[] = {
-   "glhckRender",
-   "glhckClear",
-   "glhckObjectDraw",
-   "glhckObjectRender",
-   "objectDraw",
-   "objectRender",
-   "glhckTextDraw",
-   "glhckTextRender",
-   "textDraw",
-   "clear",
-   "glhckTextureBind",
-   "glhckCameraBind",
-   "setProjection",
-   "glhckBindTexture",
-   "_glBindTexture",
-   NULL,
-};
-
-/* list all ignored functions when
- * GLHCK_CHANNEL_TRANSFORM switch is not active */
-static const char *_transformFuncs[] = {
-   "_glhckObjectUpdateMatrix",
-   "glhckObjectPosition",
-   "glhckObjectMove",
-   "glhckObjectRotate",
-   "glhckObjectScale",
-   "glhckCameraUpdate",
-   "_glhckCameraViewMatrix",
-   "glhckCameraPosition",
-   "glhckCameraRotate",
-   "glhckCameraTarget",
-   "_glhckAtlasGetPackedArea",
-   "glhckAtlasGetTransformed",
-   NULL,
-};
+/* Tracing levels:
+ * 0: Non frequent calls (creation, freeing, etc..)
+ * 1: Average call (setters, getters)
+ * 2: Spam call (render, draw, transformation, etc..) */
 
 /* list all debug channels */
-__GLHCKtrace _traceChannels[] =
+__GLHCKtraceChannel _traceChannels[] =
 {
+   /* glhck's channels */
    { GLHCK_CHANNEL_GLHCK,    0 },
    { GLHCK_CHANNEL_IMPORT,   0 },
    { GLHCK_CHANNEL_OBJECT,   0 },
@@ -69,13 +31,6 @@ __GLHCKtrace _traceChannels[] =
    { GLHCK_CHANNEL_ALLOC,    0 },
    { GLHCK_CHANNEL_RENDER,   0 },
 
-   /* special channels,
-    * will stop bloating output,
-    * with commands that might be executed,
-    * every game loop */
-   { GLHCK_CHANNEL_TRANSFORM, 0 },
-   { GLHCK_CHANNEL_DRAW,      0 },
-
    /* trace channel */
    { GLHCK_CHANNEL_TRACE,  0 },
 
@@ -83,23 +38,13 @@ __GLHCKtrace _traceChannels[] =
    { NULL,                 0 },
 };
 
-/* \brief is a draw function? */
-static int _glhckTraceIsFunction(const char **list, const char *function)
-{
-   int i;
-   for (i = 0; list[i]; ++i)
-      if (!strcmp(list[i], function))
-         return RETURN_TRUE;
-   return RETURN_FALSE;
-}
-
 /* \brief channel is active? */
 static int _glhckTraceIsActive(const char *name)
 {
    int i;
-   for (i = 0; _GLHCKlibrary.trace[i].name; ++i)
-      if (!_glhckStrupcmp(_GLHCKlibrary.trace[i].name, name))
-            return _GLHCKlibrary.trace[i].active;
+   for (i = 0; _GLHCKlibrary.trace.channel[i].name; ++i)
+      if (!_glhckStrupcmp(_GLHCKlibrary.trace.channel[i].name, name))
+            return _GLHCKlibrary.trace.channel[i].active;
    return 0;
 }
 
@@ -107,13 +52,11 @@ static int _glhckTraceIsActive(const char *name)
 static void _glhckTraceSet(const char *name, int active)
 {
    int i;
-   for(i = 0; _GLHCKlibrary.trace[i].name ; ++i)
-      if (!_glhckStrupcmp(name, _GLHCKlibrary.trace[i].name)                   ||
+   for(i = 0; _GLHCKlibrary.trace.channel[i].name ; ++i)
+      if (!_glhckStrupcmp(name, _GLHCKlibrary.trace.channel[i].name)           ||
          (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL)                             &&
-          _glhckStrupcmp(_GLHCKlibrary.trace[i].name, GLHCK_CHANNEL_TRACE)     &&
-          _glhckStrupcmp(_GLHCKlibrary.trace[i].name, GLHCK_CHANNEL_TRANSFORM) &&
-          _glhckStrupcmp(_GLHCKlibrary.trace[i].name, GLHCK_CHANNEL_DRAW)))
-      _GLHCKlibrary.trace[i].active = active;
+          _glhckStrupcmp(_GLHCKlibrary.trace.channel[i].name, GLHCK_CHANNEL_TRACE)))
+      _GLHCKlibrary.trace.channel[i].active = active;
 }
 
 /* \brief init debug system */
@@ -123,7 +66,7 @@ void _glhckTraceInit(int argc, char **argv)
    char *match, **split;
 
    /* init */
-   _GLHCKlibrary.trace = _traceChannels;
+   _GLHCKlibrary.trace.channel = _traceChannels;
 
    i = 0; match = NULL;
    for(i = 0, match = NULL; i != argc; ++i) {
@@ -132,12 +75,17 @@ void _glhckTraceInit(int argc, char **argv)
          break;
       }
    }
+
    if (!match) return;
    count = _glhckStrsplit(&split, match, ",");
    if (!split) return;
 
    for (i = 0; i != count; ++i) {
-      if (!strncmp(split[i], "+", 1))
+      if (!strncmp(split[i], "+++", 3))
+         _GLHCKlibrary.trace.level = 2;
+      else if (!strncmp(split[i], "++", 2))
+         _GLHCKlibrary.trace.level = 1;
+      else if (!strncmp(split[i], "+", 1))
          _glhckTraceSet(split[i] + 1, 1);
       else if (!strncmp(split[i], "-", 1))
          _glhckTraceSet(split[i] + 1, 0);
@@ -147,21 +95,17 @@ void _glhckTraceInit(int argc, char **argv)
 }
 
 /* \brief output trace info */
-void _glhckTrace(const char *channel, const char *function, const char *fmt, ...)
+void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...)
 {
    va_list args;
    char buffer[LINE_MAX];
 
-   if (!_GLHCKlibrary.trace) return;
+   if (!_GLHCKlibrary.trace.channel) return;
+
+   if (level > _GLHCKlibrary.trace.level)
+      return;
+
    if (!_glhckTraceIsActive(GLHCK_CHANNEL_TRACE))
-      return;
-
-   if (!_glhckTraceIsActive(GLHCK_CHANNEL_DRAW) &&
-        _glhckTraceIsFunction(_drawFuncs, function))
-      return;
-
-   if (!_glhckTraceIsActive(GLHCK_CHANNEL_TRANSFORM) &&
-        _glhckTraceIsFunction(_transformFuncs, function))
       return;
 
    if (!_glhckTraceIsActive(channel))

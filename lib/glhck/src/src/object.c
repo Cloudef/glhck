@@ -13,7 +13,7 @@ static void _glhckConvertVertexData(_glhckObject *object, __GLHCKvertexData *int
    char no_vconvert, no_nconvert;
    kmVec3 vmin, vmax,
           nmin, nmax;
-   CALL("%p, %p, %zu", internal, import, memb);
+   CALL(0, "%p, %p, %zu", internal, import, memb);
 
    set3d(vmax, import[0].vertex);
    set3d(vmin, import[0].vertex);
@@ -115,7 +115,7 @@ static void _glhckConvertIndexData(GLHCK_CAST_INDEX *internal,
       const unsigned int *import, size_t memb)
 {
    size_t i;
-   CALL("%p, %p, %zu", internal, import, memb);
+   CALL(0, "%p, %p, %zu", internal, import, memb);
 
    /* TODO: Handle unsigned short indices or just use unsigned int for sake of simplicity? */
    for (i = 0; i != memb; ++i)
@@ -129,7 +129,7 @@ static void _glhckObjectCalculateAABB(_glhckObject *object)
    kmVec3 min, max;
    kmAABB aabb_box;
    __GLHCKobjectGeometry *g;
-   CALL("%p", object);
+   CALL(2, "%p", object);
 
    g = &object->geometry;
    set3d(max, g->vertexData[0].vertex);
@@ -151,7 +151,7 @@ static void _glhckObjectCalculateAABB(_glhckObject *object)
 static void _glhckObjectUpdateMatrix(_glhckObject *object)
 {
    kmMat4 translation, rotation, scaling, temp;
-   CALL("%p", object);
+   CALL(2, "%p", object);
 
    /* translation */
    kmMat4Translation(&translation,
@@ -183,7 +183,7 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
 /* set object's filename */
 void _glhckObjectSetFile(_glhckObject *object, const char *file)
 {
-   CALL("%p, %s", object, file);
+   CALL(1, "%p, %s", object, file);
    assert(object);
    IFDO(_glhckFree, object->file);
    if (file) object->file = _glhckStrdup(file);
@@ -192,7 +192,7 @@ void _glhckObjectSetFile(_glhckObject *object, const char *file)
 /* set object's data */
 void _glhckObjectSetData(_glhckObject *object, const char *data)
 {
-   CALL("%p, %s", object, data);
+   CALL(1, "%p, %s", object, data);
    assert(object);
    IFDO(_glhckFree, object->data);
    if (data) object->data = _glhckStrdup(data);
@@ -204,7 +204,7 @@ void _glhckObjectSetData(_glhckObject *object, const char *data)
 GLHCKAPI glhckObject *glhckObjectNew(void)
 {
    _glhckObject *object;
-   TRACE();
+   TRACE(0);
 
    if (!(object = _glhckMalloc(sizeof(_glhckObject))))
       goto fail;
@@ -228,11 +228,11 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    /* insert to world */
    _glhckWorldInsert(olist, object, _glhckObject*);
 
-   RET("%p", object);
+   RET(0, "%p", object);
    return object;
 
 fail:
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
@@ -240,7 +240,7 @@ fail:
 GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
 {
    _glhckObject *object;
-   CALL("%p", src);
+   CALL(0, "%p", src);
    assert(src);
 
    if (!(object = _glhckMalloc(sizeof(_glhckObject))))
@@ -275,7 +275,7 @@ GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
    /* insert to world */
    _glhckWorldInsert(olist, object, _glhckObject*);
 
-   RET("%p", object);
+   RET(0, "%p", object);
    return object;
 
 fail:
@@ -286,27 +286,27 @@ fail:
       IFDO(_glhckFree, object->geometry.indices);
    }
    IFDO(_glhckFree, object);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
 /* \brief reference object */
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object)
 {
-   CALL("%p", object);
+   CALL(0, "%p", object);
    assert(object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET("%p", object);
+   RET(0, "%p", object);
    return object;
 }
 
 /* \brief free object */
 GLHCKAPI short glhckObjectFree(glhckObject *object)
 {
-   CALL("%p", object);
+   CALL(0, "%p", object);
    assert(object);
 
    /* there is still references to this object alive */
@@ -331,14 +331,14 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    object = NULL;
 
 success:
-   RET("%d", object?object->refCounter:0);
+   RET(0, "%d", object?object->refCounter:0);
    return object?object->refCounter:0;
 }
 
 /* \brief set object's texture */
 GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture)
 {
-   CALL("%p, %p", object, texture);
+   CALL(1, "%p, %p", object, texture);
    assert(object);
 
    IFDO(glhckTextureFree, object->material.texture);
@@ -348,7 +348,7 @@ GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture)
 /* \brief add object to draw queue */
 GLHCKAPI void glhckObjectDraw(glhckObject *object)
 {
-   CALL("%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* does view matrix need update? */
@@ -368,7 +368,7 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
 /* \brief render object */
 GLHCKAPI void glhckObjectRender(glhckObject *object)
 {
-   CALL("%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* does view matrix need update? */
@@ -382,7 +382,7 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
 /* \brief position object */
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position)
 {
-   CALL("%p, "VEC3S, object, VEC3(position));
+   CALL(2, "%p, "VEC3S, object, VEC3(position));
    assert(object && position);
 
    if (object->view.translation.x == position->x &&
@@ -405,7 +405,7 @@ GLHCKAPI void glhckObjectPositionf(glhckObject *object,
 /* \brief move object */
 GLHCKAPI void glhckObjectMove(glhckObject *object, const kmVec3 *move)
 {
-   CALL("%p, "VEC3S, object, VEC3(move));
+   CALL(2, "%p, "VEC3S, object, VEC3(move));
    assert(object && move);
 
    kmVec3Add(&object->view.translation,
@@ -424,7 +424,7 @@ GLHCKAPI void glhckObjectMovef(glhckObject *object,
 /* \brief rotate object */
 GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate)
 {
-   CALL("%p, "VEC3S, object, VEC3(rotate));
+   CALL(2, "%p, "VEC3S, object, VEC3(rotate));
    assert(object && rotate);
 
    if (object->view.rotation.x == rotate->x &&
@@ -447,7 +447,7 @@ GLHCKAPI void glhckObjectRotatef(glhckObject *object,
 /* \brief scale object */
 GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale)
 {
-   CALL("%p, "VEC3S, object, VEC3(scale));
+   CALL(2, "%p, "VEC3S, object, VEC3(scale));
    assert(object && scale);
 
    if (object->view.scaling.x == scale->x &&
@@ -474,7 +474,7 @@ GLHCKAPI int glhckObjectInsertVertexData(
       const glhckImportVertexData *vertexData)
 {
    __GLHCKvertexData *new;
-   CALL("%p, %zu, %p", object, memb, vertexData);
+   CALL(0, "%p, %zu, %p", object, memb, vertexData);
    assert(object);
 
    /* allocate new buffer */
@@ -493,11 +493,11 @@ GLHCKAPI int glhckObjectInsertVertexData(
    /* calculate AABB from vertices */
    _glhckObjectCalculateAABB(object);
 
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
@@ -508,7 +508,7 @@ GLHCKAPI int glhckObjectInsertIndices(
       const unsigned int *indices)
 {
    GLHCK_CAST_INDEX *new;
-   CALL("%p, %zu, %p", object, memb, indices);
+   CALL(0, "%p, %zu, %p", object, memb, indices);
    assert(object);
 
    /* allocate new buffer */
@@ -529,11 +529,11 @@ GLHCKAPI int glhckObjectInsertIndices(
    object->geometry.indices = new;
    object->geometry.indicesCount = memb;
 
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 

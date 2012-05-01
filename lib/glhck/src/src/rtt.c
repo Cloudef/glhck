@@ -7,7 +7,7 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
 {
    _glhckRtt *rtt;
    _glhckTexture *texture = NULL;
-   CALL("%d", mode);
+   CALL(0, "%d", mode);
 
    if (!(rtt = _glhckMalloc(sizeof(_glhckRtt))))
       goto fail;
@@ -39,20 +39,20 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
    /* insert to world */
    _glhckWorldInsert(rlist, rtt, _glhckRtt*);
 
-   RET("%p", rtt);
+   RET(0, "%p", rtt);
    return rtt;
 
 fail:
    IFDO(_glhckFree, rtt);
    IFDO(glhckTextureFree, texture);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
 /* \brief free rtt object */
 GLHCKAPI short glhckRttFree(glhckRtt *rtt)
 {
-   CALL("%p", rtt);
+   CALL(0, "%p", rtt);
    assert(rtt);
 
    /* there is still references to this rtt alive */
@@ -70,7 +70,7 @@ GLHCKAPI short glhckRttFree(glhckRtt *rtt)
    rtt = NULL;
 
 success:
-   RET("%d", rtt?rtt->refCounter:0);
+   RET(0, "%d", rtt?rtt->refCounter:0);
    return rtt?rtt->refCounter:0;
 }
 
@@ -78,7 +78,7 @@ success:
 GLHCKAPI int glhckRttFillData(glhckRtt *rtt)
 {
    unsigned char *data;
-   CALL("%p", rtt);
+   CALL(1, "%p", rtt);
    assert(rtt);
 
    data = _glhckMalloc(rtt->texture->width    *
@@ -95,27 +95,28 @@ GLHCKAPI int glhckRttFillData(glhckRtt *rtt)
 
    _glhckTextureSetData(rtt->texture, data);
 
-   RET("%d", RETURN_OK);
+   RET(1, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
-   RET("%d", RETURN_FAIL);
+   RET(1, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
 /* \brief return rtt's texture */
 GLHCKAPI glhckTexture* glhckRttGetTexture(glhckRtt *rtt)
 {
-   CALL("%p", rtt);
+   CALL(1, "%p", rtt);
    assert(rtt);
 
-   RET("%p", rtt->texture);
+   RET(1, "%p", rtt->texture);
    return rtt->texture;
 }
 
 /* \brief start rendering to rtt */
 GLHCKAPI void glhckRttBegin(glhckRtt *rtt)
 {
+   CALL(2, "%p", rtt);
    assert(rtt);
    _GLHCKlibrary.render.api.bindFramebuffer(rtt->object);
 }
@@ -123,6 +124,7 @@ GLHCKAPI void glhckRttBegin(glhckRtt *rtt)
 /* \brief end rendering to rtt */
 GLHCKAPI void glhckRttEnd(glhckRtt *rtt)
 {
+   CALL(2, "%p", rtt);
    assert(rtt);
    _GLHCKlibrary.render.api.bindFramebuffer(0);
 }
