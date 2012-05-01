@@ -37,7 +37,7 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
 void _glhckDefaultProjection(int width, int height)
 {
    kmMat4 projection;
-   TRACE();
+   TRACE(1);
    _GLHCKlibrary.render.api.viewport(0, 0,
          _GLHCKlibrary.render.width,
          _GLHCKlibrary.render.height);
@@ -51,13 +51,14 @@ void _glhckDefaultProjection(int width, int height)
 /* \brief initialize */
 GLHCKAPI int glhckInit(int argc, char **argv)
 {
-   CALL("%d, %p", argc, argv);
+   CALL(0, "%d, %p", argc, argv);
 
    if (_glhckInitialized)
       goto success;
 
    /* reset global state */
    memset(&_GLHCKlibrary,                 0, sizeof(__GLHCKlibrary));
+   memset(&_GLHCKlibrary.trace,           0, sizeof(__GLHCKtrace));
    memset(&_GLHCKlibrary.render,          0, sizeof(__GLHCKrender));
    memset(&_GLHCKlibrary.render.api,      0, sizeof(__GLHCKrenderAPI));
    memset(&_GLHCKlibrary.render.draw,     0, sizeof(__GLHCKrenderDraw));
@@ -69,7 +70,7 @@ GLHCKAPI int glhckInit(int argc, char **argv)
    _glhckInitialized = 1;
 
 success:
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 }
 
@@ -77,7 +78,7 @@ success:
 GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderType)
 {
    kmMat4 projection;
-   CALL("%d, %d, %d", width, height, renderType);
+   CALL(0, "%d, %d, %d", width, height, renderType);
 
    if (!_glhckInitialized ||
        width <= 0 && height <= 0)
@@ -108,18 +109,18 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    glhckDisplayResize(width, height);
 
 success:
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
 /* \brief close the virutal display */
 GLHCKAPI void glhckDisplayClose(void)
 {
-   TRACE();
+   TRACE(0);
 
    /* nothing to terminate */
    if (!_glhckInitialized || !_GLHCKlibrary.render.name)
@@ -132,7 +133,7 @@ GLHCKAPI void glhckDisplayClose(void)
 /* \brief resize virtual display */
 GLHCKAPI void glhckDisplayResize(int width, int height)
 {
-   CALL("%d, %d", width, height);
+   CALL(1, "%d, %d", width, height);
    assert(width > 0 && height > 0);
 
    /* nothing to resize */
@@ -154,7 +155,7 @@ GLHCKAPI void glhckDisplayResize(int width, int height)
 /* \brief clear scene */
 GLHCKAPI void glhckClear(void)
 {
-   TRACE();
+   TRACE(2);
 
    /* can't clear */
    if (!_glhckInitialized || !_GLHCKlibrary.render.name)
@@ -170,7 +171,7 @@ GLHCKAPI void glhckRender(void)
    char kt;
    _glhckTexture *t;
    _glhckObject *o;
-   TRACE();
+   TRACE(2);
 
    /* can't render */
    if (!_glhckInitialized || !_GLHCKlibrary.render.name)
@@ -253,7 +254,7 @@ GLHCKAPI void glhckTerminate(void)
    _glhckAtlas *a, *an;
    _glhckRtt *r, *rn;
    _glhckText *tf, *tfn;
-   TRACE();
+   TRACE(0);
 
    if (!_glhckInitialized) return;
 

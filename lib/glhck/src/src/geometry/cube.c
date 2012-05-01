@@ -152,7 +152,7 @@ GLHCKAPI _glhckObject* glhckCubeNew(size_t size)
       }
    };
 
-   CALL("%d", size);
+   CALL(0, "%d", size);
 
    /* create new object */
    if (!(object = glhckObjectNew()))
@@ -169,12 +169,12 @@ GLHCKAPI _glhckObject* glhckCubeNew(size_t size)
    /* scale the cube */
    glhckObjectScalef(object, size, size, size);
 
-   RET("%p", object);
+   RET(0, "%p", object);
    return object;
 
 fail:
    IFDO(glhckObjectFree, object);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 

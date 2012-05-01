@@ -63,7 +63,7 @@ static char* parse_header(const char *file)
    char *MAGIC_HEADER = NULL, bit = '\0';
    FILE *f;
    size_t bytesRead = 0, bytesTotal;
-   CALL("%s", file);
+   CALL(0, "%s", file);
 
    /* open file */
    if (!(f = fopen(file, "rb"))) {
@@ -122,7 +122,7 @@ static char* parse_header(const char *file)
 
    MAGIC_HEADER[bytesRead] = '\0';
 
-   RET("%s", MAGIC_HEADER);
+   RET(0, "%s", MAGIC_HEADER);
    return MAGIC_HEADER;
 
 parse_fail:
@@ -133,21 +133,21 @@ read_fail:
 fail:
    IFDO(_glhckFree, MAGIC_HEADER);
    IFDO(fclose, f);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
 /* \brief check against known model format headers */
 static _glhckModelFormat model_format(const char *MAGIC_HEADER)
 {
-   CALL("%s", MAGIC_HEADER);
+   CALL(0, "%s", MAGIC_HEADER);
 
    /* --------- FORMAT HEADER CHECKING ------------ */
 
 #if GLHCK_IMPORT_OPENCTM
    /* OpenCTM check */
    if (!strcmp(MODEL_FORMAT_OCTM, MAGIC_HEADER)) {
-      RET("%s", "M_OCTM");
+      RET(0, "%s", "M_OCTM");
       return M_OCTM;
    }
 #endif
@@ -155,14 +155,14 @@ static _glhckModelFormat model_format(const char *MAGIC_HEADER)
 #if GLHCK_IMPORT_PMD
    /* PMD check */
    if (!strcmp(MODEL_FORMAT_PMD, MAGIC_HEADER)) {
-      RET("%s", "M_PMD");
+      RET(0, "%s", "M_PMD");
       return M_PMD;
    }
 #endif
 
 #if GLHCK_IMPORT_ASSIMP
    /* Our importers cant handle this, let's try ASSIMP */
-   RET("%s", "M_ASSIMP");
+   RET(0, "%s", "M_ASSIMP");
    return M_ASSIMP;
 #endif
 
@@ -172,7 +172,7 @@ static _glhckModelFormat model_format(const char *MAGIC_HEADER)
    DEBUG(GLHCK_DBG_ERROR, "If the format is supported, make sure you have compiled the library with the support.");
    DEBUG(GLHCK_DBG_ERROR, "Magic header: %s", MAGIC_HEADER);
 
-   RET("%s", "M_NOT_FOUND");
+   RET(0, "%s", "M_NOT_FOUND");
    return M_NOT_FOUND;
 }
 
@@ -191,7 +191,7 @@ int _glhckImportModel(_glhckObject *object, const char *file, int animated)
    /* default for fail, as in no importer found */
    int importReturn = RETURN_FAIL;
 
-   CALL("%p, %s, %d", object, file, animated);
+   CALL(0, "%p, %s, %d", object, file, animated);
    DEBUG(GLHCK_DBG_CRAP, "Model: %s", file);
 
    /* read file header */
@@ -235,7 +235,7 @@ int _glhckImportModel(_glhckObject *object, const char *file, int animated)
 
    /* can be non fail too depending on the importReturn */
 fail:
-   RET("%d", importReturn);
+   RET(0, "%d", importReturn);
    return importReturn;
 }
 
@@ -252,7 +252,7 @@ static inline unsigned int _getFormat(unsigned int channels)
 int _glhckImportImage(_glhckTexture *texture, const char *file)
 {
    unsigned int channels;
-   CALL("%p, %s", texture, file);
+   CALL(0, "%p, %s", texture, file);
    DEBUG(GLHCK_DBG_CRAP, "Image: %s", file);
 
    /* load using SOIL */
@@ -269,12 +269,12 @@ int _glhckImportImage(_glhckTexture *texture, const char *file)
 
    texture->format = _getFormat(channels);
    texture->size   = texture->width * texture->height * channels;
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to load %s", file);
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
@@ -285,9 +285,9 @@ fail:
 char *gnu_basename(char *path)
 {
     char *base;
-    CALL("%s", path);
+    CALL(1, "%s", path);
     base = strrchr(path, '/');
-    RET("%s", base ? base+1 : path);
+    RET(1, "%s", base ? base+1 : path);
     return base ? base+1 : path;
 }
 
@@ -300,7 +300,7 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
 {
    char *textureFile, *modelFolder;
    char textureInModelFolder[PATH_MAX];
-   CALL("%s, %s", odd_texture_path, model_path);
+   CALL(0, "%s, %s", odd_texture_path, model_path);
 
    /* these are must to check */
    if (!odd_texture_path || !odd_texture_path[0])
@@ -313,7 +313,7 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
    if (access(textureFile, F_OK) != 0)
       textureFile = gnu_basename((char*)odd_texture_path);
    else {
-      RET("%s", textureFile);
+      RET(0, "%s", textureFile);
       return strdup(textureFile);
    }
 
@@ -341,11 +341,11 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
       goto fail;
 
    /* return, remember to free */
-   RET("%s", textureInModelFolder);
+   RET(0, "%s", textureInModelFolder);
    return strdup(textureInModelFolder);
 
 fail:
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
@@ -385,7 +385,7 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
    unsigned int *out_indices = NULL, test;
    size_t i, strips, prim_count, tmp;
    ACTCData *tc = NULL;
-   CALL("%p, %zu, %p", indices, num_indices, out_num_indices);
+   CALL(0, "%p, %zu, %p", indices, num_indices, out_num_indices);
 
    /* check if the triangles we got are valid */
    test = num_indices;
@@ -442,7 +442,7 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
    printf("%d profit\n", num_indices - i);
    actcDelete(tc);
 
-   RET("%p", out_indices);
+   RET(0, "%p", out_indices);
    return out_indices;
 
 not_valid:
@@ -459,7 +459,7 @@ no_profit:
 fail:
    IFDO(actcDelete, tc);
    IFDO(_glhckFree, out_indices);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 #else
    /* stripping is disabled.

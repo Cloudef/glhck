@@ -54,50 +54,50 @@ typedef struct __GLHCKtextFont
 
 /* utf8 table */
 static const unsigned char utf8d[] = {
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
-	7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
-	8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
-	0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
-	0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
-	0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
-	1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
-	1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
-	1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
-	1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
+   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
+   7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
+   8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
+   0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
+   0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
+   0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
+   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
+   1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
+   1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
+   1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
 };
 
 /* decode utf8 */
 static unsigned int decutf8(unsigned int* state, unsigned int* codep, unsigned int byte)
 {
-	unsigned int type = utf8d[byte];
-	*codep = (*state != UTF8_ACCEPT) ?
-		(byte & 0x3fu) | (*codep << 6) :
-		(0xff >> type) & (byte);
-	*state = utf8d[256 + *state*16 + type];
-	return *state;
+   unsigned int type = utf8d[byte];
+   *codep = (*state != UTF8_ACCEPT) ?
+      (byte & 0x3fu) | (*codep << 6) :
+      (0xff >> type) & (byte);
+   *state = utf8d[256 + *state*16 + type];
+   return *state;
 }
 
 /* hasher */
 static unsigned int hashint(unsigned int a)
 {
-	a += ~(a<<15);
-	a ^=  (a>>10);
-	a +=  (a<<3);
-	a ^=  (a>>6);
-	a += ~(a<<11);
-	a ^=  (a>>16);
-	return a;
+   a += ~(a<<15);
+   a ^=  (a>>10);
+   a +=  (a<<3);
+   a ^=  (a>>6);
+   a += ~(a<<11);
+   a ^=  (a>>16);
+   return a;
 }
 
 /* \brief creates new texture to the cache */
 static int _glhckTextNewTexture(_glhckText *text, unsigned int object)
 {
    __GLHCKtextTexture *texture, *t;
-   CALL("%p, %d", text, texture);
+   CALL(0, "%p, %d", text, texture);
    assert(text);
 
    if (!(texture = _glhckMalloc(sizeof(__GLHCKtextTexture))))
@@ -112,12 +112,12 @@ static int _glhckTextNewTexture(_glhckText *text, unsigned int object)
 
    texture->object = object;
 
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
    IFDO(_glhckFree, texture);
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
@@ -341,6 +341,7 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
 {
    _glhckText *text;
    __GLHCKtextTexture *texture = NULL;
+   CALL(0, "%d, %d", cachew, cacheh);
 
    /* allocate text stack */
    if (!(text = _glhckMalloc(sizeof(_glhckText))))
@@ -369,13 +370,13 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    /* insert to world */
    _glhckWorldInsert(tflist, text, _glhckText*);
 
-   RET("%p", text);
+   RET(0, "%p", text);
    return text;
 
 fail:
    IFDO(_glhckFree, text);
    IFDO(_glhckFree, texture);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
@@ -384,7 +385,7 @@ GLHCKAPI void glhckTextFree(glhckText *text)
 {
    __GLHCKtextFont *f, *fn;
    __GLHCKtextTexture *t, *tn;
-   CALL("%p", text);
+   CALL(0, "%p", text);
    assert(text);
 
    /* free texture cache */
@@ -416,7 +417,7 @@ GLHCKAPI void glhckTextMetrics(glhckText *text, unsigned int font_id,
       float size, float *ascender, float *descender, float *lineh)
 {
    __GLHCKtextFont *font;
-   CALL("%p, %d, %zu, %f, %f, %f", text, font_id, size,
+   CALL(1, "%p, %d, %zu, %f, %f, %f", text, font_id, size,
          ascender, descender, lineh);
    assert(text);
 
@@ -446,7 +447,7 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
    __GLHCKtextQuad q;
    float x, y;
 
-   CALL("%p, %d, %zu, %s, %p, %p",
+   CALL(1, "%p, %d, %zu, %s, %p, %p",
          text, font_id, size, s, min, max);
    assert(text && s && min && max);
 
@@ -481,7 +482,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text, unsigned char 
    unsigned int id;
    int ascent, descent, fh, line_gap;
    __GLHCKtextFont *font, *f;
-   CALL("%p, %p", text, data);
+   CALL(0, "%p, %p", text, data);
    assert(text && data);
 
    /* allocate font */
@@ -510,12 +511,12 @@ GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text, unsigned char 
    font->next     = text->fcache;
    text->fcache   = font;
 
-   RET("%d", id);
+   RET(0, "%d", id);
    return id;
 
 fail:
    IFDO(_glhckFree, font);
-   RET("%d", 0);
+   RET(0, "%d", 0);
    return 0;
 }
 
@@ -526,6 +527,8 @@ GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file)
    size_t size;
    unsigned int id;
    unsigned char *data = NULL;
+   CALL(0, "%p, %s", text, file);
+   assert(text && file);
 
    /* open font */
    if (!(f = fopen(file, "rb")))
@@ -545,13 +548,13 @@ GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file)
    if (!(id = glhckTextNewFontFromMemory(text, data)))
       goto fail;
 
-   RET("%d", id);
+   RET(0, "%d", id);
    return id;
 
 fail:
    IFDO(fclose, f);
    IFDO(_glhckFree, data);
-   RET("%d", 0);
+   RET(0, "%d", 0);
    return 0;
 }
 
@@ -563,6 +566,8 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
    unsigned char *data = NULL;
    int fh, width, height, channels;
    __GLHCKtextFont *font, *f;
+   CALL(0, "%p, %s, %d, %d, %d",
+         text, file, ascent, descent, line_gap);
    assert(text && file);
 
     /* allocate font */
@@ -604,13 +609,13 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
    font->next     = text->fcache;
    text->fcache   = font;
 
-   RET("%d", id);
+   RET(0, "%d", id);
    return id;
 
 fail:
    IFDO(_glhckFree, font);
    IFDO(free, data);
-   RET("%d", 0);
+   RET(0, "%d", 0);
    return 0;
 }
 
@@ -623,7 +628,7 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *text,
    unsigned int codepoint, state = 0, hh;
    __GLHCKtextFont *font;
    __GLHCKtextGlyph *glyph;
-   CALL("%p, %s, %d, %d, %d, %d, %d, %d, %f, %f, %f",
+   CALL(0, "%p, %s, %d, %d, %d, %d, %d, %d, %f, %f, %f",
          text, s, size, base, w, y, w, h, xoff, yoff, xadvance);
    assert(text && s);
 
@@ -665,7 +670,7 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *text,
 /* \brief render all drawn text */
 GLHCKAPI void glhckTextRender(glhckText *text)
 {
-   CALL("%p", text); assert(text);
+   CALL(2, "%p", text); assert(text);
    _GLHCKlibrary.render.api.textDraw(text);
 }
 
@@ -680,7 +685,7 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
    __GLHCKtextGlyph *glyph;
    __GLHCKtextFont *font;
    __GLHCKtextQuad q;
-   CALL("%p, %d, %zu, %f, %f, %s, %p", text, font_id,
+   CALL(2, "%p, %d, %zu, %f, %f, %s, %p", text, font_id,
          size, x, y, s, dx);
    assert(text && s);
    if (!text->tcache) return;

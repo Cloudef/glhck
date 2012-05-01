@@ -7,7 +7,7 @@
 GLHCKAPI _glhckObject* glhckModelNew(const char *path, size_t size)
 {
    _glhckObject *object;
-   CALL("%s, %d", path, size);
+   CALL(0, "%s, %d", path, size);
 
    /* create new object */
    if (!(object = glhckObjectNew()))
@@ -22,12 +22,12 @@ GLHCKAPI _glhckObject* glhckModelNew(const char *path, size_t size)
    /* set object's filename */
    _glhckObjectSetFile(object, path);
 
-   RET("%p", object);
+   RET(0, "%p", object);
    return object;
 
 fail:
    IFDO(glhckObjectFree, object);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 

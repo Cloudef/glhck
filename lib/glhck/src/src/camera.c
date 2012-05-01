@@ -5,7 +5,7 @@
 /* \brief calculate projection matrix */
 static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
 {
-   CALL("%p", camera);
+   CALL(2, "%p", camera);
    assert(camera);
 
    kmMat4PerspectiveProjection(
@@ -20,7 +20,7 @@ static void _glhckCameraViewMatrix(_glhckCamera *camera)
 {
    kmVec3 tgtv, upvector;
    kmMat4 view;
-   CALL("%p", camera);
+   CALL(2, "%p", camera);
    assert(camera);
 
    kmVec3Subtract(&tgtv, &camera->view.target,
@@ -45,7 +45,7 @@ void _glhckCameraWorldUpdate(int width, int height)
 {
    _glhckCamera *camera;
    int diffw, diffh;
-   CALL("%d, %d", width, height);
+   CALL(2, "%d, %d", width, height);
 
    /* get difference of old dimensions and now */
    diffw = width  - _GLHCKlibrary.render.width;
@@ -77,7 +77,7 @@ void _glhckCameraWorldUpdate(int width, int height)
 GLHCKAPI glhckCamera* glhckCameraNew(void)
 {
    _glhckCamera *camera;
-   TRACE();
+   TRACE(0);
 
    /* allocate acmera */
    if (!(camera = _glhckMalloc(sizeof(_glhckCamera))))
@@ -101,32 +101,32 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    /* insert to world */
    _glhckWorldInsert(clist, camera, _glhckCamera*);
 
-   RET("%p", camera);
+   RET(0, "%p", camera);
    return camera;
 
 fail:
    IFDO(_glhckFree, camera);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
 /* \brief reference camera */
 GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *camera)
 {
-   CALL("%p", camera);
+   CALL(0, "%p", camera);
    assert(camera);
 
    /* increase reference */
    camera->refCounter++;
 
-   RET("%p", camera);
+   RET(0, "%p", camera);
    return camera;
 }
 
 /* \brief free camera */
 GLHCKAPI short glhckCameraFree(glhckCamera *camera)
 {
-   CALL("%p", camera);
+   CALL(0, "%p", camera);
    assert(camera);
 
    /* there is still references to this object alive */
@@ -144,14 +144,14 @@ GLHCKAPI short glhckCameraFree(glhckCamera *camera)
    camera = NULL;
 
 success:
-   RET("%d", camera?camera->refCounter:0);
+   RET(0, "%d", camera?camera->refCounter:0);
    return camera?camera->refCounter:0;
 }
 
 /* \brief update the camera */
 GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
 {
-   CALL("%p", camera);
+   CALL(2, "%p", camera);
 
    /* bind none */
    if (!camera) {
@@ -180,7 +180,7 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
 /* \brief reset camera to default state */
 GLHCKAPI void glhckCameraReset(glhckCamera *camera)
 {
-   CALL("%p", camera);
+   CALL(0, "%p", camera);
    assert(camera);
 
    camera->view.update = 1;
@@ -198,7 +198,7 @@ GLHCKAPI void glhckCameraReset(glhckCamera *camera)
 /* \brief set camera's fov */
 GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov)
 {
-   CALL("%p, %f", camera, fov);
+   CALL(1, "%p, %f", camera, fov);
    assert(camera);
    camera->view.fov = fov;
 }
@@ -207,7 +207,7 @@ GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov)
 GLHCKAPI void glhckCameraRange(glhckCamera *camera,
       const kmScalar near, const kmScalar far)
 {
-   CALL("%p, %f, %f", camera, near, far);
+   CALL(1, "%p, %f, %f", camera, near, far);
    assert(camera);
    camera->view.near = near;
    camera->view.far  = far;
@@ -216,7 +216,7 @@ GLHCKAPI void glhckCameraRange(glhckCamera *camera,
 /* \brief set camera's viewport */
 GLHCKAPI void glhckCameraViewport(glhckCamera *camera, const kmVec4 *viewport)
 {
-   CALL("%p, "VEC4S, camera, VEC4(viewport));
+   CALL(1, "%p, "VEC4S, camera, VEC4(viewport));
    assert(camera);
 
    if (camera->view.viewport.x == viewport->x &&
@@ -242,7 +242,7 @@ GLHCKAPI void glhckCameraViewportf(glhckCamera *camera,
 /* \brief position camera */
 GLHCKAPI void glhckCameraPosition(glhckCamera *camera, const kmVec3 *position)
 {
-   CALL("%p, "VEC3S, camera, VEC3(position));
+   CALL(2, "%p, "VEC3S, camera, VEC3(position));
    assert(camera);
 
    if (camera->view.translation.x == position->x &&
@@ -265,7 +265,7 @@ GLHCKAPI void glhckCameraPositionf(glhckCamera *camera,
 /* \brief move camera */
 GLHCKAPI void glhckCameraMove(glhckCamera *camera, const kmVec3 *move)
 {
-   CALL("%p, "VEC3S, camera, VEC3(move));
+   CALL(2, "%p, "VEC3S, camera, VEC3(move));
    assert(camera);
 
    kmVec3Add(&camera->view.translation,
@@ -286,7 +286,7 @@ GLHCKAPI void glhckCameraRotate(glhckCamera *camera, const kmVec3 *rotation)
 {
    kmVec3 rotToDir;
    const kmVec3 forwards = { 0, 0, 1 };
-   CALL("%p, "VEC3S, camera, VEC3(rotation));
+   CALL(2, "%p, "VEC3S, camera, VEC3(rotation));
    assert(camera);
 
    if (camera->view.rotation.x == rotation->x &&
@@ -316,7 +316,7 @@ GLHCKAPI void glhckCameraRotatef(glhckCamera *camera,
 GLHCKAPI void glhckCameraTarget(glhckCamera *camera, const kmVec3 *target)
 {
    kmVec3 toTarget;
-   CALL("%p, "VEC3S, camera, VEC3(target));
+   CALL(2, "%p, "VEC3S, camera, VEC3(target));
    assert(camera);
 
    if (camera->view.target.x == target->x &&

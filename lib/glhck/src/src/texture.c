@@ -16,7 +16,7 @@
 static _glhckTexture* _glhckTextureCacheCheck(const char *file)
 {
    _glhckTexture *cache;
-   CALL("%s", file);
+   CALL(1, "%s", file);
 
    if (!file)
       goto nothing;
@@ -27,7 +27,7 @@ static _glhckTexture* _glhckTextureCacheCheck(const char *file)
    }
 
 nothing:
-   RET("%p", NULL);
+   RET(1, "%p", NULL);
    return NULL;
 }
 
@@ -35,7 +35,7 @@ nothing:
  * NOTE: internal function, so data isn't copied. */
 void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data)
 {
-   CALL("%p, %p", texture, data);
+   CALL(1, "%p, %p", texture, data);
    assert(texture);
 
    IFDO(_glhckFree, texture->data);
@@ -57,7 +57,7 @@ inline unsigned int _glhckNumChannels(unsigned int format)
 GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
 {
    _glhckTexture *texture;
-   CALL("%s, %u", file, flags);
+   CALL(0, "%s, %u", file, flags);
 
    /* check if texture is in cache */
    if ((texture = _glhckTextureCacheCheck(file)))
@@ -100,7 +100,6 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
       _glhckTrackFake(texture, sizeof(_glhckTexture) + texture->size);
 #endif
 
-
       DEBUG(GLHCK_DBG_CRAP, "NEW %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
    }
 
@@ -111,12 +110,12 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
    _glhckWorldInsert(tlist, texture, _glhckTexture*);
 
 success:
-   RET("%p", texture);
+   RET(0, "%p", texture);
    return texture;
 
 fail:
    IFDO(glhckTextureFree, texture);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
@@ -124,7 +123,7 @@ fail:
 GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
 {
    _glhckTexture *texture;
-   CALL("%p", src);
+   CALL(0, "%p", src);
    assert(src);
 
    /* allocate texture */
@@ -147,19 +146,19 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
    _glhckWorldInsert(tlist, texture, _glhckTexture*);
 
    /* Return texture */
-   RET("%p", texture);
+   RET(0, "%p", texture);
    return texture;
 
 fail:
    IFDO(glhckTextureFree, texture);
-   RET("%p", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
 /* \brief reference texture */
 GLHCKAPI _glhckTexture* glhckTextureRef(_glhckTexture *texture)
 {
-   CALL("%p", texture);
+   CALL(0, "%p", texture);
    assert(texture);
 
    DEBUG(GLHCK_DBG_CRAP, "REFERENCE %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
@@ -168,14 +167,14 @@ GLHCKAPI _glhckTexture* glhckTextureRef(_glhckTexture *texture)
    texture->refCounter++;
 
    /* return reference */
-   RET("%p", texture);
+   RET(0, "%p", texture);
    return texture;
 }
 
 /* \brief free texture */
 GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
 {
-   CALL("%p", texture);
+   CALL(0, "%p", texture);
    assert(texture);
 
    /* there is still references to this texture alive */
@@ -199,7 +198,7 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
    texture = NULL;
 
 success:
-   RET("%d", texture?texture->refCounter:0);
+   RET(0, "%d", texture?texture->refCounter:0);
    return texture?texture->refCounter:0;
 }
 
@@ -208,7 +207,7 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
       int width, int height, unsigned int format, unsigned int flags)
 {
    unsigned int object;
-   CALL("%p, %u, %d, %d, %d, %u", texture, data,
+   CALL(0, "%p, %u, %d, %d, %d, %u", texture, data,
          width, height, format, flags);
    assert(texture);
 
@@ -237,18 +236,18 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
 
    DEBUG(GLHCK_DBG_CRAP, "NEW %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
 /* \brief save texture to file in TGA format */
 GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
 {
-   CALL("%p, %s", texture, path);
+   CALL(0, "%p, %s", texture, path);
    assert(texture);
 
    /* not correct texture format for saving */
@@ -265,18 +264,18 @@ GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
       ))
       goto fail;
 
-   RET("%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
-   RET("%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
 /* \brief bind texture */
 GLHCKAPI void glhckTextureBind(_glhckTexture *texture)
 {
-   CALL("%p", texture);
+   CALL(2, "%p", texture);
 
    if (!texture && _GLHCKlibrary.render.draw.texture) {
       _GLHCKlibrary.render.api.bindTexture(0);
@@ -294,7 +293,7 @@ GLHCKAPI void glhckTextureBind(_glhckTexture *texture)
 /* \brief bind using ID */
 GLHCKAPI void glhckBindTexture(unsigned int texture)
 {
-   CALL("%d", texture);
+   CALL(2, "%d", texture);
 
    if (_GLHCKlibrary.render.draw.texture == texture)
       return;
