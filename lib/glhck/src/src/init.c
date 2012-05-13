@@ -77,7 +77,6 @@ success:
 /* \brief creates virtual display and inits renderer */
 GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderType)
 {
-   kmMat4 projection;
    CALL(0, "%d, %d, %d", width, height, renderType);
 
    if (!_glhckInitialized ||
