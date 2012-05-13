@@ -194,7 +194,7 @@ GLHCKAPI void glhckRender(void)
             continue;
          }
 
-         /* renders object */
+         /* render object */
          glhckObjectRender(o);
          _GLHCKlibrary.render.draw.oqueue[oi] = NULL;
       }
@@ -245,7 +245,7 @@ for (c = _GLHCKlibrary.world.list; c; c = n) {  \
    func(c);                                     \
 } _GLHCKlibrary.world.list = NULL;
 
-/* \brief frees virtual display and deinits glue framework */
+/* \brief frees virtual display and deinits glhck */
 GLHCKAPI void glhckTerminate(void)
 {
    _glhckObject *o, *on;
