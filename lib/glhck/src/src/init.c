@@ -43,7 +43,7 @@ void _glhckDefaultProjection(int width, int height)
          _GLHCKlibrary.render.height);
    kmMat4PerspectiveProjection(&projection, 35,
          (float)width/height, 0.1f, 100.0f);
- _GLHCKlibrary.render.api.setProjection(&projection);
+   _GLHCKlibrary.render.api.setProjection(&projection);
 }
 
 /* public api */
