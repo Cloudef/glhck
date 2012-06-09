@@ -1,7 +1,9 @@
 #include "internal.h"
-#include <stdio.h>  /* for printf  */
-#include <ctype.h>  /* for toupper */
-#include <malloc.h> /* for free    */
+#include <stdio.h>  /* for printf   */
+#include <ctype.h>  /* for toupper  */
+#include <malloc.h> /* for free     */
+#include <stdarg.h> /* for va_list  */
+#include <limits.h> /* for LINE_MAX */
 
 /* \brief output in red */
 inline void _glhckRed(void)
@@ -105,6 +107,20 @@ void _glhckPuts(const char *buffer)
    _glhckNormal();
    printf("\n");
    fflush(stdout);
+}
+
+/* \brief colored printf */
+void _glhckPrintf(const char *fmt, ...)
+{
+   va_list args;
+   char buffer[LINE_MAX];
+
+   memset(buffer, 0, LINE_MAX);
+   va_start(args, fmt);
+   vsnprintf(buffer, LINE_MAX-1, fmt, args);
+   va_end(args);
+
+   _glhckPuts(buffer);
 }
 
 /* \brief split string */
