@@ -50,6 +50,7 @@ typedef struct __OpenGLrender {
    struct __OpenGLstate state;
    size_t indicesCount;
    kmMat4 projection;
+   kmMat4 orthographic;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
 
@@ -280,6 +281,10 @@ static void viewport(int x, int y, int width, int height)
 
    /* set viewport */
    GL_CALL(glViewport(x, y, width, height));
+
+   /* create orthographic projection matrix */
+   kmMat4OrthographicProjection(&_OpenGL.orthographic,
+         0, width, 0, height, -1, 1);
 }
 
 /* \brief pass interleaved vertex data to OpenGL nicely. */
@@ -340,7 +345,7 @@ static inline void materialState(_glhckObject *object)
          GL_CALL(glEnable(GL_DEPTH_TEST));
          GL_CALL(glDepthMask(GL_TRUE));
          GL_CALL(glDepthFunc(GL_LEQUAL));
-         GL_CALL(glCullFace(GL_FRONT));
+         GL_CALL(glCullFace(GL_BACK));
          GL_CALL(glEnable(GL_CULL_FACE));
       } else {
          GL_CALL(glDisable(GL_DEPTH_TEST));
@@ -513,7 +518,6 @@ static void textDraw(_glhckText *text)
    if (!_OpenGL.state.cull) {
       _OpenGL.state.cull = 1;
       GL_CALL(glEnable(GL_CULL_FACE));
-      GL_CALL(glCullFace(GL_FRONT));
    }
 
    if (!_OpenGL.state.alpha) {
@@ -537,13 +541,13 @@ static void textDraw(_glhckText *text)
 
    /* set 2d projection */
    GL_CALL(glMatrixMode(GL_PROJECTION));
-   GL_CALL(glLoadIdentity());
-   GL_CALL(glOrtho(0,
-            _GLHCKlibrary.render.width, 0,
-            _GLHCKlibrary.render.height, -1, 1));
+   GL_CALL(glLoadMatrixf((float*)&_OpenGL.orthographic));
 
    GL_CALL(glMatrixMode(GL_MODELVIEW));
    GL_CALL(glLoadIdentity());
+
+   /* the culling is flipped in orthographic */
+   glCullFace(GL_FRONT);
 
    GL_CALL(glDisable(GL_DEPTH_TEST));
    for (texture = text->tcache; texture;
@@ -562,6 +566,9 @@ static void textDraw(_glhckText *text)
       texture->geometry.vertexCount = 0;
    }
    GL_CALL(glEnable(GL_DEPTH_TEST));
+
+   /* switch back to normal cull */
+   glCullFace(GL_BACK);
 
    setProjection(&_OpenGL.projection);
 }
