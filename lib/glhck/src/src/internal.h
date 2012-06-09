@@ -151,7 +151,7 @@ typedef struct _glhckRtt
 #endif
 
 /* disable triangle stripping? */
-#define GLHCK_TRISTRIP 1
+#define GLHCK_TRISTRIP 0
 
 typedef struct _glhckVertex3d
 {
@@ -454,9 +454,9 @@ typedef struct _glhckTexturePacker
 
 /* tracing && debug macros */
 #define THIS_FILE ((strrchr(__FILE__, '/') ?: __FILE__ - 1) + 1)
-#define TRACE_FMT       "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \3%s\2()"
-#define CALL_FMT(fmt)   "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \3%s\2(\5"fmt"\2)"
-#define RET_FMT(fmt)    "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \3%s\2()\4 => \2(\5"fmt"\2)"
+#define TRACE_FMT       "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \4%s\2()"
+#define CALL_FMT(fmt)   "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \4%s\2(\5"fmt"\2)"
+#define RET_FMT(fmt)    "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \4%s\2()\3 => \2(\5"fmt"\2)"
 
 #define DEBUG(level, fmt, ...)   _glhckPassDebug(THIS_FILE, __LINE__, __func__, level, fmt, ##__VA_ARGS__)
 #define TRACE(level)             _glhckTrace(level, GLHCK_CHANNEL, __func__, TRACE_FMT,      THIS_FILE, __LINE__, __func__)
