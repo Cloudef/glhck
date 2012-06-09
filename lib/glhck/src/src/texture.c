@@ -251,9 +251,17 @@ GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
    assert(texture);
 
    /* not correct texture format for saving */
-   if (texture->format != GLHCK_RGB ||
-       texture->format != GLHCK_RGBA)
-      goto fail;
+   if (texture->format != GLHCK_RGBA)
+      goto format_fail;
+
+   DEBUG(GLHCK_DBG_CRAP,
+         "\2Save \3%d\5x\3%d \5[\4%s, \3%d\5]",
+         texture->width, texture->height,
+         texture->format==GLHCK_RGBA?"RGBA":
+         texture->format==GLHCK_RGB?"RGB":
+         texture->format==GLHCK_LUMINANCE_ALPHA?
+         "LUMINANCE ALPHA":"LUMINANCE",
+         _glhckNumChannels(texture->format));
 
    if (!SOIL_save_image
       (
@@ -267,6 +275,8 @@ GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
+format_fail:
+   _glhckPuts("\1Err.. Sorry only RGBA texture save for now.");
 fail:
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
