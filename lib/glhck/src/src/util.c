@@ -97,8 +97,8 @@ void _glhckPuts(const char *buffer)
    for (i = 0; i != len; ++i) {
            if (buffer[i] == '\1') _glhckRed();
       else if (buffer[i] == '\2') _glhckGreen();
-      else if (buffer[i] == '\3') _glhckYellow();
-      else if (buffer[i] == '\4') _glhckBlue();
+      else if (buffer[i] == '\3') _glhckBlue();
+      else if (buffer[i] == '\4') _glhckYellow();
       else if (buffer[i] == '\5') _glhckWhite();
       else printf("%c", buffer[i]);
    }
