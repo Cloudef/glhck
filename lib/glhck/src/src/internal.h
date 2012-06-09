@@ -454,14 +454,15 @@ typedef struct _glhckTexturePacker
 
 /* tracing && debug macros */
 #define THIS_FILE ((strrchr(__FILE__, '/') ?: __FILE__ - 1) + 1)
-#define TRACE_FMT       "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \4%s\2()"
-#define CALL_FMT(fmt)   "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \4%s\2(\5"fmt"\2)"
-#define RET_FMT(fmt)    "\2@FILE \5%-20s \2@LINE \5%-4d \5>> \4%s\2()\3 => \2(\5"fmt"\2)"
+#define DBG_FMT         "\2%4d\1: \5%-20s \5%s"
+#define TRACE_FMT       "\2%4d\1: \5%-20s \4%s\2()"
+#define CALL_FMT(fmt)   "\2%4d\1: \5%-20s \4%s\2(\5"fmt"\2)"
+#define RET_FMT(fmt)    "\2%4d\1: \5%-20s \4%s\2()\3 => \2(\5"fmt"\2)"
 
 #define DEBUG(level, fmt, ...)   _glhckPassDebug(THIS_FILE, __LINE__, __func__, level, fmt, ##__VA_ARGS__)
-#define TRACE(level)             _glhckTrace(level, GLHCK_CHANNEL, __func__, TRACE_FMT,      THIS_FILE, __LINE__, __func__)
-#define CALL(level, args, ...)   _glhckTrace(level, GLHCK_CHANNEL, __func__, CALL_FMT(args), THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
-#define RET(level, args, ...)    _glhckTrace(level, GLHCK_CHANNEL, __func__, RET_FMT(args),  THIS_FILE, __LINE__, __func__, ##__VA_ARGS__)
+#define TRACE(level)             _glhckTrace(level, GLHCK_CHANNEL, __func__, TRACE_FMT,      __LINE__, THIS_FILE, __func__)
+#define CALL(level, args, ...)   _glhckTrace(level, GLHCK_CHANNEL, __func__, CALL_FMT(args), __LINE__, THIS_FILE, __func__, ##__VA_ARGS__)
+#define RET(level, args, ...)    _glhckTrace(level, GLHCK_CHANNEL, __func__, RET_FMT(args),  __LINE__, THIS_FILE, __func__, ##__VA_ARGS__)
 
 /* private api */
 

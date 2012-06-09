@@ -131,7 +131,10 @@ void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLev
    va_end(args);
 
    if (!_glhckDebugHook) {
-      _glhckPuts(buffer);
+      /* by default, we assume debug prints are
+       * useless if tracing. */
+      if (_glhckTraceIsActive(GLHCK_CHANNEL_TRACE)) return;
+      _glhckPrintf(DBG_FMT, line, file, buffer);
       return;
    }
 
