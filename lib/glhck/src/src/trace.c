@@ -111,6 +111,7 @@ void _glhckTrace(int level, const char *channel, const char *function, const cha
    if (!_glhckTraceIsActive(channel))
       return;
 
+   memset(buffer, 0, LINE_MAX);
    va_start(args, fmt);
    vsnprintf(buffer, LINE_MAX-1, fmt, args);
    va_end(args);
@@ -124,13 +125,13 @@ void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLev
    va_list args;
    char buffer[LINE_MAX];
 
+   memset(buffer, 0, LINE_MAX);
    va_start(args, fmt);
    vsnprintf(buffer, LINE_MAX-1, fmt, args);
    va_end(args);
 
    if (!_glhckDebugHook) {
       _glhckPuts(buffer);
-      fflush(stdout);
       return;
    }
 
