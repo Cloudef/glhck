@@ -487,6 +487,7 @@ void  _glhckYellow(void);
 void  _glhckWhite(void);
 void  _glhckNormal(void);
 void  _glhckPuts(const char *buffer);
+void  _glhckPrintf(const char *fmt, ...);
 int   _glhckStrsplit(char ***dst, char *str, char *token);
 void  _glhckStrsplitClear(char ***dst);
 char* _glhckStrupstr(const char *hay, const char *needle);
