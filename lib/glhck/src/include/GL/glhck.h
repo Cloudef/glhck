@@ -182,7 +182,7 @@ typedef struct _glhckCamera  glhckCamera;
 typedef void (*glhckDebugHookFunc)(const char *file, int line, const char *function, glhckDebugLevel level, const char *str);
 
 /* init && terminate */
-GLHCKAPI int glchkInit(int argc, char **argv);
+GLHCKAPI int glchkInit(int argc, const char **argv);
 GLHCKAPI void glhckTerminate(void);
 
 /* display */
