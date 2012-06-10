@@ -278,6 +278,7 @@ static kmMat4 getProjection(void)
 static void viewport(int x, int y, int width, int height)
 {
    CALL(2, "%d, %d, %d, %d", x, y, width, height);
+   assert(width > 0 && height > 0);
 
    /* set viewport */
    GL_CALL(glViewport(x, y, width, height));
