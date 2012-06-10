@@ -124,7 +124,7 @@ void _glhckPrintf(const char *fmt, ...)
 }
 
 /* \brief split string */
-int _glhckStrsplit(char ***dst, char *str, char *token)
+int _glhckStrsplit(char ***dst, const char *str, const char *token)
 {
    char *saveptr, *ptr, *start;
    int t_len, i;
