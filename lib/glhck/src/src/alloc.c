@@ -103,7 +103,7 @@ void _glhckTrackTerminate(void)
 void* __glhckMalloc(const char *channel, size_t size)
 {
    void *ptr;
-   CALL(0, "%s, %zu", channel, size);
+   CALL(3, "%s, %zu", channel, size);
 
    if (!(ptr = malloc(size)))
       goto fail;
@@ -112,12 +112,12 @@ void* __glhckMalloc(const char *channel, size_t size)
    trackAlloc(channel, ptr, size);
 #endif
 
-   RET(0, "%p", ptr);
+   RET(3, "%p", ptr);
    return ptr;
 
 fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to allocate %zu bytes", size);
-   RET(0, "%p", NULL);
+   RET(3, "%p", NULL);
    return NULL;
 }
 
@@ -125,7 +125,7 @@ fail:
 void* __glhckCalloc(const char *channel, size_t nmemb, size_t size)
 {
    void *ptr;
-   CALL(0, "%s, %zu, %zu", channel, nmemb, size);
+   CALL(3, "%s, %zu, %zu", channel, nmemb, size);
 
    if (!(ptr = calloc(nmemb, size)))
       goto fail;
@@ -134,12 +134,12 @@ void* __glhckCalloc(const char *channel, size_t nmemb, size_t size)
    trackAlloc(channel, ptr, nmemb * size);
 #endif
 
-   RET(0, "%p", ptr);
+   RET(3, "%p", ptr);
    return ptr;
 
 fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to allocate %zu bytes", nmemb * size);
-   RET(0, "%p", NULL);
+   RET(3, "%p", NULL);
    return NULL;
 }
 
@@ -147,7 +147,7 @@ fail:
 char* __glhckStrdup(const char *channel, const char *s)
 {
    char *s2;
-   CALL(0, "%s, %s", channel, s);
+   CALL(3, "%s, %s", channel, s);
    if (!(s2 = strdup(s)))
       goto fail;
 
@@ -155,12 +155,12 @@ char* __glhckStrdup(const char *channel, const char *s)
    trackAlloc(channel, s2, strlen(s) + 1);
 #endif
 
-   RET(0, "%s", s2);
+   RET(3, "%s", s2);
    return s2;
 
 fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to strdup '%s'", s);
-   RET(0, "%p", NULL);
+   RET(3, "%p", NULL);
    return NULL;
 }
 
@@ -168,18 +168,18 @@ fail:
 void* __glhckCopy(const char *channel, void *ptr, size_t nmemb)
 {
    void *ptr2;
-   CALL(0, "%p, %zu", ptr, nmemb);
+   CALL(3, "%p, %zu", ptr, nmemb);
    assert(ptr);
 
    if (!(ptr2 = __glhckMalloc(channel, nmemb)))
       goto fail;
 
    memcpy(ptr2, ptr, nmemb);
-   RET(0, "%p", ptr2);
+   RET(3, "%p", ptr2);
    return ptr2;
 
 fail:
-   RET(0, "%p", NULL);
+   RET(3, "%p", NULL);
    return NULL;
 }
 
@@ -187,7 +187,7 @@ fail:
 void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size)
 {
    void *ptr2;
-   CALL(0, "%p, %zu, %zu, %zu", ptr, omemb, nmemb, size);
+   CALL(3, "%p, %zu, %zu, %zu", ptr, omemb, nmemb, size);
 
    if (!(ptr2 = realloc(ptr, nmemb * size))) {
       if (!(ptr2 = malloc(nmemb * size)))
@@ -200,20 +200,20 @@ void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size)
    trackRealloc(ptr, ptr2, size);
 #endif
 
-   RET(0, "%p", ptr2);
+   RET(3, "%p", ptr2);
    return ptr2;
 
 fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to reallocate %zu bytes",
          nmemb * size - omemb * size);
-   RET(0, "%p", NULL);
+   RET(3, "%p", NULL);
    return NULL;
 }
 
 /* \brief internal free function. */
 void _glhckFree(void *ptr)
 {
-   CALL(0, "%p", ptr);
+   CALL(3, "%p", ptr);
    assert(ptr);
 
 #ifndef NDEBUG
