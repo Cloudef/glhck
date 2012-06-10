@@ -4,7 +4,7 @@
         ignore = dirty
 [submodule "lib/kazmath/src"]
 	path = lib/kazmath/src
-        url = https://github.com/Kazade/kazmath.git
+        url = https://github.com/Cloudef/kazmath.git
         ignore = dirty
 [submodule "lib/GLEW/src"]
 	path = lib/GLEW/src
