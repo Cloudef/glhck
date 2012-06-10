@@ -49,10 +49,10 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
 void _glhckDefaultProjection(int width, int height)
 {
    kmMat4 projection;
-   TRACE(1);
-   _GLHCKlibrary.render.api.viewport(0, 0,
-         _GLHCKlibrary.render.width,
-         _GLHCKlibrary.render.height);
+   CALL(1, "%d, %d", width, height);
+   assert(width > 0 && height > 0);
+
+   _GLHCKlibrary.render.api.viewport(0, 0, width, height);
    kmMat4PerspectiveProjection(&projection, 35,
          (float)width/height, 0.1f, 100.0f);
    _GLHCKlibrary.render.api.setProjection(&projection);
@@ -62,7 +62,10 @@ void _glhckDefaultProjection(int width, int height)
 #if defined(__linux__) || defined(_WIN32) || defined(OSX_SSE_FPE)
 static void _glhckFpeHandler(int sig)
 {
-   _glhckPuts("\4SIGFPE \1trapped");
+   _glhckPuts("\4SIGFPE \1signal received!");
+   _glhckPuts("Run the program again with DEBUG=+++,+all,+trace to catch where it happens.");
+   _glhckPuts("Or optionally run the program with GDB.");
+   abort();
 }
 #endif
 
@@ -109,8 +112,10 @@ GLHCKAPI int glhckInit(int argc, const char **argv)
    memset(&_GLHCKlibrary.render.draw,     0, sizeof(__GLHCKrenderDraw));
    memset(&_GLHCKlibrary.world,           0, sizeof(__GLHCKworld));
 
+#ifndef NDEBUG
    /* set FPE handler */
    _glhckSetFPE(argc, argv);
+#endif
 
    /* init trace system */
    _glhckTraceInit(argc, argv);
