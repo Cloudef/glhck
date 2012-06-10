@@ -60,10 +60,11 @@ static void _glhckTraceSet(const char *name, int active)
 }
 
 /* \brief init debug system */
-void _glhckTraceInit(int argc, char **argv)
+void _glhckTraceInit(int argc, const char **argv)
 {
    int i, count;
-   char *match, **split;
+   const char *match;
+   char **split;
 
    /* init */
    _GLHCKlibrary.trace.channel = _traceChannels;

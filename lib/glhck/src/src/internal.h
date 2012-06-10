@@ -489,7 +489,7 @@ void  _glhckWhite(void);
 void  _glhckNormal(void);
 void  _glhckPuts(const char *buffer);
 void  _glhckPrintf(const char *fmt, ...);
-int   _glhckStrsplit(char ***dst, char *str, char *token);
+int   _glhckStrsplit(char ***dst, const char *str, const char *token);
 void  _glhckStrsplitClear(char ***dst);
 char* _glhckStrupstr(const char *hay, const char *needle);
 int   _glhckStrupcmp(const char *hay, const char *needle);
@@ -518,7 +518,7 @@ unsigned int _glhckNumChannels(unsigned int format);
 void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
 
 /* tracing && debug functions */
-void _glhckTraceInit(int argc, char **argv);
+void _glhckTraceInit(int argc, const char **argv);
 void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...);
 void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *fmt, ...);
 
