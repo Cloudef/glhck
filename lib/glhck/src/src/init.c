@@ -73,6 +73,11 @@ static void _glhckFpeHandler(int sig)
  * this stuff is from blender project. */
 static int _glhckSetFPE(int argc, const char **argv)
 {
+#if defined(APPLE)
+   /* OS X shows strange exceptions in gld... */
+   return;
+#endif
+
 #if defined(__linux__) || defined(_WIN32) || defined(OSX_SSE_FPE)
    /* zealous but makes float issues a heck of a lot easier to find!
     * set breakpoints on fpe_handler */
