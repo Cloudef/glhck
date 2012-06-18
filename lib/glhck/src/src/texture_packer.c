@@ -1,6 +1,12 @@
 #include "internal.h"
-#include <malloc.h> /* for malloc */
+#include <stdlib.h> /* for malloc */
 #include <assert.h> /* for assert */
+
+#ifdef __APPLE__
+#   include <malloc/malloc.h>
+#else
+#   include <malloc.h>
+#endif
 #define xfree(x) { free(x); x = NULL; }
 
 typedef struct tpRect {

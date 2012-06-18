@@ -3,8 +3,13 @@
 #include <limits.h> /* for PATH_MAX */
 #include <unistd.h> /* for access   */
 #include <libgen.h> /* for dirname  */
-#include <malloc.h> /* for free     */
 #include "tc.h"
+
+#ifdef __APPLE__
+#   include <malloc/malloc.h>
+#else
+#   include <malloc.h>
+#endif
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT

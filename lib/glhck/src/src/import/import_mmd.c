@@ -1,8 +1,13 @@
 #include "../internal.h"
 #include "import.h"
 #include <stdio.h>
-#include <malloc.h>
 #include "../../include/mmd.h"
+
+#ifdef __APPLE__
+#   include <malloc/malloc.h>
+#else
+#   include <malloc.h>
+#endif
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 

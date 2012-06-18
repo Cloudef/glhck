@@ -1,9 +1,15 @@
 #include "internal.h"
 #include <stdio.h>  /* for printf   */
+#include <stdlib.h> /* for realloc  */
 #include <ctype.h>  /* for toupper  */
-#include <malloc.h> /* for free     */
 #include <stdarg.h> /* for va_list  */
 #include <limits.h> /* for LINE_MAX */
+
+#ifdef __APPLE__
+#   include <malloc/malloc.h>
+#else
+#   include <malloc.h>
+#endif
 
 /* \brief output in red */
 inline void _glhckRed(void)
