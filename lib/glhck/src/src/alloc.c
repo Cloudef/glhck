@@ -1,8 +1,15 @@
 #define _GNU_SOURCE
 #include "internal.h"
+#include <stdio.h>   /* for printf */
+#include <stdlib.h>  /* for malloc */
 #include <assert.h>  /* for assert */
-#include <malloc.h>  /* for malloc */
 #include <dlfcn.h>   /* for dlsym  */
+
+#ifdef __APPLE__
+#   include <malloc/malloc.h>
+#else
+#   include <malloc.h>
+#endif
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_ALLOC

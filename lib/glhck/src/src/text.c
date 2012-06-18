@@ -1,6 +1,6 @@
 #include "internal.h"
 #include "helper/vertexdata.h"
-#include "SOIL/SOIL.h"
+#include "SOIL.h"
 #include <stdio.h>
 
 /* traching channel for this file */

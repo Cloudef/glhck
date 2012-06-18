@@ -66,7 +66,7 @@ int main(int argc, char **argv)
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
 
-#if 1
+#if 0
    cube = glhckCubeNew(1);
    //cube = glhckPlaneNew(1);
    //cube = glhckSpriteNew("../media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
    //cube = glhckTextNew("/usr/share/fonts/TTF/mikachan.ttf", 8);
    cameraPos.z = -20.0f;
 #else
-   cube = glhckModelNew("../media/md_m.pmd", 1);
+   cube = glhckModelNew("../media/rin.pmd", 1);
    cameraPos.y =  10.0f;
    cameraPos.z = -40.0f;
 #endif
@@ -96,8 +96,8 @@ int main(int argc, char **argv)
 
       /* old version of dwm has no NETWM_ACTIVE support
        * workaround until I switch to monsterwm */
-      if (NO_NETWM_ACTIVE_SUPPORT ||
-          glfwGetWindowParam(window, GLFW_ACTIVE)) {
+      if (glfwGetWindowParam(window, GLFW_ACTIVE) ||
+            NO_NETWM_ACTIVE_SUPPORT) {
          glfwPollEvents();
          glfwGetMousePos(window, &mousex, &mousey);
 

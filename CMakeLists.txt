@@ -59,33 +59,43 @@ SET(CMAKE_BUILD_TYPE Debug)
 
 # Set UNIX depencies
 IF (UNIX)
-   FIND_PACKAGE(X11 REQUIRED)
+   IF (APPLE)  # MAC
+      find_library(COCOA_FRAMEWORK Cocoa)
+      find_library(IOKIT_FRAMEWORK IOKit)
+      find_library(CORE_FOUNDATION_FRAMEWORK CoreFoundation)
+      list(APPEND GLHCK_TEST_LINK ${COCOA_FRAMEWORK}
+                                  ${OPENGL_gl_LIBRARY}
+                                  ${IOKIT_FRAMEWORK}
+                                  ${CORE_FOUNDATION_FRAMEWORK})
+   ELSE ()     # LINUX
+      FIND_PACKAGE(X11 REQUIRED)
 
-   # X11
-   LIST(APPEND GLHCK_TEST_INCL ${X11_X11_INCLUDE_PATH})
-   LIST(APPEND GLHCK_TEST_LINK ${X11_X11_LIB})
+      # X11
+      LIST(APPEND GLHCK_TEST_INCL ${X11_X11_INCLUDE_PATH})
+      LIST(APPEND GLHCK_TEST_LINK ${X11_X11_LIB})
 
-   # XRandr
-   IF (X11_Xrandr_FOUND)
-      LIST(APPEND GLHCK_TEST_LINK ${X11_Xrandr_LIB})
-   ENDIF ()
-
-   # Xf86vmode
-   IF (X11_xf86vmode_FOUND)
-      LIST(APPEND GLHCK_TEST_INCL ${X11_xf86vmode_INCLUDE_PATH})
-
-      # Workaround CMake bug 0006976
-      IF (X11_xf86vmode_LIB)
-         LIST(APPEND GLHCK_TEST_LINK ${X11_xf86vmode_LIB})
-      ELSE ()
-         LIST(APPEND GLHCK_TEST_LINK Xxf86vm)
+      # XRandr
+      IF (X11_Xrandr_FOUND)
+         LIST(APPEND GLHCK_TEST_LINK ${X11_Xrandr_LIB})
       ENDIF ()
-   ENDIF ()
 
-   # Xkb
-   IF (X11_Xkb_FOUND)
-      LIST(APPEND GLHCK_TEST_INCL ${X11_Xkb_INCLUDE_PATH})
-   ENDIF ()
+      # Xf86vmode
+      IF (X11_xf86vmode_FOUND)
+         LIST(APPEND GLHCK_TEST_INCL ${X11_xf86vmode_INCLUDE_PATH})
+
+         # Workaround CMake bug 0006976
+         IF (X11_xf86vmode_LIB)
+            LIST(APPEND GLHCK_TEST_LINK ${X11_xf86vmode_LIB})
+         ELSE ()
+            LIST(APPEND GLHCK_TEST_LINK Xxf86vm)
+         ENDIF ()
+      ENDIF ()
+
+      # Xkb
+      IF (X11_Xkb_FOUND)
+         LIST(APPEND GLHCK_TEST_INCL ${X11_Xkb_INCLUDE_PATH})
+      ENDIF ()
+   ENDIF() # ^ LINUX
 
    # Rt
    FIND_LIBRARY(RT_LIBRARY rt)
