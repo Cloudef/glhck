@@ -565,7 +565,6 @@ static void textDraw(_glhckText *text)
             &texture->geometry.vertexData[0].coord));
       GL_CALL(glDrawArrays(GL_TRIANGLES, 0,
             texture->geometry.vertexCount));
-      texture->geometry.vertexCount = 0;
    }
    GL_CALL(glEnable(GL_DEPTH_TEST));
 

@@ -670,8 +670,15 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *text,
 /* \brief render all drawn text */
 GLHCKAPI void glhckTextRender(glhckText *text)
 {
+   __GLHCKtextTexture *texture;
    CALL(2, "%p", text); assert(text);
    _GLHCKlibrary.render.api.textDraw(text);
+
+   /* reset vertex counts */
+   for (texture = text->tcache; texture;
+        texture = texture->next) {
+      texture->geometry.vertexCount = 0;
+   }
 }
 
 /* \brief draw text using font */
@@ -702,9 +709,10 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
       if (decutf8(&state, &codepoint, *(unsigned char*)s)) continue;
       if (!(glyph = _glhckTextGetGlyph(text, font, codepoint, isize)))
          continue;
+
       texture = glyph->texture;
       if (texture->geometry.vertexCount+6 >= GLHCK_TEXT_VERT_COUNT)
-         glhckTextRender(text);
+         continue;
 
       /* should not ever fail */
       if (_getQuad(text, font, glyph, isize, &x, &y, &q)
