@@ -63,7 +63,7 @@ void _glhckDefaultProjection(int width, int height)
 static void _glhckFpeHandler(int sig)
 {
    _glhckPuts("\4SIGFPE \1signal received!");
-   _glhckPuts("Run the program again with DEBUG=+++,+all,+trace to catch where it happens.");
+   _glhckPuts("Run the program again with DEBUG=2,+all,+trace to catch where it happens.");
    _glhckPuts("Or optionally run the program with GDB.");
    abort();
 }
