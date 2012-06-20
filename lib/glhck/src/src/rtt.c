@@ -1,5 +1,6 @@
 #include "internal.h"
 
+/* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RTT
 
 /* \brief create new rtt */
