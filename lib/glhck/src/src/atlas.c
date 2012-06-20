@@ -174,7 +174,6 @@ GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *atlas)
    return atlas->texture;
 }
 
-#include <GL/gl.h>
 /* \brief pack textures to atlas */
 GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int border)
 {
