@@ -563,8 +563,8 @@ static void textDraw(_glhckText *text)
       GL_CALL(glTexCoordPointer(2, GLHCK_PRECISION_COORD,
             sizeof(__GLHCKtextVertexData),
             &texture->geometry.vertexData[0].coord));
-      GL_CALL(glDrawArrays(GL_TRIANGLES, 0,
-            texture->geometry.vertexCount));
+      GL_CALL(glDrawArrays(GLHCK_TRISTRIP?GL_TRIANGLE_STRIP:GL_TRIANGLES,
+               0, texture->geometry.vertexCount));
    }
    GL_CALL(glEnable(GL_DEPTH_TEST));
 
