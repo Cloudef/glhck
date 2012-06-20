@@ -88,7 +88,7 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    memset(&camera->view, 0, sizeof(__GLHCKcameraView));
 
    /* defaults */
-   camera->view.near = 0.1f;
+   camera->view.near = 1.0f;
    camera->view.far  = 100.0f;
    camera->view.fov  = 35.0f;
 

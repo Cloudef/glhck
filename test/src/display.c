@@ -41,6 +41,7 @@ int main(int argc, char **argv)
    if (!glfwInit())
       return EXIT_FAILURE;
 
+   glfwOpenWindowHint(GLFW_DEPTH_BITS, 24);
    if (!(window = glfwOpenWindow(WIDTH, HEIGHT, GLFW_WINDOWED, "display test", NULL)))
       return EXIT_FAILURE;
 

@@ -151,7 +151,7 @@ typedef struct _glhckRtt
 #endif
 
 /* disable triangle stripping? */
-#define GLHCK_TRISTRIP 0
+#define GLHCK_TRISTRIP 1
 
 typedef struct _glhckVertex3d
 {
