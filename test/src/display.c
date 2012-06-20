@@ -67,7 +67,7 @@ int main(int argc, char **argv)
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
 
-#if 0
+#if 1
    cube = glhckCubeNew(1);
    //cube = glhckPlaneNew(1);
    //cube = glhckSpriteNew("../media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
