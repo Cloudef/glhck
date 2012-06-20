@@ -82,9 +82,9 @@ void _glhckTraceInit(int argc, const char **argv)
    if (!split) return;
 
    for (i = 0; i != count; ++i) {
-      if (!strncmp(split[i], "+++", 3))
+      if (!strncmp(split[i], "2", 1))
          _GLHCKlibrary.trace.level = 2;
-      else if (!strncmp(split[i], "++", 2))
+      else if (!strncmp(split[i], "1", 1))
          _GLHCKlibrary.trace.level = 1;
       else if (!strncmp(split[i], "+", 1))
          _glhckTraceSet(split[i] + 1, 1);
