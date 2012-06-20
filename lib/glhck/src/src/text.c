@@ -687,7 +687,8 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
 {
    unsigned int i, codepoint, state = 0;
    short isize = (short)size*10.0f;
-   __GLHCKtextVertexData *v;
+   size_t vcount;
+   __GLHCKtextVertexData *v, *d;
    __GLHCKtextTexture *texture;
    __GLHCKtextGlyph *glyph;
    __GLHCKtextFont *font;
@@ -710,8 +711,8 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
       if (!(glyph = _glhckTextGetGlyph(text, font, codepoint, isize)))
          continue;
 
-      texture = glyph->texture;
-      if (texture->geometry.vertexCount+6 >= GLHCK_TEXT_VERT_COUNT)
+      vcount = (texture = glyph->texture)->geometry.vertexCount;
+      if ((vcount?vcount+6:4) >= GLHCK_TEXT_VERT_COUNT)
          continue;
 
       /* should not ever fail */
@@ -720,9 +721,30 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
          continue;
 
       /* insert geometry data */
-      v = &texture->geometry.vertexData[texture->geometry.vertexCount];
+      v = &texture->geometry.vertexData[vcount];
 
       i = 0;
+#if GLHCK_TRISTRIP
+      /* degenerate */
+      if (vcount) {
+         d = &texture->geometry.vertexData[vcount-1];
+         v[i].vertex.x = d->vertex.x; v[i+0].vertex.y = d->vertex.y;
+         v[i].coord.x  = d->coord.x;  v[i++].coord.y  = d->coord.y;
+         v[i].vertex.x = q.v2.x; v[i+0].vertex.y = q.v2.y;
+         v[i].coord.x  = q.t2.x; v[i++].coord.y  = q.t2.y;
+      }
+
+      /* tristrip */
+      v[i].vertex.x = q.v2.x; v[i+0].vertex.y = q.v2.y;
+      v[i].coord.x  = q.t2.x; v[i++].coord.y  = q.t2.y;
+      v[i].vertex.x = q.v1.x; v[i+0].vertex.y = q.v2.y;
+      v[i].coord.x  = q.t1.x; v[i++].coord.y  = q.t2.y;
+      v[i].vertex.x = q.v2.x; v[i+0].vertex.y = q.v1.y;
+      v[i].coord.x  = q.t2.x; v[i++].coord.y  = q.t1.y;
+      v[i].vertex.x = q.v1.x; v[i+0].vertex.y = q.v1.y;
+      v[i].coord.x  = q.t1.x; v[i++].coord.y  = q.t1.y;
+#else
+      /* triangle */
       v[i].vertex.x = q.v1.x; v[i+0].vertex.y = q.v1.y;
       v[i].coord.x  = q.t1.x; v[i++].coord.y  = q.t1.y;
       v[i].vertex.x = q.v2.x; v[i+0].vertex.y = q.v1.y;
@@ -736,6 +758,7 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
       v[i].coord.x  = q.t2.x; v[i++].coord.y  = q.t2.y;
       v[i].vertex.x = q.v1.x; v[i+0].vertex.y = q.v2.y;
       v[i].coord.x  = q.t1.x; v[i++].coord.y  = q.t2.y;
+#endif
 
       texture->geometry.vertexCount += i;
    }
