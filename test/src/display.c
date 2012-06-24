@@ -6,16 +6,47 @@
 static int RUNNING = 0;
 static int WIDTH = 800, HEIGHT = 480;
 static int NO_NETWM_ACTIVE_SUPPORT = 1;
-int close_callback(GLFWwindow window)
+static int MOUSEX = 0, MOUSEY = 0;
+static int LASTMOUSEX = 0, LASTMOUSEY = 0;
+static int close_callback(GLFWwindow window)
 {
    RUNNING = 0;
    return 1;
 }
 
-void resize_callback(GLFWwindow window, int width, int height)
+static void resize_callback(GLFWwindow window, int width, int height)
 {
    WIDTH = width; HEIGHT = height;
    glhckDisplayResize(width, height);
+}
+
+static void mousepos_callback(GLFWwindow window, int mousex, int mousey)
+{
+   MOUSEX = mousex;
+   MOUSEY = mousey;
+}
+
+static void handleCamera(GLFWwindow window, float delta, kmVec3 *cameraPos, kmVec3 *cameraRot) {
+   if (glfwGetKey(window, GLFW_KEY_W)) {
+      cameraPos->x += cos((cameraRot->y + 90) * kmPIOver180) * 25.0f * delta;
+      cameraPos->z -= sin((cameraRot->y + 90) * kmPIOver180) * 25.0f * delta;
+   } else if (glfwGetKey(window, GLFW_KEY_S)) {
+      cameraPos->x -= cos((cameraRot->y + 90) * kmPIOver180) * 25.0f * delta;
+      cameraPos->z += sin((cameraRot->y + 90) * kmPIOver180) * 25.0f * delta;
+   }
+
+   if (glfwGetKey(window, GLFW_KEY_A)) {
+      cameraPos->x += cos((cameraRot->y + 180) * kmPIOver180) * 25.0f * delta;
+      cameraPos->z -= sin((cameraRot->y + 180) * kmPIOver180) * 25.0f * delta;
+   } else if (glfwGetKey(window, GLFW_KEY_D)) {
+      cameraPos->x -= cos((cameraRot->y + 180) * kmPIOver180) * 25.0f * delta;
+      cameraPos->z += sin((cameraRot->y + 180) * kmPIOver180) * 25.0f * delta;
+   }
+
+   cameraRot->y -= (float)(MOUSEX - LASTMOUSEX) / 7;
+   cameraRot->x -= (float)(MOUSEY - LASTMOUSEY) / 7;
+   LASTMOUSEX = MOUSEX;
+   LASTMOUSEY = MOUSEY;
 }
 
 int main(int argc, char **argv)
@@ -25,7 +56,6 @@ int main(int argc, char **argv)
    glhckObject *cube = NULL;
    glhckCamera *camera;
    float spin = 0;
-   int mousex, mousey;
    kmVec3 cameraPos = { 0, 0, 0 };
    kmVec3 cameraRot = { 180, 180, 0 };
 
@@ -46,7 +76,7 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
 
    /* Turn on VSYNC if driver allows */
-   // glfwSwapInterval(1);
+   glfwSwapInterval(0);
 
    if (!glhckInit(argc, argv))
       return EXIT_FAILURE;
@@ -84,12 +114,13 @@ int main(int argc, char **argv)
    glhckText *text = glhckTextNew(512, 512);
    if (!text) return EXIT_FAILURE;
 
-   unsigned int font = glhckTextNewFont(text, "/usr/share/fonts/TTF/ipag.ttf");
-   unsigned int font2 = glhckTextNewFont(text, "/usr/share/fonts/TTF/DejaVuSans.ttf");
+   unsigned int font = glhckTextNewFont(text, "../media/ipag.ttf");
+   unsigned int font2 = glhckTextNewFont(text, "../media/bridge.ttf");
 
    glfwSetWindowCloseCallback(close_callback);
    glfwSetWindowSizeCallback(resize_callback);
-   glfwSetMousePos(window, WIDTH/2, HEIGHT/2);
+   glfwSetMousePosCallback(mousepos_callback);
+   glfwSetInputMode(window, GLFW_CURSOR_MODE, GLFW_CURSOR_CAPTURED);
    while (RUNNING && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
       last  =  now;
       now   =  glfwGetTime();
@@ -100,28 +131,7 @@ int main(int argc, char **argv)
       if (glfwGetWindowParam(window, GLFW_ACTIVE) ||
             NO_NETWM_ACTIVE_SUPPORT) {
          glfwPollEvents();
-         glfwGetMousePos(window, &mousex, &mousey);
-
-         cameraRot.y -= (float)(mousex - WIDTH/2)  / 7;
-         cameraRot.x -= (float)(mousey - HEIGHT/2) / 7;
-
-         if (glfwGetKey(window, GLFW_KEY_W)) {
-            cameraPos.x += cos((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
-            cameraPos.z -= sin((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
-         } else if (glfwGetKey(window, GLFW_KEY_S)) {
-            cameraPos.x -= cos((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
-            cameraPos.z += sin((cameraRot.y + 90) * kmPIOver180) * 25.0f * delta;
-         }
-
-         if (glfwGetKey(window, GLFW_KEY_A)) {
-            cameraPos.x += cos((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
-            cameraPos.z -= sin((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
-         } else if (glfwGetKey(window, GLFW_KEY_D)) {
-            cameraPos.x -= cos((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
-            cameraPos.z += sin((cameraRot.y + 180) * kmPIOver180) * 25.0f * delta;
-         }
-
-         glfwSetMousePos(window, WIDTH/2, HEIGHT/2);
+         handleCamera(window, delta, &cameraPos, &cameraRot);
       }
 
       /* update the camera */
