@@ -303,7 +303,7 @@ char *gnu_basename(char *path)
  * maybe we could have a _default_ texture for missing files? */
 char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_path)
 {
-   char *textureFile, *modelFolder;
+   char *textureFile, *modelFolder, *modelPath;
    char textureInModelFolder[PATH_MAX];
    CALL(0, "%s, %s", odd_texture_path, model_path);
 
@@ -331,15 +331,19 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
    if (!model_path || !model_path[0])
       goto fail;
 
+   /* copy original path */
+   if (!(modelPath = strndup(model_path, PATH_MAX-1)))
+      goto fail;
+
    /* grab the folder where model resides */
-   modelFolder = dirname(strdup(model_path));
+   modelFolder = dirname(modelPath);
 
    /* ok, maybe the texture is in same folder as the model? */
    snprintf(textureInModelFolder, PATH_MAX-1, "%s/%s",
             modelFolder, textureFile );
 
    /* free this */
-   free(modelFolder);
+   free(modelPath);
 
    /* gah, don't give me missing textures damnit!! */
    if (access(textureInModelFolder, F_OK) != 0)
