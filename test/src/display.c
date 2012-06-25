@@ -118,8 +118,8 @@ int main(int argc, char **argv)
    glhckText *text = glhckTextNew(512, 512);
    if (!text) return EXIT_FAILURE;
 
-   unsigned int font = glhckTextNewFont(text, "../media/ipag.ttf");
-   unsigned int font2 = glhckTextNewFont(text, "../media/bridge.ttf");
+   unsigned int font = glhckTextNewFont(text, "/usr/share/fonts/TTF/ipag.ttf");
+   unsigned int font2 = glhckTextNewFont(text, "/usr/share/fonts/TTF/DejaVuSans.ttf");
 
    glfwSetWindowCloseCallback(close_callback);
    glfwSetWindowSizeCallback(resize_callback);
