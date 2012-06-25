@@ -24,6 +24,10 @@ static void mousepos_callback(GLFWwindow window, int mousex, int mousey)
 {
    MOUSEX = mousex;
    MOUSEY = mousey;
+   if (!LASTMOUSEX && !LASTMOUSEY) {
+      LASTMOUSEX = MOUSEX;
+      LASTMOUSEY = MOUSEY;
+   }
 }
 
 static void handleCamera(GLFWwindow window, float delta, kmVec3 *cameraPos, kmVec3 *cameraRot) {
@@ -53,7 +57,7 @@ int main(int argc, char **argv)
 {
    GLFWwindow window;
    glhckTexture *texture;
-   glhckObject *cube = NULL;
+   glhckObject *cube = NULL, *sprite = NULL;
    glhckCamera *camera;
    float spin = 0;
    kmVec3 cameraPos = { 0, 0, 0 };
@@ -97,15 +101,15 @@ int main(int argc, char **argv)
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
 
+   sprite = glhckSpriteNew("../media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
 #if 1
    cube = glhckCubeNew(1);
-   //cube = glhckPlaneNew(1);
-   //cube = glhckSpriteNew("../media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
    if (cube) glhckObjectSetTexture(cube, texture);
-   //cube = glhckTextNew("/usr/share/fonts/TTF/mikachan.ttf", 8);
+   glhckObjectPositionf(sprite, 0, 4, 0);
    cameraPos.z = -20.0f;
 #else
-   cube = glhckModelNew("../media/rin.pmd", 1);
+   cube = glhckModelNew("../media/md_m.pmd", 1);
+   glhckObjectPositionf(sprite, 0, 22, 0);
    cameraPos.y =  10.0f;
    cameraPos.z = -40.0f;
 #endif
@@ -141,10 +145,11 @@ int main(int argc, char **argv)
       glhckCameraPosition(camera, &cameraPos);
       glhckCameraTargetf(camera, cameraPos.x, cameraPos.y, cameraPos.z + 1);
       glhckCameraRotate(camera, &cameraRot);
-      //glhckObjectRotatef(cube, 0, spin = spin + 10.0f * delta, 0);
+      glhckObjectRotatef(sprite, 0, spin = spin + 30.0f * delta, 0);
 
       /* glhck drawing */
       glhckObjectDraw(cube);
+      glhckObjectDraw(sprite);
       glhckRender();
 
       glhckTextDraw(text, font, 42, 54, 200, "愛してるGLHCK", NULL);
