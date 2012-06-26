@@ -34,9 +34,11 @@ static void handleCamera(GLFWwindow window, float delta, kmVec3 *cameraPos, kmVe
    if (glfwGetKey(window, GLFW_KEY_W)) {
       cameraPos->x += cos((cameraRot->y + 90) * kmPIOver180) * 25.0f * delta;
       cameraPos->z -= sin((cameraRot->y + 90) * kmPIOver180) * 25.0f * delta;
+      cameraPos->y += cos((cameraRot->x + 90) * kmPIOver180) * 25.0f * delta;
    } else if (glfwGetKey(window, GLFW_KEY_S)) {
       cameraPos->x -= cos((cameraRot->y + 90) * kmPIOver180) * 25.0f * delta;
       cameraPos->z += sin((cameraRot->y + 90) * kmPIOver180) * 25.0f * delta;
+      cameraPos->y -= cos((cameraRot->x + 90) * kmPIOver180) * 25.0f * delta;
    }
 
    if (glfwGetKey(window, GLFW_KEY_A)) {
