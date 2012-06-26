@@ -17,7 +17,8 @@ SET(GLHCK_SRC
    src/src/geometry/cube.c
    src/src/render/OpenGL.c
    src/src/import/import.c
-   src/src/import/import_mmd.c)
+   src/src/import/import_mmd.c
+   src/src/import/import_tga.c)
 
 SET(GLHCK_INC
    src/include/GL/glhck.h)
