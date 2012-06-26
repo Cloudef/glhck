@@ -40,6 +40,9 @@ int _glhckImportImage(_glhckTexture *object, const char *file);
  */
 char* _glhckImportTexturePath(const char *texture_path, const char *asset_path);
 
+/* check that image dimensions are OK */
+int _glhckIsValidImageDimension(unsigned long long w,  unsigned long long h);
+
 /* \brief returns tristripped indecies from triangle indecies */
 unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *out_num_indices);
 

@@ -358,6 +358,12 @@ fail:
    return NULL;
 }
 
+/* check that image dimensions are ok */
+int _glhckIsValidImageDimension(unsigned long long w, unsigned long long h)
+{
+   return (((w) > 0) && ((h) > 0) && (w*h <= (1ULL << 29) - 1));
+}
+
 #define ACTC_CHECK_SYNTAX  "%d: "__STRING(func)" returned unexpected "__STRING(c)"\n"
 #define ACTC_CALL_SYNTAX   "%d: "__STRING(func)" failed with %04X\n"
 
