@@ -147,7 +147,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
    return RETURN_OK;
 
 read_fail:
-   DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s\n", file);
+   DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s", file);
    goto fail;
 mmd_import_fail:
    DEBUG(GLHCK_DBG_ERROR, "MMD importing failed.");
