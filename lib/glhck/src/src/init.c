@@ -71,7 +71,7 @@ static void _glhckFpeHandler(int sig)
 
 /* set floating point exception stuff
  * this stuff is from blender project. */
-static int _glhckSetFPE(int argc, const char **argv)
+static void _glhckSetFPE(int argc, const char **argv)
 {
 #if defined(__linux__) || defined(_WIN32) || defined(OSX_SSE_FPE)
    /* zealous but makes float issues a heck of a lot easier to find!
@@ -98,8 +98,9 @@ static int _glhckSetFPE(int argc, const char **argv)
 /* public api */
 
 /* \brief initialize */
-GLHCKAPI int glhckInit(int argc, const char **argv)
+GLHCKAPI int glhckInit(int argc, char **argv)
 {
+   const char ** _argv = (const char **)argv;
    CALL(0, "%d, %p", argc, argv);
 
    if (_glhckInitialized)
@@ -115,11 +116,11 @@ GLHCKAPI int glhckInit(int argc, const char **argv)
 
 #ifndef NDEBUG
    /* set FPE handler */
-   _glhckSetFPE(argc, argv);
+   _glhckSetFPE(argc, _argv);
 #endif
 
    /* init trace system */
-   _glhckTraceInit(argc, argv);
+   _glhckTraceInit(argc, _argv);
 
    atexit(glhckTerminate);
    _glhckInitialized = 1;
@@ -135,7 +136,7 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    CALL(0, "%d, %d, %d", width, height, renderType);
 
    if (!_glhckInitialized ||
-       width <= 0 && height <= 0)
+       (width <= 0 && height <= 0))
       goto fail;
 
    /* autodetect */
@@ -237,7 +238,7 @@ GLHCKAPI void glhckRender(void)
 
    /* draw in sorted texture order */
    for (ti = 0, ts = 0, os = 0, kt = 0;
-        t = _GLHCKlibrary.render.draw.tqueue[ti]; ++ti) {
+        (t = _GLHCKlibrary.render.draw.tqueue[ti]); ++ti) {
       for (oi = 0; (o = _GLHCKlibrary.render.draw.oqueue[oi]); ++oi) {
          /* don't draw if not same texture or opaque,
           * opaque objects are drawn last */
@@ -266,7 +267,7 @@ GLHCKAPI void glhckRender(void)
     * TODO: this should not be done in texture order,
     * instead draw from farthest to nearest. (I hate opaque objects) */
    for (ti = 0, os = 0;
-        t = _GLHCKlibrary.render.draw.tqueue[ti]; ++ti) {
+        (t = _GLHCKlibrary.render.draw.tqueue[ti]); ++ti) {
       for (oi = 0; (o = _GLHCKlibrary.render.draw.oqueue[oi]); ++oi) {
          /* don't draw if not same texture */
          if (o->material.texture != t) {

@@ -1,4 +1,5 @@
 #include "../internal.h"
+#include "../import/import.h"
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY

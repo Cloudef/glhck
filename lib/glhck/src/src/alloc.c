@@ -105,8 +105,8 @@ void _glhckTrackTerminate(void)
 /* Use _glhckMalloc and _glhckCalloc and _glhckCopy macros instead
  * of __glhckMalloc and __glhckCalloc and _glhckCopy.
  * They will assign GLCHK_CHANNEL automatically.
-
-/* \brief internal malloc function. */
+ *
+ * \brief internal malloc function. */
 void* __glhckMalloc(const char *channel, size_t size)
 {
    void *ptr;

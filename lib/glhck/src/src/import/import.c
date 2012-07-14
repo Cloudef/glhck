@@ -1,4 +1,5 @@
 #include "../internal.h"
+#include "import.h"
 #include <stdio.h>  /* for fopen    */
 #include <limits.h> /* for PATH_MAX */
 #include <unistd.h> /* for access   */
@@ -256,7 +257,7 @@ static inline unsigned int _getFormat(unsigned int channels)
 /* \brief import using SOIL */
 int _glhckImportImage(_glhckTexture *texture, const char *file)
 {
-   unsigned int channels;
+   int channels;
    CALL(0, "%p, %s", texture, file);
    DEBUG(GLHCK_DBG_CRAP, "Image: %s", file);
 
@@ -398,7 +399,7 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
 #if GLHCK_TRISTRIP
    unsigned int v1, v2, v3;
    unsigned int *out_indices = NULL, test;
-   size_t i, strips, prim_count, tmp;
+   size_t i, prim_count, tmp;
    ACTCData *tc = NULL;
    CALL(0, "%p, %zu, %p", indices, num_indices, out_num_indices);
 
@@ -421,9 +422,10 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
    ACTC_CALL(actcBeginInput(tc));
    while (i != num_indices) {
       ACTC_CALL(actcAddTriangle(tc,
-               indices[i++],
-               indices[i++],
-               indices[i++]));
+               indices[i+0],
+               indices[i+1],
+               indices[i+2]));
+      i+=3;
    }
    ACTC_CALL(actcEndInput(tc));
 
@@ -448,13 +450,13 @@ unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *
    }
    ACTC_CALL(actcEndOutput(tc));
    puts("");
-   printf("%d alloc\n", num_indices);
+   printf("%zu alloc\n", num_indices);
    *out_num_indices = i; num_indices = tmp;
 
-   printf("%d indices\n", num_indices);
-   printf("%d out indicies\n", i);
-   printf("%d tristrips\n", prim_count);
-   printf("%d profit\n", num_indices - i);
+   printf("%zu indices\n", num_indices);
+   printf("%zu out indicies\n", i);
+   printf("%zu tristrips\n", prim_count);
+   printf("%zu profit\n", num_indices - i);
    actcDelete(tc);
 
    RET(0, "%p", out_indices);

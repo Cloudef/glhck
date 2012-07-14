@@ -15,7 +15,7 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated);
 
 #if GLHCK_IMPORT_PMD
 /* MikuMikuDance PMD */
-int _glhckImportPmd(_glhckObject *object, const char *file, int animated );
+int _glhckImportPMD(_glhckObject *object, const char *file, int animated);
 #endif /* WITH_PMD */
 
 #if GLHCK_IMPORT_ASSIMP

@@ -79,8 +79,8 @@ static int node_fits(tpNode *n, int width, int height, int *edge_count)
    }
 
    *edge_count = ec;
-   return (width  <= n->width && height <= n->height ||
-           height <= n->width && width  <= n->height);
+   return ((width  <= n->width && height <= n->height) ||
+           (height <= n->width && width  <= n->height));
 }
 
 static void node_get_rect(tpNode *n, tpRect *r)
