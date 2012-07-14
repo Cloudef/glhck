@@ -104,7 +104,7 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
 
    sprite = glhckSpriteNew("../media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
-#if 1
+#if 0
    cube = glhckCubeNew(1);
    if (cube) glhckObjectSetTexture(cube, texture);
    glhckObjectPositionf(sprite, 0, 4, 0);

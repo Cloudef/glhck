@@ -74,7 +74,7 @@ int main(int argc, char **argv)
    ACTCData *tc = NULL;
    size_t i, num_indices, out_num_indices;
    unsigned int *in_indices = NULL, *out_indices = NULL;
-   unsigned int v1, v2, v3, test;
+   unsigned int v1, v2, v3 = 0, test;
    char buffer[LINE_MAX], **read_indices = NULL;
 
    if (!(fgets(buffer, LINE_MAX, stdin)))
@@ -101,11 +101,13 @@ int main(int argc, char **argv)
 
    i = 0;
    ACTC_CALL(actcBeginInput(tc));
-   while (i != num_indices)
+   while (i != num_indices) {
       ACTC_CALL(actcAddTriangle(tc,
-               in_indices[i++],
-               in_indices[i++],
-               in_indices[i++]));
+               in_indices[i+0],
+               in_indices[i+1],
+               in_indices[i+2]));
+      i+=3;
+   }
    ACTC_CALL(actcEndInput(tc));
    ACTC_CALL(actcBeginOutput(tc));
    i = 0;
@@ -118,7 +120,7 @@ int main(int argc, char **argv)
       }
       out_indices[i++] = v1;
       out_indices[i++] = v2;
-      while (actcGetNextVert(tc, &out_indices[i++]) != ACTC_PRIM_COMPLETE) {
+      while (actcGetNextVert(tc, &v3) != ACTC_PRIM_COMPLETE) {
          if (i + 1 > num_indices)
             goto no_profit;
          out_indices[i++] = v3;

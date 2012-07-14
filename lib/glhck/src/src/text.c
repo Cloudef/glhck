@@ -97,7 +97,7 @@ static unsigned int hashint(unsigned int a)
 static int _glhckTextNewTexture(_glhckText *text, unsigned int object)
 {
    __GLHCKtextTexture *texture, *t;
-   CALL(0, "%p, %d", text, texture);
+   CALL(0, "%p, %d", text, object);
    assert(text);
 
    if (!(texture = _glhckMalloc(sizeof(__GLHCKtextTexture))))
@@ -264,10 +264,9 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
 static int _getQuad(_glhckText *text, __GLHCKtextFont *font, __GLHCKtextGlyph *glyph,
       short isize, float *x, float *y, __GLHCKtextQuad *q)
 {
-   kmVec2 v1, v2, t1, t2, vmax, vmin;
+   kmVec2 v1, v2, t1, t2;
    int rx, ry;
    float scale = 1.0f;
-   char no_vconvert;
 
    if (font->type == GLHCK_FONT_BMP) scale = (float)isize/(glyph->size*10.0f);
 
@@ -284,29 +283,10 @@ static int _getQuad(_glhckText *text, __GLHCKtextFont *font, __GLHCKtextGlyph *g
    t2.x = (glyph->x2) * text->itw;
    t2.y = (glyph->y2) * text->ith;
 
-   set2d(vmax, v1);
-   set2d(vmin, v1);
-   max2d(vmax, v2);
-   min2d(vmin, v2);
-
-   /* do we need conversion? */
-   no_vconvert = 0;
-   if (vmax.x + vmin.x == 1 &&
-       vmax.y + vmin.y == 1 &&
-       vmax.x + vmin.x == 0 &&
-       vmax.y + vmin.y == 0)
-      no_vconvert = 1;
-
-   /* avoid artifacts */
-   vmax.x++; vmax.y++;
-   vmin.x--; vmin.y--;
-
 #if GLHCK_PRECISION_VERTEX == GLHCK_FLOAT
    memcpy(&q->v1, &v1, sizeof(_glhckVertex2d));
    memcpy(&q->v2, &v2, sizeof(_glhckVertex2d));
 #else
-   convert2d(q->v1, v1, vmax, vmin, GLHCK_VERTEX_MAGIC, GLHCK_CAST_VERTEX);
-   convert2d(q->v2, v2, vmax, vmin, GLHCK_VERTEX_MAGIC, GLHCK_CAST_VERTEX);
    set2d(q->v1, v1);
    set2d(q->v2, v2);
 #endif
@@ -323,15 +303,6 @@ static int _getQuad(_glhckText *text, __GLHCKtextFont *font, __GLHCKtextGlyph *g
 
    *x += scale * glyph->xadv;
    return RETURN_OK;
-}
-
-/* \brief generate degenaret vertices */
-static void _degenerate(__GLHCKtextVertexData *v, __GLHCKtextVertexData *o)
-{
-   v[0].vertex.x = o[0].vertex.x;
-   v[0].vertex.y = o[0].vertex.y;
-   v[0].coord.x  = o[0].coord.x;
-   v[0].coord.y  = o[0].coord.y;
 }
 
 /* public api */

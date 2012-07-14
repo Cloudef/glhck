@@ -30,21 +30,21 @@ static void _glhckConvertVertexData(_glhckObject *object, __GLHCKvertexData *int
 
    /* do we need conversion? */
    no_vconvert = 0;
-   if (vmax.x + vmin.x == 1 &&
-       vmax.y + vmin.y == 1 &&
-       vmax.z + vmin.z == 1 ||
-       vmax.x + vmin.x == 0 &&
-       vmax.y + vmin.y == 0 &&
-       vmax.z + vmin.z == 0)
+   if ((vmax.x + vmin.x == 1 &&
+        vmax.y + vmin.y == 1 &&
+        vmax.z + vmin.z == 1) ||
+       (vmax.x + vmin.x == 0 &&
+        vmax.y + vmin.y == 0 &&
+        vmax.z + vmin.z == 0))
       no_vconvert = 1;
 
    no_nconvert = 0;
-   if (nmax.x + nmin.x == 1 &&
-       nmax.y + nmin.y == 1 &&
-       nmax.z + nmin.z == 1 ||
-       nmax.x + nmin.x == 0 &&
-       nmax.y + nmin.y == 0 &&
-       nmax.z + nmin.z == 0)
+   if ((nmax.x + nmin.x == 1 &&
+        nmax.y + nmin.y == 1 &&
+        nmax.z + nmin.z == 1) ||
+       (nmax.x + nmin.x == 0 &&
+        nmax.y + nmin.y == 0 &&
+        nmax.z + nmin.z == 0))
       no_nconvert = 1;
 
    /* lie about bounds by 1 point so,
@@ -249,7 +249,7 @@ GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
    /* copy static data */
    memcpy(object, src, sizeof(_glhckObject));
    memcpy(&object->geometry, &src->geometry, sizeof(__GLHCKobjectGeometry));
-   memcpy(&object->view, 0, sizeof(__GLHCKobjectView));
+   memcpy(&object->view, &src->view, sizeof(__GLHCKobjectView));
 
    /* copy metadata */
    if (src->file)

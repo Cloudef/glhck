@@ -227,7 +227,6 @@ static int linkFramebufferWithTexture(unsigned int object,
 
 fbo_fail:
    DEBUG(GLHCK_DBG_ERROR, "Framebuffer is not complete");
-fail:
    glBindFramebuffer(GL_FRAMEBUFFER, 0);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
@@ -461,7 +460,6 @@ static void drawAABB(_glhckObject *object)
 /* \brief draw single object */
 static void objectDraw(_glhckObject *object)
 {
-   unsigned int i;
    unsigned int old_primitive;
    CALL(2, "%p", object);
 
@@ -581,7 +579,6 @@ static int renderInfo(void)
 {
    char *version, *vendor, *extensions;
    unsigned int major = 0, minor = 0, patch = 0;
-   int num_parsed;
    TRACE(0);
 
    version = (char*)GL_CALL(glGetString(GL_VERSION));
