@@ -11,6 +11,30 @@
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
+/* \brief check if file is a MikuMikuDance PMD file */
+int _glhckFormatPMD(const char *file)
+{
+   FILE *f;
+   mmd_header header;
+   CALL(0, "%s", file);
+
+   if (!(f = fopen(file, "rb")))
+      goto read_fail;
+
+   if (mmd_read_header(f, &header) != 0)
+      goto fail;
+
+   /* close file */
+   fclose(f); f = NULL;
+   return RETURN_OK;
+
+read_fail:
+   DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s", file);
+fail:
+   IFDO(fclose, f);
+   return RETURN_FAIL;
+}
+
 /* \brief import MikuMikuDance PMD file */
 int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
 {
@@ -25,7 +49,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
    unsigned int *indices = NULL, *strip_indices = NULL;
    CALL(0, "%p, %s, %d", object, file, animated);
 
-   if (!(f = fopen((char*)file, "rb")))
+   if (!(f = fopen(file, "rb")))
       goto read_fail;
 
    if (mmd_read_header(f, &header) != 0)
