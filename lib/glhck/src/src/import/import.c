@@ -404,4 +404,7 @@ fail:
 #endif
 }
 
+#undef ACTC_CALL
+#undef ACTC_CALL
+
 /* vim: set ts=8 sw=3 tw=0 :*/
