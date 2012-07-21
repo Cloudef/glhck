@@ -80,14 +80,18 @@ static _glhckImageImporter imageImporters[] = {
 /* \brief load importers dynamically */
 static int _glhckLoadImporters(void)
 {
+   CALL(0);
    /* code here */
+   RET(0, RETURN_FAIL);
    return RETURN_FAIL;
 }
 
 /* \brief unload dynamically loaded importers */
 static int _glhckUnloadImporters(void)
 {
+   CALL(0);
    /* code here */
+   RET(0, RETURN_FAIL);
    return RETURN_FAIL;
 }
 #endif
