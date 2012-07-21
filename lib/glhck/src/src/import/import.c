@@ -130,22 +130,18 @@ static _glhckModelImporter* _glhckGetModelImporter(const char *file)
 int _glhckImportModel(_glhckObject *object, const char *file, int animated)
 {
    _glhckModelImporter *importer;
-
-   /* default for fail, as in no importer found */
-   int importReturn = RETURN_FAIL;
-
+   int importReturn;
    CALL(0, "%p, %s, %d", object, file, animated);
    DEBUG(GLHCK_DBG_CRAP, "Model: %s", file);
 
    /* figure out the model format */
-   if (!(importer = _glhckGetModelImporter(file)))
-      goto fail;
+   if (!(importer = _glhckGetModelImporter(file))) {
+      RET(0, "%d", RETURN_FAIL);
+      return RETURN_FAIL;
+   }
 
    /* import */
    importReturn = importer->importFunc(object, file, animated);
-
-   /* can be non fail too depending on the importReturn */
-fail:
    RET(0, "%d", importReturn);
    return importReturn;
 }
@@ -184,22 +180,18 @@ static _glhckImageImporter* _glhckGetImageImporter(const char *file)
 int _glhckImportImage(_glhckTexture *texture, const char *file, unsigned int flags)
 {
    _glhckImageImporter *importer;
-
-   /* default for fail, as in no importer found */
-   int importReturn = RETURN_FAIL;
-
+   int importReturn;
    CALL(0, "%p, %s, %u", texture, file, flags);
    DEBUG(GLHCK_DBG_CRAP, "Model: %s", file);
 
    /* figure out the image format */
-   if (!(importer = _glhckGetImageImporter(file)))
-      goto fail;
+   if (!(importer = _glhckGetImageImporter(file))) {
+      RET(0, "%d", RETURN_FAIL);
+      return RETURN_FAIL;
+   }
 
    /* import */
    importReturn = importer->importFunc(texture, file, flags);
-
-   /* can be non fail too depending on the importReturn */
-fail:
    RET(0, "%d", importReturn);
    return importReturn;
 }
