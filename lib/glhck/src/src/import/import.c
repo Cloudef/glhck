@@ -56,20 +56,25 @@ typedef struct _glhckImageImporter
 
 #define REGISTER_IMPORTER(format, formatFunc, importFunc, lib) \
    { __STRING(format), format, formatFunc, importFunc, lib, NULL }
+#define END_IMPORTERS() \
+   { NULL, 0, NULL, NULL, NULL, NULL }
 
 /* Model importers */
 static _glhckModelImporter modelImporters[] = {
    //REGISTER_IMPORTER(FORMAT_OCTM, _glhckFormatOpenCTM, _glhckImportOpenCTM, "glhckImportOpenCTM"),
    REGISTER_IMPORTER(FORMAT_PMD, _glhckFormatPMD, _glhckImportPMD, "glhckImportPMD"),
    //REGISTER_IMPORTER(FORMAT_ASSIMP, _glhckFormatAssimp, _glhckImportAssimp, "glhckImportAssimp"),
+   END_IMPORTERS()
 };
 
 /* Image importers */
 static _glhckImageImporter imageImporters[] = {
    REGISTER_IMPORTER(FORMAT_TGA, _glhckFormatTGA, _glhckImportTGA, "glhckImportTGA"),
+   END_IMPORTERS()
 };
 
 #undef REGISTER_IMPORTER
+#undef END_IMPORTERS
 
 #if GLHCK_IMPORT_DYNAMIC
 /* \brief load importers dynamically */
@@ -95,7 +100,7 @@ static _glhckModelImporter* _glhckGetModelImporter(const char *file)
 
    /* --------- FORMAT HEADER CHECKING ------------ */
 
-   for (i = 0; modelImporters[i].str; ++i)
+   for (i = 0; modelImporters[i].formatFunc; ++i)
       if (modelImporters[i].formatFunc(file)) {
          RET(0, "%s", modelImporters[i].str);
          return &modelImporters[i];
@@ -141,15 +146,6 @@ fail:
    return importReturn;
 }
 
-/* \brief guess texture format from number of channels
- * TODO: Not needed when we get rid of SOIL */
-static inline unsigned int _getFormat(unsigned int channels)
-{
-   return channels==2?GLHCK_LUMINANCE_ALPHA:
-          channels==3?GLHCK_RGB:
-          channels==4?GLHCK_RGBA:GLHCK_LUMINANCE;
-}
-
 /* \brief check against known image format headers */
 static _glhckImageImporter* _glhckGetImageImporter(const char *file)
 {
@@ -158,7 +154,7 @@ static _glhckImageImporter* _glhckGetImageImporter(const char *file)
 
    /* --------- FORMAT HEADER CHECKING ------------ */
 
-   for (i = 0; imageImporters[i].str; ++i)
+   for (i = 0; imageImporters[i].formatFunc; ++i)
       if (!imageImporters[i].formatFunc ||
            imageImporters[i].formatFunc(file)) {
          RET(0, "%s", imageImporters[i].str);
