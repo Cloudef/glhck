@@ -85,7 +85,7 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
                   GLHCK_TEXTURE_DXT;
 
       /* import image */
-      if (_glhckImportImage(texture, file) != RETURN_OK)
+      if (_glhckImportImage(texture, file, flags) != RETURN_OK)
          goto fail;
 
       /* upload texture */

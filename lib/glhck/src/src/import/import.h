@@ -1,6 +1,13 @@
 #ifndef __import_h__
 #define __import_h__
 
+/* Load and unload functions when importers are configured
+ * to be loaded dynamically */
+#if GLHCK_IMPORT_DYNAMIC
+int _glhckLoadImporters(void);
+int _glhckUnloadImporters(void);
+#endif
+
 /* Wraps around the other imports by figuring out the header
  * 1. pointer to sceneobject
  * 2. filename
@@ -8,26 +15,31 @@
  */
 int _glhckImportModel(_glhckObject *object, const char *file, int animated);
 
-#if GLHCK_IMPORT_OPENCTM
+#if !GLHCK_IMPORT_DYNAMIC
 /* OpenCTM http://openctm.sourceforge.net/ */
-int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated);
-#endif /* WITH_OCTM */
+//int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated);
+//int _glhckFormatOpenCTM(const char *file);
 
-#if GLHCK_IMPORT_PMD
 /* MikuMikuDance PMD */
 int _glhckImportPMD(_glhckObject *object, const char *file, int animated);
-#endif /* WITH_PMD */
+int _glhckFormatPMD(const char *file);
 
-#if GLHCK_IMPORT_ASSIMP
 /* Assimp wrapper */
-int _glhckImportAssimp(_glhckObject *object, const char *file, int animated);
-#endif /* WITH_ASSIMP */
+//int _glhckImportAssimp(_glhckObject *object, const char *file, int animated);
+//int _glhckFormatAssimp(const char *file);
+#endif
 
-/* Not using own importers anymore, SOIL ftw :)
+/* Wraps around the other imports by figuring out the header
  * 1. pointer to texture object
  * 2. filename
  */
-int _glhckImportImage(_glhckTexture *object, const char *file);
+int _glhckImportImage(_glhckTexture *texture, const char *file, unsigned int flags);
+
+#if !GLHCK_IMPORT_DYNAMIC
+/* TGA */
+int _glhckImportTGA(_glhckTexture *texture, const char *file, unsigned int flags);
+int _glhckFormatTGA(const char *file);
+#endif
 
 /* Common helper functions.'
  * don't add here if it does not apply to other formats or importers */

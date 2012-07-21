@@ -34,8 +34,8 @@
 #define GLHCK_CHANNEL_ALL        "ALL"
 #define GLHCK_CHANNEL_SWITCH     "DEBUG"
 
-/* temporary options */
-#define GLHCK_IMPORT_PMD 1
+/* build importers as seperate dynamic libraries? */
+#define GLHCK_IMPORT_DYNAMIC 0
 
 /* maximum draw queue allowed */
 #define GLHCK_MAX_DRAW 32767

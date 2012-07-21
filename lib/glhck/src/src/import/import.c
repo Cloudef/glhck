@@ -15,171 +15,100 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
-/* I used to have own image importers,
- * but then I stumbled against SOIL which seems to do a lots
- * of stuff with it's tiny size, so why reinvent the wheel?
- *
- * Din't want to write a wrapper for it either like assimp,
- * since it would just bloat my texture structure. It's much better like this :) */
-#include "../../include/SOIL.h"
-
-/* Should be good enough,
- * dont think anyone would use this long
- * file header anyways.
- */
-#define HEADER_MAX 20
-
-/* Minimun header length.
- * I seriously hope there are no headers with only
- * 1 or 2 characters <_<
- */
-#define HEADER_MIN 3
-
-/* TO-DO :
- * If any plans to add ASCII formats,
- * then they should be handled too..
- *
- * Maybe check against common stuff on that format?
- * And increase possibility by each match, then pick the one with highest possibility.
- * */
-
-/* Model format defines here */
-#define MODEL_FORMAT_OCTM     "OCTM"
-#define MODEL_FORMAT_B3D      "BB3Dd"
-#define MODEL_FORMAT_PMD      "Pmd"    /* really? */
-
-/* Model format enumeration here */
-typedef enum _glhckModelFormat
+/* File format enumeration here */
+typedef enum _glhckFormat
 {
-   M_NOT_FOUND = 0,
-   M_OCTM,
-   M_PMD,
-   M_ASSIMP,
-} _glhckModelFormat;
+   /* models */
+   FORMAT_OCTM,
+   FORMAT_PMD,
+   FORMAT_ASSIMP,
 
-/* Read first HEADER_MAX bytes from
- * the file, and try using that information
- * to figure out which format it is.
- *
- * returned char array must be freed */
+   /* images */
+   FORMAT_TGA,
+} _glhckFormat;
 
-/* \brief parse header from file */
-static char* parse_header(const char *file)
+/* Function typedefs */
+typedef int (*_glhckModelImportFunc)(_glhckObject *object, const char *file, int animated);
+typedef int (*_glhckImageImportFunc)(_glhckTexture *texture, const char *file, unsigned int flags);
+typedef int (*_glhckFormatFunc)(const char *file);
+
+/* Model importer struct */
+typedef struct _glhckModelImporter
 {
-   char *MAGIC_HEADER = NULL, bit = '\0';
-   FILE *f;
-   size_t bytesRead = 0, bytesTotal;
-   CALL(0, "%s", file);
+   const char *str;
+   _glhckFormat format;
+   _glhckFormatFunc formatFunc;
+   _glhckModelImportFunc importFunc;
+   const char *lib;
+   void *dl;
+} _glhckModelImporter;
 
-   /* open file */
-   if (!(f = fopen(file, "rb"))) {
-      DEBUG(GLHCK_DBG_ERROR, "File: %s, could not open", file);
-      goto read_fail;
-   }
+/* Image importer struct */
+typedef struct _glhckImageImporter
+{
+   const char *str;
+   _glhckFormat format;
+   _glhckFormatFunc formatFunc;
+   _glhckImageImportFunc importFunc;
+   const char *lib;
+   void *dl;
+} _glhckImageImporter;
 
-   /* allocate our header */
-   if (!(MAGIC_HEADER = _glhckMalloc(HEADER_MAX + 1)))
-      goto fail;
+#define REGISTER_IMPORTER(format, formatFunc, importFunc, lib) \
+   { __STRING(format), format, formatFunc, importFunc, lib, NULL }
 
-   /* read bytes */
-   while (fread(&bit, 1, 1, f)) {
-      /* check ascii range */
-      if ((bit >= 45 && bit <= 90) ||
-          (bit >= 97 && bit <= 122))
-         MAGIC_HEADER[bytesRead++] = bit;
-      else if (bytesRead)
-         break;
+/* Model importers */
+static _glhckModelImporter modelImporters[] = {
+   //REGISTER_IMPORTER(FORMAT_OCTM, _glhckFormatOpenCTM, _glhckImportOpenCTM, "glhckImportOpenCTM"),
+   REGISTER_IMPORTER(FORMAT_PMD, _glhckFormatPMD, _glhckImportPMD, "glhckImportPMD"),
+   //REGISTER_IMPORTER(FORMAT_ASSIMP, _glhckFormatAssimp, _glhckImportAssimp, "glhckImportAssimp"),
+};
 
-      /* don't exceed the maximum */
-      if (bytesRead == HEADER_MAX)
-         break;
-   }
+/* Image importers */
+static _glhckImageImporter imageImporters[] = {
+   REGISTER_IMPORTER(FORMAT_TGA, _glhckFormatTGA, _glhckImportTGA, "glhckImportTGA"),
+};
 
-   /* check that our header has minimum length */
-   if (bytesRead + 1 <= HEADER_MIN) {
-      bytesRead = 0;
+#undef REGISTER_IMPORTER
 
-      /* Some formats tend to be hipster and store the header/description
-       * at end of the file.. I'm looking at you TGA!! */
-      fseek(f, 0L, SEEK_END);
-      bytesTotal = ftell(f) - HEADER_MAX;
-      fseek(f, bytesTotal, SEEK_SET);
-
-      while (fread(&bit, 1, 1, f)) {
-         /* check ascii range */
-         if((bit >= 45 && bit <= 90) ||
-            (bit >= 97 && bit <= 122))
-            MAGIC_HEADER[bytesRead++] = bit;
-         else if (bytesRead)
-            break;
-
-         /* don't exceed the maximum */
-         if (bytesRead == HEADER_MAX)
-            break;
-      }
-   }
-
-   /* close the file */
-   fclose(f); f = NULL;
-
-   /* if nothing */
-   if (!bytesRead)
-      goto parse_fail;
-
-   MAGIC_HEADER[bytesRead] = '\0';
-
-   RET(0, "%s", MAGIC_HEADER);
-   return MAGIC_HEADER;
-
-parse_fail:
-   DEBUG(GLHCK_DBG_ERROR, "File: %s, failed to parse header", file);
-   goto fail;
-read_fail:
-   DEBUG(GLHCK_DBG_ERROR, "File: %s, failed to open", file);
-fail:
-   IFDO(_glhckFree, MAGIC_HEADER);
-   IFDO(fclose, f);
-   RET(0, "%p", NULL);
-   return NULL;
+#if GLHCK_IMPORT_DYNAMIC
+/* \brief load importers dynamically */
+static int _glhckLoadImporters(void)
+{
+   /* code here */
+   return RETURN_FAIL;
 }
 
-/* \brief check against known model format headers */
-static _glhckModelFormat model_format(const char *MAGIC_HEADER)
+/* \brief unload dynamically loaded importers */
+static int _glhckUnloadImporters(void)
 {
-   CALL(0, "%s", MAGIC_HEADER);
+   /* code here */
+   return RETURN_FAIL;
+}
+#endif
+
+/* \brief check against known model format headers */
+static _glhckModelImporter* _glhckGetModelImporter(const char *file)
+{
+   unsigned int i;
+   CALL(0, "%s", file);
 
    /* --------- FORMAT HEADER CHECKING ------------ */
 
-#if GLHCK_IMPORT_OPENCTM
-   /* OpenCTM check */
-   if (!strcmp(MODEL_FORMAT_OCTM, MAGIC_HEADER)) {
-      RET(0, "%s", "M_OCTM");
-      return M_OCTM;
-   }
-#endif
-
-#if GLHCK_IMPORT_PMD
-   /* PMD check */
-   if (!strcmp(MODEL_FORMAT_PMD, MAGIC_HEADER)) {
-      RET(0, "%s", "M_PMD");
-      return M_PMD;
-   }
-#endif
-
-#if GLHCK_IMPORT_ASSIMP
-   /* Our importers cant handle this, let's try ASSIMP */
-   RET(0, "%s", "M_ASSIMP");
-   return M_ASSIMP;
-#endif
+   for (i = 0; modelImporters[i].str; ++i)
+      if (modelImporters[i].formatFunc(file)) {
+         RET(0, "%s", modelImporters[i].str);
+         return &modelImporters[i];
+      }
 
    /* ------- ^^ FORMAT HEADER CHECKING ^^ -------- */
 
-   DEBUG(GLHCK_DBG_ERROR, "No suitable importers found");
+   DEBUG(GLHCK_DBG_ERROR, "No suitable model importers found.");
    DEBUG(GLHCK_DBG_ERROR, "If the format is supported, make sure you have compiled the library with the support.");
-   DEBUG(GLHCK_DBG_ERROR, "Magic header: %s", MAGIC_HEADER);
+   DEBUG(GLHCK_DBG_ERROR, "File: %s", file);
 
-   RET(0, "%s", "M_NOT_FOUND");
-   return M_NOT_FOUND;
+   RET(0, "%s", "FORMAT_NOT_FOUND");
+   return NULL;
 }
 
 /* Figure out the file type
@@ -191,8 +120,7 @@ static _glhckModelFormat model_format(const char *MAGIC_HEADER)
 /* \brief import model file */
 int _glhckImportModel(_glhckObject *object, const char *file, int animated)
 {
-   _glhckModelFormat fileFormat;
-   char *header;
+   _glhckModelImporter *importer;
 
    /* default for fail, as in no importer found */
    int importReturn = RETURN_FAIL;
@@ -200,44 +128,12 @@ int _glhckImportModel(_glhckObject *object, const char *file, int animated)
    CALL(0, "%p, %s, %d", object, file, animated);
    DEBUG(GLHCK_DBG_CRAP, "Model: %s", file);
 
-   /* read file header */
-   if (!(header = parse_header(file)))
+   /* figure out the model format */
+   if (!(importer = _glhckGetModelImporter(file)))
       goto fail;
 
-   /* figure out the model format */
-   fileFormat = model_format(header);
-   _glhckFree(header);
-
-   /* --------- FORMAT IMPORT CALL ----------- */
-
-   switch (fileFormat) {
-      /* bail out */
-      case M_NOT_FOUND:
-         break;
-
-#if GLHCK_IMPORT_OPENCTM
-      /* OpenCTM */
-      case M_OCTM:
-         importReturn = _glhckImportOpenCTM(object, file, animated);
-         break;
-#endif /* WITH_OPENCTM */
-
-#if GLHCK_IMPORT_PMD
-      /* PMD */
-      case M_PMD:
-         importReturn = _glhckImportPMD(object, file, animated);
-         break;
-#endif /* WITH_PMD */
-
-#if GLHCK_IMPORT_ASSIMP
-      /* Use asssimp */
-      case M_ASSIMP:
-         importReturn = _glhckImportAssimp(object, file, animated);
-         break;
-#endif /* WITH_ASSIMP */
-   }
-
-   /* ---------- ^^ FORMAT IMPORT ^^ ---------- */
+   /* import */
+   importReturn = importer->importFunc(object, file, animated);
 
    /* can be non fail too depending on the importReturn */
 fail:
@@ -254,36 +150,60 @@ static inline unsigned int _getFormat(unsigned int channels)
           channels==4?GLHCK_RGBA:GLHCK_LUMINANCE;
 }
 
-/* \brief import using SOIL */
-int _glhckImportImage(_glhckTexture *texture, const char *file)
+/* \brief check against known image format headers */
+static _glhckImageImporter* _glhckGetImageImporter(const char *file)
 {
-   int channels;
-   CALL(0, "%p, %s", texture, file);
-   DEBUG(GLHCK_DBG_CRAP, "Image: %s", file);
+   unsigned int i;
+   CALL(0, "%s", file);
 
-   /* load using SOIL */
-   texture->data = SOIL_load_image(
-         file,
-         &texture->width,
-         &texture->height,
-         &channels,
-         0);
+   /* --------- FORMAT HEADER CHECKING ------------ */
 
-   /* check succes */
-   if (!texture->data)
-      goto fail;
+   for (i = 0; imageImporters[i].str; ++i)
+      if (!imageImporters[i].formatFunc ||
+           imageImporters[i].formatFunc(file)) {
+         RET(0, "%s", imageImporters[i].str);
+         return &imageImporters[i];
+      }
 
-   texture->format = _getFormat(channels);
-   texture->size   = texture->width * texture->height * channels;
-   RET(0, "%d", RETURN_OK);
-   return RETURN_OK;
+   /* ------- ^^ FORMAT HEADER CHECKING ^^ -------- */
 
-fail:
-   DEBUG(GLHCK_DBG_ERROR, "Failed to load %s", file);
-   RET(0, "%d", RETURN_FAIL);
-   return RETURN_FAIL;
+   DEBUG(GLHCK_DBG_ERROR, "No suitable image importers found.");
+   DEBUG(GLHCK_DBG_ERROR, "If the format is supported, make sure you have compiled the library with the support.");
+   DEBUG(GLHCK_DBG_ERROR, "File: %s", file);
+
+   RET(0, "%s", "FORMAT_NOT_FOUND");
+   return NULL;
 }
 
+/* Figure out the file type
+ * Call the right importer
+ * And let it fill the texture structure
+ * Return the texture
+ */
+
+/* \brief import image file */
+int _glhckImportImage(_glhckTexture *texture, const char *file, unsigned int flags)
+{
+   _glhckImageImporter *importer;
+
+   /* default for fail, as in no importer found */
+   int importReturn = RETURN_FAIL;
+
+   CALL(0, "%p, %s, %u", texture, file, flags);
+   DEBUG(GLHCK_DBG_CRAP, "Model: %s", file);
+
+   /* figure out the image format */
+   if (!(importer = _glhckGetImageImporter(file)))
+      goto fail;
+
+   /* import */
+   importReturn = importer->importFunc(texture, file, flags);
+
+   /* can be non fail too depending on the importReturn */
+fail:
+   RET(0, "%d", importReturn);
+   return importReturn;
+}
 
 /* ------------------ PORTABILTY ------------------ */
 

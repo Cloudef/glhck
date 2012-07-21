@@ -50,8 +50,16 @@ typedef struct {
    char                null;
 } tga_footer;
 
+/* \brief check if a file is TGA */
+int _glhckFormatTGA(const char *file)
+{
+   CALL(0, "%s", file);
+   /* for now just return OK, abstract the TGA header better later */
+   return RETURN_OK;
+}
+
 /* \brief import TGA images */
-int _glhckImportTga(_glhckTexture *texture, const char *file, const unsigned int flags)
+int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int flags)
 {
    FILE *f;
    void *seg = NULL, *data, *import = NULL;
@@ -190,6 +198,9 @@ int _glhckImportTga(_glhckTexture *texture, const char *file, const unsigned int
       DEBUG(GLHCK_DBG_ERROR, "RLE compressed import not yet implemented.");
       goto fail;
    }
+
+   /* upload */
+   //glhckTextureCreate(texture, import, w, h, GLHCK_RGBA, 0);
 
    /* load image data here */
    RET(0, "%d", RETURN_OK);
