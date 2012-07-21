@@ -159,8 +159,7 @@ static _glhckImageImporter* _glhckGetImageImporter(const char *file)
    /* --------- FORMAT HEADER CHECKING ------------ */
 
    for (i = 0; imageImporters[i].formatFunc; ++i)
-      if (!imageImporters[i].formatFunc ||
-           imageImporters[i].formatFunc(file)) {
+      if (imageImporters[i].formatFunc(file)) {
          RET(0, "%s", imageImporters[i].str);
          return &imageImporters[i];
       }
