@@ -46,6 +46,10 @@ int _glhckImportImage(_glhckTexture *texture, const char *file, unsigned int fla
 int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct *data, unsigned int flags);
 
 #if !GLHCK_IMPORT_DYNAMIC
+/* PNG */
+int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags);
+int _glhckFormatPNG(const char *file);
+
 /* TGA */
 int _glhckImportTGA(_glhckTexture *texture, const char *file, unsigned int flags);
 int _glhckFormatTGA(const char *file);
