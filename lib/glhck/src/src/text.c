@@ -1,6 +1,5 @@
 #include "internal.h"
 #include "helper/vertexdata.h"
-#include "SOIL.h"
 #include <stdio.h>
 
 /* traching channel for this file */
@@ -540,6 +539,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
    unsigned char *data = NULL;
    int fh, width, height, channels;
    __GLHCKtextFont *font, *f;
+   _glhckTexture *temp;
    CALL(0, "%p, %s, %d, %d, %d",
          text, file, ascent, descent, line_gap);
    assert(text && file);
@@ -553,9 +553,11 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
    memset(font->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
    for (id = 1, f = text->fcache; f; f = f->next) ++id;
 
-   /* do this better way */
-   data = SOIL_load_image(
-         file, &width, &height, &channels, 0);
+   /* load image */
+   if (!(temp = glhckTextureNew(file, 0)))
+      goto fail;
+   data = _glhckCopy(temp->data, temp->size);
+   glhckTextureFree(temp);
 
    /* check success */
    if (!data)
