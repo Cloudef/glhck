@@ -260,6 +260,9 @@ GLHCKAPI void glhckMemoryGraph(void)
          puts("--------------------");
       }
 
+      /* don't print zero channels */
+      if (!allocChannel) continue;
+
       /* set color */
       if (allocChannel >= GLHCK_ALLOC_CRITICAL)       _glhckRed();
       else if (allocChannel >= GLHCK_ALLOC_HIGH)      _glhckBlue();
