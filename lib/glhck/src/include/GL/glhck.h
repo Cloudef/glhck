@@ -256,7 +256,7 @@ GLHCKAPI glhckObject* glhckSpriteNew(const char *file, size_t size,
 
 /* text */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
-GLHCKAPI void glhckTextFree(glhckText *text);
+GLHCKAPI short glhckTextFree(glhckText *text);
 GLHCKAPI void glhckTextMetrics(glhckText *text, unsigned int font_id,
       float size, float *ascender, float *descender, float *lineh);
 GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
