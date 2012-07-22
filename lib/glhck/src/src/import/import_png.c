@@ -15,10 +15,34 @@
 /* \brief check if file is PNG */
 int _glhckFormatPNG(const char *file)
 {
+   FILE *f;
+   unsigned char buf[PNG_BYTES_TO_CHECK], isPNG = 0;
    CALL(0, "%s", file);
 
-   RET(0, "%d", RETURN_OK);
-   return RETURN_OK;
+   /* open PNG */
+   if (!(f = fopen(file, "rb")))
+      goto read_fail;
+
+   /* read header */
+   if (fread(buf, 1, PNG_BYTES_TO_CHECK, f) != PNG_BYTES_TO_CHECK)
+      goto fail;
+
+   /* check magic header */
+   if (png_sig_cmp(buf, 0, PNG_BYTES_TO_CHECK) == 0)
+      isPNG = 1;
+
+   /* close file */
+   fclose(f); f = NULL;
+
+   RET(0, "%d", isPNG?RETURN_OK:RETURN_FAIL);
+   return isPNG?RETURN_OK:RETURN_FAIL;
+
+read_fail:
+   DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s", file);
+fail:
+   IFDO(fclose, f);
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
 }
 
 /* \brief import PNG images */
@@ -53,8 +77,13 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
    if (!(info = png_create_info_struct(png)))
       goto out_of_memory;
 
-   //if (setjmp(png->jmpbuf))
-   //   goto fail;
+#if (PNG_LIBPNG_VER < 10500)
+   if (setjmp(ping->jmpbuf))
+      goto fail;
+#else
+   if (setjmp(png_jmpbuf(png)))
+      goto fail;
+#endif
 
    png_init_io(png, f);
    png_read_info(png, info);
@@ -100,23 +129,19 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
    /* what the hell was up with the colors                                      */
    /* now png loading should work on big-endian machines nicely                 */
 #ifdef WORDS_BIGENDIAN
-   png_set_swap_alpha(png);
-   if (!hasa)
-      png_set_filler(png, 0xff, PNG_FILLER_BEFORE);
+   if (!hasa) png_set_filler(png, 0xff, PNG_FILLER_BEFORE);
 #else
-   png_set_bgr(png);
-   if (!hasa)
-      png_set_filler(png, 0xff, PNG_FILLER_AFTER);
+   if (!hasa) png_set_filler(png, 0xff, PNG_FILLER_AFTER);
 #endif
 
    if (!(import = _glhckMalloc(w*h*4)))
       goto out_of_memory;
 
-   if (!(lines = _glhckMalloc(h *sizeof(unsigned char*))))
+   if (!(lines = _glhckMalloc(h*sizeof(unsigned char*))))
       goto out_of_memory;
 
    for (i = 0; i != h; ++i)
-      lines[i] = (unsigned char*)(import)+(i*w*4);
+      lines[h-i-1] = (unsigned char*)import+i*w*4;
 
    png_read_image(png, lines);
 
@@ -135,6 +160,7 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
    if (_glhckImagePostProcess(texture, &importData, flags) != RETURN_OK)
       goto fail;
 
+   _glhckFree(import);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
@@ -148,7 +174,7 @@ out_of_memory:
    DEBUG(GLHCK_DBG_ERROR, "Out of memory, won't load file: %s", file);
    goto fail;
 bad_dimensions:
-   DEBUG(GLHCK_DBG_ERROR, "TGA image has invalid dimension %dx%d", w, h);
+   DEBUG(GLHCK_DBG_ERROR, "PNG image has invalid dimension %dx%d", w, h);
 fail:
    if (png && info) png_read_end(png, info);
    if (png)         png_destroy_read_struct(&png, &info, (png_infopp)NULL);
