@@ -45,7 +45,7 @@ typedef struct {
    char                null;
 } tga_footer;
 
-/* \brief check if a file is TGA */
+/* \brief check if file is TGA */
 int _glhckFormatTGA(const char *file)
 {
    FILE *f;
@@ -188,7 +188,7 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
 
    /* non RLE compressed data */
    if (!rle) {
-      for (i = 0; i != h*w; ++i) {
+      for (i = 0; i != h*w && bufptr+bpp/8 <= bufend; ++i) {
          switch (bpp) {
             /* 32-bit BGRA */
             case 32:
@@ -245,7 +245,8 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
    importData.width  = w;
    importData.height = h;
    importData.data   = import;
-   _glhckImagePostProcess(texture, &importData, flags);
+   if (_glhckImagePostProcess(texture, &importData, flags) != RETURN_OK)
+      goto fail;
 
    /* dealloc */
    _glhckFree(seg);

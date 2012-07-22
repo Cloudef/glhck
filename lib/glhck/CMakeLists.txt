@@ -18,14 +18,15 @@ SET(GLHCK_SRC
    src/src/render/OpenGL.c
    src/src/import/import.c
    src/src/import/import_mmd.c
+   src/src/import/import_png.c
    src/src/import/import_tga.c)
 
 SET(GLHCK_INC
    src/include/GL/glhck.h)
 
-FIND_PACKAGE(Freetype REQUIRED)
+FIND_PACKAGE(PNG REQUIRED)
 FILE(COPY ${GLHCK_INC} DESTINATION ${GLHCK_TEST_INCLUDE_DIR}/GL)
 INCLUDE_DIRECTORIES(${GLHCK_INCLUDE_DIR} ${FREETYPE_INCLUDE_DIRS})
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck SOIL kazmath MMD actc ${FREETYPE_LIBRARY} ${MATH_LIBRARY})
+TARGET_LINK_LIBRARIES(glhck SOIL kazmath MMD actc ${PNG_LIBRARY} ${MATH_LIBRARY})

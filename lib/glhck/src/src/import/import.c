@@ -24,6 +24,7 @@ typedef enum _glhckFormat
    FORMAT_ASSIMP,
 
    /* images */
+   FORMAT_PNG,
    FORMAT_TGA,
 } _glhckFormat;
 
@@ -69,6 +70,7 @@ static _glhckModelImporter modelImporters[] = {
 
 /* Image importers */
 static _glhckImageImporter imageImporters[] = {
+   REGISTER_IMPORTER(FORMAT_PNG, _glhckFormatPNG, _glhckImportPNG, "glhckImportPNG"),
    REGISTER_IMPORTER(FORMAT_TGA, _glhckFormatTGA, _glhckImportTGA, "glhckImportTGA"),
    END_IMPORTERS()
 };
