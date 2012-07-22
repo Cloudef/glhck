@@ -352,7 +352,7 @@ fail:
 }
 
 /* \brief free text stack */
-GLHCKAPI void glhckTextFree(glhckText *text)
+GLHCKAPI short glhckTextFree(glhckText *text)
 {
    __GLHCKtextFont *f, *fn;
    __GLHCKtextTexture *t, *tn;
@@ -381,6 +381,9 @@ GLHCKAPI void glhckTextFree(glhckText *text)
 
    /* free this */
    _glhckFree(text);
+
+   /* has no reference counting at least atm */
+   return 0;
 }
 
 /* \brief get text metrics */

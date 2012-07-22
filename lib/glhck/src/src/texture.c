@@ -87,8 +87,6 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
       /* import image */
       if (_glhckImportImage(texture, file, flags) != RETURN_OK)
          goto fail;
-
-      DEBUG(GLHCK_DBG_CRAP, "NEW %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
    }
 
    /* insert to world */
@@ -146,7 +144,8 @@ GLHCKAPI _glhckTexture* glhckTextureRef(_glhckTexture *texture)
    CALL(0, "%p", texture);
    assert(texture);
 
-   DEBUG(GLHCK_DBG_CRAP, "REFERENCE %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
+   DEBUG(GLHCK_DBG_CRAP, "REFERENCE(%p) %dx%d %.2f MiB", texture,
+         texture->width, texture->height, (float)texture->size / 1048576);
 
    /* increase ref counter */
    texture->refCounter++;
@@ -165,7 +164,8 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
    /* there is still references to this texture alive */
    if (--texture->refCounter != 0) goto success;
 
-   DEBUG(GLHCK_DBG_CRAP, "FREE %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
+   DEBUG(GLHCK_DBG_CRAP, "FREE(%p) %dx%d %.2f MiB", texture,
+         texture->width, texture->height, (float)texture->size / 1048576);
 
    /* delete texture if there is one */
    if (texture->object)
@@ -219,7 +219,8 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
          goto fail;
    }
 
-   DEBUG(GLHCK_DBG_CRAP, "NEW %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
+   DEBUG(GLHCK_DBG_CRAP, "NEW(%p) %dx%d %.2f MiB", texture,
+         texture->width, texture->height, (float)texture->size / 1048576);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
