@@ -26,6 +26,7 @@ typedef enum _glhckFormat
    /* images */
    FORMAT_PNG,
    FORMAT_TGA,
+   FORMAT_BMP
 } _glhckFormat;
 
 /* Function typedefs */
@@ -72,6 +73,7 @@ static _glhckModelImporter modelImporters[] = {
 static _glhckImageImporter imageImporters[] = {
    REGISTER_IMPORTER(FORMAT_PNG, _glhckFormatPNG, _glhckImportPNG, "glhckImportPNG"),
    REGISTER_IMPORTER(FORMAT_TGA, _glhckFormatTGA, _glhckImportTGA, "glhckImportTGA"),
+   REGISTER_IMPORTER(FORMAT_BMP, _glhckFormatBMP, _glhckImportBMP, "glhckImportBMP"),
    END_IMPORTERS()
 };
 
@@ -184,7 +186,7 @@ int _glhckImportImage(_glhckTexture *texture, const char *file, unsigned int fla
    _glhckImageImporter *importer;
    int importReturn;
    CALL(0, "%p, %s, %u", texture, file, flags);
-   DEBUG(GLHCK_DBG_CRAP, "Model: %s", file);
+   DEBUG(GLHCK_DBG_CRAP, "Image: %s", file);
 
    /* figure out the image format */
    if (!(importer = _glhckGetImageImporter(file))) {
