@@ -1,6 +1,5 @@
 #include "internal.h"
 #include "import/import.h"
-#include "../include/SOIL.h"  /* for image saving */
 #include <assert.h>           /* for assert */
 
 /* tracing channel for this file */
@@ -69,6 +68,7 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
 
    /* init texture */
    memset(texture, 0, sizeof(_glhckTexture));
+   texture->refCounter++;
 
    /* If file is passed, then try import it */
    if (file) {
@@ -88,23 +88,8 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
       if (_glhckImportImage(texture, file, flags) != RETURN_OK)
          goto fail;
 
-      /* upload texture */
-      if (_GLHCKlibrary.render.api.uploadTexture(texture, flags) != RETURN_OK)
-         goto fail;
-
-      /* we know the size of image data from SOIL,
-       * add it to tracking.
-       *
-       * Maybe solve this different way later? */
-#ifndef NDEBUG
-      _glhckTrackFake(texture, sizeof(_glhckTexture) + texture->size);
-#endif
-
       DEBUG(GLHCK_DBG_CRAP, "NEW %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
    }
-
-   /* increase ref counter */
-   texture->refCounter++;
 
    /* insert to world */
    _glhckWorldInsert(tlist, texture, _glhckTexture*);
@@ -262,15 +247,6 @@ GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
          texture->format==GLHCK_LUMINANCE_ALPHA?
          "LUMINANCE ALPHA":"LUMINANCE",
          _glhckNumChannels(texture->format));
-
-   if (!SOIL_save_image
-      (
-          path,
-          SOIL_SAVE_TYPE_TGA,
-          texture->width, texture->height, _glhckNumChannels(texture->format),
-          texture->data
-      ))
-      goto fail;
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
