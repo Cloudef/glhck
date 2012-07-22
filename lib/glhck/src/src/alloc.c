@@ -253,7 +253,7 @@ GLHCKAPI void glhckMemoryGraph(void)
       if (trace[i].name) {
          for (data = _GLHCKlibrary.alloc;
               data; data = data->next)
-            if (data->channel == trace[i].name)
+            if (!strcmp(data->channel, trace[i].name))
                allocChannel += data->size;
       } else {
          allocChannel = allocTotal;
