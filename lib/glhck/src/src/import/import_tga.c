@@ -50,7 +50,7 @@ int _glhckFormatTGA(const char *file)
 {
    FILE *f;
    void *data = NULL;
-   int isTga = 0;
+   char isTga = 0;
    size_t size;
    tga_header *header;
    tga_footer *footer;
