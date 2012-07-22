@@ -1,14 +1,9 @@
 /* TGA loader taken from imlib2 */
 
 #include "../internal.h"
+#include "../helper/imagedata.h"
 #include "import.h"
 #include <stdio.h>
-
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
@@ -53,29 +48,68 @@ typedef struct {
 /* \brief check if a file is TGA */
 int _glhckFormatTGA(const char *file)
 {
+   FILE *f;
+   void *data = NULL;
+   int isTga = 0;
+   size_t size;
+   tga_header *header;
+   tga_footer *footer;
    CALL(0, "%s", file);
-   /* for now just return OK, abstract the TGA header better later */
-   return RETURN_OK;
+
+   if (!(f = fopen(file, "rb")))
+      goto read_fail;
+
+   fseek(f, 0L, SEEK_END);
+   if ((size = ftell(f)) < sizeof(tga_header) + sizeof(tga_footer))
+      goto fail;
+
+   if (!(data = _glhckMalloc(size)))
+      goto out_of_memory;
+
+   fseek(f, 0L, SEEK_SET);
+   if (fread(data, 1, size, f) != size)
+      goto fail;
+
+   /* we don't need the file anymore */
+   fclose(f); f = NULL;
+   header = (tga_header*)data;
+   footer = (tga_footer*)((char*)data+size-sizeof(tga_footer));
+
+   /* is TGA v2.0? (stop storing the headers at EOF please) */
+   if (!memcmp(footer->signature, TGA_SIGNATURE, sizeof(footer->signature)))
+      isTga = 1;
+   else if ((header->bpp == 32) || (header->bpp == 24) || (header->bpp == 8))
+      isTga = 1;
+
+   _glhckFree(data);
+   RET(0, "%d", isTga?RETURN_OK:RETURN_FAIL);
+   return isTga?RETURN_OK:RETURN_FAIL;
+
+read_fail:
+   DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s", file);
+   goto fail;
+out_of_memory:
+   DEBUG(GLHCK_DBG_ERROR, "Out of memory, won't load file: %s", file);
+fail:
+   IFDO(fclose, f);
+   IFDO(_glhckFree, data);
+   return RETURN_FAIL;
 }
 
 /* \brief import TGA images */
 int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int flags)
 {
    FILE *f;
-   void *seg = NULL, *data, *import = NULL;
+   void *seg = NULL, *data;
    int bpp, vinverted = 0;
    int rle = 0, footer_present = 0;
-   size_t size;
+   size_t datasize, size, i, i2;
    unsigned short w, h;
    tga_header *header;
    tga_footer *footer;
 
-   /* non rle import */
-   unsigned long datasize;
-   unsigned char *bufptr, *bufend;
-   unsigned char *dataptr;
-   int y;
-
+   /* import data */
+   unsigned char *bufptr, *bufend, *import = NULL;
    CALL(0, "%p, %s, %d", texture, file, flags);
 
    if (!(f = fopen(file, "rb")))
@@ -85,7 +119,7 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
    if ((size = ftell(f)) < sizeof(tga_header) + sizeof(tga_footer))
       goto not_possible;
 
-   if (!(seg = malloc(size)))
+   if (!(seg = _glhckMalloc(size)))
       goto out_of_memory;
 
    fseek(f, 0L, SEEK_SET);
@@ -136,15 +170,11 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
    w = (header->widthHi  << 8) | header->widthLo;
    h = (header->heightHi << 8) | header->heightLo;
 
-   if (!_glhckIsValidImageDimension(w, h))
+   if (!IMAGE_DIMENSIONS_OK(w, h))
       goto bad_dimensions;
 
-   int hasAlpha = 0;
-   if (bpp == 32)
-      hasAlpha = 1;
-
    /* allocate destination buffer */
-   if (!(import = malloc(w*h)))
+   if (!(import = _glhckMalloc(w*h*4)))
       goto out_of_memory;
 
    /* find out how much data to be read from file
@@ -156,39 +186,36 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
    bufptr = data;
    bufend = data + datasize;
 
-   /* dataptr is the next 32-bit pixel to be filled in */
-   dataptr = import;
-
    /* non RLE compressed data */
    if (!rle) {
-      for (y = 0; y != h; ++y) {
-         int x;
+      for (i = 0; i != h*w; ++i) {
+         switch (bpp) {
+            /* 32-bit BGRA */
+            case 32:
+               import[i*4+0] = bufptr[2];
+               import[i*4+1] = bufptr[1];
+               import[i*4+2] = bufptr[0];
+               import[i*4+3] = bufptr[3];
+               bufptr += 4;
+            break;
 
-         /* some TGA's are upside-down */
-         if (vinverted) dataptr = import + ((h - y - 1) * w);
-         else dataptr = import + (y * w);
+            /* 24-bit BGR */
+            case 24:
+               import[i*4+0] = bufptr[2];
+               import[i*4+1] = bufptr[1];
+               import[i*4+2] = bufptr[0];
+               import[i*4+3] = 255;
+               bufptr += 3;
+            break;
 
-         for (x = 0; x != w && bufptr+bpp/8 <= bufend; ++x) {
-            switch (bpp) {
-
-               /* 32-bit BGRA */
-               case 32:
-                  ++dataptr;
-                  bufptr += 4;
-               break;
-
-               /* 24-bit BGR */
-               case 24:
-                  ++dataptr;
-                  bufptr += 3;
-               break;
-
-               /* 8-bit grayscale */
-               case 8:
-                  ++dataptr;
-                  bufptr += 1;
-               break;
-            }
+            /* 8-bit grayscale */
+            case 8:
+               import[i*4+0] = bufptr[0];
+               import[i*4+1] = bufptr[0];
+               import[i*4+2] = bufptr[0];
+               import[i*4+3] = 255;
+               bufptr += 1;
+            break;
          }
       }
    }
@@ -199,8 +226,30 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
       goto fail;
    }
 
-   /* upload */
-   //glhckTextureCreate(texture, import, w, h, GLHCK_RGBA, 0);
+   /* some TGA's are upside-down */
+   if (vinverted) {
+      for (i = 0; i*2 < h; ++i) {
+         int index1 = i*w*4;
+         int index2 = (h-1-i)*w*4;
+         for (i2 = w*4; i2 != 0; --i2) {
+            unsigned char temp = import[index1];
+            import[index1] = import[index2];
+            import[index2] = temp;
+            ++index1; ++index2;
+         }
+      }
+   }
+
+   /* do post processing to imported data, and assign to texture */
+   _glhckImagePostProcessStruct importData;
+   importData.width  = w;
+   importData.height = h;
+   importData.data   = import;
+   _glhckImagePostProcess(texture, &importData, flags);
+
+   /* dealloc */
+   _glhckFree(seg);
+   _glhckFree(import);
 
    /* load image data here */
    RET(0, "%d", RETURN_OK);
@@ -225,8 +274,8 @@ bad_dimensions:
    DEBUG(GLHCK_DBG_ERROR, "TGA image has invalid dimension %dx%d", w, h);
 fail:
    IFDO(fclose, f);
-   IFDO(free, import);
-   IFDO(free, seg);
+   IFDO(_glhckFree, import);
+   IFDO(_glhckFree, seg);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
