@@ -270,10 +270,38 @@ fail:
    return NULL;
 }
 
-/* check that image dimensions are ok */
-int _glhckIsValidImageDimension(unsigned long long w, unsigned long long h)
+/* post-processing of image data */
+int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct *data, unsigned int flags)
 {
-   return (((w) > 0) && ((h) > 0) && (w*h <= (1ULL << 29) - 1));
+   unsigned char *outData = NULL;
+   unsigned int outFormat;
+   char freeData = 0;
+   unsigned long long i;
+   CALL(0, "%p, %p, %u", texture, data, flags);
+
+   /* assign import data to outData */
+   outData   = data->data;
+   outFormat = GLHCK_RGBA;
+
+   /* format converisons
+    * check flags and convert to
+    * requested format */
+
+   /* upload texture */
+   glhckTextureCreate(texture, outData, data->width, data->height, outFormat, flags);
+
+   /* free data */
+   if (freeData) free(outData);
+
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
+
+out_of_memory:
+   DEBUG(GLHCK_DBG_ERROR, "Out of memory");
+fail:
+   if (freeData) free(outData);
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
 }
 
 #define ACTC_CHECK_SYNTAX  "%d: "__STRING(func)" returned unexpected "__STRING(c)"\n"

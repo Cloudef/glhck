@@ -1,6 +1,13 @@
 #ifndef __import_h__
 #define __import_h__
 
+/* Import struct for post processing */
+typedef struct _glhckImagePostProcessStruct
+{
+   unsigned long long width, height;
+   unsigned char *data;
+} _glhckImagePostProcessStruct;
+
 /* Load and unload functions when importers are configured
  * to be loaded dynamically */
 #if GLHCK_IMPORT_DYNAMIC
@@ -34,6 +41,9 @@ int _glhckFormatPMD(const char *file);
  * 2. filename
  */
 int _glhckImportImage(_glhckTexture *texture, const char *file, unsigned int flags);
+
+/* Post-process the RGBA image data */
+int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct *data, unsigned int flags);
 
 #if !GLHCK_IMPORT_DYNAMIC
 /* TGA */
