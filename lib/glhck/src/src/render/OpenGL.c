@@ -1,5 +1,4 @@
 #include "../internal.h"
-#include "../../include/SOIL.h"
 #include "render.h"
 #include <limits.h>
 #include <stdio.h>   /* for sscanf */
@@ -139,12 +138,6 @@ static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc,
 static int uploadTexture(_glhckTexture *texture, unsigned int flags)
 {
    CALL(0, "%p, %d", texture, flags);
-   texture->object = SOIL_create_OGL_texture(
-         texture->data,
-         texture->width, texture->height,
-      _glhckNumChannels(texture->format),
-         texture->object?texture->object:0,
-         flags);
 
    RET(0, "%d", texture->object?RETURN_OK:RETURN_FAIL);
    return texture->object?RETURN_OK:RETURN_FAIL;
@@ -262,7 +255,9 @@ static void setProjection(const kmMat4 *m)
 #else
    GL_CALL(glLoadMatrixd((double*)m));
 #endif
-   memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
+
+   if (m != &_OpenGL.projection)
+      memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
 }
 
 /* \brief get current projection */
