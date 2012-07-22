@@ -53,6 +53,10 @@ int _glhckFormatPNG(const char *file);
 /* TGA */
 int _glhckImportTGA(_glhckTexture *texture, const char *file, unsigned int flags);
 int _glhckFormatTGA(const char *file);
+
+/* BMP */
+int _glhckImportBMP(_glhckTexture *texture, const char *file, unsigned int flags);
+int _glhckFormatBMP(const char *file);
 #endif
 
 /* Common helper functions.'
