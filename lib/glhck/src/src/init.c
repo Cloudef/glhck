@@ -297,7 +297,8 @@ GLHCKAPI void glhckRender(void)
 #define _massacre(list, c, n, func)             \
 for (c = _GLHCKlibrary.world.list; c; c = n) {  \
    n = c->next;                                 \
-   func(c);                                     \
+   while (func(c));                             \
+   DEBUG(GLHCK_DBG_CRAP, "Slaughter: %p");      \
 } _GLHCKlibrary.world.list = NULL;
 
 /* \brief frees virtual display and deinits glhck */
