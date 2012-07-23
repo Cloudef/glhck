@@ -78,7 +78,7 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
       goto out_of_memory;
 
 #if (PNG_LIBPNG_VER < 10500)
-   if (setjmp(ping->jmpbuf))
+   if (setjmp(png->jmpbuf))
       goto fail;
 #else
    if (setjmp(png_jmpbuf(png)))
