@@ -5,52 +5,6 @@ SET(GLUE_DESCRIPTION "A dead simple OpenGL/GLES rendering engine")
 OPTION(GLHCK_USE_GLES "Build for OpenGL ES" OFF)
 OPTION(GLHCK_KAZMATH_FLOAT "Defines kmScalar as float" ON)
 
-# TODO:
-# Do neater CMake configuration,
-# Current one works but is bubble gum job
-
-SET(LIB_OUT_DIR ${CMAKE_BINARY_DIR}/build/lib)
-SET(TEST_OUT_DIR ${CMAKE_BINARY_DIR}/build/test)
-SET(3RDPARTY_OUT_DIR ${CMAKE_BINARY_DIR}/build/3rdparty)
-SET(GLHCK_INCLUDE_DIR ${CMAKE_BINARY_DIR}/lib/glhck/src/include)
-SET(GLHCK_TEST_INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
-
-# Tests will be linked and included against these
-SET(GLHCK_TEST_INCL ${GLHCK_TEST_INCLUDE_DIR})
-SET(GLHCK_TEST_LINK glhck glfw)
-
-# Build checks
-# Abort git submodule init && git submodule update
-# has not been ran.
-SET(SUBMODULE_ERROR "Run git submodule init && git submodule update first.")
-IF (NOT EXISTS ${CMAKE_BINARY_DIR}/lib/kazmath/src/.git)
-   SET(SUBMODULE_ERROR_THROW 1)
-ELSEIF (NOT EXISTS ${CMAKE_BINARY_DIR}/lib/glfw/src/.git)
-   SET(SUBMODULE_ERROR_THROW 1)
-ENDIF ()
-
-# If on unix try fix the error first
-IF (UNIX)
-IF (SUBMODULE_ERROR_THROW)
-   EXECUTE_PROCESS(COMMAND "git" "submodule" "init"
-      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-      RESULT_VARIABLE git_result)
-   IF (${git_result} MATCHES 0)
-      EXECUTE_PROCESS(COMMAND "git" "submodule" "update"
-         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-         RESULT_VARIABLE git_result)
-      IF (${git_result} MATCHES 0)
-         SET(SUBMODULE_ERROR_THROW 0)
-      ENDIF ()
-   ENDIF ()
-ENDIF ()
-ENDIF ()
-
-# Throw the error, if unix try fix it first
-IF (SUBMODULE_ERROR_THROW)
-   MESSAGE(FATAL_ERROR ${SUBMODULE_ERROR})
-ENDIF ()
-
 # Debug build
 SET(CMAKE_BUILD_TYPE Debug)
 
@@ -147,3 +101,20 @@ ENDIF ()
 ADD_SUBDIRECTORY(lib)
 ADD_SUBDIRECTORY(3rdparty)
 ADD_SUBDIRECTORY(test)
+
+# Build checks
+# Abort git submodule init && git submodule update
+# has not been ran.
+SET(SUBMODULE_ERROR "Run git submodule init && git submodule update first.")
+IF (NOT EXISTS ${kazmath_SOURCE_DIR}/src/.git)
+   SET(SUBMODULE_ERROR_THROW 1)
+ELSEIF (NOT EXISTS ${GLFW_SOURCE_DIR}/.git)
+   SET(SUBMODULE_ERROR_THROW 1)
+ENDIF ()
+
+# Throw the error, if unix try fix it first
+IF (SUBMODULE_ERROR_THROW)
+   MESSAGE(FATAL_ERROR ${SUBMODULE_ERROR})
+ENDIF ()
+
+INSTALL(DIRECTORY build/media DESTINATION .)
