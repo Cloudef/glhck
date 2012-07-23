@@ -9,10 +9,12 @@ Move on.
 
 ## Building
 
-    git submodule init
-    git submodule update
-    cmake .
-    make
+    git submodule init                    # - initialize and fetch
+    git submodule update                  #   submodules
+    mkdir target && cd target             # - create build target directory
+    cmake -DCMAKE_INSTALL_PREFIX=build .. # - run CMake, set install directory
+    make install                          # - compile and install
+    
 
 ## Thanks to
 *  [GLEW][] - OpenGL Extension Wrangler
