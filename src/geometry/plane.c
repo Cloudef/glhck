@@ -66,31 +66,33 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, kmScalar size,
 {
    _glhckObject *object;
    _glhckTexture *texture;
-   kmScalar sF = 0.03f;
+   kmScalar w, h;
    CALL(0, "%s, %zu", file, size);
 
    /* load texture */
    if (!(texture = glhckTextureNew(file, flags)))
       goto fail;
 
+   w = 2.0f-(1.0f/(kmScalar)texture->width);
+   h = 2.0f-(1.0f/(kmScalar)texture->height);
    const glhckImportVertexData vertices[] = {
       {
-         {  texture->width*sF,  texture->height*sF, 0 },
+         {  w,  h, 0 },
          {  0,  0, 0 },      /* normals */
          {  1,  1 },         /* uv coord */
          { 0, 0, 0, 0 }      /* color */
       },{
-         { -texture->width*sF,  texture->height*sF, 0 },
+         { -w,  h, 0 },
          {  0,  0, 0 },
          {  0,  1 },
          { 0, 0, 0, 0 }
       },{
-         {  texture->width*sF, -texture->height*sF, 0 },
+         {  w, -h, 0 },
          {  0,  0, 0 },
          {  1,  0 },
          { 0, 0, 0, 0 }
       },{
-         { -texture->width*sF, -texture->height*sF, 0 },
+         { -w, -h, 0 },
          {  0,  0, 0 },
          {  0,  0 },
          { 0, 0, 0, 0 }
@@ -107,7 +109,7 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, kmScalar size,
       goto fail;
 
    /* scale keeping aspect ratio */
-   glhckObjectScalef(object, size, size, 1.0f);
+   glhckObjectScalef(object, size, size, size);
 
    /* pass reference to object, and free this */
    glhckObjectSetTexture(object, texture);
