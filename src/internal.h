@@ -7,7 +7,7 @@
 #  define GLHCKGLOBAL extern
 #endif
 
-#include "../include/GL/glhck.h"
+#include "GL/glhck.h"
 #include <string.h> /* for strrchr */
 
 #if defined(_init_c_)
