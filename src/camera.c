@@ -209,8 +209,14 @@ GLHCKAPI void glhckCameraRange(glhckCamera *camera,
 {
    CALL(1, "%p, %f, %f", camera, near, far);
    assert(camera);
+
+   if (camera->view.near == near &&
+       camera->view.far  == far)
+      return;
+
    camera->view.near = near;
    camera->view.far  = far;
+   _glhckCameraProjectionMatrix(camera);
 }
 
 /* \brief set camera's viewport */
