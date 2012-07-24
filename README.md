@@ -13,8 +13,17 @@ Move on.
     git submodule update                  #   submodules
     mkdir target && cd target             # - create build target directory
     cmake -DCMAKE_INSTALL_PREFIX=build .. # - run CMake, set install directory
-    make install                          # - compile and install
-    
+    make                                  # - compile
+
+## Running test(s)
+
+    ./target/test/display                 # - for example
+
+## Installing
+
+    cd target                             # - cd to your target directory
+    make install                          # - install
+
 
 ## Thanks to
 *  [GLEW][] - OpenGL Extension Wrangler
