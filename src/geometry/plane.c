@@ -110,6 +110,7 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, kmScalar size,
    /* don't make things humongous */
    w = size-(1.0f/(texture->width>texture->height?
             texture->width:texture->height));
+   w *= 0.03f;
 
    /* scale keeping aspect ratio */
    glhckObjectScalef(object, w, w, w);
