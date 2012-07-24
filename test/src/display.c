@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 {
    GLFWwindow window;
    glhckTexture *texture;
-   glhckObject *cube = NULL, *sprite = NULL;
+   glhckObject *cube = NULL, *sprite = NULL, *sprite2 = NULL;
    glhckCamera *camera;
    float spin = 0;
    kmVec3 cameraPos = { 0, 0, 0 };
@@ -103,14 +103,15 @@ int main(int argc, char **argv)
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
 
-   sprite = glhckSpriteNew("test/media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
+   sprite = glhckSpriteNew("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
+   sprite2 = glhckSpriteNew("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
 #if 1
-   cube = glhckCubeNew(1);
+   cube = glhckCubeNew(1.0f);
    if (cube) glhckObjectSetTexture(cube, texture);
    glhckObjectPositionf(sprite, 0, 4, 0);
    cameraPos.z = -20.0f;
 #else
-   cube = glhckModelNew("test/media/md_m.pmd", 1);
+   cube = glhckModelNew("test/media/md_m.pmd", 1.0f);
    glhckObjectPositionf(sprite, 0, 22, 0);
    cameraPos.y =  10.0f;
    cameraPos.z = -40.0f;
@@ -151,7 +152,13 @@ int main(int argc, char **argv)
 
       /* glhck drawing */
       glhckObjectDraw(cube);
+
+      glhckObjectPositionf(sprite, 0, 4, 0);
       glhckObjectDraw(sprite);
+
+      glhckObjectPositionf(sprite2, -1, 3, 0);
+      glhckObjectDraw(sprite2);
+
       glhckRender();
 
       glhckTextDraw(text, font, 42, 54, 200, "愛してるGLHCK", NULL);
