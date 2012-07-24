@@ -97,8 +97,13 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, kmScalar size,
       }
    };
 
-   /* make plane */
-   if (!(object = glhckPlaneNew(1.0f)))
+   /* create new object */
+   if (!(object = glhckObjectNew()))
+      goto fail;
+
+   /* insert vertices to object's geometry */
+   if (glhckObjectInsertVertexData(object,
+            LENGTH(vertices), &vertices[0]) != RETURN_OK)
       goto fail;
 
    /* scale keeping aspect ratio */
