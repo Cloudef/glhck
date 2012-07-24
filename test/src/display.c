@@ -156,7 +156,7 @@ int main(int argc, char **argv)
       glhckObjectPositionf(sprite, 0, 4, 0);
       glhckObjectDraw(sprite);
 
-      glhckObjectPositionf(sprite2, -1, 3, 0);
+      glhckObjectPositionf(sprite2, -2, 3, 0);
       glhckObjectDraw(sprite2);
 
       glhckRender();
