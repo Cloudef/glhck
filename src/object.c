@@ -219,7 +219,7 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    object->geometry.type = GLHCK_TRIANGLE_STRIP;
 
    /* default view matrix */
-   glhckObjectScalef(object, 100, 100, 100);
+   glhckObjectScalef(object, 1.0f, 1.0f, 1.0f);
    _glhckObjectUpdateMatrix(object);
 
    /* increase reference */

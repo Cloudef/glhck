@@ -6,35 +6,34 @@
 /* temporary macro */
 #define LENGTH(X) (sizeof X / sizeof X[0])
 
-/* shared vertices */
-static const glhckImportVertexData vertices[] = {
-   {
-      {  1,  1, 0 },      /* vertices */
-      {  0,  0, 0 },      /* normals */
-      {  1,  1 },         /* uv coord */
-      { 0, 0, 0, 0 }      /* color */
-   },{
-      { -1,  1, 0 },
-      {  0,  0, 0 },
-      {  0,  1 },
-      { 0, 0, 0, 0 }
-   },{
-      {  1, -1, 0 },
-      {  0,  0, 0 },
-      {  1,  0 },
-      { 0, 0, 0, 0 }
-   },{
-      { -1, -1, 0 },
-      {  0,  0, 0 },
-      {  0,  0 },
-      { 0, 0, 0, 0 }
-   }
-};
-
 /* \brief create new plane object */
-GLHCKAPI _glhckObject* glhckPlaneNew(size_t size)
+GLHCKAPI _glhckObject* glhckPlaneNew(kmScalar size)
 {
    _glhckObject *object;
+   static const glhckImportVertexData vertices[] = {
+      {
+         {  1,  1, 0 },      /* vertices */
+         {  0,  0, 0 },      /* normals */
+         {  1,  1 },         /* uv coord */
+         { 0, 0, 0, 0 }      /* color */
+      },{
+         { -1,  1, 0 },
+         {  0,  0, 0 },
+         {  0,  1 },
+         { 0, 0, 0, 0 }
+      },{
+         {  1, -1, 0 },
+         {  0,  0, 0 },
+         {  1,  0 },
+         { 0, 0, 0, 0 }
+      },{
+         { -1, -1, 0 },
+         {  0,  0, 0 },
+         {  0,  0 },
+         { 0, 0, 0, 0 }
+      }
+   };
+
    CALL(0, "%d", size);
 
    /* create new object */
@@ -62,24 +61,48 @@ fail:
 }
 
 /* \brief create new sprite */
-GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, size_t size, unsigned int flags)
+GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, kmScalar size,
+      unsigned int flags)
 {
    _glhckObject *object;
    _glhckTexture *texture;
+   kmScalar sF = 0.03f;
    CALL(0, "%s, %zu", file, size);
 
    /* load texture */
    if (!(texture = glhckTextureNew(file, flags)))
       goto fail;
 
+   const glhckImportVertexData vertices[] = {
+      {
+         {  texture->width*sF,  texture->height*sF, 0 },
+         {  0,  0, 0 },      /* normals */
+         {  1,  1 },         /* uv coord */
+         { 0, 0, 0, 0 }      /* color */
+      },{
+         { -texture->width*sF,  texture->height*sF, 0 },
+         {  0,  0, 0 },
+         {  0,  1 },
+         { 0, 0, 0, 0 }
+      },{
+         {  texture->width*sF, -texture->height*sF, 0 },
+         {  0,  0, 0 },
+         {  1,  0 },
+         { 0, 0, 0, 0 }
+      },{
+         { -texture->width*sF, -texture->height*sF, 0 },
+         {  0,  0, 0 },
+         {  0,  0 },
+         { 0, 0, 0, 0 }
+      }
+   };
+
    /* make plane */
-   if (!(object = glhckPlaneNew(1)))
+   if (!(object = glhckPlaneNew(1.0f)))
       goto fail;
 
    /* scale keeping aspect ratio */
-   glhckObjectScalef(object,
-         (float)size/texture->width,
-         (float)size/texture->height, 1);
+   glhckObjectScalef(object, size, size, 1.0f);
 
    /* pass reference to object, and free this */
    glhckObjectSetTexture(object, texture);

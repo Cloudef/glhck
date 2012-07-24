@@ -248,10 +248,10 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 
 /* geometry */
-GLHCKAPI glhckObject* glhckModelNew(const char *path, size_t size);
-GLHCKAPI glhckObject* glhckCubeNew(size_t size);
-GLHCKAPI glhckObject* glhckPlaneNew(size_t size);
-GLHCKAPI glhckObject* glhckSpriteNew(const char *file, size_t size,
+GLHCKAPI glhckObject* glhckModelNew(const char *path, kmScalar size);
+GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
+GLHCKAPI glhckObject* glhckPlaneNew(kmScalar size);
+GLHCKAPI glhckObject* glhckSpriteNew(const char *file, kmScalar size,
       unsigned int flags);
 
 /* text */
