@@ -73,8 +73,7 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, kmScalar size,
    if (!(texture = glhckTextureNew(file, flags)))
       goto fail;
 
-   w = 2.0f-(1.0f/(kmScalar)texture->width);
-   h = 2.0f-(1.0f/(kmScalar)texture->height);
+   w = (kmScalar)texture->width; h = (kmScalar)texture->height;
    const glhckImportVertexData vertices[] = {
       {
          {  w,  h, 0 },
@@ -108,8 +107,12 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, kmScalar size,
             LENGTH(vertices), &vertices[0]) != RETURN_OK)
       goto fail;
 
+   /* don't make things humongous */
+   w = size-(1.0f/(texture->width>texture->height?
+            texture->width:texture->height));
+
    /* scale keeping aspect ratio */
-   glhckObjectScalef(object, size, size, size);
+   glhckObjectScalef(object, w, w, w);
 
    /* pass reference to object, and free this */
    glhckObjectSetTexture(object, texture);
