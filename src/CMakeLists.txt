@@ -26,7 +26,7 @@ SET(GLHCK_INC
 FIND_PACKAGE(PNG REQUIRED)
 
 INCLUDE_DIRECTORIES(
-  include 
+  ../include 
   ${FREETYPE_INCLUDE_DIRS} 
   ${kazmath_SOURCE_DIR}/src
   ${GLEW_SOURCE_DIR}/src/include
