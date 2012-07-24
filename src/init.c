@@ -237,9 +237,9 @@ GLHCKAPI void glhckRender(void)
       return;
 
    /* draw in sorted texture order */
-   for (ti = 0, ts = 0, os = 0, kt = 0;
+   for (ti = 0, ts = 0;
         (t = _GLHCKlibrary.render.draw.tqueue[ti]); ++ti) {
-      for (oi = 0; (o = _GLHCKlibrary.render.draw.oqueue[oi]); ++oi) {
+      for (oi = 0, os = 0, kt = 0; (o = _GLHCKlibrary.render.draw.oqueue[oi]); ++oi) {
          /* don't draw if not same texture or opaque,
           * opaque objects are drawn last */
          if (o->material.texture != t ||
@@ -266,9 +266,9 @@ GLHCKAPI void glhckRender(void)
    /* draw opaque objects next,
     * TODO: this should not be done in texture order,
     * instead draw from farthest to nearest. (I hate opaque objects) */
-   for (ti = 0, os = 0;
+   for (ti = 0;
         (t = _GLHCKlibrary.render.draw.tqueue[ti]); ++ti) {
-      for (oi = 0; (o = _GLHCKlibrary.render.draw.oqueue[oi]); ++oi) {
+      for (oi = 0, os = 0; (o = _GLHCKlibrary.render.draw.oqueue[oi]); ++oi) {
          /* don't draw if not same texture */
          if (o->material.texture != t) {
             _GLHCKlibrary.render.draw.oqueue[os++] = o; /* assign back to list */
