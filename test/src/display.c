@@ -99,18 +99,18 @@ int main(int argc, char **argv)
    glhckCameraRange(camera, 0.1f, 1000.0f);
 
    /* this texture is useless when toggling PMD testing */
-   if (!(texture = glhckTextureNew("../media/glhck.png",
+   if (!(texture = glhckTextureNew("media/glhck.png",
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
 
-   sprite = glhckSpriteNew("../media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
+   sprite = glhckSpriteNew("media/glhck.png", 100, GLHCK_TEXTURE_DEFAULTS);
 #if 0
    cube = glhckCubeNew(1);
    if (cube) glhckObjectSetTexture(cube, texture);
    glhckObjectPositionf(sprite, 0, 4, 0);
    cameraPos.z = -20.0f;
 #else
-   cube = glhckModelNew("../media/md_m.pmd", 1);
+   cube = glhckModelNew("media/md_m.pmd", 1);
    glhckObjectPositionf(sprite, 0, 22, 0);
    cameraPos.y =  10.0f;
    cameraPos.z = -40.0f;
