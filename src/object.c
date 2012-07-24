@@ -379,6 +379,12 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
    _GLHCKlibrary.render.api.objectDraw(object);
 }
 
+/* \brief set's object material flags */
+GLHCKAPI void glhckObjectSetMaterialFlags(_glhckObject *object, unsigned int flags)
+{
+   object->material.flags = flags;
+}
+
 /* \brief position object */
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position)
 {

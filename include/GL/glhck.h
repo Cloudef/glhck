@@ -233,6 +233,9 @@ GLHCKAPI int glhckObjectInsertVertexData(glhckObject *object,
 GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
       size_t memb, const unsigned int *indices);
 
+/* material */
+GLHCKAPI void glhckObjectSetMaterialFlags(glhckObject *object, unsigned int flags);
+
 /* object control */
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
 GLHCKAPI void glhckObjectPositionf(glhckObject *object,
