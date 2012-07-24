@@ -31,7 +31,7 @@ Move on.
 *  [Font-Stash][] - Dynamic font glyph cache
 *  [ACTC][] - Triangle consolidator
 *  [Kazmath][] - C Math library
-*  [STB-stuff][] - Used for text and temporarily for image importing.
+*  [STB-stuff][] - Used as freetype replacement
 
 [GLEW]: http://glew.sourceforge.net/
 [GLFW]: http://www.glfw.org/
