@@ -5,7 +5,7 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
 
 /* \brief create new cube object */
-GLHCKAPI _glhckObject* glhckModelNew(const char *path, size_t size)
+GLHCKAPI _glhckObject* glhckModelNew(const char *path, kmScalar size)
 {
    _glhckObject *object;
    CALL(0, "%s, %d", path, size);

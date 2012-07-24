@@ -7,7 +7,7 @@
 #define LENGTH(X) (sizeof X / sizeof X[0])
 
 /* \brief create new cube object */
-GLHCKAPI _glhckObject* glhckCubeNew(size_t size)
+GLHCKAPI _glhckObject* glhckCubeNew(kmScalar size)
 {
    _glhckObject *object;
 
