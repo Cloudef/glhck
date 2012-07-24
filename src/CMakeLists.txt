@@ -20,13 +20,10 @@ SET(GLHCK_SRC
    import/import_tga.c
    import/import_bmp.c)
 
-SET(GLHCK_INC
-   include/GL/glhck.h)
-
 FIND_PACKAGE(PNG REQUIRED)
 
 INCLUDE_DIRECTORIES(
-  ../include 
+  ${GLHCK_INCLUDE_DIR}
   ${FREETYPE_INCLUDE_DIRS} 
   ${kazmath_SOURCE_DIR}/src
   ${GLEW_SOURCE_DIR}/src/include
