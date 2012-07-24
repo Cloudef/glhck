@@ -1,5 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-PROJECT(ROOT)
+PROJECT(glhck)
+
 SET(PROJECT_NAME "GLhck Rendering Engine")
 SET(GLUE_DESCRIPTION "A dead simple OpenGL/GLES rendering engine")
 OPTION(GLHCK_USE_GLES "Build for OpenGL ES" OFF)
@@ -97,19 +98,14 @@ ELSE ()
    LIST(APPEND GLHCK_TEST_LINK ${OPENGL_gl_LIBRARY} GLEW)
 ENDIF ()
 
-# Do it (tm)
-ADD_SUBDIRECTORY(lib)
-ADD_SUBDIRECTORY(glhck)
-ADD_SUBDIRECTORY(3rdparty)
-ADD_SUBDIRECTORY(test)
 
 # Build checks
 # Abort git submodule init && git submodule update
 # has not been ran.
 SET(SUBMODULE_ERROR "Run git submodule init && git submodule update first.")
-IF (NOT EXISTS ${kazmath_SOURCE_DIR}/src/.git)
+IF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/kazmath/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
-ELSEIF (NOT EXISTS ${GLFW_SOURCE_DIR}/.git)
+ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glfw/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
 ENDIF ()
 
@@ -118,4 +114,11 @@ IF (SUBMODULE_ERROR_THROW)
    MESSAGE(FATAL_ERROR ${SUBMODULE_ERROR})
 ENDIF ()
 
-INSTALL(DIRECTORY build/media DESTINATION .)
+# Do it (tm)
+ADD_SUBDIRECTORY(lib)
+ADD_SUBDIRECTORY(src)
+ADD_SUBDIRECTORY(3rdparty)
+ADD_SUBDIRECTORY(test)
+
+INSTALL(FILES include/GL/glhck.h DESTINATION include/GL)
+SET(GLHCK_INCLUDE_DIR ${glhck_SOURCE_DIR}/include)
