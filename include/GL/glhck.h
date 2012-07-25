@@ -237,11 +237,16 @@ GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
 GLHCKAPI void glhckObjectSetMaterialFlags(glhckObject *object, unsigned int flags);
 
 /* object control */
+GLHCKAPI const kmVec3* glhckObjectGetPosition(glhckObject *object);
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
 GLHCKAPI void glhckObjectPositionf(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI void glhckObjectMove(glhckObject *object, const kmVec3 *move);
 GLHCKAPI void glhckObjectMovef(glhckObject *object,
+      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI const kmVec3* glhckObjectGetRotation(glhckObject *object);
+GLHCKAPI void glhckObjectRotation(glhckObject *object, const kmVec3 *rotate);
+GLHCKAPI void glhckObjectRotationf(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate);
 GLHCKAPI void glhckObjectRotatef(glhckObject *object,
