@@ -87,7 +87,7 @@ int main(int argc, char **argv)
    if (!glhckInit(argc, argv))
       return EXIT_FAILURE;
 
-   if (!glhckDisplayCreate(WIDTH, HEIGHT, 0))
+   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_AUTO))
       return EXIT_FAILURE;
 
    RUNNING = 1;
