@@ -163,7 +163,7 @@ int main(int argc, char **argv)
 
       glhckTextDraw(text, font, 42, 54, 200, "愛してるGLHCK", NULL);
       glhckTextDraw(text, font2, 32, 54, 240, "Äöäö DejaVuSans perkele", NULL);
-      glhckTextDraw(text, font, 18, 0, 0, "SADASD", NULL);
+      glhckTextDraw(text, font, 18, 0, 0, "SADASD!?,.:;", NULL);
       glhckTextRender(text);
 
       /* Actual swap and clear */
