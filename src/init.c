@@ -140,7 +140,7 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
       goto fail;
 
    /* autodetect */
-   if (renderType == GLHCK_RENDER_NONE)
+   if (renderType == GLHCK_RENDER_AUTO)
       renderType = GLHCK_RENDER_OPENGL;
 
    /* close display if created already */
@@ -182,7 +182,7 @@ GLHCKAPI void glhckDisplayClose(void)
       return;
 
    _GLHCKlibrary.render.api.terminate();
-   _GLHCKlibrary.render.type = GLHCK_RENDER_NONE;
+   _GLHCKlibrary.render.type = GLHCK_RENDER_AUTO;
 }
 
 /* \brief resize virtual display */
