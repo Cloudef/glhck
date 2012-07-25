@@ -351,6 +351,11 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
    CALL(2, "%p", object);
    assert(object);
 
+   if (_GLHCKlibrary.render.draw.oqueue[GLHCK_MAX_DRAW-1]) {
+      DEBUG(GLHCK_DBG_WARNING, "Maximum draw queue limit reached!");
+      return;
+   }
+
    /* does view matrix need update? */
    if (object->view.update)
       _glhckObjectUpdateMatrix(object);
