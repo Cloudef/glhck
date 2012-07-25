@@ -390,6 +390,12 @@ GLHCKAPI void glhckObjectSetMaterialFlags(_glhckObject *object, unsigned int fla
    object->material.flags = flags;
 }
 
+/* \brief get object position */
+GLHCKAPI const kmVec3* glhckObjectGetPosition(glhckObject *object)
+{
+  return &object->view.translation;
+}
+
 /* \brief position object */
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position)
 {
@@ -432,18 +438,42 @@ GLHCKAPI void glhckObjectMovef(glhckObject *object,
    glhckObjectMove(object, &move);
 }
 
+/* \brief get object rotation */
+GLHCKAPI const kmVec3* glhckObjectGetRotation(glhckObject *object)
+{
+  return &object->view.rotation;
+}
+
+/* \brief set object rotation */
+GLHCKAPI void glhckObjectRotation(glhckObject *object, const kmVec3 *rotation)
+{
+   CALL(2, "%p, "VEC3S, object, VEC3(rotation));
+   assert(object && rotation);
+
+   if (object->view.rotation.x == rotation->x &&
+       object->view.rotation.y == rotation->y &&
+       object->view.rotation.z == rotation->z)
+      return;
+
+   kmVec3Assign(&object->view.rotation, rotation);
+   object->view.update = 1;
+}
+
+/* \brief set object rotation (with kmScalar) */
+GLHCKAPI void glhckObjectRotationf(glhckObject *object,
+      const kmScalar x, const kmScalar y, const kmScalar z)
+{
+   const kmVec3 rotation = { x, y, z };
+   glhckObjectRotation(object, &rotation);
+}
+
 /* \brief rotate object */
 GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate)
 {
    CALL(2, "%p, "VEC3S, object, VEC3(rotate));
    assert(object && rotate);
 
-   if (object->view.rotation.x == rotate->x &&
-       object->view.rotation.y == rotate->y &&
-       object->view.rotation.z == rotate->z)
-      return;
-
-   kmVec3Assign(&object->view.rotation, rotate);
+   kmVec3Add(&object->view.rotation, &object->view.rotation, rotate);
    object->view.update = 1;
 }
 
@@ -451,8 +481,8 @@ GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate)
 GLHCKAPI void glhckObjectRotatef(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z)
 {
-   const kmVec3 rotation = { x, y, z };
-   glhckObjectRotate(object, &rotation);
+   const kmVec3 rotate = { x, y, z };
+   glhckObjectRotate(object, &rotate);
 }
 
 /* \brief scale object */
