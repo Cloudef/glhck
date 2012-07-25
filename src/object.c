@@ -393,7 +393,7 @@ GLHCKAPI void glhckObjectSetMaterialFlags(_glhckObject *object, unsigned int fla
 /* \brief get object position */
 GLHCKAPI const kmVec3* glhckObjectGetPosition(glhckObject *object)
 {
-  return &object->view.translation;
+   return &object->view.translation;
 }
 
 /* \brief position object */
@@ -441,7 +441,7 @@ GLHCKAPI void glhckObjectMovef(glhckObject *object,
 /* \brief get object rotation */
 GLHCKAPI const kmVec3* glhckObjectGetRotation(glhckObject *object)
 {
-  return &object->view.rotation;
+   return &object->view.rotation;
 }
 
 /* \brief set object rotation */
