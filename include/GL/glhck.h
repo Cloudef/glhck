@@ -120,7 +120,7 @@ typedef enum glhckDebugLevel {
 
 /* render type */
 typedef enum glhckRenderType {
-   GLHCK_RENDER_NONE,
+   GLHCK_RENDER_AUTO,
    GLHCK_RENDER_OPENGL,
    GLHCK_RENDER_GLES,
    GLHCK_RENDER_NULL,
