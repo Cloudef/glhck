@@ -26,11 +26,12 @@ typedef struct __GLHCKtextQuad {
 /* \brief glyph object */
 typedef struct __GLHCKtextGlyph
 {
-   unsigned int code, next;
+   unsigned int code;
    short size;
    int x1, y1, x2, y2;
    float xadv, xoff, yoff;
    struct __GLHCKtextTexture *texture;
+   int next;
 } __GLHCKtextGlyph;
 
 /* \brief font object */
@@ -124,9 +125,9 @@ fail:
 __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
       unsigned int code, short isize)
 {
-   unsigned int i, h, tex_object;
+   unsigned int h, tex_object;
    unsigned char *data;
-   int x1, y1, x2, y2, gw, rh, gh, gid, advance, lsb;
+   int i, x1, y1, x2, y2, gw, rh, gh, gid, advance, lsb;
    float scale;
    float size = (float)isize/10.0f;
    short py;
@@ -136,7 +137,8 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
 
    /* find code and size */
    h = hashint(code) & (GLHCK_TEXT_HASH_SIZE-1);
-   for (i = font->lut[h]; i != -1; ++i) {
+   i = font->lut[h];
+   while (font->gcache && i != -1) {
       if (font->gcache[i].code == code &&
          (font->type == GLHCK_FONT_BMP ||
           font->gcache[i].size == isize))
