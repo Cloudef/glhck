@@ -375,11 +375,13 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
 
    /* insert object to drawing queue */
    _glhckQueueInsert(_GLHCKlibrary.render.draw.oqueue, object);
+   glhckObjectRef(object); /* free after render */
 
    /* insert texture to drawing queue */
    if (object->material.texture) {
       _glhckQueueInsert(_GLHCKlibrary.render.draw.tqueue,
             object->material.texture);
+      glhckTextureRef(object->material.texture); /* free after render */
    }
 }
 
