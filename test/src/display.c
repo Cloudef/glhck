@@ -103,8 +103,8 @@ int main(int argc, char **argv)
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
 
-   sprite = glhckSpriteNew("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
-   sprite2 = glhckSpriteNew("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
+   sprite = glhckSpriteNewFromFile("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
+   sprite2 = glhckSpriteNewFromFile("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
 #if 1
    cube = glhckCubeNew(1.0f);
    if (cube) glhckObjectSetTexture(cube, texture);

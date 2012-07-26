@@ -225,6 +225,7 @@ GLHCKAPI glhckObject* glhckObjectNew(void);
 GLHCKAPI glhckObject* glhckObjectCopy(glhckObject *src);
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
 GLHCKAPI short glhckObjectFree(glhckObject *object);
+GLHCKAPI glhckTexture* glhckObjectGetTexture(glhckObject *object);
 GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
@@ -237,11 +238,16 @@ GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
 GLHCKAPI void glhckObjectSetMaterialFlags(glhckObject *object, unsigned int flags);
 
 /* object control */
+GLHCKAPI const kmVec3* glhckObjectGetPosition(glhckObject *object);
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
 GLHCKAPI void glhckObjectPositionf(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI void glhckObjectMove(glhckObject *object, const kmVec3 *move);
 GLHCKAPI void glhckObjectMovef(glhckObject *object,
+      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI const kmVec3* glhckObjectGetRotation(glhckObject *object);
+GLHCKAPI void glhckObjectRotation(glhckObject *object, const kmVec3 *rotate);
+GLHCKAPI void glhckObjectRotationf(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate);
 GLHCKAPI void glhckObjectRotatef(glhckObject *object,
@@ -254,7 +260,8 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
 GLHCKAPI glhckObject* glhckModelNew(const char *path, kmScalar size);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar size);
-GLHCKAPI glhckObject* glhckSpriteNew(const char *file, kmScalar size,
+GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, kmScalar size);
+GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
       unsigned int flags);
 
 /* text */

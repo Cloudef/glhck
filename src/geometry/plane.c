@@ -61,17 +61,36 @@ fail:
 }
 
 /* \brief create new sprite */
-GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, kmScalar size,
+GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
       unsigned int flags)
 {
    _glhckObject *object;
    _glhckTexture *texture;
-   kmScalar w, h;
-   CALL(0, "%s, %zu", file, size);
 
+   CALL(0, "%s, %zu", texture, size);
+   
    /* load texture */
    if (!(texture = glhckTextureNew(file, flags)))
-      goto fail;
+   {
+      RET(0, "%p", NULL);
+      return NULL;
+   }
+   
+   object = glhckSpriteNew(texture, size);
+   
+   /* object owns texture now, free this */
+   glhckTextureFree(texture);
+
+   RET(0, "%p", object);
+   return object;
+}
+
+/* \brief create new sprite */
+GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar size)
+{
+   _glhckObject *object;
+   kmScalar w, h;
+   CALL(0, "%p, %zu", texture, size);
 
    w = (kmScalar)texture->width; h = (kmScalar)texture->height;
    const glhckImportVertexData vertices[] = {
@@ -115,12 +134,11 @@ GLHCKAPI _glhckObject* glhckSpriteNew(const char *file, kmScalar size,
    /* scale keeping aspect ratio */
    glhckObjectScalef(object, w, w, w);
 
-   /* pass reference to object, and free this */
+   /* pass reference to object */
    glhckObjectSetTexture(object, texture);
-   glhckTextureFree(texture);
 
    /* set filename of object */
-   _glhckObjectSetFile(object, file);
+   _glhckObjectSetFile(object, texture->file);
 
    RET(0, "%p", object);
    return object;
