@@ -140,10 +140,10 @@ static void _glhckConvertVertexData(_glhckObject *object, __GLHCKvertexData *int
       (vmax.y - vmin.y) / GLHCK_SCALE_OFFSET;
    object->geometry.scale.z =
       (vmax.z - vmin.z) / GLHCK_SCALE_OFFSET;
-#endif
 
    /* update matrix */
    _glhckObjectUpdateMatrix(object);
+#endif
 }
 
 /* \brief convert index data to internal format */
