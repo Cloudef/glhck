@@ -351,6 +351,7 @@ GLHCKAPI glhckTexture* glhckObjectGetTexture(glhckObject *object)
    CALL(1, "%p", object);
    assert(object);
 
+   RET(1, "%p", object->material.texture);
    return object->material.texture;
 }
 
@@ -402,6 +403,10 @@ GLHCKAPI void glhckObjectSetMaterialFlags(_glhckObject *object, unsigned int fla
 /* \brief get object position */
 GLHCKAPI const kmVec3* glhckObjectGetPosition(glhckObject *object)
 {
+   CALL(1, "%p", object);
+   assert(object);
+   
+   RET(1, VEC3S, &object->view.translation);
    return &object->view.translation;
 }
 
@@ -450,6 +455,10 @@ GLHCKAPI void glhckObjectMovef(glhckObject *object,
 /* \brief get object rotation */
 GLHCKAPI const kmVec3* glhckObjectGetRotation(glhckObject *object)
 {
+   CALL(1, "%p", object);
+   assert(object);
+   
+   RET(1, VEC3S, &object->view.rotation);
    return &object->view.rotation;
 }
 
