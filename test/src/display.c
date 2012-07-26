@@ -61,7 +61,6 @@ int main(int argc, char **argv)
    glhckTexture *texture;
    glhckObject *cube = NULL, *sprite = NULL, *sprite2 = NULL;
    glhckCamera *camera;
-   float spin = 0;
    kmVec3 cameraPos = { 0, 0, 0 };
    kmVec3 cameraRot = { 180, 180, 0 };
 
@@ -148,7 +147,7 @@ int main(int argc, char **argv)
       glhckCameraPosition(camera, &cameraPos);
       glhckCameraTargetf(camera, cameraPos.x, cameraPos.y, cameraPos.z + 1);
       glhckCameraRotate(camera, &cameraRot);
-      glhckObjectRotatef(sprite, 0, spin = spin + 30.0f * delta, 0);
+      glhckObjectRotatef(sprite, 0, 30.0f * delta, 0);
 
       /* glhck drawing */
       glhckObjectDraw(cube);
