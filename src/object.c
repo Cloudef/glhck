@@ -345,6 +345,15 @@ GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture)
    if (texture) object->material.texture = glhckTextureRef(texture);
 }
 
+/* \brief get object's texture */
+GLHCKAPI glhckTexture* glhckObjectGetTexture(glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   return object->material.texture;
+}
+
 /* \brief add object to draw queue */
 GLHCKAPI void glhckObjectDraw(glhckObject *object)
 {
