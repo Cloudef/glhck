@@ -406,11 +406,11 @@ typedef struct _glhckTexturePacker
 } _glhckTexturePacker;
 
 /* helpful macros */
-#define VEC2(v)   v?v->x:-1, v?v->y:-1
+#define VEC2(v)   (v)?(v)->x:-1, (v)?(v)->y:-1
 #define VEC2S     "vec2[%f, %f]"
-#define VEC3(v)   v?v->x:-1, v?v->y:-1, v?v->z:-1
+#define VEC3(v)   (v)?(v)->x:-1, (v)?(v)->y:-1, (v)?(v)->z:-1
 #define VEC3S     "vec3[%f, %f, %f]"
-#define VEC4(v)   v?v->x:-1, v?v->y:-1, v?v->z:-1, v?v->w:-1
+#define VEC4(v)   (v)?(v)->x:-1, (v)?(v)->y:-1, (v)?(v)->z:-1, (v)?(v)->w:-1
 #define VEC4S     "vec3[%f, %f, %f, %f]"
 
 /* insert to glhck world */
