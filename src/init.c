@@ -252,6 +252,7 @@ GLHCKAPI void glhckRender(void)
 
          /* render object */
          glhckObjectRender(o);
+         glhckObjectFree(o); /* ref is increased on draw call! */
          _GLHCKlibrary.render.draw.oqueue[oi] = NULL;
       }
 
@@ -259,7 +260,10 @@ GLHCKAPI void glhckRender(void)
       if (kt) {
          if (ts != ti) _GLHCKlibrary.render.draw.tqueue[ti] = NULL;
          _GLHCKlibrary.render.draw.tqueue[ts++] = t;
-      } else _GLHCKlibrary.render.draw.tqueue[ti] = NULL;
+      } else {
+         if (t) glhckTextureFree(t); /* ref is increased on draw call! */
+         _GLHCKlibrary.render.draw.tqueue[ti] = NULL;
+      }
 
       /* no texture, time to break
        * we do this here, so objects with no texture get drawn last */
@@ -281,10 +285,12 @@ GLHCKAPI void glhckRender(void)
 
          /* render object */
          glhckObjectRender(o);
+         glhckObjectFree(o); /* ref is increased on draw call! */
          _GLHCKlibrary.render.draw.oqueue[oi] = NULL;
       }
 
       /* this texture is done for */
+      if (t) glhckTextureFree(t); /* ref is increased on draw call! */
       _GLHCKlibrary.render.draw.tqueue[ti] = NULL;
 
       /* no texture, time to break */
