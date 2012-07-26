@@ -78,6 +78,9 @@ GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
    
    object = glhckSpriteNew(texture, size);
    
+   /* object owns texture now, free this */
+   glhckTextureFree(texture);
+
    RET(0, "%p", object);
    return object;
 }
@@ -131,9 +134,8 @@ GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar size)
    /* scale keeping aspect ratio */
    glhckObjectScalef(object, w, w, w);
 
-   /* pass reference to object, and free this */
+   /* pass reference to object */
    glhckObjectSetTexture(object, texture);
-   glhckTextureFree(texture);
 
    /* set filename of object */
    _glhckObjectSetFile(object, texture->file);
