@@ -260,7 +260,8 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
 GLHCKAPI glhckObject* glhckModelNew(const char *path, kmScalar size);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar size);
-GLHCKAPI glhckObject* glhckSpriteNew(const char *file, kmScalar size,
+GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, kmScalar size);
+GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
       unsigned int flags);
 
 /* text */
