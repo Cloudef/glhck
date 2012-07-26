@@ -397,6 +397,7 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
 /* \brief set's object material flags */
 GLHCKAPI void glhckObjectSetMaterialFlags(_glhckObject *object, unsigned int flags)
 {
+   CALL(1, "%p, %u", object, flags);
    object->material.flags = flags;
 }
 
