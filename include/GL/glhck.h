@@ -225,6 +225,7 @@ GLHCKAPI glhckObject* glhckObjectNew(void);
 GLHCKAPI glhckObject* glhckObjectCopy(glhckObject *src);
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
 GLHCKAPI short glhckObjectFree(glhckObject *object);
+GLHCKAPI glhckTexture* glhckObjectGetTexture(glhckObject *object);
 GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
