@@ -405,7 +405,7 @@ GLHCKAPI const kmVec3* glhckObjectGetPosition(glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
-   
+
    RET(1, VEC3S, &object->view.translation);
    return &object->view.translation;
 }
@@ -457,7 +457,7 @@ GLHCKAPI const kmVec3* glhckObjectGetRotation(glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
-   
+
    RET(1, VEC3S, &object->view.rotation);
    return &object->view.rotation;
 }
