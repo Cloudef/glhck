@@ -5,6 +5,39 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
 
+/* \brief update view matrix of object */
+static void _glhckObjectUpdateMatrix(_glhckObject *object)
+{
+   kmMat4 translation, rotation, scaling, temp;
+   CALL(2, "%p", object);
+
+   /* translation */
+   kmMat4Translation(&translation,
+         object->view.translation.x + object->geometry.bias.x,
+         object->view.translation.y + object->geometry.bias.y,
+         object->view.translation.z + object->geometry.bias.z);
+
+   /* rotation */
+   kmMat4RotationX(&rotation, kmDegreesToRadians(object->view.rotation.x));
+   kmMat4Multiply(&rotation, &rotation,
+         kmMat4RotationY(&temp, kmDegreesToRadians(object->view.rotation.y)));
+   kmMat4Multiply(&rotation, &rotation,
+         kmMat4RotationZ(&temp, kmDegreesToRadians(object->view.rotation.z)));
+
+   /* scaling */
+   kmMat4Scaling(&scaling,
+         object->view.scaling.x + object->geometry.scale.x,
+         object->view.scaling.y + object->geometry.scale.y,
+         object->view.scaling.z + object->geometry.scale.z);
+
+   /* build matrix */
+   kmMat4Multiply(&translation, &translation, &rotation);
+   kmMat4Multiply(&object->view.matrix, &translation, &scaling);
+
+   /* done */
+   object->view.update = 0;
+}
+
 /* \brief convert vertex data to internal format */
 static void _glhckConvertVertexData(_glhckObject *object, __GLHCKvertexData *internal,
       const glhckImportVertexData *import, size_t memb)
@@ -108,6 +141,9 @@ static void _glhckConvertVertexData(_glhckObject *object, __GLHCKvertexData *int
    object->geometry.scale.z =
       (vmax.z - vmin.z) / GLHCK_SCALE_OFFSET;
 #endif
+
+   /* update matrix */
+   _glhckObjectUpdateMatrix(object);
 }
 
 /* \brief convert index data to internal format */
@@ -145,39 +181,6 @@ static void _glhckObjectCalculateAABB(_glhckObject *object)
    aabb_box.min = min;
    aabb_box.max = max;
    object->view.bounding = aabb_box;
-}
-
-/* \brief update view matrix of object */
-static void _glhckObjectUpdateMatrix(_glhckObject *object)
-{
-   kmMat4 translation, rotation, scaling, temp;
-   CALL(2, "%p", object);
-
-   /* translation */
-   kmMat4Translation(&translation,
-         object->view.translation.x + object->geometry.bias.x,
-         object->view.translation.y + object->geometry.bias.y,
-         object->view.translation.z + object->geometry.bias.z);
-
-   /* rotation */
-   kmMat4RotationX(&rotation, kmDegreesToRadians(object->view.rotation.x));
-   kmMat4Multiply(&rotation, &rotation,
-         kmMat4RotationY(&temp, kmDegreesToRadians(object->view.rotation.y)));
-   kmMat4Multiply(&rotation, &rotation,
-         kmMat4RotationZ(&temp, kmDegreesToRadians(object->view.rotation.z)));
-
-   /* scaling */
-   kmMat4Scaling(&scaling,
-         object->view.scaling.x + object->geometry.scale.x,
-         object->view.scaling.y + object->geometry.scale.y,
-         object->view.scaling.z + object->geometry.scale.z);
-
-   /* build matrix */
-   kmMat4Multiply(&translation, &translation, &rotation);
-   kmMat4Multiply(&object->view.matrix, &translation, &scaling);
-
-   /* done */
-   object->view.update = 0;
 }
 
 /* set object's filename */
@@ -407,7 +410,7 @@ GLHCKAPI const kmVec3* glhckObjectGetPosition(glhckObject *object)
    CALL(1, "%p", object);
    assert(object);
 
-   RET(1, VEC3S, &object->view.translation);
+   RET(1, VEC3S, VEC3(&object->view.translation));
    return &object->view.translation;
 }
 
@@ -459,7 +462,7 @@ GLHCKAPI const kmVec3* glhckObjectGetRotation(glhckObject *object)
    CALL(1, "%p", object);
    assert(object);
 
-   RET(1, VEC3S, &object->view.rotation);
+   RET(1, VEC3S, VEC3(&object->view.rotation));
    return &object->view.rotation;
 }
 
