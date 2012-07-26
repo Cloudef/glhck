@@ -110,7 +110,7 @@ int main(int argc, char **argv)
    glhckObjectPositionf(sprite, 0, 4, 0);
    cameraPos.z = -20.0f;
 #else
-   cube = glhckModelNew("test/media/md_m.pmd", 1.0f);
+   cube = glhckModelNew("test/media/madoka/md_m.pmd", 1.0f);
    glhckObjectPositionf(sprite, 0, 22, 0);
    cameraPos.y =  10.0f;
    cameraPos.z = -40.0f;
