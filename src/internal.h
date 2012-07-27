@@ -415,6 +415,11 @@ typedef struct _glhckTexturePacker
 #define VEC4(v)   (v)?(v)->x:-1, (v)?(v)->y:-1, (v)?(v)->z:-1, (v)?(v)->w:-1
 #define VEC4S     "vec3[%f, %f, %f, %f]"
 
+/* call prioritory for free calls to reference counted objects.
+ * use this on CALL(), function call on reference counted object's free function. */
+#define FREE_CALL_PRIO(o) o?o->refCounter==1?0:3:0
+#define FREE_RET_PRIO(o)  o?3:0
+
 /* insert to glhck world */
 #define _glhckWorldInsert(list, object, cast)   \
 {                                               \

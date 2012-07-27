@@ -362,20 +362,20 @@ fail:
 /* \brief reference object */
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object)
 {
-   CALL(0, "%p", object);
+   CALL(3, "%p", object);
    assert(object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(0, "%p", object);
+   RET(3, "%p", object);
    return object;
 }
 
 /* \brief free object */
 GLHCKAPI short glhckObjectFree(glhckObject *object)
 {
-   CALL(0, "%p", object);
+   CALL(FREE_CALL_PRIO(object), "%p", object);
    assert(object);
 
    /* there is still references to this object alive */
@@ -400,7 +400,7 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    object = NULL;
 
 success:
-   RET(0, "%d", object?object->refCounter:0);
+   RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
    return object?object->refCounter:0;
 }
 

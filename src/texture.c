@@ -141,24 +141,21 @@ fail:
 /* \brief reference texture */
 GLHCKAPI _glhckTexture* glhckTextureRef(_glhckTexture *texture)
 {
-   CALL(0, "%p", texture);
+   CALL(3, "%p", texture);
    assert(texture);
-
-   DEBUG(GLHCK_DBG_CRAP, "REFERENCE(%p) %dx%d %.2f MiB", texture,
-         texture->width, texture->height, (float)texture->size / 1048576);
 
    /* increase ref counter */
    texture->refCounter++;
 
    /* return reference */
-   RET(0, "%p", texture);
+   RET(3, "%p", texture);
    return texture;
 }
 
 /* \brief free texture */
 GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
 {
-   CALL(0, "%p", texture);
+   CALL(FREE_CALL_PRIO(texture), "%p", texture);
    assert(texture);
 
    /* there is still references to this texture alive */
@@ -183,7 +180,7 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
    texture = NULL;
 
 success:
-   RET(0, "%d", texture?texture->refCounter:0);
+   RET(FREE_RET_PRIO(texture), "%d", texture?texture->refCounter:0);
    return texture?texture->refCounter:0;
 }
 

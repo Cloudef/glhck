@@ -68,7 +68,7 @@ fail:
 /* \brief free atlas */
 GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas)
 {
-   CALL(0, "%p", atlas);
+   CALL(FREE_CALL_PRIO(atlas), "%p", atlas);
    assert(atlas);
 
    /* there is still references to this atlas alive */
@@ -88,7 +88,7 @@ GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas)
    atlas = NULL;
 
 success:
-   RET(0, "%d", atlas?atlas->refCounter:0);
+   RET(FREE_RET_PRIO(atlas), "%d", atlas?atlas->refCounter:0);
    return atlas?atlas->refCounter:0;
 }
 
