@@ -106,7 +106,7 @@ int main(int argc, char **argv)
    sprite  = glhckSpriteNewFromFile("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
    sprite2 = glhckSpriteNewFromFile("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
    //sprite2 = glhckObjectCopy(sprite); /* FIXME */
-#if 0
+#if 1
    cube = glhckCubeNew(1.0f);
    if (cube) glhckObjectSetTexture(cube, texture);
    cameraPos.z = -20.0f;
