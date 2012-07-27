@@ -53,7 +53,7 @@ fail:
 /* \brief free rtt object */
 GLHCKAPI short glhckRttFree(glhckRtt *rtt)
 {
-   CALL(0, "%p", rtt);
+   CALL(FREE_CALL_PRIO(rtt), "%p", rtt);
    assert(rtt);
 
    /* there is still references to this rtt alive */
@@ -71,7 +71,7 @@ GLHCKAPI short glhckRttFree(glhckRtt *rtt)
    rtt = NULL;
 
 success:
-   RET(0, "%d", rtt?rtt->refCounter:0);
+   RET(FREE_RET_PRIO(rtt), "%d", rtt?rtt->refCounter:0);
    return rtt?rtt->refCounter:0;
 }
 

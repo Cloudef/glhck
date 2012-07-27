@@ -113,20 +113,20 @@ fail:
 /* \brief reference camera */
 GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *camera)
 {
-   CALL(0, "%p", camera);
+   CALL(3, "%p", camera);
    assert(camera);
 
    /* increase reference */
    camera->refCounter++;
 
-   RET(0, "%p", camera);
+   RET(3, "%p", camera);
    return camera;
 }
 
 /* \brief free camera */
 GLHCKAPI short glhckCameraFree(glhckCamera *camera)
 {
-   CALL(0, "%p", camera);
+   CALL(FREE_CALL_PRIO(camera), "%p", camera);
    assert(camera);
 
    /* there is still references to this object alive */
@@ -144,7 +144,7 @@ GLHCKAPI short glhckCameraFree(glhckCamera *camera)
    camera = NULL;
 
 success:
-   RET(0, "%d", camera?camera->refCounter:0);
+   RET(FREE_RET_PRIO(camera), "%d", camera?camera->refCounter:0);
    return camera?camera->refCounter:0;
 }
 
