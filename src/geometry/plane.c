@@ -66,7 +66,7 @@ GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
 {
    _glhckObject *object;
    _glhckTexture *texture;
-   CALL(0, "%s, %zu", file, size);
+   CALL(0, "%s, %zu, %u", file, size, flags);
 
    /* load texture */
    if (!(texture = glhckTextureNew(file, flags))) {
