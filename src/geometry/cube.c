@@ -152,7 +152,7 @@ GLHCKAPI _glhckObject* glhckCubeNew(kmScalar size)
       }
    };
 
-   CALL(0, "%d", size);
+   CALL(0, "%f", size);
 
    /* create new object */
    if (!(object = glhckObjectNew()))

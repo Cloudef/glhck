@@ -34,7 +34,7 @@ GLHCKAPI _glhckObject* glhckPlaneNew(kmScalar size)
       }
    };
 
-   CALL(0, "%d", size);
+   CALL(0, "%f", size);
 
    /* create new object */
    if (!(object = glhckObjectNew()))
@@ -66,7 +66,7 @@ GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
 {
    _glhckObject *object;
    _glhckTexture *texture;
-   CALL(0, "%s, %zu, %u", file, size, flags);
+   CALL(0, "%s, %f, %u", file, size, flags);
 
    /* load texture */
    if (!(texture = glhckTextureNew(file, flags))) {
@@ -88,7 +88,7 @@ GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar size)
 {
    _glhckObject *object;
    kmScalar w, h;
-   CALL(0, "%p, %zu", texture, size);
+   CALL(0, "%p, %f", texture, size);
 
    w = (kmScalar)texture->width; h = (kmScalar)texture->height;
    const glhckImportVertexData vertices[] = {
