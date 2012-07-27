@@ -42,7 +42,7 @@ const GLenum _glhckAttribName[] = {
 /* global data */
 typedef struct __OpenGLstate {
    char attrib[GLHCK_ATTRIB_COUNT];
-   char cull, alpha, texture, draw_aabb, wireframe;
+   char cull, alpha, texture, draw_aabb, draw_obb, wireframe;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
@@ -326,6 +326,10 @@ static inline void materialState(_glhckObject *object)
    _OpenGL.state.draw_aabb =
       object->material.flags & GLHCK_MATERIAL_DRAW_AABB;
 
+   /* obb? */
+   _OpenGL.state.draw_obb =
+      object->material.flags & GLHCK_MATERIAL_DRAW_OBB;
+
    /* wire? */
    _OpenGL.state.wireframe =
       object->material.flags & GLHCK_MATERIAL_WIREFRAME;
@@ -392,8 +396,8 @@ static inline void materialState(_glhckObject *object)
       glhckTextureBind(object->material.texture);
 }
 
-/* \brief draw object's bounding box */
-static void drawAABB(_glhckObject *object)
+/* \brief draw object's oriented bounding box */
+static void drawOBB(_glhckObject *object)
 {
    unsigned int i = 0;
    kmVec3 min = object->view.bounding.min;
@@ -452,6 +456,69 @@ static void drawAABB(_glhckObject *object)
       }
 }
 
+/* \brief draw object's axis-aligned bounding box */
+static void drawAABB(_glhckObject *object)
+{
+   kmAABB aabb;
+   unsigned int i = 0;
+   kmVec3 min = object->view.aabb.min;
+   kmVec3 max = object->view.aabb.max;
+   const float points[] = {
+                      min.x, min.y, min.z,
+                      max.x, min.y, min.z,
+                      min.x, min.y, min.z,
+                      min.x, max.y, min.z,
+                      min.x, min.y, min.z,
+                      min.x, min.y, max.z,
+
+                      max.x, max.y, max.z,
+                      min.x, max.y, max.z,
+                      max.x, max.y, max.z,
+                      max.x, min.y, max.z,
+                      max.x, max.y, max.z,
+                      max.x, max.y, min.z,
+
+                      min.x, max.y, min.z,
+                      max.x, max.y, min.z,
+                      min.x, max.y, min.z,
+                      min.x, max.y, max.z,
+
+                      max.x, min.y, min.z,
+                      max.x, max.y, min.z,
+                      max.x, min.y, min.z,
+                      max.x, min.y, max.z,
+
+                      min.x, min.y, max.z,
+                      max.x, min.y, max.z,
+                      min.x, min.y, max.z,
+                      min.x, max.y, max.z  };
+
+   /* disable stuff if enabled */
+   if (_OpenGL.state.texture) {
+      GL_CALL(glDisable(GL_TEXTURE_2D));
+   }
+   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (_OpenGL.state.attrib[i]) {
+         GL_CALL(glDisableClientState(_glhckAttribName[i]));
+      }
+
+   GL_CALL(glLoadIdentity());
+   GL_CALL(glColor4f(0, 0, 1, 1));
+   GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
+   GL_CALL(glDrawArrays(GL_LINES, 0, 24));
+   GL_CALL(glColor4f(1, 1, 1, 1));
+   GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
+
+   /* re enable stuff we disabled */
+   if (_OpenGL.state.texture) {
+      GL_CALL(glEnable(GL_TEXTURE_2D));
+   }
+   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (_OpenGL.state.attrib[i]) {
+         GL_CALL(glEnableClientState(_glhckAttribName[i]));
+      }
+}
+
 /* \brief draw single object */
 static void objectDraw(_glhckObject *object)
 {
@@ -489,9 +556,13 @@ static void objectDraw(_glhckObject *object)
    if (_OpenGL.state.wireframe)
       object->geometry.type = old_primitive;
 
-   /* draw bounding box, if requested */
+   /* draw axis-aligned bounding box, if requested */
    if (_OpenGL.state.draw_aabb)
       drawAABB(object);
+
+   /* draw oriented bounding box, if requested */
+   if (_OpenGL.state.draw_obb)
+      drawOBB(object);
 
    /* enable the culling back
     * NOTE: this is a hack*/
