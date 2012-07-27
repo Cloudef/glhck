@@ -66,18 +66,16 @@ GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
 {
    _glhckObject *object;
    _glhckTexture *texture;
-
    CALL(0, "%s, %zu", texture, size);
-   
+
    /* load texture */
-   if (!(texture = glhckTextureNew(file, flags)))
-   {
+   if (!(texture = glhckTextureNew(file, flags))) {
       RET(0, "%p", NULL);
       return NULL;
    }
-   
+
    object = glhckSpriteNew(texture, size);
-   
+
    /* object owns texture now, free this */
    glhckTextureFree(texture);
 
