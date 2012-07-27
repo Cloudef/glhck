@@ -146,8 +146,9 @@ typedef enum glhckTextureFlags
 typedef enum glhckMaterialFlags
 {
    GLHCK_MATERIAL_DRAW_AABB = 1,
-   GLHCK_MATERIAL_WIREFRAME = 2,
-   GLHCK_MATERIAL_ALPHA     = 4,
+   GLHCK_MATERIAL_DRAW_OBB  = 2,
+   GLHCK_MATERIAL_WIREFRAME = 4,
+   GLHCK_MATERIAL_ALPHA     = 8,
 } glhckMaterialFlags;
 
 /* rtt modes */
@@ -238,6 +239,8 @@ GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
 GLHCKAPI void glhckObjectSetMaterialFlags(glhckObject *object, unsigned int flags);
 
 /* object control */
+GLHCKAPI const kmAABB* glhckObjectGetOBB(glhckObject *object);
+GLHCKAPI const kmAABB* glhckObjectGetAABB(glhckObject *object);
 GLHCKAPI const kmVec3* glhckObjectGetPosition(glhckObject *object);
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
 GLHCKAPI void glhckObjectPositionf(glhckObject *object,

@@ -5,7 +5,6 @@
 
 static int RUNNING = 0;
 static int WIDTH = 800, HEIGHT = 480;
-static int NO_NETWM_ACTIVE_SUPPORT = 1;
 static int MOUSEX = 0, MOUSEY = 0;
 static int LASTMOUSEX = 0, LASTMOUSEY = 0;
 static int close_callback(GLFWwindow window)
@@ -61,8 +60,10 @@ int main(int argc, char **argv)
    glhckTexture *texture;
    glhckObject *cube = NULL, *sprite = NULL, *sprite2 = NULL;
    glhckCamera *camera;
+   const kmAABB *aabb;
    kmVec3 cameraPos = { 0, 0, 0 };
    kmVec3 cameraRot = { 180, 180, 0 };
+   float spin = 0.0f, spinRadius;
 
    float          now          = 0;
    float          last         = 0;
@@ -81,7 +82,7 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
 
    /* Turn on VSYNC if driver allows */
-   glfwSwapInterval(0);
+   glfwSwapInterval(1);
 
    if (!glhckInit(argc, argv))
       return EXIT_FAILURE;
@@ -95,26 +96,28 @@ int main(int argc, char **argv)
    if (!(camera = glhckCameraNew()))
       return EXIT_FAILURE;
 
-   glhckCameraRange(camera, 0.1f, 1000.0f);
+   glhckCameraRange(camera, 0.5f, 1000.0f);
 
    /* this texture is useless when toggling PMD testing */
    if (!(texture = glhckTextureNew("test/media/glhck.png",
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
 
-   sprite = glhckSpriteNewFromFile("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
+   sprite  = glhckSpriteNewFromFile("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
    sprite2 = glhckSpriteNewFromFile("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
-#if 1
+   //sprite2 = glhckObjectCopy(sprite); /* FIXME */
+#if 0
    cube = glhckCubeNew(1.0f);
    if (cube) glhckObjectSetTexture(cube, texture);
-   glhckObjectPositionf(sprite, 0, 4, 0);
    cameraPos.z = -20.0f;
 #else
    cube = glhckModelNew("test/media/madoka/md_m.pmd", 1.0f);
-   glhckObjectPositionf(sprite, 0, 22, 0);
    cameraPos.y =  10.0f;
    cameraPos.z = -40.0f;
 #endif
+
+   glhckObjectSetMaterialFlags(cube, GLHCK_MATERIAL_DRAW_AABB |
+                                     GLHCK_MATERIAL_DRAW_OBB);
    glhckMemoryGraph();
 
    glhckText *text = glhckTextNew(512, 512);
@@ -132,13 +135,8 @@ int main(int argc, char **argv)
       now   =  glfwGetTime();
       delta =  now - last;
 
-      /* old version of dwm has no NETWM_ACTIVE support
-       * workaround until I switch to monsterwm */
-      if (glfwGetWindowParam(window, GLFW_ACTIVE) ||
-            NO_NETWM_ACTIVE_SUPPORT) {
-         glfwPollEvents();
-         handleCamera(window, delta, &cameraPos, &cameraRot);
-      }
+      glfwPollEvents();
+      handleCamera(window, delta, &cameraPos, &cameraRot);
 
       /* update the camera */
       glhckCameraUpdate(camera);
@@ -147,15 +145,32 @@ int main(int argc, char **argv)
       glhckCameraPosition(camera, &cameraPos);
       glhckCameraTargetf(camera, cameraPos.x, cameraPos.y, cameraPos.z + 1);
       glhckCameraRotate(camera, &cameraRot);
+
+      glhckObjectRotatef(cube, 30.0f * delta, 0, 30.0f * delta);
       glhckObjectRotatef(sprite, 0, 30.0f * delta, 0);
 
       /* glhck drawing */
       glhckObjectDraw(cube);
 
-      glhckObjectPositionf(sprite, 0, 4, 0);
+      /* do spinning effect */
+      aabb = glhckObjectGetAABB(cube);
+      spinRadius = aabb->max.x>aabb->max.z?
+         aabb->max.x>aabb->max.y?aabb->max.x:aabb->max.y:
+         aabb->max.z>aabb->max.y?aabb->max.z:aabb->max.y;
+      spinRadius += 5.0f;
+
+      glhckObjectPositionf(sprite,
+            spinRadius*sin((glhckObjectGetRotation(cube))->x/2),
+            (glhckObjectGetOBB(cube))->max.y,
+            spinRadius*cos((glhckObjectGetRotation(cube))->x/2));
       glhckObjectDraw(sprite);
 
-      glhckObjectPositionf(sprite2, -2, 3, 0);
+      /* TODO: save object state on draw call
+       * so we don't need sprite2 here! */
+      glhckObjectPositionf(sprite2,
+            spinRadius*sin((glhckObjectGetRotation(cube))->z/2),
+            (spinRadius*cos((glhckObjectGetRotation(cube))->z/2)+aabb->max.y/2),
+            (glhckObjectGetOBB(cube))->max.z);
       glhckObjectDraw(sprite2);
 
       glhckRender();

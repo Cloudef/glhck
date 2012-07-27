@@ -190,6 +190,8 @@ typedef struct __GLHCKobjectView
    kmVec3 translation, rotation, scaling;
    kmMat4 matrix;
    kmAABB bounding;
+   kmAABB aabb; /* transformed bounding (axis aligned) */
+   kmAABB obb;  /* transformed bounding (oriented) */
    char update;
 } __GLHCKobjectView;
 

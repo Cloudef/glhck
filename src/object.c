@@ -8,6 +8,9 @@
 /* \brief update view matrix of object */
 static void _glhckObjectUpdateMatrix(_glhckObject *object)
 {
+   kmVec3 min, max;
+   kmVec3 mixxyz, mixyyz, mixyzz;
+   kmVec3 maxxyz, maxyyz, maxyzz;
    kmMat4 translation, rotation, scaling, temp;
    CALL(2, "%p", object);
 
@@ -33,6 +36,65 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
    /* build matrix */
    kmMat4Multiply(&translation, &translation, &rotation);
    kmMat4Multiply(&object->view.matrix, &translation, &scaling);
+
+   /* update transformed obb */
+   kmVec3Transform(&object->view.obb.min, &object->view.bounding.min, &object->view.matrix);
+   kmVec3Transform(&object->view.obb.max, &object->view.bounding.max, &object->view.matrix);
+
+   /* update transformed aabb */
+   maxxyz.x = object->view.bounding.max.x;
+   maxxyz.y = object->view.bounding.min.y;
+   maxxyz.z = object->view.bounding.min.z;
+
+   maxyyz.x = object->view.bounding.min.x;
+   maxyyz.y = object->view.bounding.max.y;
+   maxyyz.z = object->view.bounding.min.z;
+
+   maxyzz.x = object->view.bounding.min.x;
+   maxyzz.y = object->view.bounding.min.y;
+   maxyzz.z = object->view.bounding.max.z;
+
+   mixxyz.x = object->view.bounding.min.x;
+   mixxyz.y = object->view.bounding.max.y;
+   mixxyz.z = object->view.bounding.max.z;
+
+   mixyyz.x = object->view.bounding.max.x;
+   mixyyz.y = object->view.bounding.min.y;
+   mixyyz.z = object->view.bounding.max.z;
+
+   mixyzz.x = object->view.bounding.max.x;
+   mixyzz.y = object->view.bounding.max.y;
+   mixyzz.z = object->view.bounding.min.z;
+
+   /* transform edges */
+   kmVec3Transform(&mixxyz, &mixxyz, &object->view.matrix);
+   kmVec3Transform(&maxxyz, &maxxyz, &object->view.matrix);
+   kmVec3Transform(&mixyyz, &mixyyz, &object->view.matrix);
+   kmVec3Transform(&maxyyz, &maxyyz, &object->view.matrix);
+   kmVec3Transform(&mixyzz, &mixyzz, &object->view.matrix);
+   kmVec3Transform(&maxyzz, &maxyzz, &object->view.matrix);
+
+   /* find max edges */
+   set3d(max, object->view.obb.max);
+   max3d(max, maxxyz);
+   max3d(max, maxyyz);
+   max3d(max, maxyzz);
+   max3d(max, mixxyz);
+   max3d(max, mixyyz);
+   max3d(max, mixyzz);
+
+   /* find min edges */
+   set3d(min, object->view.obb.min);
+   min3d(min, mixxyz);
+   min3d(min, mixyyz);
+   min3d(min, mixyzz);
+   min3d(min, maxxyz);
+   min3d(min, maxyyz);
+   min3d(min, maxyzz);
+
+   /* set edges */
+   set3d(object->view.aabb.max, max);
+   set3d(object->view.aabb.min, min);
 
    /* done */
    object->view.update = 0;
@@ -250,9 +312,10 @@ GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
       goto fail;
 
    /* copy static data */
-   memcpy(object, src, sizeof(_glhckObject));
+   memset(object, 0, sizeof(_glhckObject));
    memcpy(&object->geometry, &src->geometry, sizeof(__GLHCKobjectGeometry));
    memcpy(&object->view, &src->view, sizeof(__GLHCKobjectView));
+   memcpy(&object->material, &src->material, sizeof(__GLHCKobjectMaterial));
 
    /* copy metadata */
    if (src->file)
@@ -271,6 +334,9 @@ GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
             _glhckCopy(src->geometry.vertexData,
                src->geometry.indicesCount * sizeof(GLHCK_CAST_INDEX))))
       goto fail;
+
+   /* copy texture */
+   glhckObjectSetTexture(object, src->material.texture);
 
    /* set ref counter to 1 */
    object->refCounter = 1;
@@ -403,7 +469,29 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
 GLHCKAPI void glhckObjectSetMaterialFlags(_glhckObject *object, unsigned int flags)
 {
    CALL(1, "%p, %u", object, flags);
+   assert(object);
+
    object->material.flags = flags;
+}
+
+/* \brief get obb bounding box of the object */
+GLHCKAPI const kmAABB*  glhckObjectGetOBB(_glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   RET(1, "%p", object->view.obb);
+   return &object->view.obb;
+}
+
+/* \brief get aabb bounding box of the object */
+GLHCKAPI const kmAABB* glhckObjectGetAABB(_glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   RET(1, "%p", object->view.aabb);
+   return &object->view.aabb;
 }
 
 /* \brief get object position */
