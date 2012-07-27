@@ -8,7 +8,7 @@
 GLHCKAPI _glhckObject* glhckModelNew(const char *path, kmScalar size)
 {
    _glhckObject *object;
-   CALL(0, "%s, %d", path, size);
+   CALL(0, "%s, %f", path, size);
 
    /* create new object */
    if (!(object = glhckObjectNew()))
