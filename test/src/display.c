@@ -175,6 +175,7 @@ int main(int argc, char **argv)
 
       glhckRender();
 
+      glhckTextDraw(text, font2, 18, 0, HEIGHT-18, WIN_TITLE, NULL);
       glhckTextDraw(text, font, 42, 54, 200, "愛してるGLHCK", NULL);
       glhckTextDraw(text, font2, 32, 54, 240, "Äöäö DejaVuSans perkele", NULL);
       glhckTextDraw(text, font, 18, 0, 0, "SADASD!?,.:;", NULL);
@@ -189,8 +190,6 @@ int main(int argc, char **argv)
             FPS = (float)frameCounter / duration;
             sprintf(WIN_TITLE, "OpenGL [FPS: %d]", FPS);
             glfwSetWindowTitle(window, WIN_TITLE);
-            printf("FPS: %d\n", FPS);
-            printf("DELTA: %f\n", delta);
             frameCounter = 0; fpsDelay = now + 1; duration = 0;
          }
       }
