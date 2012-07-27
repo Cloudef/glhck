@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "GL/glfw3.h"
 #include "GL/glhck.h"
 
@@ -73,6 +74,7 @@ int main(int argc, char **argv)
    float          duration     = 0;
    float          delta        = 0;
    char           WIN_TITLE[256];
+   memset(WIN_TITLE, 0, sizeof(WIN_TITLE));
 
    if (!glfwInit())
       return EXIT_FAILURE;
@@ -188,7 +190,7 @@ int main(int argc, char **argv)
       if (fpsDelay < now) {
          if (duration > 0.0f) {
             FPS = (float)frameCounter / duration;
-            sprintf(WIN_TITLE, "OpenGL [FPS: %d]", FPS);
+            snprintf(WIN_TITLE, sizeof(WIN_TITLE)-1, "OpenGL [FPS: %d]", FPS);
             glfwSetWindowTitle(window, WIN_TITLE);
             frameCounter = 0; fpsDelay = now + 1; duration = 0;
          }
