@@ -24,6 +24,7 @@ int _glhckFormatPNG(const char *file)
       goto read_fail;
 
    /* read header */
+   memset(buf, 0, sizeof(buf));
    if (fread(buf, 1, PNG_BYTES_TO_CHECK, f) != PNG_BYTES_TO_CHECK)
       goto fail;
 
@@ -32,7 +33,7 @@ int _glhckFormatPNG(const char *file)
       isPNG = 1;
 
    /* close file */
-   fclose(f); f = NULL;
+   NULLDO(fclose, f);
 
    RET(0, "%d", isPNG?RETURN_OK:RETURN_FAIL);
    return isPNG?RETURN_OK:RETURN_FAIL;
@@ -63,6 +64,7 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
       goto read_fail;
 
    /* read header */
+   memset(buf, 0, sizeof(buf));
    if (fread(buf, 1, PNG_BYTES_TO_CHECK, f) != PNG_BYTES_TO_CHECK)
       goto fail;
 
@@ -145,12 +147,12 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
 
    png_read_image(png, lines);
 
-   IFDO(_glhckFree, lines);
+   NULLDO(_glhckFree, lines);
    png_read_end(png, info);
    png_destroy_read_struct(&png, &info, (png_infopp)NULL);
 
    /* close file */
-   fclose(f); f = NULL;
+   NULLDO(fclose, f);
 
    /* do post processing to imported data, and assign to texture */
    _glhckImagePostProcessStruct importData;
@@ -160,7 +162,8 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
    if (_glhckImagePostProcess(texture, &importData, flags) != RETURN_OK)
       goto fail;
 
-   _glhckFree(import);
+   NULLDO(_glhckFree, import);
+
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 

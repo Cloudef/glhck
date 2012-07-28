@@ -21,6 +21,7 @@ int _glhckFormatBMP(const char *file)
       goto read_fail;
 
    /* check header */
+   memset(header, 0, sizeof(header));
    if (fread(header, 1, 2, f) != 2)
       goto fail;
 
@@ -36,7 +37,7 @@ int _glhckFormatBMP(const char *file)
       goto fail;
 
    /* close file */
-   fclose(f); f = NULL;
+   NULLDO(fclose, f);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -78,12 +79,6 @@ int _glhckImportBMP(_glhckTexture *texture, const char *file, unsigned int flags
    if (!IMAGE_DIMENSIONS_OK(w, h))
       goto bad_dimensions;
 
-#if 0
-   /* support only 24 bpp */
-   if (bpp != 24)
-      goto not_24bpp;
-#endif
-
    if (!(import = _glhckMalloc(w*h*4)))
       goto out_of_memory;
 
@@ -112,7 +107,7 @@ int _glhckImportBMP(_glhckTexture *texture, const char *file, unsigned int flags
    }
 
    /* close file */
-   fclose(f); f = NULL;
+   NULLDO(fclose, f);
 
    /* do post processing to imported data, and assign to texture */
    _glhckImagePostProcessStruct importData;
@@ -122,7 +117,7 @@ int _glhckImportBMP(_glhckTexture *texture, const char *file, unsigned int flags
    if (_glhckImagePostProcess(texture, &importData, flags) != RETURN_OK)
       goto fail;
 
-   _glhckFree(import);
+   NULLDO(_glhckFree, import);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 

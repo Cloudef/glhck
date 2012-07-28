@@ -140,8 +140,7 @@ GLHCKAPI short glhckCameraFree(glhckCamera *camera)
    _glhckWorldRemove(clist, camera, _glhckCamera*);
 
    /* free */
-   _glhckFree(camera);
-   camera = NULL;
+   NULLDO(_glhckFree, camera);
 
 success:
    RET(FREE_RET_PRIO(camera), "%d", camera?camera->refCounter:0);

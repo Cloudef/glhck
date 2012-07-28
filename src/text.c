@@ -517,7 +517,7 @@ GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file)
 
    /* read data */
    fread(data, 1, size, f);
-   fclose(f); f = NULL;
+   NULLDO(fclose, f);
 
    /* read and add the new font to stash */
    if (!(id = glhckTextNewFontFromMemory(text, data)))

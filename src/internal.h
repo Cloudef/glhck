@@ -450,8 +450,13 @@ typedef struct _glhckTexturePacker
    queue[i] = object;                    \
 }
 
-/* if exists then free and set NULL */
-#define IFDO(f, x) if (x) f(x); x = NULL;
+/* if exists then perform function and set NULL
+ * used mainly to shorten if (x) free(x); x = NULL; */
+#define IFDO(f, x) { if (x) f(x); x = NULL; }
+
+/* perform function and set NULL (no checks)
+ * used mainly to shorten free(x); x = NULL; */
+#define NULLDO(f, x) { f(x); x = NULL; }
 
 /* tracking allocation macros */
 #define _glhckMalloc(x)    __glhckMalloc(GLHCK_CHANNEL, x)

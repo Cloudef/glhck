@@ -7,7 +7,10 @@
 #else
 #   include <malloc.h>
 #endif
-#define xfree(x) { free(x); x = NULL; }
+
+#ifndef NULLDO
+#  define NULLDO(f,x) { f(x); x = NULL; }
+#endif
 
 typedef struct tpRect {
    int x1, x2, y1, y2;
@@ -145,14 +148,14 @@ static void glhckTexturePackerReset(_glhckTexturePacker *tp)
    tp->texture_index = 0;
 
    if(tp->textures)
-      xfree(tp->textures);
+      NULLDO(free, tp->textures);
 
    if (tp->free_list) {
       next = tp->free_list;
       while (next) {
          kill = next;
          next = next->next;
-         xfree(kill);
+         NULLDO(free, kill);
       }
    }
    tp->free_list = NULL;
@@ -448,7 +451,7 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
             texture_place(t, best_fit->x, best_fit->y, flipped);
             if (previous_best_fit)  previous_best_fit->next = best_fit->next;
             else                    tp->free_list = best_fit->next;
-            xfree(best_fit);
+            NULLDO(free, best_fit);
             validate(tp);
             break;
       }

@@ -25,7 +25,7 @@ int _glhckFormatPMD(const char *file)
       goto fail;
 
    /* close file */
-   fclose(f); f = NULL;
+   NULLDO(fclose, f);
    return RETURN_OK;
 
 read_fail:
@@ -68,7 +68,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
       goto mmd_import_fail;
 
    /* close file */
-   fclose(f); f = NULL;
+   NULLDO(fclose, f);
 
    DEBUG(GLHCK_DBG_CRAP, "V: %d", mmd->num_vertices);
    DEBUG(GLHCK_DBG_CRAP, "I: %d", mmd->num_indices);
@@ -150,8 +150,8 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
    glhckObjectSetTexture(object, glhckAtlasGetTexture(atlas));
 
    /* we don't need atlas packer anymore */
-   glhckAtlasFree(atlas);
-   _glhckFree(textureList);
+   NULLDO(glhckAtlasFree, atlas);
+   NULLDO(_glhckFree, textureList);
 
    /* triangle strip geometry */
    if (!(strip_indices = _glhckTriStrip(indices, mmd->num_indices, &num_indices))) {
@@ -159,13 +159,13 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
       object->geometry.type   = GLHCK_TRIANGLES;
       num_indices             = mmd->num_indices;
       strip_indices           = indices;
-   } else  _glhckFree(indices);
+   } else NULLDO(_glhckFree, indices);
 
    glhckObjectInsertVertexData(object, mmd->num_vertices, vertexData);
    glhckObjectInsertIndices(object, num_indices, strip_indices);
-   _glhckFree(vertexData);
-   _glhckFree(strip_indices);
-   mmd_free(mmd);
+   NULLDO(_glhckFree, vertexData);
+   NULLDO(_glhckFree, strip_indices);
+   NULLDO(mmd_free, mmd);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;

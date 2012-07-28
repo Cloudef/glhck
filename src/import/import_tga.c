@@ -71,7 +71,7 @@ int _glhckFormatTGA(const char *file)
       goto fail;
 
    /* we don't need the file anymore */
-   fclose(f); f = NULL;
+   NULLDO(fclose, f);
    header = (tga_header*)data;
    footer = (tga_footer*)((char*)data+size-sizeof(tga_footer));
 
@@ -81,7 +81,8 @@ int _glhckFormatTGA(const char *file)
    else if ((header->bpp == 32) || (header->bpp == 24) || (header->bpp == 8))
       isTga = 1;
 
-   _glhckFree(data);
+   NULLDO(_glhckFree, data);
+
    RET(0, "%d", isTga?RETURN_OK:RETURN_FAIL);
    return isTga?RETURN_OK:RETURN_FAIL;
 
@@ -127,7 +128,7 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
       goto fail;
 
    /* we don't need the file anymore */
-   fclose(f); f = NULL;
+   NULLDO(fclose, f);
 
    data = seg;
    header = (tga_header*)data;
@@ -249,8 +250,8 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
       goto fail;
 
    /* dealloc */
-   _glhckFree(seg);
-   _glhckFree(import);
+   NULLDO(_glhckFree, seg);
+   NULLDO(_glhckFree, import);
 
    /* load image data here */
    RET(0, "%d", RETURN_OK);

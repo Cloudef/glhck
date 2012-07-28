@@ -279,8 +279,6 @@ int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct 
 {
    unsigned char *outData = NULL;
    unsigned int outFormat;
-   char freeData = 0;
-   unsigned long long i;
    CALL(0, "%p, %p, %u", texture, data, flags);
 
    /* assign import data to outData */
@@ -294,16 +292,12 @@ int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct 
    /* upload texture */
    glhckTextureCreate(texture, outData, data->width, data->height, outFormat, flags);
 
-   /* free data */
-   if (freeData) free(outData);
-
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 out_of_memory:
    DEBUG(GLHCK_DBG_ERROR, "Out of memory");
 fail:
-   if (freeData) free(outData);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
