@@ -61,12 +61,12 @@ fail:
 }
 
 /* \brief create new sprite */
-GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
-      unsigned int flags)
+GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file,
+      size_t width, size_t height, unsigned int flags)
 {
    _glhckObject *object;
    _glhckTexture *texture;
-   CALL(0, "%s, %f, %u", file, size, flags);
+   CALL(0, "%s, %zu, %zu, %u", file, width, height, flags);
 
    /* load texture */
    if (!(texture = glhckTextureNew(file, flags))) {
@@ -74,7 +74,7 @@ GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
       return NULL;
    }
 
-   object = glhckSpriteNew(texture, size);
+   object = glhckSpriteNew(texture, width, height);
 
    /* object owns texture now, free this */
    glhckTextureFree(texture);
@@ -84,13 +84,15 @@ GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
 }
 
 /* \brief create new sprite */
-GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar size)
+GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture,
+      size_t width, size_t height)
 {
    _glhckObject *object;
    kmScalar w, h;
-   CALL(0, "%p, %f", texture, size);
+   CALL(0, "%p, %zu, %zu", texture, width, height);
 
-   w = (kmScalar)texture->width; h = (kmScalar)texture->height;
+   w = (kmScalar)(width?width:texture->width);
+   h = (kmScalar)(height?height:texture->height);
    const glhckImportVertexData vertices[] = {
       {
          {  w,  h, 0 },
@@ -125,7 +127,7 @@ GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar size)
       goto fail;
 
    /* don't make things humongous */
-   w = size-(1.0f/(texture->width>texture->height?
+   w = 1.0f-(1.0f/(texture->width>texture->height?
             texture->width:texture->height));
 
    /* scale keeping aspect ratio */
