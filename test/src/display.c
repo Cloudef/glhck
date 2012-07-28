@@ -110,6 +110,9 @@ int main(int argc, char **argv)
 
    sprite  = glhckSpriteNewFromFile("test/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
    sprite2 = glhckSpriteNewFromFile("test/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
+   glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
+   glhckObjectScalef(sprite2, 0.03f, 0.03f, 0.03f);
+
    //sprite2 = glhckObjectCopy(sprite); /* FIXME */
 #if 1
    cube = glhckCubeNew(1.0f);
