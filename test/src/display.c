@@ -133,7 +133,7 @@ int main(int argc, char **argv)
    glhckText *text = glhckTextNew(512, 512);
    if (!text) return EXIT_FAILURE;
 
-   unsigned int font = glhckTextNewFont(text, "/usr/share/fonts/OTF/ipag.ttf");
+   unsigned int font  = glhckTextNewFont(text, "/usr/share/fonts/OTF/ipag.ttf");
    unsigned int font2 = glhckTextNewFont(text, "/usr/share/fonts/TTF/DejaVuSans.ttf");
 
    glfwSetWindowCloseCallback(close_callback);
@@ -195,10 +195,11 @@ int main(int argc, char **argv)
 
       glhckRender();
 
-      glhckTextDraw(text, font2, 18, 0, HEIGHT-18, WIN_TITLE, NULL);
-      glhckTextDraw(text, font, 42, 54, 200, "愛してるGLHCK", NULL);
-      glhckTextDraw(text, font2, 32, 54, 240, "Äöäö DejaVuSans perkele", NULL);
-      glhckTextDraw(text, font, 18, 0, 0, "SADASD!?,.:;", NULL);
+      glhckTextDraw(text, font2, 18,         0,  HEIGHT-4, WIN_TITLE, NULL);
+      glhckTextDraw(text, font,  42,        25, HEIGHT-80, "愛してるGLHCK", NULL);
+      glhckTextDraw(text, font2, 32,        25, HEIGHT-40, "Äöäö DejaVuSans perkele", NULL);
+      glhckTextDraw(text, font2, 18,         0,        18, "SADASD!?,.:;", NULL);
+      glhckTextDraw(text, font2, 12, WIDTH-100,        18, "Wall of text", NULL);
       glhckTextRender(text);
 
       /* Actual swap and clear */

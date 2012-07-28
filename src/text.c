@@ -252,8 +252,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
 
    /* rasterize */
    if ((data = _glhckMalloc(gw*gh))) {
-      stbtt_MakeGlyphBitmap(&font->font, data, gw, gh, gw,
-            scale, scale, gid);
+      stbtt_MakeGlyphBitmap(&font->font, data, gw, gh, gw, scale, scale, gid);
       _GLHCKlibrary.render.api.fillTexture(texture->object, data, glyph->x1, glyph->y1, gw, gh, GLHCK_ALPHA);
       _glhckFree(data);
    }
@@ -272,16 +271,16 @@ static int _getQuad(_glhckText *text, __GLHCKtextFont *font, __GLHCKtextGlyph *g
    if (font->type == GLHCK_FONT_BMP) scale = (float)isize/(glyph->size*10.0f);
 
    rx = floorf(*x + scale * glyph->xoff);
-   ry = floorf(*y - scale * glyph->yoff);
+   ry = floorf(*y + scale * glyph->yoff);
 
-   v1.x = rx;
+   v2.x = rx;
    v1.y = ry;
-   v2.x = rx + scale * (glyph->x2 - glyph->x1);
-   v2.y = ry - scale * (glyph->y2 - glyph->y1);
+   v1.x = rx + scale * (glyph->x2 - glyph->x1);
+   v2.y = ry + scale * (glyph->y2 - glyph->y1);
 
-   t1.x = (glyph->x1) * text->itw;
+   t2.x = (glyph->x1) * text->itw;
    t1.y = (glyph->y1) * text->ith;
-   t2.x = (glyph->x2) * text->itw;
+   t1.x = (glyph->x2) * text->itw;
    t2.y = (glyph->y2) * text->ith;
 
 #if GLHCK_PRECISION_VERTEX == GLHCK_FLOAT

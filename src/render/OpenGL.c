@@ -293,7 +293,7 @@ static void viewport(int x, int y, int width, int height)
 
    /* create orthographic projection matrix */
    kmMat4OrthographicProjection(&_OpenGL.orthographic,
-         0, width, 0, height, -1, 1);
+         0, width, height, 0, -1, 1);
 }
 
 /* \brief pass interleaved vertex data to OpenGL nicely. */
@@ -652,9 +652,6 @@ static void textDraw(_glhckText *text)
    GL_CALL(glMatrixMode(GL_MODELVIEW));
    GL_CALL(glLoadIdentity());
 
-   /* the culling is flipped in orthographic */
-   glCullFace(GL_FRONT);
-
    for (texture = text->tcache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
@@ -673,9 +670,6 @@ static void textDraw(_glhckText *text)
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glEnable(GL_DEPTH_TEST));
    }
-
-   /* switch back to normal cull */
-   glCullFace(GL_BACK);
 
    setProjection(&_OpenGL.projection);
 }
