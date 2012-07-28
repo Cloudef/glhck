@@ -644,8 +644,8 @@ GLHCKAPI void glhckObjectTransformCoordinates(
    /* out */
    for (i = 0; i != object->geometry.vertexCount; ++i) {
       v = &object->geometry.vertexData[i];
-      out.x = v->coord.x;
-      out.y = v->coord.y;
+      out.x = (kmScalar)v->coord.x/GLHCK_RANGE_COORD;
+      out.y = (kmScalar)v->coord.y/GLHCK_RANGE_COORD;
 
       if (oldCoords) {
          if (oldCoords->degrees != 0)
@@ -665,8 +665,8 @@ GLHCKAPI void glhckObjectTransformCoordinates(
       out.y *= transformed->w;
       out.y += transformed->y;
 
-      v->coord.x = out.x;
-      v->coord.y = out.y;
+      v->coord.x = out.x * GLHCK_RANGE_COORD;
+      v->coord.y = out.y * GLHCK_RANGE_COORD;
    }
 
    newCoords->degrees   = degrees;
