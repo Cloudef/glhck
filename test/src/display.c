@@ -108,8 +108,8 @@ int main(int argc, char **argv)
                GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
 
-   sprite  = glhckSpriteNewFromFile("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
-   sprite2 = glhckSpriteNewFromFile("test/media/glhck.png", 1.0f, GLHCK_TEXTURE_DEFAULTS);
+   sprite  = glhckSpriteNewFromFile("test/media/glhck.png", 0.05f, GLHCK_TEXTURE_DEFAULTS);
+   sprite2 = glhckSpriteNewFromFile("test/media/glhck.png", 0.03f, GLHCK_TEXTURE_DEFAULTS);
    //sprite2 = glhckObjectCopy(sprite); /* FIXME */
 #if 1
    cube = glhckCubeNew(1.0f);
@@ -150,7 +150,16 @@ int main(int argc, char **argv)
       glhckCameraProjection(camera, projectionType);
 
       /* update the camera */
-      glhckCameraUpdate(camera);
+      if(glfwGetKey(window, GLFW_KEY_O))
+      {
+         kmMat4 identity;
+         kmMat4Identity(&identity);
+         glhckRenderSetProjection(&identity);
+      }
+      else
+      {
+         glhckCameraUpdate(camera);
+      }
 
       /* rotate */
       glhckCameraPosition(camera, &cameraPos);
