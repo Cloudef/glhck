@@ -299,7 +299,7 @@ GLHCKAPI int glhckAtlasGetTransform(glhckAtlas *atlas, glhckTexture *texture,
    float atlasWidth, atlasHeight;
    _glhckAtlasArea *packed;
 
-   CALL(2, "%p, %p, "VEC4S", %p", atlas, texture, VEC2(out), degrees);
+   CALL(2, "%p, %p, "VEC4S", %p", atlas, texture, VEC4(out), degrees);
    assert(atlas && texture && out && degrees);
 
    if (!atlas->texture)

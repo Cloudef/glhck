@@ -392,6 +392,7 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    /* free geometry */
    IFDO(_glhckFree, object->geometry.vertexData);
    IFDO(_glhckFree, object->geometry.indices);
+   IFDO(_glhckFree, object->geometry.transformedCoordinates);
 
    /* free material */
    glhckObjectSetTexture(object, NULL);
@@ -627,11 +628,12 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
 GLHCKAPI void glhckObjectTransformCoordinates(
       _glhckObject *object, const kmVec4 *transformed, short degrees)
 {
+   size_t i;
+   kmVec2 out;
    __GLHCKvertexData *v;
    __GLHCKcoordTransform *newCoords, *oldCoords;
-   kmVec2 out;
    kmVec2 center = { 0.5f, 0.5f };
-   CALL(2, "%p, "VEC2S, VEC2(transformed));
+   CALL(2, "%p, "VEC4S", %d", object, VEC4(transformed), degrees);
 
    if (!(newCoords = _glhckMalloc(sizeof(__GLHCKcoordTransform))))
       return;
@@ -640,7 +642,8 @@ GLHCKAPI void glhckObjectTransformCoordinates(
    oldCoords = object->geometry.transformedCoordinates;
 
    /* out */
-   for (v = object->geometry.vertexData; v; ++v) {
+   for (i = 0; i != object->geometry.vertexCount; ++i) {
+      v = &object->geometry.vertexData[i];
       out.x = v->coord.x;
       out.y = v->coord.y;
 
