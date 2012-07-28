@@ -333,11 +333,11 @@ GLHCKAPI void glhckTerminate(void)
    if (!_glhckInitialized) return;
 
    /* destroy the world */
-   _massacre(olist, o, on, glhckObjectFree);
    _massacre(clist, c, cn, glhckCameraFree);
-   _massacre(tlist, t, tn, glhckTextureFree);
    _massacre(alist, a, an, glhckAtlasFree);
    _massacre(rlist, r, rn, glhckRttFree);
+   _massacre(olist, o, on, glhckObjectFree);
+   _massacre(tlist, t, tn, glhckTextureFree);
    _massacre(tflist, tf, tfn, glhckTextFree);
 
 #ifndef NDEBUG
