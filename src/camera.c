@@ -8,11 +8,26 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
    CALL(2, "%p", camera);
    assert(camera);
 
-   kmMat4PerspectiveProjection(
-         &camera->view.projection,
-         camera->view.fov,
-         camera->view.viewport.z/camera->view.viewport.w,
-         camera->view.near, camera->view.far);
+   switch(camera->view.projectionType)
+   {
+      case GLHCK_PROJECTION_ORTHOGRAPHIC:
+         kmMat4OrthographicProjection(&camera->view.projection,
+            camera->view.viewport.x - camera->view.viewport.z/2,
+            camera->view.viewport.x + camera->view.viewport.z/2,
+            camera->view.viewport.y - camera->view.viewport.w/2,
+            camera->view.viewport.y + camera->view.viewport.w/2,
+            camera->view.near, camera->view.far);
+         break;
+
+      case GLHCK_PROJECTION_PERSPECTIVE:
+      default:
+         kmMat4PerspectiveProjection(
+               &camera->view.projection,
+               camera->view.fov,
+               camera->view.viewport.z/camera->view.viewport.w,
+               camera->view.near, camera->view.far);
+         break;
+   }
 }
 
 /* \brief calcualate view matrix */
@@ -88,6 +103,7 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    memset(&camera->view, 0, sizeof(__GLHCKcameraView));
 
    /* defaults */
+   camera->view.projectionType = GLHCK_PROJECTION_PERSPECTIVE;
    camera->view.near = 1.0f;
    camera->view.far  = 100.0f;
    camera->view.fov  = 35.0f;
@@ -194,12 +210,22 @@ GLHCKAPI void glhckCameraReset(glhckCamera *camera)
    _glhckCameraProjectionMatrix(camera);
 }
 
+/* \brief set camera's projection type */
+GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionType projectionType)
+{
+   CALL(1, "%p, %d", camera, projectionType);
+   assert(camera);
+   camera->view.projectionType = projectionType;
+   _glhckCameraProjectionMatrix(camera);
+}
+
 /* \brief set camera's fov */
 GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov)
 {
    CALL(1, "%p, %f", camera, fov);
    assert(camera);
    camera->view.fov = fov;
+   _glhckCameraProjectionMatrix(camera);
 }
 
 /* \brief set camera's range */

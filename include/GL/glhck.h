@@ -126,6 +126,12 @@ typedef enum glhckRenderType {
    GLHCK_RENDER_NULL,
 } glhckRenderType;
 
+/* projection type */
+typedef enum glhckProjectionType {
+   GLHCK_PROJECTION_PERSPECTIVE,
+   GLHCK_PROJECTION_ORTHOGRAPHIC,
+} glhckProjectionType;
+
 /* texture flags */
 typedef enum glhckTextureFlags
 {
@@ -201,6 +207,7 @@ GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *camera);
 GLHCKAPI short glhckCameraFree(glhckCamera *camera);
 GLHCKAPI void glhckCameraUpdate(glhckCamera *camera);
 GLHCKAPI void glhckCameraReset(glhckCamera *camera);
+GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionType projectionType);
 GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov);
 GLHCKAPI void glhckCameraRange(glhckCamera *camera,
       const kmScalar near, const kmScalar far);
