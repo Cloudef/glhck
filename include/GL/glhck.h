@@ -281,9 +281,9 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
 GLHCKAPI glhckObject* glhckModelNew(const char *path, kmScalar size);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar size);
-GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, kmScalar size);
-GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar size,
-      unsigned int flags);
+GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, size_t x, size_t y);
+GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file,
+      size_t width, size_t height, unsigned int flags);
 
 /* text */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
