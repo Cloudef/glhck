@@ -126,6 +126,11 @@ typedef enum glhckRenderType {
    GLHCK_RENDER_NULL,
 } glhckRenderType;
 
+/* renderer flags (nothing here atm) */
+typedef enum glhckRenderFlags {
+   GLHCK_RENDER_FLAG_NONE = 0,
+} glhckRenderFlags;
+
 /* texture flags */
 typedef enum glhckTextureFlags
 {
@@ -149,6 +154,8 @@ typedef enum glhckMaterialFlags
    GLHCK_MATERIAL_DRAW_OBB  = 2,
    GLHCK_MATERIAL_WIREFRAME = 4,
    GLHCK_MATERIAL_ALPHA     = 8,
+   GLHCK_MATERIAL_CULL      = 16,
+   GLHCK_MATERIAL_DEPTH     = 32
 } glhckMaterialFlags;
 
 /* rtt modes */
@@ -192,6 +199,7 @@ GLHCKAPI void glhckDisplayClose(void);
 GLHCKAPI void glhckDisplayResize(int width, int height);
 
 /* rendering */
+GLHCKAPI void glhckRenderSetFlags(unsigned int flags);
 GLHCKAPI void glhckRender(void);
 GLHCKAPI void glhckClear(void);
 

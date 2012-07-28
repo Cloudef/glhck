@@ -219,6 +219,13 @@ GLHCKAPI void glhckClear(void)
    _GLHCKlibrary.render.api.clear();
 }
 
+/* \brief set render flags */
+GLHCKAPI void glhckRenderSetFlags(unsigned int flags)
+{
+   CALL(0, "%u", flags);
+   _GLHCKlibrary.render.flags = flags;
+}
+
 /* \brief render scene */
 GLHCKAPI void glhckRender(void)
 {

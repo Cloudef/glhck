@@ -351,6 +351,7 @@ typedef struct __GLHCKrender
    int width, height;
    const char *name;
    glhckRenderType type;
+   unsigned int flags;
    struct __GLHCKrenderAPI api;
    struct __GLHCKrenderDraw draw;
 } __GLHCKrender;
