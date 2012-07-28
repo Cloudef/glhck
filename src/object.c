@@ -287,6 +287,10 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    glhckObjectScalef(object, 1.0f, 1.0f, 1.0f);
    _glhckObjectUpdateMatrix(object);
 
+   /* default material flags */
+   glhckObjectSetMaterialFlags(object, GLHCK_MATERIAL_DEPTH |
+                                       GLHCK_MATERIAL_CULL);
+
    /* increase reference */
    object->refCounter++;
 
