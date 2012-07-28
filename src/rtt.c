@@ -67,8 +67,7 @@ GLHCKAPI short glhckRttFree(glhckRtt *rtt)
    _glhckWorldRemove(rlist, rtt, _glhckRtt*);
 
    /* free */
-   _glhckFree(rtt);
-   rtt = NULL;
+   NULLDO(_glhckFree, rtt);
 
 success:
    RET(FREE_RET_PRIO(rtt), "%d", rtt?rtt->refCounter:0);

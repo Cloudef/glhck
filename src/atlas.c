@@ -84,8 +84,7 @@ GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas)
    _glhckWorldRemove(alist, atlas, _glhckAtlas*);
 
    /* free */
-   _glhckFree(atlas);
-   atlas = NULL;
+   NULLDO(_glhckFree, atlas);
 
 success:
    RET(FREE_RET_PRIO(atlas), "%d", atlas?atlas->refCounter:0);

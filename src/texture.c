@@ -176,8 +176,7 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
    _glhckWorldRemove(tlist, texture, _glhckTexture*);
 
    /* free */
-   _glhckFree(texture);
-   texture = NULL;
+   NULLDO(_glhckFree, texture);
 
 success:
    RET(FREE_RET_PRIO(texture), "%d", texture?texture->refCounter:0);

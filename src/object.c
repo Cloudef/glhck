@@ -396,8 +396,7 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    _glhckWorldRemove(olist, object, _glhckObject*);
 
    /* free */
-   _glhckFree(object);
-   object = NULL;
+   NULLDO(_glhckFree, object);
 
 success:
    RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
