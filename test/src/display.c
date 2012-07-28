@@ -101,7 +101,7 @@ int main(int argc, char **argv)
    if (!(camera = glhckCameraNew()))
       return EXIT_FAILURE;
 
-   glhckCameraRange(camera, 10.0f, 30.0f);
+   glhckCameraRange(camera, 1.0f, 1000.0f);
 
    /* this texture is useless when toggling PMD testing */
    if (!(texture = glhckTextureNew("test/media/glhck.png",
