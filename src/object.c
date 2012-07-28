@@ -623,6 +623,55 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
    glhckObjectScale(object, &scaling);
 }
 
+/* \brief transform coordinates with vec4 (off x, off y, width, height) and rotation */
+GLHCKAPI void glhckObjectTransformCoordinates(
+      _glhckObject *object, const kmVec4 *transformed, short degrees)
+{
+   __GLHCKvertexData *v;
+   __GLHCKcoordTransform *newCoords, *oldCoords;
+   kmVec2 out;
+   kmVec2 center = { 0.5f, 0.5f };
+   CALL(2, "%p, "VEC2S, VEC2(transformed));
+
+   if (!(newCoords = _glhckMalloc(sizeof(__GLHCKcoordTransform))))
+      return;
+
+   /* old coordinates */
+   oldCoords = object->geometry.transformedCoordinates;
+
+   /* out */
+   for (v = object->geometry.vertexData; v; ++v) {
+      out.x = v->coord.x;
+      out.y = v->coord.y;
+
+      if (oldCoords) {
+         if (oldCoords->degrees != 0)
+            kmVec2RotateBy(&out, &out, -oldCoords->degrees, &center);
+
+         out.x -= oldCoords->transform.x;
+         out.x /= oldCoords->transform.z;
+         out.y -= oldCoords->transform.y;
+         out.y /= oldCoords->transform.w;
+      }
+
+      if (degrees != 0)
+         kmVec2RotateBy(&out, &out, degrees, &center);
+
+      out.x *= transformed->z;
+      out.x += transformed->x;
+      out.y *= transformed->w;
+      out.y += transformed->y;
+
+      v->coord.x = out.x;
+      v->coord.y = out.y;
+   }
+
+   newCoords->degrees   = degrees;
+   newCoords->transform = *transformed;
+   IFDO(_glhckFree, object->geometry.transformedCoordinates);
+   object->geometry.transformedCoordinates = newCoords;
+}
+
 /* \brief insert vertex data into object */
 GLHCKAPI int glhckObjectInsertVertexData(
       _glhckObject *object,

@@ -238,6 +238,8 @@ GLHCKAPI glhckTexture* glhckObjectGetTexture(glhckObject *object);
 GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
+GLHCKAPI void glhckObjectTransformCoordinates(glhckObject *object,
+      const kmVec4 *transformed, short degrees);
 GLHCKAPI int glhckObjectInsertVertexData(glhckObject *object,
       size_t memb, const glhckImportVertexData *vertexData);
 GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
@@ -315,7 +317,9 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two,
       const int border);
 GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(glhckAtlas *atlas,
       unsigned short index);
-GLHCKAPI int glhckAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
+GLHCKAPI int glhckAtlasGetTransform(glhckAtlas *atlas, glhckTexture *texture,
+      kmVec4 *transformed, short *degrees);
+GLHCKAPI int glhckAtlasTransformCoordinates(glhckAtlas *atlas, glhckTexture *texture,
       const kmVec2 *in, kmVec2 *out);
 
 /* render to texture */
