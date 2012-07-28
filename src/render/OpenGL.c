@@ -643,7 +643,11 @@ static void textDraw(_glhckText *text)
 
    /* set 2d projection */
    GL_CALL(glMatrixMode(GL_PROJECTION));
+#ifdef GLHCK_KAZMATH_FLOAT
    GL_CALL(glLoadMatrixf((float*)&_OpenGL.orthographic));
+#else
+   GL_CALL(glLoadMatrixd((double*)&_OpenGL.orthographic));
+#endif
 
    GL_CALL(glMatrixMode(GL_MODELVIEW));
    GL_CALL(glLoadIdentity());
