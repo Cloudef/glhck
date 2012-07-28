@@ -30,7 +30,10 @@ static void mousepos_callback(GLFWwindow window, int mousex, int mousey)
    }
 }
 
-static void handleCamera(GLFWwindow window, float delta, kmVec3 *cameraPos, kmVec3 *cameraRot) {
+static void handleCamera(GLFWwindow window, float delta, kmVec3 *cameraPos, kmVec3 *cameraRot,
+                         glhckProjectionType *projectionType) {
+   *projectionType = glfwGetKey(window, GLFW_KEY_P) ?
+         GLHCK_PROJECTION_ORTHOGRAPHIC : GLHCK_PROJECTION_PERSPECTIVE;
    if (glfwGetKey(window, GLFW_KEY_W)) {
       cameraPos->x += cos((cameraRot->y + 90) * kmPIOver180) * 25.0f * delta;
       cameraPos->z -= sin((cameraRot->y + 90) * kmPIOver180) * 25.0f * delta;
@@ -98,7 +101,7 @@ int main(int argc, char **argv)
    if (!(camera = glhckCameraNew()))
       return EXIT_FAILURE;
 
-   glhckCameraRange(camera, 0.5f, 1000.0f);
+   glhckCameraRange(camera, 10.0f, 30.0f);
 
    /* this texture is useless when toggling PMD testing */
    if (!(texture = glhckTextureNew("test/media/glhck.png",
@@ -134,13 +137,17 @@ int main(int argc, char **argv)
    glfwSetWindowSizeCallback(resize_callback);
    glfwSetMousePosCallback(mousepos_callback);
    glfwSetInputMode(window, GLFW_CURSOR_MODE, GLFW_CURSOR_CAPTURED);
+
+   glhckProjectionType projectionType = GLHCK_PROJECTION_PERSPECTIVE;
+
    while (RUNNING && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
       last  =  now;
       now   =  glfwGetTime();
       delta =  now - last;
 
       glfwPollEvents();
-      handleCamera(window, delta, &cameraPos, &cameraRot);
+      handleCamera(window, delta, &cameraPos, &cameraRot, &projectionType);
+      glhckCameraProjection(camera, projectionType);
 
       /* update the camera */
       glhckCameraUpdate(camera);
