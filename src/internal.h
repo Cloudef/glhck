@@ -257,6 +257,7 @@ typedef struct _glhckText {
 
 typedef struct __GLHCKcameraView
 {
+   glhckProjectionType projectionType;
    kmScalar near, far, fov;
    kmVec3 translation, target, rotation, upVector;
    kmVec4 viewport;
