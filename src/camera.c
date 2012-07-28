@@ -5,18 +5,23 @@
 /* \brief calculate projection matrix */
 static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
 {
+   kmScalar w, h;
+
    CALL(2, "%p", camera);
    assert(camera);
 
    switch(camera->view.projectionType)
    {
       case GLHCK_PROJECTION_ORTHOGRAPHIC:
+         w = camera->view.viewport.z > camera->view.viewport.w ? 1 :
+               camera->view.viewport.z / camera->view.viewport.w;
+         h = camera->view.viewport.z < camera->view.viewport.w ? 1 :
+               camera->view.viewport.w / camera->view.viewport.z;
+         w *= (camera->view.near + (camera->view.far - camera->view.near) / 2) / 2;
+         h *= (camera->view.near + (camera->view.far - camera->view.near) / 2) / 2;
+
          kmMat4OrthographicProjection(&camera->view.projection,
-            camera->view.viewport.x - camera->view.viewport.z/2,
-            camera->view.viewport.x + camera->view.viewport.z/2,
-            camera->view.viewport.y - camera->view.viewport.w/2,
-            camera->view.viewport.y + camera->view.viewport.w/2,
-            camera->view.near, camera->view.far);
+            -w, w, -h, h, camera->view.near, camera->view.far);
          break;
 
       case GLHCK_PROJECTION_PERSPECTIVE:
