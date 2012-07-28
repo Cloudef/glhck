@@ -433,13 +433,16 @@ typedef struct _glhckTexturePacker
 }
 
 /* remove from glhck world */
-#define _glhckWorldRemove(list, object, cast)   \
-{                                               \
-   cast i;                                      \
-   for (i = _GLHCKlibrary.world.list;           \
-       i && i->next != object; i = i->next);    \
-   if (i) i->next = object->next;               \
-   else _GLHCKlibrary.world.list = NULL;        \
+#define _glhckWorldRemove(list, object, cast)      \
+{                                                  \
+   cast i;                                         \
+   if (object == (i = _GLHCKlibrary.world.list))   \
+      _GLHCKlibrary.world.list = object->next;     \
+   else {                                          \
+      for (; i && i->next != object; i = i->next); \
+      if (i) i->next = object->next;               \
+      else _GLHCKlibrary.world.list = NULL;        \
+   }                                               \
 }
 
 /* insert to draw queue */
