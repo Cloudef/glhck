@@ -119,7 +119,9 @@ int main(int argc, char **argv)
 #endif
 
    glhckObjectSetMaterialFlags(cube, GLHCK_MATERIAL_DRAW_AABB |
-                                     GLHCK_MATERIAL_DRAW_OBB);
+                                     GLHCK_MATERIAL_DRAW_OBB  |
+                                     GLHCK_MATERIAL_CULL      |
+                                     GLHCK_MATERIAL_DEPTH);
    glhckMemoryGraph();
 
    glhckText *text = glhckTextNew(512, 512);
