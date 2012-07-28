@@ -206,6 +206,7 @@ GLHCKAPI void glhckDisplayResize(int width, int height);
 
 /* rendering */
 GLHCKAPI void glhckRenderSetFlags(unsigned int flags);
+GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat);
 GLHCKAPI void glhckRender(void);
 GLHCKAPI void glhckClear(void);
 

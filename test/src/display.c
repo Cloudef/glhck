@@ -150,7 +150,16 @@ int main(int argc, char **argv)
       glhckCameraProjection(camera, projectionType);
 
       /* update the camera */
-      glhckCameraUpdate(camera);
+      if(glfwGetKey(window, GLFW_KEY_O))
+      {
+         kmMat4 identity;
+         kmMat4Identity(&identity);
+         glhckRenderSetProjection(&identity);
+      }
+      else
+      {
+         glhckCameraUpdate(camera);
+      }
 
       /* rotate */
       glhckCameraPosition(camera, &cameraPos);
