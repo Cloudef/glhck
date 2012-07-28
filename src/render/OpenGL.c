@@ -329,7 +329,8 @@ static inline void geometryDraw(__GLHCKobjectGeometry *geometry)
 static inline void materialState(_glhckObject *object)
 {
    unsigned int i;
-   __OpenGLstate old = _OpenGL.state;
+   __OpenGLstate old   = _OpenGL.state;
+   _OpenGL.state.flags = 0; /* reset this state */
 
    /* always draw vertices */
    _OpenGL.state.attrib[0] = 1;
