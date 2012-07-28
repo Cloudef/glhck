@@ -87,14 +87,14 @@ static void x(unsigned int object)                                   \
 #ifdef NDEBUG
 #  define GL_CALL(x) x
 #else
-#  define GL_CALL(x) x; GL_ERROR(__func__, __STRING(x));
-static inline void GL_ERROR(const char *func, const char *glfunc)
+#  define GL_CALL(x) x; GL_ERROR(__LINE__, __func__, __STRING(x));
+static inline void GL_ERROR(unsigned int line, const char *func, const char *glfunc)
 {
    GLenum error;
    if ((error = glGetError())
          != GL_NO_ERROR)
-      DEBUG(GLHCK_DBG_ERROR, "GL @%-20s %-20s >> %s",
-            func, glfunc,
+      DEBUG(GLHCK_DBG_ERROR, "GL @%d:%-20s %-20s >> %s",
+            line, func, glfunc,
             error==GL_INVALID_ENUM?
             "GL_INVALID_ENUM":
             error==GL_INVALID_VALUE?
@@ -367,7 +367,6 @@ static inline void materialState(_glhckObject *object)
    if (GL_STATE_CHANGED(GL_STATE_DEPTH)) {
       if (GL_HAS_STATE(GL_STATE_DEPTH)) {
          GL_CALL(glEnable(GL_DEPTH_TEST));
-         GL_CALL(glEnable(GL_DEPTH_BUFFER_BIT));
          GL_CALL(glDepthMask(GL_TRUE));
          GL_CALL(glDepthFunc(GL_LEQUAL));
       } else {
@@ -378,8 +377,8 @@ static inline void materialState(_glhckObject *object)
    /* check culling */
    if (GL_STATE_CHANGED(GL_STATE_CULL)) {
       if (GL_HAS_STATE(GL_STATE_CULL)) {
-         GL_CALL(glCullFace(GL_BACK));
          GL_CALL(glEnable(GL_CULL_FACE));
+         GL_CALL(glCullFace(GL_BACK));
       } else {
          GL_CALL(glDisable(GL_CULL_FACE));
       }
