@@ -226,6 +226,15 @@ GLHCKAPI void glhckRenderSetFlags(unsigned int flags)
    _GLHCKlibrary.render.flags = flags;
 }
 
+
+/* \brief set projection matrix */
+GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat)
+{
+   CALL(1, "%p", mat);
+
+   _GLHCKlibrary.render.api.setProjection(mat);
+}
+
 /* \brief render scene */
 GLHCKAPI void glhckRender(void)
 {
