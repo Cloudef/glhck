@@ -94,14 +94,14 @@ extern "C" {
 /* public api below */
 
 /* texture format */
-#define GLHCK_RED       0x1903
-#define GLHCK_GREEN        0x1904
-#define GLHCK_BLUE         0x1905
-#define GLHCK_ALPHA        0x1906
+#define GLHCK_RED             0x1903
+#define GLHCK_GREEN           0x1904
+#define GLHCK_BLUE            0x1905
+#define GLHCK_ALPHA           0x1906
 #define GLHCK_LUMINANCE       0x1909
 #define GLHCK_LUMINANCE_ALPHA 0x190A
-#define GLHCK_RGB       0x1907
-#define GLHCK_RGBA         0x1908
+#define GLHCK_RGB             0x1907
+#define GLHCK_RGBA            0x1908
 
 /* geometry type */
 #define GLHCK_POINTS          0x0000
