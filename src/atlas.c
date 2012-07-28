@@ -293,16 +293,14 @@ GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(glhckAtlas *atlas,
 }
 
 /* \brief return transformed coordinates of packed texture */
-GLHCKAPI int glhckAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
-      const kmVec2 *in, kmVec2 *out)
+GLHCKAPI int glhckAtlasGetTransform(glhckAtlas *atlas, glhckTexture *texture,
+      kmVec4 *out, short *degrees)
 {
    float atlasWidth, atlasHeight;
-   float width, height, x, y;
    _glhckAtlasArea *packed;
-   kmVec2 center = { 0.5f, 0.5f };
 
-   CALL(2, "%p, %p, "VEC2S", "VEC2S, atlas, texture, VEC2(in), VEC2(out));
-   assert(atlas && texture && in && out);
+   CALL(2, "%p, %p, "VEC4S", %p", atlas, texture, VEC2(out), degrees);
+   assert(atlas && texture && out && degrees);
 
    if (!atlas->texture)
       goto fail;
@@ -313,22 +311,42 @@ GLHCKAPI int glhckAtlasGetTransformed(glhckAtlas *atlas, glhckTexture *texture,
    atlasWidth  = atlas->texture->width;
    atlasHeight = atlas->texture->height;
 
-   width    = packed->x2 / atlasWidth;
-   height   = packed->y2 / atlasHeight;
-   x        = packed->x1 / atlasWidth;
-   y        = packed->y1 / atlasHeight;
+   out->z = packed->x2 / atlasWidth;
+   out->w = packed->y2 / atlasHeight;
+   out->x = packed->x1 / atlasWidth;
+   out->y = packed->y1 / atlasHeight;
+   *degrees = packed->rotated?-90:0;
+
+   RET(2, "%d", RETURN_OK);
+   return RETURN_OK;
+
+fail:
+   RET(2, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
+}
+
+/* \brief return coordinates transformed with the packed texture's transform */
+GLHCKAPI int glhckAtlasTransformCoordinates(glhckAtlas *atlas, glhckTexture *texture,
+      const kmVec2 *in, kmVec2 *out)
+{
+   short degrees;
+   kmVec4 transformed;
+   kmVec2 center = { 0.5f, 0.5f };
+
+   CALL(2, "%p, %p, "VEC2S", "VEC2S, atlas, texture, VEC2(in), VEC2(out));
+   if (glhckAtlasGetTransform(atlas, texture, &transformed, &degrees)
+         != RETURN_OK)
+      goto fail;
 
    /* do we need to rotate? */
-   if (packed->rotated)
-      kmVec2RotateBy(out, in, -90, &center);
-   else
-      kmVec2Assign(out, in);
+   if (degrees != 0) kmVec2RotateBy(out, in, degrees, &center);
+   else              kmVec2Assign(out, in);
 
    /* out */
-   out->x *= width;
-   out->x += x;
-   out->y *= height;
-   out->y += y;
+   out->x *= transformed.z;
+   out->x += transformed.x;
+   out->y *= transformed.w;
+   out->y += transformed.y;
 
    RET(2, "%d", RETURN_OK);
    return RETURN_OK;

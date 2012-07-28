@@ -138,7 +138,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
 
          /* if there is packed texture */
          if (textureList[i])
-            glhckAtlasGetTransformed(atlas, textureList[i],
+            glhckAtlasTransformCoordinates(atlas, textureList[i],
                   &vertexData[ix].coord, &vertexData[ix].coord);
 
          indices[i2] = ix;

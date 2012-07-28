@@ -176,9 +176,15 @@ typedef struct __GLHCKvertexData {
 #endif
 } __GLHCKvertexData;
 
+typedef struct __GLHCKcoordTransform {
+   short degrees;
+   kmVec4 transform;
+} __GLHCKcoordTransform;
+
 typedef struct __GLHCKobjectGeometry
 {
    struct __GLHCKvertexData *vertexData;
+   struct __GLHCKcoordTransform *transformedCoordinates;
    GLHCK_CAST_INDEX *indices;
    size_t indicesCount, vertexCount;
    kmVec3 bias, scale;
