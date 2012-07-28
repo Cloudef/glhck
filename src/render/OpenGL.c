@@ -39,10 +39,21 @@ const GLenum _glhckAttribName[] = {
 #endif
 };
 
+/* state flags */
+enum {
+   GL_STATE_DEPTH       = 1,
+   GL_STATE_CULL        = 2,
+   GL_STATE_ALPHA       = 4,
+   GL_STATE_TEXTURE     = 8,
+   GL_STATE_DRAW_AABB   = 16,
+   GL_STATE_DRAW_OBB    = 32,
+   GL_STATE_WIREFRAME   = 64
+};
+
 /* global data */
 typedef struct __OpenGLstate {
    char attrib[GLHCK_ATTRIB_COUNT];
-   char cull, alpha, texture, draw_aabb, draw_obb, wireframe;
+   unsigned int flags;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
@@ -52,6 +63,9 @@ typedef struct __OpenGLrender {
    kmMat4 orthographic;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
+
+/* check if we have certain draw state active */
+#define GL_HAS_STATE(x) (_OpenGL.state.flags & x)
 
 /* declare gl generation function */
 #define DECLARE_GL_GEN_FUNC(x,y)                                     \
@@ -309,6 +323,8 @@ static inline void geometryDraw(__GLHCKobjectGeometry *geometry)
    }
 }
 
+#define GL_STATE_CHANGED(x) (_OpenGL.state.flags & x) != (old.flags & x)
+
 /* \brief set needed state from object data */
 static inline void materialState(_glhckObject *object)
 {
@@ -319,61 +335,75 @@ static inline void materialState(_glhckObject *object)
    _OpenGL.state.attrib[0] = 1;
 
    /* need texture? */
-   _OpenGL.state.texture   = object->material.texture?1:0;
-   _OpenGL.state.attrib[1] = _OpenGL.state.texture;
+   _OpenGL.state.attrib[1] = object->material.texture?1:0;
+   _OpenGL.state.flags |= object->material.texture?GL_STATE_TEXTURE:0;
 
    /* aabb? */
-   _OpenGL.state.draw_aabb =
-      object->material.flags & GLHCK_MATERIAL_DRAW_AABB;
+   _OpenGL.state.flags |=
+      (object->material.flags & GLHCK_MATERIAL_DRAW_AABB)?GL_STATE_DRAW_AABB:0;
 
    /* obb? */
-   _OpenGL.state.draw_obb =
-      object->material.flags & GLHCK_MATERIAL_DRAW_OBB;
+   _OpenGL.state.flags |=
+      (object->material.flags & GLHCK_MATERIAL_DRAW_OBB)?GL_STATE_DRAW_OBB:0;
 
    /* wire? */
-   _OpenGL.state.wireframe =
-      object->material.flags & GLHCK_MATERIAL_WIREFRAME;
+   _OpenGL.state.flags |=
+      (object->material.flags & GLHCK_MATERIAL_WIREFRAME)?GL_STATE_WIREFRAME:0;
 
    /* alpha? */
-   if (object->material.flags & GLHCK_MATERIAL_ALPHA)
-      _OpenGL.state.alpha = 1;
+   _OpenGL.state.flags |=
+      (object->material.flags & GLHCK_MATERIAL_ALPHA)?GL_STATE_ALPHA:0;
 
-   /* check culling */
-   if (_OpenGL.state.cull != old.cull) {
-      if (_OpenGL.state.cull) {
+   /* depth? */
+   _OpenGL.state.flags |=
+      (object->material.flags & GLHCK_MATERIAL_DEPTH)?GL_STATE_DEPTH:0;
+
+   /* cull? */
+   _OpenGL.state.flags |=
+      (object->material.flags & GLHCK_MATERIAL_CULL)?GL_STATE_CULL:0;
+
+   /* depth? */
+   if (GL_STATE_CHANGED(GL_STATE_DEPTH)) {
+      if (GL_HAS_STATE(GL_STATE_DEPTH)) {
          GL_CALL(glEnable(GL_DEPTH_TEST));
          GL_CALL(glEnable(GL_DEPTH_BUFFER_BIT));
          GL_CALL(glDepthMask(GL_TRUE));
          GL_CALL(glDepthFunc(GL_LEQUAL));
+      } else {
+         GL_CALL(glDisable(GL_DEPTH_TEST));
+      }
+   }
+
+   /* check culling */
+   if (GL_STATE_CHANGED(GL_STATE_CULL)) {
+      if (GL_HAS_STATE(GL_STATE_CULL)) {
          GL_CALL(glCullFace(GL_BACK));
          GL_CALL(glEnable(GL_CULL_FACE));
       } else {
-         GL_CALL(glDisable(GL_DEPTH_TEST));
          GL_CALL(glDisable(GL_CULL_FACE));
       }
    }
 
    /* disable culling for strip geometry
     * TODO: Fix the stripping to get rid of this */
-   if (_OpenGL.state.cull &&
+   if (GL_HAS_STATE(GL_STATE_CULL) &&
        object->geometry.type == GLHCK_TRIANGLE_STRIP) {
       GL_CALL(glDisable(GL_CULL_FACE));
    }
 
    /* check alpha */
-   if (_OpenGL.state.alpha != old.alpha) {
-      if (_OpenGL.state.alpha) {
+   if (GL_STATE_CHANGED(GL_STATE_ALPHA)) {
+      if (GL_HAS_STATE(GL_STATE_ALPHA)) {
          GL_CALL(glEnable(GL_BLEND));
-         GL_CALL(glBlendFunc(GL_SRC_ALPHA,
-                  GL_ONE_MINUS_SRC_ALPHA));
+         GL_CALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
       } else {
          GL_CALL(glDisable(GL_BLEND));
       }
    }
 
    /* check texture */
-   if (_OpenGL.state.texture != old.texture) {
-      if (_OpenGL.state.texture) {
+   if (GL_STATE_CHANGED(GL_STATE_TEXTURE)) {
+      if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
          GL_CALL(glEnable(GL_TEXTURE_2D));
       } else {
          GL_CALL(glDisable(GL_TEXTURE_2D));
@@ -392,9 +422,11 @@ static inline void materialState(_glhckObject *object)
    }
 
    /* bind texture if used */
-   if (_OpenGL.state.texture)
+   if (GL_HAS_STATE(GL_STATE_TEXTURE))
       glhckTextureBind(object->material.texture);
 }
+
+#undef GL_STATE_CHANGED
 
 /* \brief draw object's oriented bounding box */
 static void drawOBB(_glhckObject *object)
@@ -433,7 +465,7 @@ static void drawOBB(_glhckObject *object)
                       min.x, max.y, max.z  };
 
    /* disable stuff if enabled */
-   if (_OpenGL.state.texture) {
+   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
       GL_CALL(glDisable(GL_TEXTURE_2D));
    }
    for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
@@ -447,7 +479,7 @@ static void drawOBB(_glhckObject *object)
    GL_CALL(glColor4f(1, 1, 1, 1));
 
    /* re enable stuff we disabled */
-   if (_OpenGL.state.texture) {
+   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
       GL_CALL(glEnable(GL_TEXTURE_2D));
    }
    for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
@@ -494,7 +526,7 @@ static void drawAABB(_glhckObject *object)
                       min.x, max.y, max.z  };
 
    /* disable stuff if enabled */
-   if (_OpenGL.state.texture) {
+   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
       GL_CALL(glDisable(GL_TEXTURE_2D));
    }
    for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
@@ -510,7 +542,7 @@ static void drawAABB(_glhckObject *object)
    GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
 
    /* re enable stuff we disabled */
-   if (_OpenGL.state.texture) {
+   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
       GL_CALL(glEnable(GL_TEXTURE_2D));
    }
    for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
@@ -543,7 +575,7 @@ static void objectDraw(_glhckObject *object)
    geometryPointer(&object->geometry);
 
    /* switch to wireframe if requested */
-   if (_OpenGL.state.wireframe) {
+   if (GL_HAS_STATE(GL_STATE_WIREFRAME)) {
       old_primitive = object->geometry.type;
       object->geometry.type = object->geometry.type == GLHCK_TRIANGLES
          ? GLHCK_LINES : GLHCK_LINE_STRIP;
@@ -553,20 +585,20 @@ static void objectDraw(_glhckObject *object)
    geometryDraw(&object->geometry);
 
    /* restore old primitive type */
-   if (_OpenGL.state.wireframe)
+   if (GL_HAS_STATE(GL_STATE_WIREFRAME))
       object->geometry.type = old_primitive;
 
    /* draw axis-aligned bounding box, if requested */
-   if (_OpenGL.state.draw_aabb)
+   if (GL_HAS_STATE(GL_STATE_DRAW_AABB))
       drawAABB(object);
 
    /* draw oriented bounding box, if requested */
-   if (_OpenGL.state.draw_obb)
+   if (GL_HAS_STATE(GL_STATE_DRAW_OBB))
       drawOBB(object);
 
    /* enable the culling back
-    * NOTE: this is a hack*/
-   if (_OpenGL.state.cull &&
+    * NOTE: this is a hack */
+   if (GL_HAS_STATE(GL_STATE_CULL) &&
        object->geometry.type == GLHCK_TRIANGLE_STRIP) {
       GL_CALL(glEnable(GL_CULL_FACE));
    }
@@ -581,20 +613,20 @@ static void textDraw(_glhckText *text)
    CALL(2, "%p", text);
 
    /* set states */
-   if (!_OpenGL.state.cull) {
-      _OpenGL.state.cull = 1;
+   if (!GL_HAS_STATE(GL_STATE_CULL)) {
+      _OpenGL.state.flags |= GL_STATE_CULL;
       GL_CALL(glEnable(GL_CULL_FACE));
    }
 
-   if (!_OpenGL.state.alpha) {
-      _OpenGL.state.alpha = 1;
+   if (!GL_HAS_STATE(GL_STATE_ALPHA)) {
+      _OpenGL.state.flags |= GL_STATE_ALPHA;
       GL_CALL(glEnable(GL_BLEND));
       GL_CALL(glBlendFunc(GL_SRC_ALPHA,
                GL_ONE_MINUS_SRC_ALPHA));
    }
 
-   if (!_OpenGL.state.texture) {
-      _OpenGL.state.texture = 1;
+   if (!GL_HAS_STATE(GL_TEXTURE)) {
+      _OpenGL.state.flags |= GL_STATE_TEXTURE;
       _OpenGL.state.attrib[1] = 1;
       GL_CALL(glEnable(GL_TEXTURE_2D));
       GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
@@ -603,6 +635,10 @@ static void textDraw(_glhckText *text)
    if (!_OpenGL.state.attrib[0]) {
       _OpenGL.state.attrib[0] = 1;
       GL_CALL(glEnableClientState(GL_VERTEX_ARRAY));
+   }
+
+   if (GL_HAS_STATE(GL_STATE_DEPTH)) {
+      GL_CALL(glDisable(GL_DEPTH_TEST));
    }
 
    /* set 2d projection */
@@ -615,7 +651,6 @@ static void textDraw(_glhckText *text)
    /* the culling is flipped in orthographic */
    glCullFace(GL_FRONT);
 
-   GL_CALL(glDisable(GL_DEPTH_TEST));
    for (texture = text->tcache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
@@ -630,7 +665,10 @@ static void textDraw(_glhckText *text)
       GL_CALL(glDrawArrays(GLHCK_TRISTRIP?GL_TRIANGLE_STRIP:GL_TRIANGLES,
                0, texture->geometry.vertexCount));
    }
-   GL_CALL(glEnable(GL_DEPTH_TEST));
+
+   if (GL_HAS_STATE(GL_STATE_DEPTH)) {
+      GL_CALL(glEnable(GL_DEPTH_TEST));
+   }
 
    /* switch back to normal cull */
    glCullFace(GL_BACK);
