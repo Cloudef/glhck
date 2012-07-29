@@ -313,9 +313,17 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
    if (force_power_of_two)
       tp->longest_edge = next_pow2(tp->longest_edge);
 
-   width = tp->longest_edge;
    count = tp->total_area / (tp->longest_edge * tp->longest_edge);
    height = (count + 2) * tp->longest_edge;
+
+   /* more sane packing area */
+   width   = height/2;
+   height /= 2;
+
+   for (i = 0; i != tp->texture_count; ++i) {
+      if (t->width  > width)  width = t->width;
+      if (t->height > height) height = t->height;
+   }
 
    tp->debug_count = 0;
    glhckTexturePackerNodeNew(tp, 0, 0, width, height);
