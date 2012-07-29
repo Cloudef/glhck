@@ -178,6 +178,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
 {
    int width, height, maxTexSize;
    unsigned short count;
+   kmVec4 old_clear;
    kmMat4 old_projection;
    _glhckTexturePacker *tp;
    _glhckAtlasRect *rect;
@@ -231,6 +232,10 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    old_projection = _GLHCKlibrary.render.api.getProjection();
    _GLHCKlibrary.render.api.setProjection(&ortho);
 
+   /* set clear color */
+   old_clear = _GLHCKlibrary.render.draw.clearColor;
+   _GLHCKlibrary.render.api.setClearColor(0,0,0,0);
+
    glhckRttBegin(rtt);
    _GLHCKlibrary.render.api.clear();
    for (rect = atlas->rect; rect; rect = rect->next) {
@@ -263,6 +268,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    _GLHCKlibrary.render.api.setProjection(&old_projection);
    _GLHCKlibrary.render.api.viewport(0, 0, _GLHCKlibrary.render.width,
          _GLHCKlibrary.render.height);
+   _GLHCKlibrary.render.api.setClearColor(
+         old_clear.x, old_clear.y, old_clear.z, old_clear.w);
 
    /* free plane */
    glhckObjectFree(plane);
