@@ -184,7 +184,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    _glhckRtt *rtt = NULL;
    _glhckObject *plane = NULL;
    kmMat4 ortho;
-   CALL(2, "%p, %d, %d", atlas, power_of_two, border);
+   CALL(0, "%p, %d, %d", atlas, power_of_two, border);
 
    /* new texture packer */
    if (!(tp = _glhckTexturePackerNew()))
@@ -266,14 +266,14 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    /* free the texture packer */
    _glhckTexturePackerFree(tp);
 
-   RET(2, "%d", RETURN_OK);
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
    IFDO(glhckObjectFree, plane);
    IFDO(glhckRttFree, rtt);
    IFDO(_glhckTexturePackerFree, tp);
-   RET(2, "%d", RETURN_FAIL);
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
