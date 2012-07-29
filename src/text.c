@@ -506,7 +506,7 @@ GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file)
 
    /* open font */
    if (!(f = fopen(file, "rb")))
-      goto fail;
+      goto read_fail;
 
    fseek(f, 0, SEEK_END);
    size = ftell(f);
@@ -525,6 +525,8 @@ GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file)
    RET(0, "%d", id);
    return id;
 
+read_fail:
+   DEBUG(GLHCK_DBG_WARNING, "\1Failed to open font: \5%s", file);
 fail:
    IFDO(fclose, f);
    IFDO(_glhckFree, data);
