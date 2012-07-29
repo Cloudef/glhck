@@ -491,7 +491,6 @@ static void drawOBB(_glhckObject *object)
 /* \brief draw object's axis-aligned bounding box */
 static void drawAABB(_glhckObject *object)
 {
-   kmAABB aabb;
    unsigned int i = 0;
    kmVec3 min = object->view.aabb.min;
    kmVec3 max = object->view.aabb.max;
@@ -679,6 +678,7 @@ static void textDraw(_glhckText *text)
 /* \brief get render information */
 static int renderInfo(void)
 {
+   int maxTex;
    char *version, *vendor, *extensions;
    unsigned int major = 0, minor = 0, patch = 0;
    TRACE(0);
@@ -698,6 +698,9 @@ static int renderInfo(void)
 
    if (extensions)
       DEBUG(3, extensions);
+
+   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTex);
+   DEBUG(3, "GL_MAX_TEXTURE_SIZE: %u", maxTex);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
