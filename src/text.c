@@ -536,11 +536,11 @@ fail:
 GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
       const char *file, int ascent, int descent, int line_gap)
 {
+   int fh;
+   _glhckTexture *temp = NULL;
    unsigned int id, texture;
    unsigned char *data = NULL;
-   int fh, width, height, channels;
    __GLHCKtextFont *font, *f;
-   _glhckTexture *temp;
    CALL(0, "%p, %s, %d, %d, %d",
          text, file, ascent, descent, line_gap);
    assert(text && file);
@@ -557,20 +557,18 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
    /* load image */
    if (!(temp = glhckTextureNew(file, 0)))
       goto fail;
-   data = _glhckCopy(temp->data, temp->size);
-   glhckTextureFree(temp);
 
-   /* check success */
-   if (!data)
+   /* get data from texture */
+   if (!(data = _glhckCopy(temp->data, temp->size)))
       goto fail;
 
    /* create texture */
    if (!(texture = _GLHCKlibrary.render.api.createTexture(
-               data, width, height,
-               channels==2?GLHCK_LUMINANCE_ALPHA:
-               channels==3?GLHCK_RGB:
-               channels==4?GLHCK_RGBA:GLHCK_LUMINANCE, 0, 0)))
+               data, temp->width, temp->height, temp->format, 0, 0)))
       goto fail;
+
+   /* not needed anymore */
+   NULLDO(glhckTextureFree, temp);
 
    if (_glhckTextNewTexture(text, texture) != RETURN_OK)
       goto fail;
@@ -590,6 +588,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
    return id;
 
 fail:
+   IFDO(glhckTextureFree, temp);
    IFDO(_glhckFree, font);
    IFDO(free, data);
    RET(0, "%d", 0);
