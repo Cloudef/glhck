@@ -309,6 +309,9 @@ typedef void (*__GLHCKrenderAPIbindFramebuffer)      (unsigned int object);
 typedef int (*__GLHCKrenderAPIlinkFramebufferWithTexture) (unsigned int object, unsigned int texture,
       unsigned int attachment);
 
+/* parameters */
+typedef void (*__GLHCKrenderAPIgetIntegerv) (unsigned int pname, int *params);
+
 typedef struct __GLHCKrenderAPI
 {
    __GLHCKrenderAPIterminate        terminate;
@@ -333,6 +336,8 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIdeleteFramebuffers     deleteFramebuffers;
    __GLHCKrenderAPIbindFramebuffer        bindFramebuffer;
    __GLHCKrenderAPIlinkFramebufferWithTexture linkFramebufferWithTexture;
+
+   __GLHCKrenderAPIgetIntegerv getIntegerv;
 } __GLHCKrenderAPI;
 
 typedef struct __GLHCKtexture
