@@ -332,6 +332,8 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
       if (t->height > height) height = t->height;
    }
 
+   DEBUG(0, "\2Good size: \3%d\5x\3%d", width, height);
+
    tp->debug_count = 0;
    glhckTexturePackerNodeNew(tp, 0, 0, width, height);
 
