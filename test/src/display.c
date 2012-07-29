@@ -134,7 +134,7 @@ int main(int argc, char **argv)
    if (!text) return EXIT_FAILURE;
 
    unsigned int font  = glhckTextNewFont(text, "/usr/share/fonts/OTF/ipag.ttf");
-   unsigned int font2 = glhckTextNewFont(text, "/usr/share/fonts/TTF/DejaVuSans.ttf");
+   unsigned int font2 = glhckTextNewFont(text, "test/media/DejaVuSans.ttf");
 
    glfwSetWindowCloseCallback(close_callback);
    glfwSetWindowSizeCallback(resize_callback);
