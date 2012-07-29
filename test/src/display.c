@@ -67,7 +67,7 @@ int main(int argc, char **argv)
    const kmAABB *aabb;
    kmVec3 cameraPos = { 0, 0, 0 };
    kmVec3 cameraRot = { 180, 180, 0 };
-   float spin = 0.0f, spinRadius;
+   float spinRadius;
 
    float          now          = 0;
    float          last         = 0;
