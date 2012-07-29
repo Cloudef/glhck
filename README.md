@@ -17,7 +17,8 @@ Move on.
 
 ## Running test(s)
 
-    ./target/test/display                 # - for example
+    cd target                             # - cd to your target directory
+    ./test/display                        # - for example
 
 ## Installing
 
