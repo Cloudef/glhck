@@ -116,7 +116,7 @@ int main(int argc, char **argv)
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
    //sprite2 = glhckObjectCopy(sprite); /* FIXME */
-#if 1
+#if 0
    cube = glhckCubeNew(1.0f);
    if (cube) glhckObjectSetTexture(cube, texture);
    cameraPos.z = -20.0f;
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
       } else if (glfwGetKey(window, GLFW_KEY_I)) {
          kmMat4 mat2d, pos;
          kmMat4Translation(&pos, -cameraPos.x, -cameraPos.y, -cameraPos.z);
-         kmMat4Scaling(&mat2d, 2.0f/WIDTH, 2.0f/HEIGHT, 0.0f);
+         kmMat4Scaling(&mat2d, -2.0f/WIDTH, 2.0f/HEIGHT, 0.0f);
          kmMat4Multiply(&mat2d, &mat2d, &pos);
          glhckRenderSetProjection(&mat2d);
       } else {
