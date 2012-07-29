@@ -325,9 +325,14 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
       tp->longest_edge = next_pow2(tp->longest_edge);
 
    width = tp->longest_edge;
-   count = tp->total_area / (tp->longest_edge * tp->longest_edge);
+   count = round((float)tp->total_area/(tp->longest_edge * tp->longest_edge));
    height = (count + 2) * tp->longest_edge;
 
+   if (force_power_of_two)
+      height = next_pow2(height);
+
+   DEBUG(0, "\4Total area: \3%d", tp->total_area);
+   DEBUG(0, "\4Count: \3%d", count);
    DEBUG(0, "\1Initial size: \3%d\5x\3%d", width, height);
 
    /* more sane packing area */
