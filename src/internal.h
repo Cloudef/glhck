@@ -352,6 +352,7 @@ typedef struct __GLHCKcamera
 
 typedef struct __GLHCKrenderDraw
 {
+   kmVec4 clearColor;
    unsigned int texture, drawCount;
    struct _glhckCamera  *camera;
    struct _glhckObject  *oqueue[GLHCK_MAX_DRAW];

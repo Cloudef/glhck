@@ -244,6 +244,7 @@ static void setClearColor(const float r, const float g, const float b, const flo
 {
    TRACE(1);
    GL_CALL(glClearColor(r, g, b, a));
+   kmVec4Fill(&_GLHCKlibrary.render.draw.clearColor, r, g, b, a);
 }
 
 
@@ -766,7 +767,7 @@ void _glhckRenderOpenGL(void)
    TRACE(0);
 
    /* init OpenGL context */
-   GL_CALL(glClearColor(0,0,0,1));
+   setClearColor(0,0,0,1);
    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
 #if !defined(GLES)
