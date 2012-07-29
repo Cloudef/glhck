@@ -43,6 +43,7 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(deleteFramebuffers);
    GLHCK_API_CHECK(bindFramebuffer);
    GLHCK_API_CHECK(linkFramebufferWithTexture);
+   GLHCK_API_CHECK(getIntegerv);
 }
 
 /* \brief builds and sends the default projection to renderer */
@@ -219,10 +220,16 @@ GLHCKAPI void glhckClear(void)
    _GLHCKlibrary.render.api.clear();
 }
 
+/* \brief get parameter from renderer */
+GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params) {
+   CALL(1, "%u, %p", pname, params);
+   _GLHCKlibrary.render.api.getIntegerv(pname, params);
+}
+
 /* \brief set render flags */
 GLHCKAPI void glhckRenderSetFlags(unsigned int flags)
 {
-   CALL(0, "%u", flags);
+   CALL(1, "%u", flags);
    _GLHCKlibrary.render.flags = flags;
 }
 

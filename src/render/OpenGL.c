@@ -673,6 +673,13 @@ static void textDraw(_glhckText *text)
    setProjection(&_OpenGL.projection);
 }
 
+/* \brief get parameters */
+static void getIntegerv(unsigned int pname, int *params)
+{
+   CALL(1, "%u, %p", pname, params);
+   GL_CALL(glGetIntegerv(pname, params));
+}
+
 /* ---- Initialization ---- */
 
 /* \brief get render information */
@@ -699,8 +706,10 @@ static int renderInfo(void)
    if (extensions)
       DEBUG(3, extensions);
 
-   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTex);
-   DEBUG(3, "GL_MAX_TEXTURE_SIZE: %u", maxTex);
+   getIntegerv(GLHCK_MAX_TEXTURE_SIZE, &maxTex);
+   DEBUG(3, "GL_MAX_TEXTURE_SIZE: %d", maxTex);
+   getIntegerv(GLHCK_MAX_RENDERBUFFER_SIZE, &maxTex);
+   DEBUG(3, "GL_MAX_RENDERBUFFER_SIZE: %d", maxTex);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -804,6 +813,9 @@ void _glhckRenderOpenGL(void)
    /* common */
    GLHCK_RENDER_FUNC(viewport, viewport);
    GLHCK_RENDER_FUNC(terminate, renderTerminate);
+
+   /* parameters */
+   GLHCK_RENDER_FUNC(getIntegerv, getIntegerv);
 
    /* this also tells library that everything went OK,
     * so do it last */

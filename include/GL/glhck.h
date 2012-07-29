@@ -111,6 +111,19 @@ extern "C" {
 #define GLHCK_TRIANGLES       0x0004
 #define GLHCK_TRIANGLE_STRIP  0x0005
 
+/* renderer properties */
+#define GLHCK_MAX_TEXTURE_SIZE             0x0D33
+#define GLHCK_MAX_CUBE_MAP_TEXTURE_SIZE    0x8510
+#define GLHCK_MAX_VERTEX_ATTRIBS           0x8869
+#define GLHCK_MAX_VERTEX_UNIFORM_VECTORS   0x8859
+#define GLHCK_MAX_VARYING_VECTORS          0x8DFC
+#define GLHCK_MAX_COMBINED_TEXTURE_IMAGE_UNITS 0x8B4D
+#define GLHCK_MAX_VERTEX_TEXTURE_IMAGE_UNITS 0x8B4C
+#define GLHCK_MAX_TEXTURE_IMAGE_UNITS      0x8872
+#define GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS 0x8DFD
+#define GLHCK_MAX_RENDERBUFFER_SIZE        0x84E8
+#define GLHCK_MAX_VIEWPORT_DIMS            0x0D3A
+
 /* debugging level */
 typedef enum glhckDebugLevel {
    GLHCK_DBG_ERROR,
@@ -205,6 +218,7 @@ GLHCKAPI void glhckDisplayClose(void);
 GLHCKAPI void glhckDisplayResize(int width, int height);
 
 /* rendering */
+GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params);
 GLHCKAPI void glhckRenderSetFlags(unsigned int flags);
 GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat);
 GLHCKAPI void glhckRender(void);
