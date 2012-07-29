@@ -133,7 +133,7 @@ int main(int argc, char **argv)
    glhckText *text = glhckTextNew(512, 512);
    if (!text) return EXIT_FAILURE;
 
-   unsigned int font  = glhckTextNewFont(text, "/usr/share/fonts/OTF/ipag.ttf");
+   unsigned int font  = glhckTextNewFont(text, "test/media/sazanami-gothic.ttf");
    unsigned int font2 = glhckTextNewFont(text, "test/media/DejaVuSans.ttf");
 
    glfwSetWindowCloseCallback(close_callback);
