@@ -289,8 +289,20 @@ int _glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *in_x
    return ret;
 }
 
+void checkDimensions(_glhckTexturePacker *tp, int *width, int *height)
+{
+   tpTexture *t;
+   unsigned short i;
+   for (i = 0; i != tp->texture_count; ++i) {
+      t = &tp->textures[i];
+      if (t->width  > *width)  *width  = t->width;
+      if (t->height > *height) *height = t->height;
+   }
+}
+
 int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_height, int force_power_of_two, int one_pixel_border)
 {
+   tpTexture *t;
    int width, height;
    unsigned short count, i, i2;
    int least_y, least_x;
@@ -298,7 +310,6 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
    int index, longest_edge, most_area;
    int flipped, wid, hit, y;
    tpNode *previous_best_fit, *best_fit, *previous, *search;
-   tpTexture *t;
    assert(tp);
 
    if (one_pixel_border) {
@@ -317,19 +328,21 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
    count = tp->total_area / (tp->longest_edge * tp->longest_edge);
    height = (count + 2) * tp->longest_edge;
 
+   DEBUG(0, "\1Initial size: \3%d\5x\3%d", width, height);
+
    /* more sane packing area */
    if (width > height) {
-      height  = width/2;
-      width  /= 2;
-   } else {
-      width   = height/2;
-      height /= 2;
-   }
-
-   for (i = 0; i != tp->texture_count; ++i) {
-      t = &tp->textures[i];
-      if (t->width  > width)  width = t->width;
-      if (t->height > height) height = t->height;
+      if (height != width/2) {
+         height  = width/2;
+         width  /= 2;
+         checkDimensions(tp, &width, &height);
+      }
+   } else if (height > width) {
+      if (width != height/2) {
+         width   = height/2;
+         height /= 2;
+         checkDimensions(tp, &width, &height);
+      }
    }
 
    DEBUG(0, "\2Good size: \3%d\5x\3%d", width, height);
