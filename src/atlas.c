@@ -176,7 +176,7 @@ GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *atlas)
 /* \brief pack textures to atlas */
 GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int border)
 {
-   int width, height;
+   int width, height, maxTexSize;
    unsigned short count;
    kmMat4 old_projection;
    _glhckTexturePacker *tp;
@@ -205,6 +205,18 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
 
    /* pack textures */
    _glhckTexturePackerPack(tp, &width, &height, power_of_two, border);
+
+   /* downscale if over maximum texture size */
+   glhckRenderGetIntegerv(GLHCK_MAX_TEXTURE_SIZE, &maxTexSize);
+   if (width > maxTexSize) {
+      height *= (float)maxTexSize/width;
+      width   = maxTexSize;
+      DEBUG(0, "Downscaling atlas texture to: %dx%d", width, height);
+   } else if (height > maxTexSize) {
+      width *= (float)maxTexSize/height;
+      height = maxTexSize;
+      DEBUG(0, "Downscaling atlas texture to: %dx%d", width, height);
+   }
 
    if (!(rtt = glhckRttNew(width, height, GLHCK_RTT_RGBA)))
       goto fail;
