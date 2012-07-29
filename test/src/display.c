@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 {
    GLFWwindow window;
    glhckTexture *texture;
-   glhckObject *cube = NULL, *sprite = NULL, *sprite2 = NULL;
+   glhckObject *cube, *sprite, *sprite2, *sprite3;
    glhckCamera *camera;
    const kmAABB *aabb;
    kmVec3 cameraPos = { 0, 0, 0 };
@@ -110,8 +110,10 @@ int main(int argc, char **argv)
 
    sprite  = glhckSpriteNewFromFile("test/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
    sprite2 = glhckSpriteNewFromFile("test/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
+   sprite3 = glhckSpriteNewFromFile("test/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
    glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
    glhckObjectScalef(sprite2, 0.03f, 0.03f, 0.03f);
+   glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
    //sprite2 = glhckObjectCopy(sprite); /* FIXME */
 #if 1
@@ -157,6 +159,10 @@ int main(int argc, char **argv)
          kmMat4 identity;
          kmMat4Identity(&identity);
          glhckRenderSetProjection(&identity);
+      } else if (glfwGetKey(window, GLFW_KEY_I)) {
+         kmMat4 mat2d;
+         kmMat4Scaling(&mat2d, 2.0f/WIDTH, 2.0f/HEIGHT, 0.0f);
+         glhckRenderSetProjection(&mat2d);
       } else {
          glhckCameraUpdate(camera);
       }
@@ -192,6 +198,8 @@ int main(int argc, char **argv)
             (spinRadius*cos((glhckObjectGetRotation(cube))->z/2)+aabb->max.y/2),
             (glhckObjectGetOBB(cube))->max.z);
       glhckObjectDraw(sprite2);
+
+      glhckObjectDraw(sprite3);
 
       glhckRender();
 
