@@ -8,7 +8,7 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
 {
    _glhckRtt *rtt;
    _glhckTexture *texture = NULL;
-   CALL(0, "%d", mode);
+   CALL(0, "%d, %d, %d", width, height, mode);
 
    if (!(rtt = _glhckMalloc(sizeof(_glhckRtt))))
       goto fail;
