@@ -174,10 +174,8 @@ int main(int argc, char **argv)
       glhckCameraTargetf(camera, cameraPos.x, cameraPos.y, cameraPos.z + 1);
       glhckCameraRotate(camera, &cameraRot);
 
-      glhckObjectRotatef(cube, 30.0f * delta, 0, 30.0f * delta);
-      glhckObjectRotatef(sprite, 0, 30.0f * delta, 0);
-
       /* glhck drawing */
+      glhckObjectRotatef(cube, 30.0f * delta, 0, 30.0f * delta);
       glhckObjectDraw(cube);
 
       /* do spinning effect */
@@ -188,21 +186,20 @@ int main(int argc, char **argv)
       spinRadius += 5.0f;
 
       glhckObjectPositionf(sprite,
-            spinRadius*sin((glhckObjectGetRotation(cube))->x/2),
+            spinRadius*sin((glhckObjectGetRotation(cube))->x/8),
             (glhckObjectGetOBB(cube))->max.y,
-            spinRadius*cos((glhckObjectGetRotation(cube))->x/2));
+            spinRadius*cos((glhckObjectGetRotation(cube))->x/8));
       glhckObjectDraw(sprite);
 
       /* TODO: save object state on draw call
        * so we don't need sprite2 here! */
       glhckObjectPositionf(sprite2,
-            spinRadius*sin((glhckObjectGetRotation(cube))->z/2),
-            (spinRadius*cos((glhckObjectGetRotation(cube))->z/2)+aabb->max.y/2),
+            spinRadius*sin((glhckObjectGetRotation(cube))->z/8),
+            (spinRadius*cos((glhckObjectGetRotation(cube))->z/8)+aabb->max.y/2),
             (glhckObjectGetOBB(cube))->max.z);
+
       glhckObjectDraw(sprite2);
-
       glhckObjectDraw(sprite3);
-
       glhckRender();
 
       glhckTextDraw(text, font2, 18,         0,  HEIGHT-4, WIN_TITLE, NULL);
