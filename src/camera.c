@@ -23,8 +23,8 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
                                   camera->view.translation.y * camera->view.translation.y +
                                   camera->view.translation.z * camera->view.translation.z);
 
-         w *= distanceFromZero/2;
-         h *= distanceFromZero/2;
+         w *= (distanceFromZero+camera->view.near)/2;
+         h *= (distanceFromZero+camera->view.near)/2;
 
          kmMat4OrthographicProjection(&camera->view.projection,
             -w, w, -h, h, camera->view.near, camera->view.far);
