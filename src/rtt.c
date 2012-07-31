@@ -81,7 +81,10 @@ GLHCKAPI int glhckRttFillData(glhckRtt *rtt)
    CALL(1, "%p", rtt);
    assert(rtt);
 
-   data = _glhckMalloc(rtt->texture->width    *
+   /* texture will take ownership of this data,
+    * so let's alloc it explictly for TEXTURE channel */
+   data = __glhckMalloc(GLHCK_CHANNEL_TEXTURE,
+                       rtt->texture->width    *
                        rtt->texture->height   *
       _glhckNumChannels(rtt->texture->format) *
                        sizeof(unsigned char));
