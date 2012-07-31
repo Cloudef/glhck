@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 
    glfwSetWindowCloseCallback(close_callback);
    glfwSetWindowSizeCallback(resize_callback);
-   glfwSetMousePosCallback(mousepos_callback);
+   glfwSetCursorPosCallback(mousepos_callback);
    glfwSetInputMode(window, GLFW_CURSOR_MODE, GLFW_CURSOR_CAPTURED);
 
    glhckProjectionType projectionType = GLHCK_PROJECTION_PERSPECTIVE;
