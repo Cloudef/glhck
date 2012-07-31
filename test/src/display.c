@@ -202,6 +202,10 @@ int main(int argc, char **argv)
       glhckObjectDraw(sprite3);
       glhckRender();
 
+      /* draw frustum */
+      glhckFrustumRender(glhckCameraGetFrustum(camera),
+                         glhckCameraGetViewMatrix(camera));
+
       glhckTextDraw(text, font2, 18,         0,  HEIGHT-4, WIN_TITLE, NULL);
       glhckTextDraw(text, font,  42,        25, HEIGHT-80, "愛してるGLHCK", NULL);
       glhckTextDraw(text, font2, 32,        25, HEIGHT-40, "Äöäö DejaVuSans perkele", NULL);

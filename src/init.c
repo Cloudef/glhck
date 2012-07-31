@@ -32,6 +32,7 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(clear);
    GLHCK_API_CHECK(objectDraw);
    GLHCK_API_CHECK(textDraw);
+   GLHCK_API_CHECK(frustumDraw);
    GLHCK_API_CHECK(getPixels);
    GLHCK_API_CHECK(generateTextures);
    GLHCK_API_CHECK(deleteTextures);
@@ -238,7 +239,6 @@ GLHCKAPI void glhckRenderSetFlags(unsigned int flags)
 GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat)
 {
    CALL(1, "%p", mat);
-
    _GLHCKlibrary.render.api.setProjection(mat);
 }
 

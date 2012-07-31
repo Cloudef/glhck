@@ -5,6 +5,7 @@ SET(GLHCK_SRC
    util.c
    object.c
    text.c
+   frustum.c
    camera.c
    texture.c
    atlas.c
