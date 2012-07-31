@@ -725,10 +725,11 @@ static void frustumDraw(_glhckFrustum *frustum, const kmMat4 *model)
    GL_CALL(glMatrixMode(GL_MODELVIEW));
 #ifdef GLHCK_KAZMATH_FLOAT
    GL_CALL(glLoadMatrixf((float*)model));
+   GL_CALL(glMultMatrixf((float*)&inv));
 #else
    GL_CALL(glLoadMatrixd((double*)model));
+   GL_CALL(glMultMatrixf((double*)&inv));
 #endif
-   GL_CALL(glMultMatrixf((float*)&inv));
 
    GL_CALL(glLineWidth(4));
    GL_CALL(glColor4f(1, 0, 0, 1));
