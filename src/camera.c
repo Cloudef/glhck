@@ -6,6 +6,7 @@
 static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
 {
    kmScalar w, h;
+   float distanceFromZero;
 
    CALL(2, "%p", camera);
    assert(camera);
@@ -17,8 +18,13 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
                camera->view.viewport.z / camera->view.viewport.w;
          h = camera->view.viewport.z < camera->view.viewport.w ? 1 :
                camera->view.viewport.w / camera->view.viewport.z;
-         w *= -camera->view.translation.z/2;
-         h *= -camera->view.translation.z/2;
+
+         distanceFromZero = sqrtf(camera->view.translation.x * camera->view.translation.x +
+                                  camera->view.translation.y * camera->view.translation.y +
+                                  camera->view.translation.z * camera->view.translation.z);
+
+         w *= distanceFromZero/2;
+         h *= distanceFromZero/2;
 
          kmMat4OrthographicProjection(&camera->view.projection,
             -w, w, -h, h, -camera->view.far, camera->view.far);
