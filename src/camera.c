@@ -27,7 +27,7 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
          h *= distanceFromZero/2;
 
          kmMat4OrthographicProjection(&camera->view.projection,
-            -w, w, -h, h, -camera->view.far, camera->view.far);
+            -w, w, -h, h, camera->view.near, camera->view.far);
          break;
 
       case GLHCK_PROJECTION_PERSPECTIVE:
