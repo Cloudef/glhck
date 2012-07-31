@@ -150,9 +150,35 @@ typedef enum glhckProjectionType {
    GLHCK_PROJECTION_ORTHOGRAPHIC,
 } glhckProjectionType;
 
-/* texture flags */
-typedef enum glhckTextureFlags
-{
+/* frustum planes */
+typedef enum glhckFrustumPlanes {
+   GLHCK_FRUSTUM_PLANE_LEFT,
+   GLHCK_FRUSTUM_PLANE_RIGHT,
+   GLHCK_FRUSTUM_PLANE_BOTTOM,
+   GLHCK_FRUSTUM_PLANE_TOP,
+   GLHCK_FRUSTUM_PLANE_NEAR,
+   GLHCK_FRUSTUM_PLANE_FAR,
+   GLHCK_FRUSTUM_PLANE_LAST
+} glhckFrustumPlanes;
+
+/* frustum corners */
+typedef enum glhckFrustumCorners {
+   GLHCK_FRUSTUM_CORNER_BOTTOM_LEFT,
+   GLHCK_FRUSTUM_CORNER_BOTTOM_RIGHT,
+   GLHCK_FRUSTUM_CORNER_TOP_RIGHT,
+   GLHCK_FRUSTUM_CORNER_TOP_LEFT,
+   GLHCK_FRUSTUM_CORNER_LAST
+} glhckFrustumCorners;
+
+/* frustum struct */
+typedef struct glhckFrustum {
+   kmPlane planes[GLHCK_FRUSTUM_PLANE_LAST];
+   kmVec3 nearCorners[GLHCK_FRUSTUM_CORNER_LAST];
+   kmVec3 farCorners[GLHCK_FRUSTUM_CORNER_LAST];
+} glhckFrustum;
+
+/* texture flags (FIXME: no longer SOIL) */
+typedef enum glhckTextureFlags {
    GLHCK_TEXTURE_POWER_OF_TWO    = 1,
    GLHCK_TEXTURE_MIPMAPS         = 2,
    GLHCK_TEXTURE_REPEATS         = 4,
@@ -167,8 +193,7 @@ typedef enum glhckTextureFlags
 } glhckTextureFlags;
 
 /* material flags */
-typedef enum glhckMaterialFlags
-{
+typedef enum glhckMaterialFlags {
    GLHCK_MATERIAL_DRAW_AABB = 1,
    GLHCK_MATERIAL_DRAW_OBB  = 2,
    GLHCK_MATERIAL_WIREFRAME = 4,
@@ -178,22 +203,19 @@ typedef enum glhckMaterialFlags
 } glhckMaterialFlags;
 
 /* rtt modes */
-typedef enum glhckRttMode
-{
+typedef enum glhckRttMode {
    GLHCK_RTT_RGB,
    GLHCK_RTT_RGBA
 } glhckRttMode;
 
 /* color struct */
-typedef struct glhckColor
-{
+typedef struct glhckColor {
    unsigned char r, g, b, a;
 } glhckColor;
 
 /* this data is used on import, uses floats,
  * which will be converted to internal precision */
-typedef struct glhckImportVertexData
-{
+typedef struct glhckImportVertexData {
    kmVec3 vertex, normal;
    kmVec2 coord;
    glhckColor color;
@@ -224,6 +246,10 @@ GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat);
 GLHCKAPI void glhckRender(void);
 GLHCKAPI void glhckClear(void);
 
+/* frustum */
+GLHCKAPI void glhckFrustumBuild(glhckFrustum *frustum, const kmMat4 *mvp);
+GLHCKAPI void glhckFrustumRender(glhckFrustum *frustum, const kmMat4 *model);
+
 /* cameras */
 GLHCKAPI glhckCamera* glhckCameraNew(void);
 GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *camera);
@@ -231,6 +257,10 @@ GLHCKAPI short glhckCameraFree(glhckCamera *camera);
 GLHCKAPI void glhckCameraUpdate(glhckCamera *camera);
 GLHCKAPI void glhckCameraReset(glhckCamera *camera);
 GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionType projectionType);
+GLHCKAPI glhckFrustum* glhckCameraGetFrustum(glhckCamera *camera);
+GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(glhckCamera *camera);
+GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(glhckCamera *camera);
+GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(glhckCamera *camera);
 GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov);
 GLHCKAPI void glhckCameraRange(glhckCamera *camera,
       const kmScalar near, const kmScalar far);

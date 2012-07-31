@@ -21,6 +21,7 @@
 #define GLHCK_CHANNEL_IMPORT     "IMPORT"
 #define GLHCK_CHANNEL_OBJECT     "OBJECT"
 #define GLHCK_CHANNEL_TEXT       "TEXT"
+#define GLHCK_CHANNEL_FRUSTUM    "FRUSTUM"
 #define GLHCK_CHANNEL_CAMERA     "CAMERA"
 #define GLHCK_CHANNEL_GEOMETRY   "GEOMETRY"
 #define GLHCK_CHANNEL_TEXTURE    "TEXTURE"
@@ -40,6 +41,9 @@
 /* maximum draw queue allowed */
 #define GLHCK_MAX_DRAW 32767
 
+/* public structs typedeffed to seperate internal code */
+typedef glhckFrustum _glhckFrustum;
+
 /* return variables used throughout library */
 typedef enum _glhckReturnValue {
    RETURN_FAIL    =  0,
@@ -49,8 +53,7 @@ typedef enum _glhckReturnValue {
 } _glhckReturnValue;
 
 /* glhck object structs */
-typedef struct _glhckTexture
-{
+typedef struct _glhckTexture {
    char *file;
    unsigned int object, flags, format;
    unsigned char *data;
@@ -60,21 +63,18 @@ typedef struct _glhckTexture
    struct _glhckTexture *next;
 } _glhckTexture;
 
-typedef struct _glhckAtlasArea
-{
+typedef struct _glhckAtlasArea {
    int x1, y1, x2, y2, rotated;
 } _glhckAtlasArea;
 
-typedef struct _glhckAtlasRect
-{
+typedef struct _glhckAtlasRect {
    struct _glhckTexture *texture;
    unsigned short index;
    struct _glhckAtlasArea packed;
    struct _glhckAtlasRect *next;
 } _glhckAtlasRect;
 
-typedef struct _glhckAtlas
-{
+typedef struct _glhckAtlas {
    struct _glhckAtlasRect *rect;
    struct _glhckTexture *texture;
    short refCounter;
@@ -85,8 +85,7 @@ typedef struct _glhckAtlas
 #define GLHCK_DEPTH_ATTACHMENT   0x8D00
 #define GLHCK_STENCIL_ATTACHMENT 0x8D20
 
-typedef struct _glhckRtt
-{
+typedef struct _glhckRtt {
    unsigned int object;
    _glhckTexture *texture;
    short refCounter;
@@ -153,13 +152,11 @@ typedef struct _glhckRtt
 /* disable triangle stripping? */
 #define GLHCK_TRISTRIP 1
 
-typedef struct _glhckVertex3d
-{
+typedef struct _glhckVertex3d {
    GLHCK_CAST_VERTEX x, y, z;
 } _glhckVertex3d;
 
-typedef struct _glhckVertex2d
-{
+typedef struct _glhckVertex2d {
    GLHCK_CAST_VERTEX x, y;
 } _glhckVertex2d;
 
@@ -181,8 +178,7 @@ typedef struct __GLHCKcoordTransform {
    kmVec4 transform;
 } __GLHCKcoordTransform;
 
-typedef struct __GLHCKobjectGeometry
-{
+typedef struct __GLHCKobjectGeometry {
    struct __GLHCKvertexData *vertexData;
    struct __GLHCKcoordTransform *transformedCoordinates;
    GLHCK_CAST_INDEX *indices;
@@ -191,8 +187,7 @@ typedef struct __GLHCKobjectGeometry
    unsigned int type;
 } __GLHCKobjectGeometry;
 
-typedef struct __GLHCKobjectView
-{
+typedef struct __GLHCKobjectView {
    kmVec3 translation, rotation, scaling;
    kmMat4 matrix;
    kmAABB bounding;
@@ -201,14 +196,12 @@ typedef struct __GLHCKobjectView
    char update;
 } __GLHCKobjectView;
 
-typedef struct __GLHCKobjectMaterial
-{
+typedef struct __GLHCKobjectMaterial {
    struct _glhckTexture *texture;
    unsigned int flags;
 } __GLHCKobjectMaterial;
 
-typedef struct _glhckObject
-{
+typedef struct _glhckObject {
    char *file;
    char *data; /* used only by text ATM */
    struct __GLHCKobjectGeometry geometry;
@@ -255,19 +248,18 @@ typedef struct _glhckText {
    struct _glhckText *next;
 } _glhckText;
 
-typedef struct __GLHCKcameraView
-{
+typedef struct __GLHCKcameraView {
    glhckProjectionType projectionType;
    kmScalar near, far, fov;
    kmVec3 translation, target, rotation, upVector;
    kmVec4 viewport;
-   kmMat4 matrix, projection;
+   kmMat4 view, projection, mvp;
    char update;
 } __GLHCKcameraView;
 
-typedef struct _glhckCamera
-{
+typedef struct _glhckCamera {
    struct __GLHCKcameraView view;
+   struct glhckFrustum frustum;
    short refCounter;
    struct _glhckCamera *next;
 } _glhckCamera;
@@ -282,6 +274,7 @@ typedef void (*__GLHCKrenderAPIsetClearColor)    (const float r, const float g, 
 typedef void (*__GLHCKrenderAPIclear)            (void);
 typedef void (*__GLHCKrenderAPIobjectDraw)       (_glhckObject *object);
 typedef void (*__GLHCKrenderAPItextDraw)         (_glhckText *text);
+typedef void (*__GLHCKrenderAPIfrustumDraw)      (_glhckFrustum *frustum, const kmMat4 *model);
 
 /* screen control */
 typedef void (*__GLHCKrenderAPIgetPixels)        (int x, int y, int width, int height,
@@ -312,8 +305,7 @@ typedef int (*__GLHCKrenderAPIlinkFramebufferWithTexture) (unsigned int object, 
 /* parameters */
 typedef void (*__GLHCKrenderAPIgetIntegerv) (unsigned int pname, int *params);
 
-typedef struct __GLHCKrenderAPI
-{
+typedef struct __GLHCKrenderAPI {
    __GLHCKrenderAPIterminate        terminate;
    __GLHCKrenderAPIviewport         viewport;
    __GLHCKrenderAPIsetProjection    setProjection;
@@ -322,6 +314,7 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIclear            clear;
    __GLHCKrenderAPIobjectDraw       objectDraw;
    __GLHCKrenderAPItextDraw         textDraw;
+   __GLHCKrenderAPIfrustumDraw      frustumDraw;
 
    __GLHCKrenderAPIgetPixels        getPixels;
 
@@ -340,18 +333,15 @@ typedef struct __GLHCKrenderAPI
    __GLHCKrenderAPIgetIntegerv getIntegerv;
 } __GLHCKrenderAPI;
 
-typedef struct __GLHCKtexture
-{
+typedef struct __GLHCKtexture {
    unsigned int bind;
 } __GLHCKtexture;
 
-typedef struct __GLHCKcamera
-{
+typedef struct __GLHCKcamera {
    struct _glhckCamera *bind;
 } __GLHCKcamera;
 
-typedef struct __GLHCKrenderDraw
-{
+typedef struct __GLHCKrenderDraw {
    kmVec4 clearColor;
    unsigned int texture, drawCount;
    struct _glhckCamera  *camera;
@@ -359,8 +349,7 @@ typedef struct __GLHCKrenderDraw
    struct _glhckTexture *tqueue[GLHCK_MAX_DRAW];
 } __GLHCKrenderDraw;
 
-typedef struct __GLHCKrender
-{
+typedef struct __GLHCKrender {
    int width, height;
    const char *name;
    glhckRenderType type;
@@ -369,8 +358,7 @@ typedef struct __GLHCKrender
    struct __GLHCKrenderDraw draw;
 } __GLHCKrender;
 
-typedef struct __GLHCKworld
-{
+typedef struct __GLHCKworld {
    struct _glhckObject  *olist;
    struct _glhckCamera  *clist;
    struct _glhckAtlas   *alist;
@@ -379,14 +367,12 @@ typedef struct __GLHCKworld
    struct _glhckText    *tflist;
 } __GLHCKworld;
 
-typedef struct __GLHCKtraceChannel
-{
+typedef struct __GLHCKtraceChannel {
    const char *name;
    char active;
 } __GLHCKtraceChannel;
 
-typedef struct __GLHCKtrace
-{
+typedef struct __GLHCKtrace {
    unsigned char level;
    struct __GLHCKtraceChannel *channel;
 } __GLHCKtrace;
@@ -400,8 +386,7 @@ typedef struct __GLHCKalloc {
 } __GLHCKalloc;
 #endif
 
-typedef struct __GLHCKlibrary
-{
+typedef struct __GLHCKlibrary {
    struct __GLHCKrender render;
    struct __GLHCKworld world;
    struct __GLHCKtrace trace;
@@ -413,8 +398,7 @@ typedef struct __GLHCKlibrary
 /* define global object */
 GLHCKGLOBAL struct __GLHCKlibrary _GLHCKlibrary;
 
-typedef struct _glhckTexturePacker
-{
+typedef struct _glhckTexturePacker {
    unsigned short debug_count, texture_index, texture_count;
    int longest_edge, total_area;
    struct tpNode *free_list;

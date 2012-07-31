@@ -539,6 +539,8 @@ static void drawAABB(_glhckObject *object)
    GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
    GL_CALL(glColor4f(1, 1, 1, 1));
+
+   /* go back */
    GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
 
    /* re enable stuff we disabled */
@@ -674,6 +676,77 @@ static void textDraw(_glhckText *text)
    setProjection(&_OpenGL.projection);
 }
 
+/* \brief draw frustum */
+static void frustumDraw(_glhckFrustum *frustum, const kmMat4 *model)
+{
+   kmMat4 inv;
+   unsigned int i = 0;
+   kmVec3 *near = frustum->nearCorners;
+   kmVec3 *far  = frustum->farCorners;
+   kmMat4Inverse(&inv, model);
+   const float points[] = {
+                      near[0].x, near[0].y, near[0].z,
+                      near[1].x, near[1].y, near[1].z,
+                      near[1].x, near[1].y, near[1].z,
+                      near[2].x, near[2].y, near[2].z,
+                      near[2].x, near[2].y, near[2].z,
+                      near[3].x, near[3].y, near[3].z,
+                      near[3].x, near[3].y, near[3].z,
+                      near[0].x, near[0].y, near[0].z,
+
+                      far[0].x, far[0].y, far[0].z,
+                      far[1].x, far[1].y, far[1].z,
+                      far[1].x, far[1].y, far[1].z,
+                      far[2].x, far[2].y, far[2].z,
+                      far[2].x, far[2].y, far[2].z,
+                      far[3].x, far[3].y, far[3].z,
+                      far[3].x, far[3].y, far[3].z,
+                      far[0].x, far[0].y, far[0].z,
+
+                      near[0].x, near[0].y, near[0].z,
+                       far[0].x,  far[0].y,  far[0].z,
+                      near[1].x, near[1].y, near[1].z,
+                       far[1].x,  far[1].y,  far[1].z,
+                      near[2].x, near[2].y, near[2].z,
+                       far[2].x,  far[2].y,  far[2].z,
+                      near[3].x, near[3].y, near[3].z,
+                       far[3].x,  far[3].y,  far[3].z  };
+
+   /* disable stuff if enabled */
+   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
+      GL_CALL(glDisable(GL_TEXTURE_2D));
+   }
+   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (_OpenGL.state.attrib[i]) {
+         GL_CALL(glDisableClientState(_glhckAttribName[i]));
+      }
+
+   setProjection(&_OpenGL.projection);
+   GL_CALL(glMatrixMode(GL_MODELVIEW));
+#ifdef GLHCK_KAZMATH_FLOAT
+   GL_CALL(glLoadMatrixf((float*)model));
+#else
+   GL_CALL(glLoadMatrixd((double*)model));
+#endif
+   GL_CALL(glMultMatrixf((float*)&inv));
+
+   GL_CALL(glLineWidth(4));
+   GL_CALL(glColor4f(1, 0, 0, 1));
+   GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
+   GL_CALL(glDrawArrays(GL_LINES, 0, 24));
+   GL_CALL(glColor4f(1, 1, 1, 1));
+   GL_CALL(glLineWidth(1));
+
+   /* re enable stuff we disabled */
+   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
+      GL_CALL(glEnable(GL_TEXTURE_2D));
+   }
+   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (_OpenGL.state.attrib[i]) {
+         GL_CALL(glEnableClientState(_glhckAttribName[i]));
+      }
+}
+
 /* \brief get parameters */
 static void getIntegerv(unsigned int pname, int *params)
 {
@@ -807,6 +880,7 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(clear, clear);
    GLHCK_RENDER_FUNC(objectDraw, objectDraw);
    GLHCK_RENDER_FUNC(textDraw, textDraw);
+   GLHCK_RENDER_FUNC(frustumDraw, frustumDraw);
 
    /* screen */
    GLHCK_RENDER_FUNC(getPixels, getPixels);

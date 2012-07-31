@@ -39,7 +39,6 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
 static void _glhckCameraViewMatrix(_glhckCamera *camera)
 {
    kmVec3 tgtv, upvector;
-   kmMat4 view;
    CALL(2, "%p", camera);
    assert(camera);
 
@@ -51,13 +50,13 @@ static void _glhckCameraViewMatrix(_glhckCamera *camera)
    if (kmVec3Dot(&tgtv, &upvector) == 1.f)
       upvector.x += 0.5f;
 
-   kmMat4LookAt(&view, &camera->view.translation,
+   kmMat4LookAt(&camera->view.view, &camera->view.translation,
          &camera->view.target, &upvector);
 
-   /* TODO: frustrum calculation here */
+   kmMat4Multiply(&camera->view.mvp,
+         &camera->view.projection, &camera->view.view);
 
-   kmMat4Multiply(&camera->view.matrix,
-         &camera->view.projection, &view);
+   glhckFrustumBuild(&camera->frustum, &camera->view.mvp);
 }
 
 /* \brief update the camera stack after window resize */
@@ -193,7 +192,7 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
 
    /* assign camera to global state */
    _GLHCKlibrary.render.api.setProjection(
-         &camera->view.matrix);
+         &camera->view.mvp);
    _GLHCKlibrary.render.draw.camera = camera;
 }
 
@@ -222,6 +221,42 @@ GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionTy
    assert(camera);
    camera->view.projectionType = projectionType;
    _glhckCameraProjectionMatrix(camera);
+}
+
+/* \brief get camera's frustum */
+GLHCKAPI glhckFrustum* glhckCameraGetFrustum(glhckCamera *camera)
+{
+   CALL(1, "%p", camera);
+   assert(camera);
+   RET(1, "%p", &camera->frustum);
+   return &camera->frustum;
+}
+
+/* \brief get camera's view matrix */
+GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(glhckCamera *camera)
+{
+   CALL(1, "%p", camera);
+   assert(camera);
+   RET(1, "%p", &camera->view.view);
+   return &camera->view.view;
+}
+
+/* \brief get camera's projection matrix */
+GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(glhckCamera *camera)
+{
+   CALL(1, "%p", camera);
+   assert(camera);
+   RET(1, "%p", &camera->view.projection);
+   return &camera->view.projection;
+}
+
+/* \brief get camera's model view projection matrix */
+GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(glhckCamera *camera)
+{
+   CALL(1, "%p", camera);
+   assert(camera);
+   RET(1, "%p", &camera->view.mvp);
+   return &camera->view.mvp;
 }
 
 /* \brief set camera's fov */
