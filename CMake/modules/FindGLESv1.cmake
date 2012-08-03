@@ -6,7 +6,7 @@
 
 find_path(GLESv1_INCLUDE_DIR NAMES GLES/gl.h)
 
-set(GLESv1_NAMES ${GLESv1_NAMES} GLES GLESv1 GLESv1_CM)
+set(GLESv1_NAMES ${GLESv1_NAMES} GLES GLESv1 GLESv1_CM GLES_CM)
 find_library(GLESv1_LIBRARY NAMES ${GLESv1_NAMES})
 
 include(FindPackageHandleStandardArgs)
