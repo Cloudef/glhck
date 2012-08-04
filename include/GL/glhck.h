@@ -336,6 +336,9 @@ GLHCKAPI void glhckTextMetrics(glhckText *text, unsigned int font_id,
       float size, float *ascender, float *descender, float *lineh);
 GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
       const char *s, kmVec2 *min, kmVec2 *max);
+GLHCKAPI void glhckTextColor(glhckText *text,
+      unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+GLHCKAPI const glhckColor* glhckGetTextColor(glhckText *text);
 GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text,
       unsigned char *data);
 GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file);

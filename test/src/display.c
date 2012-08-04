@@ -206,10 +206,14 @@ int main(int argc, char **argv)
       glhckFrustumRender(glhckCameraGetFrustum(camera),
                          glhckCameraGetViewMatrix(camera));
 
+      glhckTextColor(text, 255, 255, 255, 255);
       glhckTextDraw(text, font2, 18,         0,  HEIGHT-4, WIN_TITLE, NULL);
       glhckTextDraw(text, font,  42,        25, HEIGHT-80, "愛してるGLHCK", NULL);
       glhckTextDraw(text, font2, 32,        25, HEIGHT-40, "Äöäö DejaVuSans perkele", NULL);
       glhckTextDraw(text, font2, 18,         0,        18, "SADASD!?,.:;", NULL);
+      glhckTextRender(text);
+
+      glhckTextColor(text, 255, 0, 0, 255);
       glhckTextDraw(text, font2, 12, WIDTH-100,        18, "Wall of text", NULL);
       glhckTextRender(text);
 

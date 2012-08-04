@@ -338,6 +338,9 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    text->ith = (float)1.0f/cacheh;
    text->tcache = texture;
 
+   /* default color */
+   glhckTextColor(text, 255, 255, 255, 255);
+
    /* insert to world */
    _glhckWorldInsert(tflist, text, _glhckText*);
 
@@ -448,6 +451,29 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
       min2d((*min), q.v2);
       max2d((*max), q.v2);
    }
+}
+
+/* \brief set text color */
+GLHCKAPI void glhckTextColor(glhckText *text,
+      unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+{
+   CALL(1 ,"%p, %d, %d, %d", text, r, g, b, a);
+   assert(text);
+
+   text->color.r = r;
+   text->color.g = g;
+   text->color.b = b;
+   text->color.a = a;
+}
+
+/* \brief get text color */
+GLHCKAPI const glhckColor* glhckTextGetColor(glhckText *text)
+{
+   CALL(1, "%p", text);
+   assert(text);
+
+   RET(1, "%p", &text->color);
+   return &text->color;
 }
 
 /* \brief new font from memory */

@@ -474,10 +474,10 @@ static void drawOBB(_glhckObject *object)
          GL_CALL(glDisableClientState(_glhckAttribName[i]));
       }
 
-   GL_CALL(glColor4f(0, 1, 0, 1));
+   GL_CALL(glColor3ub(0, 255, 0));
    GL_CALL(glVertexPointer(3, GL_SHORT, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
-   GL_CALL(glColor4f(1, 1, 1, 1));
+   GL_CALL(glColor3ub(255, 255, 255));
 
    /* re enable stuff we disabled */
    if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
@@ -535,10 +535,10 @@ static void drawAABB(_glhckObject *object)
       }
 
    GL_CALL(glLoadIdentity());
-   GL_CALL(glColor4f(0, 0, 1, 1));
+   GL_CALL(glColor3ub(0, 0, 255));
    GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
-   GL_CALL(glColor4f(1, 1, 1, 1));
+   GL_CALL(glColor3ub(255, 255, 255));
 
    /* go back */
    GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
@@ -571,6 +571,9 @@ static void objectDraw(_glhckObject *object)
 #else
    GL_CALL(glLoadMatrixd((double*)&object->view.matrix));
 #endif
+
+   /* reset color */
+   GL_CALL(glColor3ub(255, 255, 255));
 
    /* set states and draw */
    materialState(object);
@@ -654,6 +657,7 @@ static void textDraw(_glhckText *text)
    GL_CALL(glMatrixMode(GL_MODELVIEW));
    GL_CALL(glLoadIdentity());
 
+   GL_CALL(glColor4ub(text->color.r, text->color.b, text->color.g, text->color.a));
    for (texture = text->tcache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
@@ -732,10 +736,10 @@ static void frustumDraw(_glhckFrustum *frustum, const kmMat4 *model)
 #endif
 
    GL_CALL(glLineWidth(4));
-   GL_CALL(glColor4f(1, 0, 0, 1));
+   GL_CALL(glColor3ub(255, 0, 0));
    GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
-   GL_CALL(glColor4f(1, 1, 1, 1));
+   GL_CALL(glColor3ub(255, 255, 255));
    GL_CALL(glLineWidth(1));
 
    /* re enable stuff we disabled */

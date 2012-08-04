@@ -243,6 +243,7 @@ typedef struct __GLHCKtextTexture {
 typedef struct _glhckText {
    int tw, th;
    float itw, ith;
+   glhckColor color;
    struct __GLHCKtextFont *fcache;
    struct __GLHCKtextTexture *tcache;
    struct _glhckText *next;
