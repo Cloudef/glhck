@@ -30,7 +30,8 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(getProjection);
    GLHCK_API_CHECK(setClearColor);
    GLHCK_API_CHECK(clear);
-   GLHCK_API_CHECK(objectDraw);
+   GLHCK_API_CHECK(objectDraw3d);
+   GLHCK_API_CHECK(objectDraw2d);
    GLHCK_API_CHECK(textDraw);
    GLHCK_API_CHECK(frustumDraw);
    GLHCK_API_CHECK(getPixels);

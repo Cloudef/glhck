@@ -297,37 +297,55 @@ static void viewport(int x, int y, int width, int height)
          0, width, height, 0, -1, 1);
 }
 
-/* \brief pass interleaved vertex data to OpenGL nicely. */
-static inline void geometryPointer(__GLHCKobjectGeometry *geometry)
+/* \brief pass interleaved 3d vertex data to OpenGL nicely. */
+static inline void geometryPointer3d(const __GLHCKobjectGeometry *geometry)
 {
    /* vertex data */
+   __GLHCKvertexData3d *v = (__GLHCKvertexData3d*)geometry->vertexData;
    GL_CALL(glVertexPointer(3, GLHCK_PRECISION_VERTEX,
-            sizeof(__GLHCKvertexData), &geometry->vertexData[0].vertex));
+            sizeof(__GLHCKvertexData3d), &v[0].vertex));
    GL_CALL(glNormalPointer(GLHCK_PRECISION_VERTEX,
-            sizeof(__GLHCKvertexData), &geometry->vertexData[0].normal));
+            sizeof(__GLHCKvertexData3d), &v[0].normal));
    GL_CALL(glTexCoordPointer(2, GLHCK_PRECISION_COORD,
-            sizeof(__GLHCKvertexData), &geometry->vertexData[0].coord));
+            sizeof(__GLHCKvertexData3d), &v[0].coord));
 #if GLHCK_VERTEXDATA_COLOR
    GL_CALL(glColorPointer(4, GLHCK_PRECISION_COLOR,
-            sizeof(__GLHCKvertexData), &geometry->vertexData[0].color));
+            sizeof(__GLHCKvertexData3d), &v[0].color));
+#endif
+}
+
+/* \brief pass interleaved 2d vertex data to OpenGL nicely. */
+static inline void geometryPointer2d(const __GLHCKobjectGeometry *geometry)
+{
+   /* vertex data */
+   __GLHCKvertexData2d *v = (__GLHCKvertexData2d*)geometry->vertexData;
+   GL_CALL(glVertexPointer(2, GLHCK_PRECISION_VERTEX,
+            sizeof(__GLHCKvertexData2d), &v[0].vertex));
+   GL_CALL(glNormalPointer(GLHCK_PRECISION_VERTEX,
+            sizeof(__GLHCKvertexData2d), &v[0].normal));
+   GL_CALL(glTexCoordPointer(2, GLHCK_PRECISION_COORD,
+            sizeof(__GLHCKvertexData2d), &v[0].coord));
+#if GLHCK_VERTEXDATA_COLOR
+   GL_CALL(glColorPointer(4, GLHCK_PRECISION_COLOR,
+            sizeof(__GLHCKvertexData2d), &v[0].color));
 #endif
 }
 
 /* \brief draw interleaved geometry */
-static inline void geometryDraw(__GLHCKobjectGeometry *geometry)
+static inline void geometryDraw(const __GLHCKobjectGeometry *geometry, unsigned int type)
 {
    if (geometry->indices) {
-      GL_CALL(glDrawElements(geometry->type , geometry->indicesCount,
+      GL_CALL(glDrawElements(type , geometry->indicesCount,
                GLHCK_PRECISION_INDEX, &geometry->indices[0]));
    } else {
-      GL_CALL(glDrawArrays(geometry->type, 0, geometry->vertexCount));
+      GL_CALL(glDrawArrays(type, 0, geometry->vertexCount));
    }
 }
 
 #define GL_STATE_CHANGED(x) (_OpenGL.state.flags & x) != (old.flags & x)
 
 /* \brief set needed state from object data */
-static inline void materialState(_glhckObject *object)
+static inline void materialState(const _glhckObject *object)
 {
    unsigned int i;
    __OpenGLstate old   = _OpenGL.state;
@@ -553,17 +571,8 @@ static inline void drawAABB(const _glhckObject *object)
       }
 }
 
-/* \brief draw single object */
-static void objectDraw(_glhckObject *object)
-{
-   unsigned int old_primitive;
-   CALL(2, "%p", object);
-
-   /* no point drawing without vertex data */
-   if (!object->geometry.vertexData ||
-       !object->geometry.vertexCount)
-      return;
-
+/* \brief begin object draw */
+static inline void objectStart(const _glhckObject *object) {
    /* load view matrix */
    GL_CALL(glMatrixMode(GL_MODELVIEW));
 #ifdef GLHCK_KAZMATH_FLOAT
@@ -577,21 +586,20 @@ static void objectDraw(_glhckObject *object)
 
    /* set states and draw */
    materialState(object);
-   geometryPointer(&object->geometry);
+}
+
+/* \brief end object draw */
+static inline void objectEnd(const _glhckObject *object) {
+   unsigned int type = object->geometry.type;
 
    /* switch to wireframe if requested */
    if (GL_HAS_STATE(GL_STATE_WIREFRAME)) {
-      old_primitive = object->geometry.type;
-      object->geometry.type = object->geometry.type == GLHCK_TRIANGLES
+      type = object->geometry.type == GLHCK_TRIANGLES
          ? GLHCK_LINES : GLHCK_LINE_STRIP;
    }
 
    /* draw geometry */
-   geometryDraw(&object->geometry);
-
-   /* restore old primitive type */
-   if (GL_HAS_STATE(GL_STATE_WIREFRAME))
-      object->geometry.type = old_primitive;
+   geometryDraw(&object->geometry, type);
 
    /* draw axis-aligned bounding box, if requested */
    if (GL_HAS_STATE(GL_STATE_DRAW_AABB))
@@ -611,8 +619,38 @@ static void objectDraw(_glhckObject *object)
    _OpenGL.indicesCount += object->geometry.indicesCount;
 }
 
+/* \brief draw single 3d object */
+static inline void objectDraw3d(const _glhckObject *object)
+{
+   CALL(2, "%p", object);
+
+   /* no point drawing without vertex data */
+   if (!object->geometry.vertexData ||
+       !object->geometry.vertexCount)
+      return;
+
+   objectStart(object);
+   geometryPointer3d(&object->geometry);
+   objectEnd(object);
+}
+
+/* \brief draw single 2d object */
+static inline void objectDraw2d(const _glhckObject *object)
+{
+   CALL(2, "%p", object);
+
+   /* no point drawing without vertex data */
+   if (!object->geometry.vertexData ||
+       !object->geometry.vertexCount)
+      return;
+
+   objectStart(object);
+   geometryPointer2d(&object->geometry);
+   objectEnd(object);
+}
+
 /* \brief draw text */
-static void textDraw(_glhckText *text)
+static inline void textDraw(const _glhckText *text)
 {
    __GLHCKtextTexture *texture;
    CALL(2, "%p", text);
@@ -883,7 +921,8 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(getProjection, getProjection);
    GLHCK_RENDER_FUNC(setClearColor, setClearColor);
    GLHCK_RENDER_FUNC(clear, clear);
-   GLHCK_RENDER_FUNC(objectDraw, objectDraw);
+   GLHCK_RENDER_FUNC(objectDraw3d, objectDraw3d);
+   GLHCK_RENDER_FUNC(objectDraw2d, objectDraw2d);
    GLHCK_RENDER_FUNC(textDraw, textDraw);
    GLHCK_RENDER_FUNC(frustumDraw, frustumDraw);
 

@@ -164,27 +164,43 @@ typedef struct _glhckCoord2d {
    GLHCK_CAST_COORD x, y;
 } _glhckCoord2d;
 
-typedef struct __GLHCKvertexData {
+typedef struct __GLHCKvertexData3d {
    struct _glhckVertex3d vertex;
    struct _glhckVertex3d normal;
    struct _glhckCoord2d coord;
 #if GLHCK_VERTEXDATA_COLOR
    struct glhckColor color;
 #endif
-} __GLHCKvertexData;
+} __GLHCKvertexData3d;
+
+typedef struct __GLHCKvertexData2d {
+   struct _glhckVertex2d vertex;
+   struct _glhckVertex3d normal;
+   struct _glhckCoord2d coord;
+#if GLHCK_VERTEXDATA_COLOR
+   struct glhckColor color;
+#endif
+} __GLHCKvertexData2d;
 
 typedef struct __GLHCKcoordTransform {
    short degrees;
    kmVec4 transform;
 } __GLHCKcoordTransform;
 
+typedef enum __GLHCKobjectGeometryFlags {
+   GEOMETRY_NONE = 0,
+   GEOMETRY_3D   = 1, /* otherwise assumed as 2D */
+} __GLHCKobjectGeometryFlags;
+
+typedef void (*__GLHCKobjectGeometryDraw) (const struct _glhckObject *object);
 typedef struct __GLHCKobjectGeometry {
-   struct __GLHCKvertexData *vertexData;
+   void *vertexData; /* __GLHCKvertexData2d || __GLHCKvertexData3d */
    struct __GLHCKcoordTransform *transformedCoordinates;
    GLHCK_CAST_INDEX *indices;
    size_t indicesCount, vertexCount;
    kmVec3 bias, scale;
-   unsigned int type;
+   unsigned int type, flags;
+   __GLHCKobjectGeometryDraw drawFunc; /* draw function for this geometry */
 } __GLHCKobjectGeometry;
 
 typedef struct __GLHCKobjectView {
@@ -270,11 +286,12 @@ typedef struct _glhckCamera {
 typedef void (*__GLHCKrenderAPIterminate)        (void);
 typedef void (*__GLHCKrenderAPIviewport)         (int x, int y, int width, int height);
 typedef void (*__GLHCKrenderAPIsetProjection)    (const kmMat4 *m);
-typedef kmMat4 (*__GLHCKrenderAPIgetProjection)  (void);
-typedef void (*__GLHCKrenderAPIsetClearColor)    (const float r, const float g, const float b, const float a);
+typedef const kmMat4* (*__GLHCKrenderAPIgetProjection)  (void);
+typedef void (*__GLHCKrenderAPIsetClearColor)    (float r, float g, float b, float a);
 typedef void (*__GLHCKrenderAPIclear)            (void);
-typedef void (*__GLHCKrenderAPIobjectDraw)       (_glhckObject *object);
-typedef void (*__GLHCKrenderAPItextDraw)         (_glhckText *text);
+typedef void (*__GLHCKrenderAPIobjectDraw3d)     (const _glhckObject *object);
+typedef void (*__GLHCKrenderAPIobjectDraw2d)     (const _glhckObject *object);
+typedef void (*__GLHCKrenderAPItextDraw)         (const _glhckText *text);
 typedef void (*__GLHCKrenderAPIfrustumDraw)      (_glhckFrustum *frustum, const kmMat4 *model);
 
 /* screen control */
@@ -313,7 +330,8 @@ typedef struct __GLHCKrenderAPI {
    __GLHCKrenderAPIgetProjection    getProjection;
    __GLHCKrenderAPIsetClearColor    setClearColor;
    __GLHCKrenderAPIclear            clear;
-   __GLHCKrenderAPIobjectDraw       objectDraw;
+   __GLHCKrenderAPIobjectDraw3d     objectDraw3d;
+   __GLHCKrenderAPIobjectDraw2d     objectDraw2d;
    __GLHCKrenderAPItextDraw         textDraw;
    __GLHCKrenderAPIfrustumDraw      frustumDraw;
 

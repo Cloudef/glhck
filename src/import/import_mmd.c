@@ -161,7 +161,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
       strip_indices           = indices;
    } else NULLDO(_glhckFree, indices);
 
-   glhckObjectInsertVertexData(object, mmd->num_vertices, vertexData);
+   glhckObjectInsertVertexData3d(object, mmd->num_vertices, vertexData);
    glhckObjectInsertIndices(object, num_indices, strip_indices);
    NULLDO(_glhckFree, vertexData);
    NULLDO(_glhckFree, strip_indices);

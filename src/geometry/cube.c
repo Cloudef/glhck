@@ -159,7 +159,7 @@ GLHCKAPI _glhckObject* glhckCubeNew(kmScalar size)
       goto fail;
 
    /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertexData(object,
+   if (glhckObjectInsertVertexData3d(object,
             LENGTH(vertices), &vertices[0]) != RETURN_OK)
       goto fail;
 

@@ -41,7 +41,7 @@ GLHCKAPI _glhckObject* glhckPlaneNew(kmScalar size)
       goto fail;
 
    /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertexData(object,
+   if (glhckObjectInsertVertexData2d(object,
             LENGTH(vertices), &vertices[0]) != RETURN_OK)
       goto fail;
 
@@ -122,7 +122,7 @@ GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture,
       goto fail;
 
    /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertexData(object,
+   if (glhckObjectInsertVertexData2d(object,
             LENGTH(vertices), &vertices[0]) != RETURN_OK)
       goto fail;
 

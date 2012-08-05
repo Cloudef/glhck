@@ -283,16 +283,18 @@ GLHCKAPI void glhckCameraTargetf(glhckCamera *camera,
 
 /* objects */
 GLHCKAPI glhckObject* glhckObjectNew(void);
-GLHCKAPI glhckObject* glhckObjectCopy(glhckObject *src);
+GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src);
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
 GLHCKAPI short glhckObjectFree(glhckObject *object);
-GLHCKAPI glhckTexture* glhckObjectGetTexture(glhckObject *object);
+GLHCKAPI glhckTexture* glhckObjectGetTexture(const glhckObject *object);
 GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
 GLHCKAPI void glhckObjectTransformCoordinates(glhckObject *object,
       const kmVec4 *transformed, short degrees);
-GLHCKAPI int glhckObjectInsertVertexData(glhckObject *object,
+GLHCKAPI int glhckObjectInsertVertexData3d(glhckObject *object,
+      size_t memb, const glhckImportVertexData *vertexData);
+GLHCKAPI int glhckObjectInsertVertexData2d(glhckObject *object,
       size_t memb, const glhckImportVertexData *vertexData);
 GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
       size_t memb, const unsigned int *indices);
