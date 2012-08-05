@@ -133,6 +133,12 @@ success:
    return RETURN_OK;
 }
 
+/* \brief is glhck initialized? (tracing here is pointless) */
+GLHCKAPI int glhckInitialized(void)
+{
+   return _glhckInitialized;
+}
+
 /* \brief creates virtual display and inits renderer */
 GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderType)
 {
