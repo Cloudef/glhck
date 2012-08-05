@@ -306,7 +306,7 @@ fail:
 }
 
 /* \brief copy object */
-GLHCKAPI glhckObject *glhckObjectCopy(glhckObject *src)
+GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
 {
    _glhckObject *object;
    CALL(0, "%p", src);
@@ -419,7 +419,7 @@ GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture)
 }
 
 /* \brief get object's texture */
-GLHCKAPI glhckTexture* glhckObjectGetTexture(glhckObject *object)
+GLHCKAPI glhckTexture* glhckObjectGetTexture(const glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
@@ -438,10 +438,6 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
       DEBUG(GLHCK_DBG_WARNING, "Maximum draw queue limit reached!");
       return;
    }
-
-   /* does view matrix need update? */
-   if (object->view.update)
-      _glhckObjectUpdateMatrix(object);
 
    /* insert object to drawing queue */
    _glhckQueueInsert(_GLHCKlibrary.render.draw.oqueue, object);
@@ -479,7 +475,7 @@ GLHCKAPI void glhckObjectSetMaterialFlags(_glhckObject *object, unsigned int fla
 }
 
 /* \brief get obb bounding box of the object */
-GLHCKAPI const kmAABB*  glhckObjectGetOBB(_glhckObject *object)
+GLHCKAPI const kmAABB*  glhckObjectGetOBB(const _glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
@@ -489,7 +485,7 @@ GLHCKAPI const kmAABB*  glhckObjectGetOBB(_glhckObject *object)
 }
 
 /* \brief get aabb bounding box of the object */
-GLHCKAPI const kmAABB* glhckObjectGetAABB(_glhckObject *object)
+GLHCKAPI const kmAABB* glhckObjectGetAABB(const _glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
@@ -499,7 +495,7 @@ GLHCKAPI const kmAABB* glhckObjectGetAABB(_glhckObject *object)
 }
 
 /* \brief get object position */
-GLHCKAPI const kmVec3* glhckObjectGetPosition(glhckObject *object)
+GLHCKAPI const kmVec3* glhckObjectGetPosition(const glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
@@ -551,7 +547,7 @@ GLHCKAPI void glhckObjectMovef(glhckObject *object,
 }
 
 /* \brief get object rotation */
-GLHCKAPI const kmVec3* glhckObjectGetRotation(glhckObject *object)
+GLHCKAPI const kmVec3* glhckObjectGetRotation(const glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
@@ -599,6 +595,16 @@ GLHCKAPI void glhckObjectRotatef(glhckObject *object,
 {
    const kmVec3 rotate = { x, y, z };
    glhckObjectRotate(object, &rotate);
+}
+
+/* \brief get object scale */
+GLHCKAPI const kmVec3* glhckObjectGetScale(const glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   RET(1, VEC3S, VEC3(&object->view.scaling));
+   return &object->view.scaling;
 }
 
 /* \brief scale object */

@@ -107,7 +107,7 @@ fail:
 }
 
 /* \brief return rtt's texture */
-GLHCKAPI glhckTexture* glhckRttGetTexture(glhckRtt *rtt)
+GLHCKAPI glhckTexture* glhckRttGetTexture(const glhckRtt *rtt)
 {
    CALL(1, "%p", rtt);
    assert(rtt);
@@ -117,7 +117,7 @@ GLHCKAPI glhckTexture* glhckRttGetTexture(glhckRtt *rtt)
 }
 
 /* \brief start rendering to rtt */
-GLHCKAPI void glhckRttBegin(glhckRtt *rtt)
+GLHCKAPI void glhckRttBegin(const glhckRtt *rtt)
 {
    CALL(2, "%p", rtt);
    assert(rtt);
@@ -125,7 +125,7 @@ GLHCKAPI void glhckRttBegin(glhckRtt *rtt)
 }
 
 /* \brief end rendering to rtt */
-GLHCKAPI void glhckRttEnd(glhckRtt *rtt)
+GLHCKAPI void glhckRttEnd(const glhckRtt *rtt)
 {
    CALL(2, "%p", rtt);
    assert(rtt);

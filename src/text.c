@@ -390,7 +390,7 @@ GLHCKAPI short glhckTextFree(glhckText *text)
 }
 
 /* \brief get text metrics */
-GLHCKAPI void glhckTextMetrics(glhckText *text, unsigned int font_id,
+GLHCKAPI void glhckTextGetMetrics(glhckText *text, unsigned int font_id,
       float size, float *ascender, float *descender, float *lineh)
 {
    __GLHCKtextFont *font;

@@ -167,7 +167,7 @@ static void getPixels(int x, int y, int width, int height,
 }
 
 /* \brief create texture from data and upload it */
-static unsigned int createTexture(const unsigned char *const buffer,
+static unsigned int createTexture(const unsigned char *buffer,
       int width, int height, unsigned int format,
       unsigned int reuse_texture_ID,
       unsigned int flags)
@@ -202,7 +202,7 @@ _return:
 
 /* \brief fill texture with data */
 static void fillTexture(unsigned int texture,
-      unsigned char *data,
+      const unsigned char *data,
       int x, int y, int width, int height,
       unsigned int format)
 {
@@ -240,7 +240,7 @@ fbo_fail:
 }
 
 /* \brief set clear color */
-static void setClearColor(const float r, const float g, const float b, const float a)
+static void setClearColor(float r, float g, float b, float a)
 {
    TRACE(1);
    GL_CALL(glClearColor(r, g, b, a));
@@ -276,11 +276,11 @@ static void setProjection(const kmMat4 *m)
 }
 
 /* \brief get current projection */
-static kmMat4 getProjection(void)
+static const kmMat4* getProjection(void)
 {
    TRACE(2);
    RET(2, "%p", &_OpenGL.projection);
-   return _OpenGL.projection;
+   return &_OpenGL.projection;
 }
 
 /* \brief resize viewport */
@@ -430,7 +430,7 @@ static inline void materialState(_glhckObject *object)
 #undef GL_STATE_CHANGED
 
 /* \brief draw object's oriented bounding box */
-static void drawOBB(_glhckObject *object)
+static inline void drawOBB(const _glhckObject *object)
 {
    unsigned int i = 0;
    kmVec3 min = object->view.bounding.min;
@@ -490,7 +490,7 @@ static void drawOBB(_glhckObject *object)
 }
 
 /* \brief draw object's axis-aligned bounding box */
-static void drawAABB(_glhckObject *object)
+static inline void drawAABB(const _glhckObject *object)
 {
    unsigned int i = 0;
    kmVec3 min = object->view.aabb.min;
@@ -681,7 +681,7 @@ static void textDraw(_glhckText *text)
 }
 
 /* \brief draw frustum */
-static void frustumDraw(_glhckFrustum *frustum, const kmMat4 *model)
+static inline void frustumDraw(_glhckFrustum *frustum, const kmMat4 *model)
 {
    kmMat4 inv;
    unsigned int i = 0;

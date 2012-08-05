@@ -230,7 +230,7 @@ GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionTy
 }
 
 /* \brief get camera's frustum */
-GLHCKAPI glhckFrustum* glhckCameraGetFrustum(glhckCamera *camera)
+GLHCKAPI glhckFrustum* glhckCameraGetFrustum(const glhckCamera *camera)
 {
    CALL(1, "%p", camera);
    assert(camera);
@@ -239,7 +239,7 @@ GLHCKAPI glhckFrustum* glhckCameraGetFrustum(glhckCamera *camera)
 }
 
 /* \brief get camera's view matrix */
-GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(glhckCamera *camera)
+GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(const glhckCamera *camera)
 {
    CALL(1, "%p", camera);
    assert(camera);
@@ -248,7 +248,7 @@ GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(glhckCamera *camera)
 }
 
 /* \brief get camera's projection matrix */
-GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(glhckCamera *camera)
+GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(const glhckCamera *camera)
 {
    CALL(1, "%p", camera);
    assert(camera);
@@ -257,7 +257,7 @@ GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(glhckCamera *camera)
 }
 
 /* \brief get camera's model view projection matrix */
-GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(glhckCamera *camera)
+GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(const glhckCamera *camera)
 {
    CALL(1, "%p", camera);
    assert(camera);

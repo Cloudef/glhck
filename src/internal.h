@@ -288,10 +288,10 @@ typedef void (*__GLHCKrenderAPIdeleteTextures)   (size_t count, unsigned int *ob
 /* textures */
 typedef void (*__GLHCKrenderAPIbindTexture)      (unsigned int object);
 typedef int  (*__GLHCKrenderAPIuploadTexture)    (_glhckTexture *texture, unsigned int flags);
-typedef void (*__GLHCKrenderAPIfillTexture)      (unsigned int texture, unsigned char *data, int x, int y,
+typedef void (*__GLHCKrenderAPIfillTexture)      (unsigned int texture, const unsigned char *data, int x, int y,
       int width, int height, unsigned int format);
 
-typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *const buffer,
+typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *buffer,
                                                        int width, int height, unsigned int format,
                                                        unsigned int reuse_texture_ID,
                                                        unsigned int flags);
@@ -513,7 +513,7 @@ int   _glhckStrnupcmp(const char *hay, const char *needle, size_t len);
 void  _glhckTexturePackerSetCount(_glhckTexturePacker *tp, short textureCount);
 short _glhckTexturePackerAdd(_glhckTexturePacker *tp, int width, int height);
 int   _glhckTexturePackerPack(_glhckTexturePacker *tp, int *width, int *height, const int force_power_of_two, const int one_pixel_border);
-int   _glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *x, int *y, int *width, int *height);
+int   _glhckTexturePackerGetLocation(const _glhckTexturePacker *tp, int index, int *x, int *y, int *width, int *height);
 _glhckTexturePacker*  _glhckTexturePackerNew(void);
 void                  _glhckTexturePackerFree(_glhckTexturePacker *tp);
 

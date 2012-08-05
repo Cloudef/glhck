@@ -5,7 +5,7 @@
 
 /* \brief get packed area for packed texture */
 static _glhckAtlasArea* _glhckAtlasGetPackedArea(
-      _glhckAtlas *atlas, _glhckTexture *texture)
+      const _glhckAtlas *atlas, _glhckTexture *texture)
 {
    _glhckAtlasRect *r;
    CALL(2, "%p, %p", atlas, texture);
@@ -229,7 +229,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    kmMat4Translation(&ortho, -1, -1, 0);
 
    _GLHCKlibrary.render.api.viewport(0, 0, width, height);
-   old_projection = _GLHCKlibrary.render.api.getProjection();
+   memcpy(&old_projection, _GLHCKlibrary.render.api.getProjection(), sizeof(kmMat4));
    _GLHCKlibrary.render.api.setProjection(&ortho);
 
    /* set clear color */
@@ -297,7 +297,7 @@ fail:
 }
 
 /* \brief return pointer to texture by index */
-GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(glhckAtlas *atlas,
+GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(const glhckAtlas *atlas,
       unsigned short index)
 {
    _glhckAtlasRect *rect;
@@ -312,7 +312,7 @@ GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(glhckAtlas *atlas,
 }
 
 /* \brief return transformed coordinates of packed texture */
-GLHCKAPI int glhckAtlasGetTransform(glhckAtlas *atlas, glhckTexture *texture,
+GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *texture,
       kmVec4 *out, short *degrees)
 {
    float atlasWidth, atlasHeight;
@@ -345,7 +345,7 @@ fail:
 }
 
 /* \brief return coordinates transformed with the packed texture's transform */
-GLHCKAPI int glhckAtlasTransformCoordinates(glhckAtlas *atlas, glhckTexture *texture,
+GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTexture *texture,
       const kmVec2 *in, kmVec2 *out)
 {
    short degrees;

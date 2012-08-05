@@ -261,7 +261,7 @@ short _glhckTexturePackerAdd(_glhckTexturePacker *tp, int width, int height)
    return tp->texture_index-1;
 }
 
-int _glhckTexturePackerGetLocation(_glhckTexturePacker *tp, int index, int *in_x, int *in_y, int *in_width, int *in_height)
+int _glhckTexturePackerGetLocation(const _glhckTexturePacker *tp, int index, int *in_x, int *in_y, int *in_width, int *in_height)
 {
    int ret = 0, x = 0, y = 0, width = 0, height = 0;
    tpTexture *t;

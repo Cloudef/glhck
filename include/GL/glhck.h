@@ -257,10 +257,10 @@ GLHCKAPI short glhckCameraFree(glhckCamera *camera);
 GLHCKAPI void glhckCameraUpdate(glhckCamera *camera);
 GLHCKAPI void glhckCameraReset(glhckCamera *camera);
 GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionType projectionType);
-GLHCKAPI glhckFrustum* glhckCameraGetFrustum(glhckCamera *camera);
-GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(glhckCamera *camera);
-GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(glhckCamera *camera);
-GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(glhckCamera *camera);
+GLHCKAPI glhckFrustum* glhckCameraGetFrustum(const glhckCamera *camera);
+GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(const glhckCamera *camera);
+GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(const glhckCamera *camera);
+GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(const glhckCamera *camera);
 GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov);
 GLHCKAPI void glhckCameraRange(glhckCamera *camera,
       const kmScalar near, const kmScalar far);
@@ -301,28 +301,29 @@ GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
 GLHCKAPI void glhckObjectSetMaterialFlags(glhckObject *object, unsigned int flags);
 
 /* object control */
-GLHCKAPI const kmAABB* glhckObjectGetOBB(glhckObject *object);
-GLHCKAPI const kmAABB* glhckObjectGetAABB(glhckObject *object);
-GLHCKAPI const kmVec3* glhckObjectGetPosition(glhckObject *object);
+GLHCKAPI const kmAABB* glhckObjectGetOBB(const glhckObject *object);
+GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object);
+GLHCKAPI const kmVec3* glhckObjectGetPosition(const glhckObject *object);
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
 GLHCKAPI void glhckObjectPositionf(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI void glhckObjectMove(glhckObject *object, const kmVec3 *move);
 GLHCKAPI void glhckObjectMovef(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
-GLHCKAPI const kmVec3* glhckObjectGetRotation(glhckObject *object);
+GLHCKAPI const kmVec3* glhckObjectGetRotation(const glhckObject *object);
 GLHCKAPI void glhckObjectRotation(glhckObject *object, const kmVec3 *rotate);
 GLHCKAPI void glhckObjectRotationf(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate);
 GLHCKAPI void glhckObjectRotatef(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI const kmVec3* glhckObjectGetScale(const glhckObject *object);
 GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale);
 GLHCKAPI void glhckObjectScalef(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 
 /* geometry */
-GLHCKAPI glhckObject* glhckModelNew(const char *path, kmScalar size);
+GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar size);
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, size_t x, size_t y);
@@ -332,7 +333,7 @@ GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file,
 /* text */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
 GLHCKAPI short glhckTextFree(glhckText *text);
-GLHCKAPI void glhckTextMetrics(glhckText *text, unsigned int font_id,
+GLHCKAPI void glhckTextGetMetrics(glhckText *text, unsigned int font_id,
       float size, float *ascender, float *descender, float *lineh);
 GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
       const char *s, kmVec2 *min, kmVec2 *max);
@@ -370,20 +371,20 @@ GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture);
 GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *atlas);
 GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two,
       const int border);
-GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(glhckAtlas *atlas,
+GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(const glhckAtlas *atlas,
       unsigned short index);
-GLHCKAPI int glhckAtlasGetTransform(glhckAtlas *atlas, glhckTexture *texture,
+GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *texture,
       kmVec4 *transformed, short *degrees);
-GLHCKAPI int glhckAtlasTransformCoordinates(glhckAtlas *atlas, glhckTexture *texture,
+GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTexture *texture,
       const kmVec2 *in, kmVec2 *out);
 
 /* render to texture */
 GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode);
 GLHCKAPI short glhckRttFree(glhckRtt *rtt);
 GLHCKAPI int glhckRttFillData(glhckRtt *rtt);
-GLHCKAPI glhckTexture* glhckRttGetTexture(glhckRtt *rtt);
-GLHCKAPI void glhckRttBegin(glhckRtt *rtt);
-GLHCKAPI void glhckRttEnd(glhckRtt *rtt);
+GLHCKAPI glhckTexture* glhckRttGetTexture(const glhckRtt *rtt);
+GLHCKAPI void glhckRttBegin(const glhckRtt *rtt);
+GLHCKAPI void glhckRttEnd(const glhckRtt *rtt);
 
 /* trace && debug */
 GLHCKAPI void glhckSetDebugHook(glhckDebugHookFunc func);

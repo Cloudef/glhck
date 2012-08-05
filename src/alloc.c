@@ -49,7 +49,7 @@ static void trackAlloc(const char *channel, void *ptr, size_t size)
 }
 
 /* \brief internal realloc hook */
-static void trackRealloc(void *ptr, void *ptr2, size_t size)
+static void trackRealloc(const void *ptr, void *ptr2, size_t size)
 {
    __GLHCKalloc *data = _GLHCKlibrary.alloc;
 
@@ -62,7 +62,7 @@ static void trackRealloc(void *ptr, void *ptr2, size_t size)
 }
 
 /* \brief internal free hook */
-static void trackFree(void *ptr)
+static void trackFree(const void *ptr)
 {
    __GLHCKalloc *found, *data = _GLHCKlibrary.alloc;
 

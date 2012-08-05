@@ -5,23 +5,23 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
 
 /* \brief create new cube object */
-GLHCKAPI _glhckObject* glhckModelNew(const char *path, kmScalar size)
+GLHCKAPI _glhckObject* glhckModelNew(const char *file, kmScalar size)
 {
    _glhckObject *object;
-   CALL(0, "%s, %f", path, size);
+   CALL(0, "%s, %f", file, size);
 
    /* create new object */
    if (!(object = glhckObjectNew()))
       goto fail;
 
    /* import model */
-   _glhckImportModel(object, path, 0);
+   _glhckImportModel(object, file, 0);
 
    /* scale the cube */
    glhckObjectScalef(object, size, size, size);
 
    /* set object's filename */
-   _glhckObjectSetFile(object, path);
+   _glhckObjectSetFile(object, file);
 
    RET(0, "%p", object);
    return object;
