@@ -3,6 +3,15 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_ATLAS
 
+/* \brief count textures */
+static unsigned short _glhckAtlasNumTextures(const _glhckAtlas *atlas)
+{
+   _glhckAtlasRect *r;
+   unsigned short count;
+   for (r = atlas->rect; r; r = r->next) ++count;
+   return count;
+}
+
 /* \brief get packed area for packed texture */
 static _glhckAtlasArea* _glhckAtlasGetPackedArea(
       const _glhckAtlas *atlas, _glhckTexture *texture)
@@ -187,15 +196,24 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    kmMat4 ortho;
    CALL(0, "%p, %d, %d", atlas, power_of_two, border);
 
-   /* new texture packer */
-   if (!(tp = _glhckTexturePackerNew()))
-      goto fail;
-
    /* count textures */
    for (count = 0, rect = atlas->rect;
         rect; rect = rect->next) {
       rect->index = count++;
    }
+
+   /* only one texture silly */
+   if (count==1) {
+      IFDO(glhckTextureFree, atlas->texture);
+      atlas->texture = glhckTextureRef(atlas->rect->texture);
+      RET(0, "%d", RETURN_OK);
+      return RETURN_OK;
+   }
+
+   /* new texture packer */
+   if (!(tp = _glhckTexturePackerNew()))
+      goto fail;
+
    _glhckTexturePackerSetCount(tp, count);
 
    /* add textures to packer */
@@ -324,6 +342,14 @@ GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *textu
    if (!atlas->texture)
       goto fail;
 
+   /* only one texture silly */
+   if (_glhckAtlasNumTextures(atlas)==1) {
+      *degrees = 0;
+      kmVec4Fill(out, 1, 1, 1, 1);
+      RET(2, "%d", RETURN_OK);
+      return RETURN_OK;
+   }
+
    if (!(packed = _glhckAtlasGetPackedArea(atlas, texture)))
       goto fail;
 
@@ -351,8 +377,15 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTextur
    short degrees;
    kmVec4 transformed;
    kmVec2 center = { 0.5f, 0.5f };
-
    CALL(2, "%p, %p, "VEC2S", "VEC2S, atlas, texture, VEC2(in), VEC2(out));
+
+   /* only one texture */
+   if (_glhckAtlasNumTextures(atlas)==1) {
+      kmVec2Assign(out, in);
+      RET(2, "%d", RETURN_OK);
+      return RETURN_OK;
+   }
+
    if (glhckAtlasGetTransform(atlas, texture, &transformed, &degrees)
          != RETURN_OK)
       goto fail;
