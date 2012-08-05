@@ -7,7 +7,7 @@
 static unsigned short _glhckAtlasNumTextures(const _glhckAtlas *atlas)
 {
    _glhckAtlasRect *r;
-   unsigned short count;
+   unsigned short count = 0;
    for (r = atlas->rect; r; r = r->next) ++count;
    return count;
 }
@@ -345,7 +345,7 @@ GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *textu
    /* only one texture silly */
    if (_glhckAtlasNumTextures(atlas)==1) {
       *degrees = 0;
-      kmVec4Fill(out, 1, 1, 1, 1);
+      kmVec4Fill(out, 0, 0, 1, 1);
       RET(2, "%d", RETURN_OK);
       return RETURN_OK;
    }
