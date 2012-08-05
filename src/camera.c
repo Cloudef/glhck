@@ -230,7 +230,7 @@ GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionTy
 }
 
 /* \brief get camera's frustum */
-GLHCKAPI glhckFrustum* glhckCameraGetFrustum(const glhckCamera *camera)
+GLHCKAPI glhckFrustum* glhckCameraGetFrustum(glhckCamera *camera)
 {
    CALL(1, "%p", camera);
    assert(camera);

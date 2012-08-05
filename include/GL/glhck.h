@@ -258,7 +258,7 @@ GLHCKAPI short glhckCameraFree(glhckCamera *camera);
 GLHCKAPI void glhckCameraUpdate(glhckCamera *camera);
 GLHCKAPI void glhckCameraReset(glhckCamera *camera);
 GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionType projectionType);
-GLHCKAPI glhckFrustum* glhckCameraGetFrustum(const glhckCamera *camera);
+GLHCKAPI glhckFrustum* glhckCameraGetFrustum(glhckCamera *camera);
 GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(const glhckCamera *camera);
 GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(const glhckCamera *camera);
 GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(const glhckCamera *camera);
