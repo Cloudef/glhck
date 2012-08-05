@@ -742,6 +742,9 @@ GLHCKAPI void glhckObjectTransformCoordinates(
    kmVec2 center = { 0.5f, 0.5f };
    CALL(2, "%p, "VEC4S", %d", object, VEC4(transformed), degrees);
 
+   if (transformed->z == 0.f || transformed->w == 0.f)
+      return;
+
    if (!(newCoords = _glhckMalloc(sizeof(__GLHCKcoordTransform))))
       return;
 

@@ -390,6 +390,9 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTextur
          != RETURN_OK)
       goto fail;
 
+   if (transformed.z == 0.f || transformed.w == 0.f)
+      goto fail;
+
    /* do we need to rotate? */
    if (degrees != 0) kmVec2RotateBy(out, in, degrees, &center);
    else              kmVec2Assign(out, in);
