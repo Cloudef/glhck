@@ -497,6 +497,9 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    CALL(FREE_CALL_PRIO(object), "%p", object);
    assert(object);
 
+   /* not initialized */
+   if (!_glhckInitialized) return 0;
+
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 

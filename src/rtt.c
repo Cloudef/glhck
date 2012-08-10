@@ -56,6 +56,9 @@ GLHCKAPI short glhckRttFree(glhckRtt *rtt)
    CALL(FREE_CALL_PRIO(rtt), "%p", rtt);
    assert(rtt);
 
+   /* not initialized */
+   if (!_glhckInitialized) return 0;
+
    /* there is still references to this rtt alive */
    if (--rtt->refCounter != 0) goto success;
 

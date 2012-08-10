@@ -80,6 +80,9 @@ GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas)
    CALL(FREE_CALL_PRIO(atlas), "%p", atlas);
    assert(atlas);
 
+   /* not initialized */
+   if (!_glhckInitialized) return 0;
+
    /* there is still references to this atlas alive */
    if (--atlas->refCounter != 0) goto success;
 

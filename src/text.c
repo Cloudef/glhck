@@ -362,6 +362,9 @@ GLHCKAPI short glhckTextFree(glhckText *text)
    CALL(0, "%p", text);
    assert(text);
 
+   /* not initialized */
+   if (!_glhckInitialized) return 0;
+
    /* free texture cache */
    for (t = text->tcache; t; t = tn) {
       tn = t->next;

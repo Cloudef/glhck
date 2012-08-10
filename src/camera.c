@@ -159,6 +159,9 @@ GLHCKAPI short glhckCameraFree(glhckCamera *camera)
    CALL(FREE_CALL_PRIO(camera), "%p", camera);
    assert(camera);
 
+   /* not initialized */
+   if (!_glhckInitialized) return 0;
+
    /* there is still references to this object alive */
    if (--camera->refCounter != 0) goto success;
 

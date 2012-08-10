@@ -158,6 +158,9 @@ GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
    CALL(FREE_CALL_PRIO(texture), "%p", texture);
    assert(texture);
 
+   /* not initialized */
+   if (!_glhckInitialized) return 0;
+
    /* there is still references to this texture alive */
    if (--texture->refCounter != 0) goto success;
 
