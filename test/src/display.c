@@ -116,7 +116,7 @@ int main(int argc, char **argv)
    glhckObjectScalef(sprite2, 0.03f, 0.03f, 0.03f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
-#if 0
+#if 1
    cube = glhckCubeNew(1.0f);
    if (cube) glhckObjectSetTexture(cube, texture);
    cameraPos.z = -20.0f;
