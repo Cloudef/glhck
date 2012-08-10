@@ -344,15 +344,6 @@ void _glhckObjectSetFile(_glhckObject *object, const char *file)
    if (file) object->file = _glhckStrdup(file);
 }
 
-/* set object's data */
-void _glhckObjectSetData(_glhckObject *object, const char *data)
-{
-   CALL(1, "%p, %s", object, data);
-   assert(object);
-   IFDO(_glhckFree, object->data);
-   if (data) object->data = _glhckStrdup(data);
-}
-
 /* public api */
 
 /* \brief new object */
@@ -414,8 +405,6 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    /* copy metadata */
    if (src->file)
       object->file = _glhckStrdup(src->file);
-   if (src->data)
-      object->data = _glhckStrdup(src->data);
 
    /* copy vertex data */
    if (object->geometry.flags & GEOMETRY_3D) {
@@ -451,7 +440,6 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
 fail:
    if (object) {
       IFDO(_glhckFree, object->file);
-      IFDO(_glhckFree, object->data);
       IFDO(_glhckFree, object->geometry.vertexData);
       IFDO(_glhckFree, object->geometry.indices);
    }
@@ -484,7 +472,6 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
 
    /* free metadata */
    IFDO(_glhckFree, object->file);
-   IFDO(_glhckFree, object->data);
 
    /* free geometry */
    IFDO(_glhckFree, object->geometry.vertexData);
