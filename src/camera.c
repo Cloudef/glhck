@@ -19,9 +19,9 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
          h = camera->view.viewport.z < camera->view.viewport.w ? 1 :
                camera->view.viewport.w / camera->view.viewport.z;
 
-         distanceFromZero = sqrtf(camera->view.translation.x * camera->view.translation.x +
-                                  camera->view.translation.y * camera->view.translation.y +
-                                  camera->view.translation.z * camera->view.translation.z);
+         distanceFromZero = sqrtf(camera->object->view.translation.x * camera->object->view.translation.x +
+                                  camera->object->view.translation.y * camera->object->view.translation.y +
+                                  camera->object->view.translation.z * camera->object->view.translation.z);
 
          w *= (distanceFromZero+camera->view.near)/2;
          h *= (distanceFromZero+camera->view.near)/2;
@@ -48,16 +48,16 @@ static void _glhckCameraViewMatrix(_glhckCamera *camera)
    CALL(2, "%p", camera);
    assert(camera);
 
-   kmVec3Subtract(&tgtv, &camera->view.target,
-         &camera->view.translation);
+   kmVec3Subtract(&tgtv, &camera->object->view.target,
+         &camera->object->view.translation);
    kmVec3Normalize(&tgtv, &tgtv);
    kmVec3Normalize(&upvector, &camera->view.upVector);
 
    if (kmVec3Dot(&tgtv, &upvector) == 1.f)
       upvector.x += 0.5f;
 
-   kmMat4LookAt(&camera->view.view, &camera->view.translation,
-         &camera->view.target, &upvector);
+   kmMat4LookAt(&camera->view.view, &camera->object->view.translation,
+         &camera->object->view.target, &upvector);
 
    kmMat4Multiply(&camera->view.mvp,
          &camera->view.projection, &camera->view.view);
@@ -112,6 +112,10 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    memset(camera, 0, sizeof(_glhckCamera));
    memset(&camera->view, 0, sizeof(__GLHCKcameraView));
 
+   /* initialize camera's object */
+   if (!(camera->object = glhckObjectNew()))
+      goto fail;
+
    /* defaults */
    camera->view.projectionType = GLHCK_PROJECTION_PERSPECTIVE;
    camera->view.near = 1.0f;
@@ -162,6 +166,9 @@ GLHCKAPI short glhckCameraFree(glhckCamera *camera)
    if (_GLHCKlibrary.render.draw.camera == camera)
       _GLHCKlibrary.render.draw.camera = NULL;
 
+   /* free cemera's object */
+   NULLDO(glhckObjectFree, camera->object);
+
    /* remove camera from world */
    _glhckWorldRemove(clist, camera, _glhckCamera*);
 
@@ -191,7 +198,7 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
             camera->view.viewport.z,
             camera->view.viewport.w);
 
-   if (camera->view.update) {
+   if (camera->view.update || camera->object->view.update) {
       _glhckCameraViewMatrix(camera);
       camera->view.update = 0;
    }
@@ -210,9 +217,9 @@ GLHCKAPI void glhckCameraReset(glhckCamera *camera)
 
    camera->view.update = 1;
    kmVec3Fill(&camera->view.upVector, 0, 1, 0);
-   kmVec3Fill(&camera->view.rotation, 0, 0, 0);
-   kmVec3Fill(&camera->view.target, 0, 0, 0);
-   kmVec3Fill(&camera->view.translation, 0, 0, 0);
+   kmVec3Fill(&camera->object->view.rotation, 0, 0, 0);
+   kmVec3Fill(&camera->object->view.target, 0, 0, 0);
+   kmVec3Fill(&camera->object->view.translation, 0, 0, 0);
    kmVec4Fill(&camera->view.viewport, 0, 0,
          _GLHCKlibrary.render.width,
          _GLHCKlibrary.render.height);
@@ -316,105 +323,11 @@ GLHCKAPI void glhckCameraViewportf(glhckCamera *camera,
    glhckCameraViewport(camera, &viewport);
 }
 
-/* \brief position camera */
-GLHCKAPI void glhckCameraPosition(glhckCamera *camera, const kmVec3 *position)
+/* \brief get camera's object */
+GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *camera)
 {
-   CALL(2, "%p, "VEC3S, camera, VEC3(position));
+   CALL(1, "%p", camera);
    assert(camera);
-
-   if (camera->view.translation.x == position->x &&
-       camera->view.translation.y == position->y &&
-       camera->view.translation.z == position->z)
-      return;
-
-   kmVec3Assign(&camera->view.translation, position);
-   camera->view.update = 1;
-}
-
-/* \brief position camera (kmScalar) */
-GLHCKAPI void glhckCameraPositionf(glhckCamera *camera,
-      const kmScalar x, const kmScalar y, const kmScalar z)
-{
-   const kmVec3 position = { x, y, z };
-   glhckCameraPosition(camera, &position);
-}
-
-/* \brief move camera */
-GLHCKAPI void glhckCameraMove(glhckCamera *camera, const kmVec3 *move)
-{
-   CALL(2, "%p, "VEC3S, camera, VEC3(move));
-   assert(camera);
-
-   kmVec3Add(&camera->view.translation,
-         &camera->view.translation, move);
-   camera->view.update = 1;
-}
-
-/* \brief move camera (kmScalar) */
-GLHCKAPI void glhckCameraMovef(glhckCamera *camera,
-      const kmScalar x, const kmScalar y, const kmScalar z)
-{
-   const kmVec3 move = { x, y, z };
-   glhckCameraMove(camera, &move);
-}
-
-/* \brief rotate camera */
-GLHCKAPI void glhckCameraRotate(glhckCamera *camera, const kmVec3 *rotation)
-{
-   kmVec3 rotToDir;
-   const kmVec3 forwards = { 0, 0, 1 };
-   CALL(2, "%p, "VEC3S, camera, VEC3(rotation));
-   assert(camera);
-
-   if (camera->view.rotation.x == rotation->x &&
-       camera->view.rotation.y == rotation->y &&
-       camera->view.rotation.z == rotation->z)
-      return;
-
-   kmVec3Assign(&camera->view.rotation, rotation);
-
-   /* update target */
-   kmVec3RotationToDirection(&rotToDir,
-         &camera->view.rotation, &forwards);
-   kmVec3Add(&camera->view.target, &camera->view.translation, &rotToDir);
-
-   camera->view.update = 1;
-}
-
-/* \brief rotate camera (kmScalar) */
-GLHCKAPI void glhckCameraRotatef(glhckCamera *camera,
-      const kmScalar x, const kmScalar y, const kmScalar z)
-{
-   const kmVec3 rotation = { x, y, z };
-   glhckCameraRotate(camera, &rotation);
-}
-
-/* \brief rotate camera towards point */
-GLHCKAPI void glhckCameraTarget(glhckCamera *camera, const kmVec3 *target)
-{
-   kmVec3 toTarget;
-   CALL(2, "%p, "VEC3S, camera, VEC3(target));
-   assert(camera);
-
-   if (camera->view.target.x == target->x &&
-       camera->view.target.y == target->y &&
-       camera->view.target.z == target->z)
-      return;
-
-   kmVec3Assign(&camera->view.target, target);
-
-   /* update rotation */
-   kmVec3Subtract(&toTarget,
-         &camera->view.target, &camera->view.translation);
-   kmVec3GetHorizontalAngle(&camera->view.rotation, &toTarget);
-
-   camera->view.update = 1;
-}
-
-/* \brief rotate camera towards point (kmScalar) */
-GLHCKAPI void glhckCameraTargetf(glhckCamera *camera,
-      const kmScalar x, const kmScalar y, const kmScalar z)
-{
-   const kmVec3 target = { x, y, z };
-   glhckCameraTarget(camera, &target);
+   RET(1, "%p", camera->object);
+   return camera->object;
 }

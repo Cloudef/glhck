@@ -204,7 +204,7 @@ typedef struct __GLHCKobjectGeometry {
 } __GLHCKobjectGeometry;
 
 typedef struct __GLHCKobjectView {
-   kmVec3 translation, rotation, scaling;
+   kmVec3 translation, target, rotation, scaling;
    kmMat4 matrix;
    kmAABB bounding;
    kmAABB aabb; /* transformed bounding (axis aligned) */
@@ -267,13 +267,14 @@ typedef struct _glhckText {
 typedef struct __GLHCKcameraView {
    glhckProjectionType projectionType;
    kmScalar near, far, fov;
-   kmVec3 translation, target, rotation, upVector;
+   kmVec3 upVector;
    kmVec4 viewport;
    kmMat4 view, projection, mvp;
    char update;
 } __GLHCKcameraView;
 
 typedef struct _glhckCamera {
+   struct _glhckObject *object;
    struct __GLHCKcameraView view;
    struct glhckFrustum frustum;
    short refCounter;

@@ -269,18 +269,7 @@ GLHCKAPI void glhckCameraViewport(glhckCamera *camera, const kmVec4 *viewport);
 GLHCKAPI void glhckCameraViewportf(glhckCamera *camera,
       const kmScalar x, const kmScalar y,
       const kmScalar w, const kmScalar h);
-GLHCKAPI void glhckCameraPosition(glhckCamera *camera, const kmVec3 *position);
-GLHCKAPI void glhckCameraPositionf(glhckCamera *camera,
-      const kmScalar x, const kmScalar y, const kmScalar z);
-GLHCKAPI void glhckCameraMove(glhckCamera *camera, const kmVec3 *move);
-GLHCKAPI void glhckCameraMovef(glhckCamera *camera,
-      const kmScalar x, const kmScalar y, const kmScalar z);
-GLHCKAPI void glhckCameraRotate(glhckCamera *camera, const kmVec3 *rotation);
-GLHCKAPI void glhckCameraRotatef(glhckCamera *camera,
-      const kmScalar x, const kmScalar y, const kmScalar z);
-GLHCKAPI void glhckCameraTarget(glhckCamera *camera, const kmVec3 *target);
-GLHCKAPI void glhckCameraTargetf(glhckCamera *camera,
-      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *camera);
 
 /* objects */
 GLHCKAPI glhckObject* glhckObjectNew(void);
@@ -319,6 +308,10 @@ GLHCKAPI void glhckObjectRotationf(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate);
 GLHCKAPI void glhckObjectRotatef(glhckObject *object,
+      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI const kmVec3* glhckObjectGetTarget(const glhckObject *object);
+GLHCKAPI void glhckObjectTarget(glhckObject *object, const kmVec3 *target);
+GLHCKAPI void glhckObjectTargetf(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI const kmVec3* glhckObjectGetScale(const glhckObject *object);
 GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale);

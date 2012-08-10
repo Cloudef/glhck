@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 {
    GLFWwindow window;
    glhckTexture *texture;
-   glhckObject *cube, *sprite, *sprite2, *sprite3;
+   glhckObject *cube, *sprite, *sprite2, *sprite3, *camObj;
    glhckCamera *camera;
    const kmAABB *aabb;
    kmVec3 cameraPos = { 0, 0, 0 };
@@ -102,6 +102,7 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
 
    glhckCameraRange(camera, 1.0f, 1000.0f);
+   camObj = glhckCameraGetObject(camera);
 
    /* this texture is useless when toggling PMD testing */
    if (!(texture = glhckTextureNew("test/media/glhck.png",
@@ -109,13 +110,12 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
 
    sprite  = glhckSpriteNewFromFile("test/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
-   sprite2 = glhckSpriteNewFromFile("test/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
-   sprite3 = glhckSpriteNewFromFile("test/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
+   sprite2 = glhckObjectCopy(sprite);
+   sprite3 = glhckObjectCopy(sprite);
    glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
    glhckObjectScalef(sprite2, 0.03f, 0.03f, 0.03f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
-   //sprite2 = glhckObjectCopy(sprite); /* FIXME */
 #if 0
    cube = glhckCubeNew(1.0f);
    if (cube) glhckObjectSetTexture(cube, texture);
@@ -170,9 +170,9 @@ int main(int argc, char **argv)
       }
 
       /* rotate */
-      glhckCameraPosition(camera, &cameraPos);
-      glhckCameraTargetf(camera, cameraPos.x, cameraPos.y, cameraPos.z + 1);
-      glhckCameraRotate(camera, &cameraRot);
+      glhckObjectPosition(camObj, &cameraPos);
+      glhckObjectTargetf(camObj, cameraPos.x, cameraPos.y, cameraPos.z + 1);
+      glhckObjectRotate(camObj, &cameraRot);
 
       /* glhck drawing */
       glhckObjectRotatef(cube, 30.0f * delta, 0, 30.0f * delta);
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
             spinRadius*sin((glhckObjectGetRotation(cube))->x/8),
             (glhckObjectGetOBB(cube))->max.y,
             spinRadius*cos((glhckObjectGetRotation(cube))->x/8));
-      glhckObjectDraw(sprite);
+      glhckObjectTarget(sprite, glhckObjectGetPosition(cube));
 
       /* TODO: save object state on draw call
        * so we don't need sprite2 here! */
@@ -197,7 +197,9 @@ int main(int argc, char **argv)
             spinRadius*sin((glhckObjectGetRotation(cube))->z/8),
             (spinRadius*cos((glhckObjectGetRotation(cube))->z/8)+aabb->max.y/2),
             (glhckObjectGetOBB(cube))->max.z);
+      glhckObjectTarget(sprite2, glhckObjectGetPosition(cube));
 
+      glhckObjectDraw(sprite);
       glhckObjectDraw(sprite2);
       glhckObjectDraw(sprite3);
       glhckRender();

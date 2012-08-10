@@ -335,6 +335,31 @@ static void _glhckObjectCalculateAABB(_glhckObject *object)
    object->view.bounding = aabb_box;
 }
 
+/* update target from rotation */
+static inline void _glhckObjectUpdateTargetFromRotation(_glhckObject *object)
+{
+   kmVec3 rotToDir;
+   const kmVec3 forwards = { 0, 0, 1 };
+   CALL(2, "%p", object);
+   assert(object);
+
+   /* update target */
+   kmVec3RotationToDirection(&rotToDir, &object->view.rotation, &forwards);
+   kmVec3Add(&object->view.target, &object->view.translation, &rotToDir);
+}
+
+/* update rotation from target */
+static inline void _glhckObjectUpdateRotationFromTarget(_glhckObject *object)
+{
+   kmVec3 toTarget;
+   CALL(2, "%p", object);
+   assert(object);
+
+   /* update rotation */
+   kmVec3Subtract(&toTarget, &object->view.target, &object->view.translation);
+   kmVec3GetHorizontalAngle(&object->view.rotation, &toTarget);
+}
+
 /* set object's filename */
 void _glhckObjectSetFile(_glhckObject *object, const char *file)
 {
@@ -407,23 +432,27 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
       object->file = _glhckStrdup(src->file);
 
    /* copy vertex data */
-   if (object->geometry.flags & GEOMETRY_3D) {
-      if (!(object->geometry.vertexData =
-               _glhckCopy(src->geometry.vertexData,
-                  src->geometry.vertexCount * sizeof(__GLHCKvertexData3d))))
-         goto fail;
-   } else {
-      if (!(object->geometry.vertexData =
-               _glhckCopy(src->geometry.vertexData,
-                  src->geometry.vertexCount * sizeof(__GLHCKvertexData2d))))
-         goto fail;
+   if (src->geometry.vertexData) {
+      if (object->geometry.flags & GEOMETRY_3D) {
+         if (!(object->geometry.vertexData =
+                  _glhckCopy(src->geometry.vertexData,
+                     src->geometry.vertexCount * sizeof(__GLHCKvertexData3d))))
+            goto fail;
+      } else {
+         if (!(object->geometry.vertexData =
+                  _glhckCopy(src->geometry.vertexData,
+                     src->geometry.vertexCount * sizeof(__GLHCKvertexData2d))))
+            goto fail;
+      }
    }
 
    /* copy index data */
-   if (!(object->geometry.indices =
-            _glhckCopy(src->geometry.indices,
-               src->geometry.indicesCount * sizeof(GLHCK_CAST_INDEX))))
-      goto fail;
+   if (src->geometry.indices) {
+      if (!(object->geometry.indices =
+               _glhckCopy(src->geometry.indices,
+                  src->geometry.indicesCount * sizeof(GLHCK_CAST_INDEX))))
+         goto fail;
+   }
 
    /* copy texture */
    glhckObjectSetTexture(object, src->material.texture);
@@ -595,11 +624,6 @@ GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position)
    CALL(2, "%p, "VEC3S, object, VEC3(position));
    assert(object && position);
 
-   if (object->view.translation.x == position->x &&
-       object->view.translation.y == position->y &&
-       object->view.translation.z == position->z)
-      return;
-
    kmVec3Assign(&object->view.translation, position);
    object->view.update = 1;
 }
@@ -634,10 +658,10 @@ GLHCKAPI void glhckObjectMovef(glhckObject *object,
 /* \brief get object rotation */
 GLHCKAPI const kmVec3* glhckObjectGetRotation(const glhckObject *object)
 {
-   CALL(1, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
-   RET(1, VEC3S, VEC3(&object->view.rotation));
+   RET(2, VEC3S, VEC3(&object->view.rotation));
    return &object->view.rotation;
 }
 
@@ -647,12 +671,8 @@ GLHCKAPI void glhckObjectRotation(glhckObject *object, const kmVec3 *rotation)
    CALL(2, "%p, "VEC3S, object, VEC3(rotation));
    assert(object && rotation);
 
-   if (object->view.rotation.x == rotation->x &&
-       object->view.rotation.y == rotation->y &&
-       object->view.rotation.z == rotation->z)
-      return;
-
    kmVec3Assign(&object->view.rotation, rotation);
+   _glhckObjectUpdateTargetFromRotation(object);
    object->view.update = 1;
 }
 
@@ -671,6 +691,7 @@ GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate)
    assert(object && rotate);
 
    kmVec3Add(&object->view.rotation, &object->view.rotation, rotate);
+   _glhckObjectUpdateTargetFromRotation(object);
    object->view.update = 1;
 }
 
@@ -680,6 +701,35 @@ GLHCKAPI void glhckObjectRotatef(glhckObject *object,
 {
    const kmVec3 rotate = { x, y, z };
    glhckObjectRotate(object, &rotate);
+}
+
+/* \brief get object target */
+GLHCKAPI const kmVec3* glhckObjectGetTarget(const glhckObject *object)
+{
+   CALL(2, "%p", object);
+   assert(object);
+
+   RET(2, VEC3S, VEC3(&object->view.target));
+   return &object->view.target;
+}
+
+/* \brief set object target */
+GLHCKAPI void glhckObjectTarget(glhckObject *object, const kmVec3 *target)
+{
+   CALL(2, "%p, "VEC3S, object, VEC3(target));
+   assert(object && target);
+
+   kmVec3Assign(&object->view.target, target);
+   _glhckObjectUpdateRotationFromTarget(object);
+   object->view.update = 1;
+}
+
+/* \brief set object target (with kmScalar) */
+GLHCKAPI void glhckObjectTargetf(glhckObject *object,
+      const kmScalar x, const kmScalar y, const kmScalar z)
+{
+   const kmVec3 target = { x, y, z };
+   glhckObjectTarget(object, &target);
 }
 
 /* \brief get object scale */
@@ -697,11 +747,6 @@ GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale)
 {
    CALL(2, "%p, "VEC3S, object, VEC3(scale));
    assert(object && scale);
-
-   if (object->view.scaling.x == scale->x &&
-       object->view.scaling.y == scale->y &&
-       object->view.scaling.z == scale->z)
-      return;
 
    kmVec3Assign(&object->view.scaling, scale);
    object->view.update = 1;
