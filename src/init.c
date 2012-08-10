@@ -117,6 +117,14 @@ GLHCKAPI int glhckInit(int argc, char **argv)
    memset(&_GLHCKlibrary.render.draw,     0, sizeof(__GLHCKrenderDraw));
    memset(&_GLHCKlibrary.world,           0, sizeof(__GLHCKworld));
 
+   _GLHCKlibrary.render.draw.objects.queue =
+      _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckObject*));
+   _GLHCKlibrary.render.draw.objects.allocated += GLHCK_QUEUE_ALLOC_STEP;
+
+   _GLHCKlibrary.render.draw.textures.queue =
+      _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckTexture*));
+   _GLHCKlibrary.render.draw.textures.allocated += GLHCK_QUEUE_ALLOC_STEP;
+
 #ifndef NDEBUG
    /* set FPE handler */
    _glhckSetFPE(argc, _argv);
@@ -256,88 +264,99 @@ GLHCKAPI void glhckRender(void)
    char kt;
    _glhckTexture *t;
    _glhckObject *o;
+   __GLHCKobjectQueue *objects;
+   __GLHCKtextureQueue *textures;
    TRACE(2);
 
    /* can't render */
    if (!_glhckInitialized || !_GLHCKlibrary.render.name)
       return;
 
+   objects  = &_GLHCKlibrary.render.draw.objects;
+   textures = &_GLHCKlibrary.render.draw.textures;
+
    /* nothing to draw */
-   if (!_GLHCKlibrary.render.draw.oqueue[0])
+   if (!objects->count)
       return;
 
    /* draw in sorted texture order */
-   for (ti = 0, ts = 0; 1; ++ti) {
-      t = _GLHCKlibrary.render.draw.tqueue[ti];
-      for (oi = 0, os = 0, kt = 0; (o = _GLHCKlibrary.render.draw.oqueue[oi]); ++oi) {
+   for (ti = 0, ts = 0; ti != textures->count+1; ++ti) {
+      if (ti < textures->count) {
+         if (!(t = textures->queue[ti])) continue;
+      } else t = NULL; /* untextured object */
+
+      for (oi = 0, os = 0, kt = 0; oi != objects->count; ++oi) {
+         if (!(o = objects->queue[oi])) continue;
+
          /* don't draw if not same texture or opaque,
           * opaque objects are drawn last */
          if (o->material.texture != t ||
             (o->material.flags & GLHCK_MATERIAL_ALPHA)) {
             if (o->material.texture == t) kt = 1; /* don't remove texture from queue */
-            if (oi != os) _GLHCKlibrary.render.draw.oqueue[oi] = NULL;
-            _GLHCKlibrary.render.draw.oqueue[os++] = o; /* assign back to list */
+            if (os != oi) objects->queue[oi] = NULL;
+            objects->queue[os++] = o;
             continue;
          }
 
          /* render object */
          glhckObjectRender(o);
-         glhckObjectFree(o); /* ref is increased on draw call! */
-         _GLHCKlibrary.render.draw.oqueue[oi] = NULL;
+         glhckObjectFree(o);
+         objects->queue[oi] = NULL;
       }
 
       /* check if we need texture again or not */
       if (kt) {
-         if (ts != ti) _GLHCKlibrary.render.draw.tqueue[ti] = NULL;
-         _GLHCKlibrary.render.draw.tqueue[ts++] = t;
+         if (ts != ti) textures->queue[ti] = NULL;
+         textures->queue[ts++] = t;
       } else {
          if (t) glhckTextureFree(t); /* ref is increased on draw call! */
-         _GLHCKlibrary.render.draw.tqueue[ti] = NULL;
+         textures->queue[ti] = NULL;
       }
-
-      /* no texture, time to break
-       * we do this here, so objects with no texture get drawn last */
-      if (!t) break;
    }
 
    /* draw opaque objects next,
     * TODO: this should not be done in texture order,
     * instead draw from farthest to nearest. (I hate opaque objects) */
-   for (ti = 0; 1; ++ti) {
-      t = _GLHCKlibrary.render.draw.tqueue[ti];
-      for (oi = 0, os = 0; (o = _GLHCKlibrary.render.draw.oqueue[oi]); ++oi) {
+   for (ti = 0; ti != textures->count+1; ++ti) {
+      if (ti < textures->count) {
+         if (!(t = textures->queue[ti])) continue;
+      } else t = NULL; /* untextured object */
+
+      for (oi = 0, os = 0; oi != objects->count; ++oi) {
+         if (!(o = objects->queue[oi])) continue;
+
          /* don't draw if not same texture */
          if (o->material.texture != t) {
-            if (oi != os) _GLHCKlibrary.render.draw.oqueue[oi] = NULL;
-            _GLHCKlibrary.render.draw.oqueue[os++] = o; /* assign back to list */
+            if (os != oi) objects->queue[oi] = NULL;
+            objects->queue[os++] = o;
             continue;
          }
 
          /* render object */
          glhckObjectRender(o);
-         glhckObjectFree(o); /* ref is increased on draw call! */
-         _GLHCKlibrary.render.draw.oqueue[oi] = NULL;
+         glhckObjectFree(o);
+         objects->queue[oi] = NULL;
       }
 
       /* this texture is done for */
       if (t) glhckTextureFree(t); /* ref is increased on draw call! */
-      _GLHCKlibrary.render.draw.tqueue[ti] = NULL;
+      textures->queue[ti] = NULL;
 
       /* no texture, time to break */
       if (!t) break;
    }
 
    /* good we got no leftovers \o/ */
-   if (_GLHCKlibrary.render.draw.oqueue[0]) {
+   if (objects->count) {
       /* something was left un-drawn :o? */
-      memset(_GLHCKlibrary.render.draw.oqueue, 0,
-            GLHCK_MAX_DRAW * sizeof(_glhckObject*));
+      memset(objects->queue, 0, objects->count * sizeof(_glhckObject*));
+      objects->count = 0;
    }
 
-   if (_GLHCKlibrary.render.draw.tqueue[0]) {
+   if (textures->count) {
       /* something was left un-drawn :o? */
-      memset(_GLHCKlibrary.render.draw.tqueue, 0,
-            GLHCK_MAX_DRAW * sizeof(_glhckTexture*));
+      memset(textures->queue, 0, textures->count * sizeof(_glhckTexture*));
+      textures->count = 0;
    }
 }
 
@@ -366,9 +385,13 @@ GLHCKAPI void glhckTerminate(void)
    _massacre(clist, c, cn, glhckCameraFree);
    _massacre(alist, a, an, glhckAtlasFree);
    _massacre(rlist, r, rn, glhckRttFree);
+   _massacre(tflist, tf, tfn, glhckTextFree);
    _massacre(olist, o, on, glhckObjectFree);
    _massacre(tlist, t, tn, glhckTextureFree);
-   _massacre(tflist, tf, tfn, glhckTextFree);
+
+   /* destroy queues */
+   _glhckFree(_GLHCKlibrary.render.draw.objects.queue);
+   _glhckFree(_GLHCKlibrary.render.draw.textures.queue);
 
 #ifndef NDEBUG
    _glhckTrackTerminate();

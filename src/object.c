@@ -411,7 +411,7 @@ fail:
    return NULL;
 }
 
-/* \brief copy object */
+/* \brief COPY OBJEct */
 GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
 {
    _glhckObject *object;
@@ -455,6 +455,7 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    }
 
    /* copy texture */
+   object->material.texture = NULL; /* make sure we don't free reference */
    glhckObjectSetTexture(object, src->material.texture);
 
    /* set ref counter to 1 */
@@ -547,21 +548,16 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
    CALL(2, "%p", object);
    assert(object);
 
-   if (_GLHCKlibrary.render.draw.oqueue[GLHCK_MAX_DRAW-1]) {
-      DEBUG(GLHCK_DBG_WARNING, "Maximum draw queue limit reached!");
+   /* insert to draw queue */
+   _glhckInsertToQueue(objects, object, glhckObject);
+   glhckObjectRef(object);
+
+   /* insert texture to drawing queue? */
+   if (!object->material.texture)
       return;
-   }
 
-   /* insert object to drawing queue */
-   _glhckQueueInsert(_GLHCKlibrary.render.draw.oqueue, object);
-   glhckObjectRef(object); /* free after render */
-
-   /* insert texture to drawing queue */
-   if (object->material.texture) {
-      _glhckQueueInsert(_GLHCKlibrary.render.draw.tqueue,
-            object->material.texture);
-      glhckTextureRef(object->material.texture); /* free after render */
-   }
+   _glhckInsertToQueue(textures, object->material.texture, glhckTexture);
+   glhckTextureRef(object->material.texture);
 }
 
 /* \brief render object */

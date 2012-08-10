@@ -38,9 +38,6 @@
 /* build importers as seperate dynamic libraries? */
 #define GLHCK_IMPORT_DYNAMIC 0
 
-/* maximum draw queue allowed */
-#define GLHCK_MAX_DRAW 32767
-
 /* public structs typedeffed to seperate internal code */
 typedef glhckFrustum _glhckFrustum;
 
@@ -360,12 +357,24 @@ typedef struct __GLHCKcamera {
    struct _glhckCamera *bind;
 } __GLHCKcamera;
 
+#define GLHCK_QUEUE_ALLOC_STEP 15
+
+typedef struct __GLHCKobjectQueue {
+   unsigned int allocated, count;
+   struct _glhckObject **queue;
+} __GLHCKobjectQueue;
+
+typedef struct __GLHCKtextureQueue {
+   unsigned int allocated, count;
+   struct _glhckTexture **queue;
+} __GLHCKtextureQueue;
+
 typedef struct __GLHCKrenderDraw {
    kmVec4 clearColor;
    unsigned int texture, drawCount;
    struct _glhckCamera  *camera;
-   struct _glhckObject  *oqueue[GLHCK_MAX_DRAW];
-   struct _glhckTexture *tqueue[GLHCK_MAX_DRAW];
+   struct __GLHCKobjectQueue objects;
+   struct __GLHCKtextureQueue textures;
 } __GLHCKrenderDraw;
 
 typedef struct __GLHCKrender {
@@ -462,12 +471,23 @@ typedef struct _glhckTexturePacker {
    }                                               \
 }
 
-/* insert to draw queue */
-#define _glhckQueueInsert(queue, object) \
-{                                        \
-   unsigned int i;                       \
-   for (i = 0; queue[i]; ++i);           \
-   queue[i] = object;                    \
+/* queue macro below, be very afraid */
+#define RQUE(x) _GLHCKlibrary.render.draw.x
+#define _glhckInsertToQueue(xque, object, cast)                   \
+{                                                                 \
+if (RQUE(xque).allocated <= RQUE(xque).count+1) {                 \
+   RQUE(xque).queue = _glhckRealloc(RQUE(xque).queue,             \
+         RQUE(xque).allocated,                                    \
+         RQUE(xque).allocated + GLHCK_QUEUE_ALLOC_STEP,           \
+         sizeof(cast*));                                          \
+                                                                  \
+   /* epic fail here */                                           \
+   if (!RQUE(xque).queue) return;                                 \
+   RQUE(xque).allocated += GLHCK_QUEUE_ALLOC_STEP;                \
+}                                                                 \
+                                                                  \
+RQUE(xque).queue[RQUE(xque).count] = object;                      \
+RQUE(xque).count++;                                               \
 }
 
 /* if exists then perform function and set NULL
