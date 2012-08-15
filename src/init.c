@@ -2,8 +2,10 @@
 #include "internal.h"
 #include "render/render.h"
 #include <stdlib.h> /* for atexit */
+#include <stdio.h>  /* for sprintf */
 #include <assert.h> /* for assert */
 #include <signal.h> /* for signal */
+#include <unistd.h> /* for fork   */
 
 #if defined(__linux__) && defined(__GNUC__)
 #  define _GNU_SOURCE
@@ -14,6 +16,10 @@ int feenableexcept(int excepts);
 #if (defined(__APPLE__) && (defined(__i386__) || defined(__x86_64__)))
 #  define OSX_SSE_FPE
 #  include <xmmintrin.h>
+#endif
+
+#if defined(__linux__) || defined(__APPLE__)
+#  include <sys/wait.h>
 #endif
 
 /* tracing channel for this file */
@@ -61,6 +67,9 @@ void _glhckDefaultProjection(int width, int height)
    _GLHCKlibrary.render.api.setProjection(&projection);
 }
 
+/* dirty debug build stuff */
+#ifndef NDEBUG
+
 /* floating point exception handler */
 #if defined(__linux__) || defined(_WIN32) || defined(OSX_SSE_FPE)
 static void _glhckFpeHandler(int sig)
@@ -98,6 +107,41 @@ static void _glhckSetFPE(int argc, const char **argv)
 #endif
 }
 
+/* \brief backtrace handler of glhck */
+static void _glhckBacktrace(int signal)
+{
+   /* GDB */
+#if defined(__linux__) || defined(__APPLE__)
+   char buf[1024];
+   pid_t dying_pid = getpid();
+   pid_t child_pid = fork();
+
+   if (child_pid < 0) {
+      _glhckPuts("\1fork failed for gdb backtrace.");
+   } else if (child_pid == 0) {
+      sprintf(buf, "gdb -p %d -batch -ex bt 2>/dev/null | "
+                   "sed '0,/<signal handler/d'", dying_pid);
+      const char* argv[] = { "sh", "-c", buf, NULL };
+      execve("/bin/sh", (char**)argv, NULL);
+      _exit(EXIT_FAILURE);
+   } else {
+      waitpid(child_pid, NULL, 0);
+   }
+#endif
+
+   /* SIGABRT || SIGSEGV */
+   exit(EXIT_FAILURE);
+}
+
+/* set backtrace stuff */
+static void _glhckSetBacktrace(void)
+{
+   signal(SIGABRT, _glhckBacktrace);
+   signal(SIGSEGV, _glhckBacktrace);
+}
+
+#endif /* NDEBUG */
+
 /* public api */
 
 /* \brief initialize */
@@ -125,9 +169,14 @@ GLHCKAPI int glhckInit(int argc, char **argv)
       _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckTexture*));
    _GLHCKlibrary.render.draw.textures.allocated += GLHCK_QUEUE_ALLOC_STEP;
 
+   /* TODO: change the signal calls in these functions to sigaction's */
 #ifndef NDEBUG
    /* set FPE handler */
    _glhckSetFPE(argc, _argv);
+
+   /* setup backtrace handler
+    * make this optional.. */
+   _glhckSetBacktrace();
 #endif
 
    /* init trace system */
