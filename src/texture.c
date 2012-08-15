@@ -30,6 +30,35 @@ nothing:
    return NULL;
 }
 
+/* \brief assign texture to draw list */
+inline void _glhckTextureInsertToQueue(_glhckTexture *texture)
+{
+   __GLHCKtextureQueue *textures;
+   unsigned int i;
+
+   textures = &_GLHCKlibrary.render.draw.textures;
+
+   /* check duplicate */
+   for (i = 0; i != textures->count; ++i)
+      if (textures->queue[i] == texture) return;
+
+   /* need alloc dynamically more? */
+   if (textures->allocated <= textures->count+1) {
+      textures->queue = _glhckRealloc(textures->queue,
+            textures->allocated,
+            textures->allocated + GLHCK_QUEUE_ALLOC_STEP,
+            sizeof(_glhckTexture*));
+
+      /* epic fail here */
+      if (textures->queue) return;
+      textures->allocated += GLHCK_QUEUE_ALLOC_STEP;
+   }
+
+   /* assign the texture to list */
+   textures->queue[textures->count] = texture;
+   textures->count++;
+}
+
 /* \brief set texture data.
  * NOTE: internal function, so data isn't copied. */
 void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data)

@@ -68,6 +68,7 @@ int main(int argc, char **argv)
    kmVec3 cameraPos = { 0, 0, 0 };
    kmVec3 cameraRot = { 180, 180, 0 };
    float spinRadius;
+   int queuePrinted = 0;
 
    float          now          = 0;
    float          last         = 0;
@@ -191,8 +192,6 @@ int main(int argc, char **argv)
             spinRadius*cos((glhckObjectGetRotation(cube))->x/8));
       glhckObjectTarget(sprite, glhckObjectGetPosition(cube));
 
-      /* TODO: save object state on draw call
-       * so we don't need sprite2 here! */
       glhckObjectPositionf(sprite2,
             spinRadius*sin((glhckObjectGetRotation(cube))->z/8),
             (spinRadius*cos((glhckObjectGetRotation(cube))->z/8)+aabb->max.y/2),
@@ -202,6 +201,13 @@ int main(int argc, char **argv)
       glhckObjectDraw(sprite);
       glhckObjectDraw(sprite2);
       glhckObjectDraw(sprite3);
+
+      if (!queuePrinted) {
+         glhckPrintTextureQueue();
+         glhckPrintObjectQueue();
+         queuePrinted = 1;
+      }
+
       glhckRender();
 
       /* draw frustum */

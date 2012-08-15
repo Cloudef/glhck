@@ -5,6 +5,35 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
 
+/* \brief assign object to draw list */
+inline void _glhckObjectInsertToQueue(_glhckObject *object)
+{
+   __GLHCKobjectQueue *objects;
+   unsigned int i;
+
+   objects = &_GLHCKlibrary.render.draw.objects;
+
+   /* check duplicate */
+   for (i = 0; i != objects->count; ++i)
+      if (objects->queue[i] == object) return;
+
+   /* need alloc dynamically more? */
+   if (objects->allocated <= objects->count+1) {
+      objects->queue = _glhckRealloc(objects->queue,
+            objects->allocated,
+            objects->allocated + GLHCK_QUEUE_ALLOC_STEP,
+            sizeof(_glhckObject*));
+
+      /* epic fail here */
+      if (objects->queue) return;
+      objects->allocated += GLHCK_QUEUE_ALLOC_STEP;
+   }
+
+   /* assign the object to list */
+   objects->queue[objects->count] = object;
+   objects->count++;
+}
+
 /* \brief update view matrix of object */
 static void _glhckObjectUpdateMatrix(_glhckObject *object)
 {
@@ -551,16 +580,15 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
    CALL(2, "%p", object);
    assert(object);
 
-   /* insert to draw queue */
-   _glhckInsertToQueue(objects, object, glhckObject);
-   glhckObjectRef(object);
+   /* insert to draw queue, referenced until glhckRender */
+   _glhckObjectInsertToQueue(glhckObjectRef(object));
 
    /* insert texture to drawing queue? */
    if (!object->material.texture)
       return;
 
-   _glhckInsertToQueue(textures, object->material.texture, glhckTexture);
-   glhckTextureRef(object->material.texture);
+   /* insert object's texture to textures queue, referenced until glhckRender */
+   _glhckTextureInsertToQueue(glhckTextureRef(object->material.texture));
 }
 
 /* \brief render object */

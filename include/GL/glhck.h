@@ -385,6 +385,8 @@ GLHCKAPI void glhckRttEnd(const glhckRtt *rtt);
 /* trace && debug */
 GLHCKAPI void glhckSetDebugHook(glhckDebugHookFunc func);
 GLHCKAPI void glhckMemoryGraph(void);
+GLHCKAPI void glhckPrintObjectQueue(void);
+GLHCKAPI void glhckPrintTextureQueue(void);
 
 /* Define cleanup */
 #ifdef GLHCK_WINGDIAPI_DEFINED

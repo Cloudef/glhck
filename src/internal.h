@@ -471,25 +471,6 @@ typedef struct _glhckTexturePacker {
    }                                               \
 }
 
-/* queue macro below, be very afraid */
-#define RQUE(x) _GLHCKlibrary.render.draw.x
-#define _glhckInsertToQueue(xque, object, cast)                   \
-{                                                                 \
-if (RQUE(xque).allocated <= RQUE(xque).count+1) {                 \
-   RQUE(xque).queue = _glhckRealloc(RQUE(xque).queue,             \
-         RQUE(xque).allocated,                                    \
-         RQUE(xque).allocated + GLHCK_QUEUE_ALLOC_STEP,           \
-         sizeof(cast*));                                          \
-                                                                  \
-   /* epic fail here */                                           \
-   if (!RQUE(xque).queue) return;                                 \
-   RQUE(xque).allocated += GLHCK_QUEUE_ALLOC_STEP;                \
-}                                                                 \
-                                                                  \
-RQUE(xque).queue[RQUE(xque).count] = object;                      \
-RQUE(xque).count++;                                               \
-}
-
 /* if exists then perform function and set NULL
  * used mainly to shorten if (x) free(x); x = NULL; */
 #define IFDO(f, x) { if (x) f(x); x = NULL; }
@@ -560,7 +541,7 @@ void _glhckDefaultProjection(int width, int height);
 
 /* objects */
 void _glhckObjectSetFile(_glhckObject *object, const char *file);
-void _glhckObjectSetData(_glhckObject *object, const char *data);
+void _glhckObjectInsertToQueue(_glhckObject *object);
 
 /* camera */
 void _glhckCameraWorldUpdate(int width, int height);
@@ -568,6 +549,7 @@ void _glhckCameraWorldUpdate(int width, int height);
 /* textures */
 unsigned int _glhckNumChannels(unsigned int format);
 void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
+void _glhckTextureInsertToQueue(_glhckTexture *texture);
 
 /* tracing && debug functions */
 void _glhckTraceInit(int argc, const char **argv);

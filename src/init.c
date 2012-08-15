@@ -257,10 +257,40 @@ GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat)
    _GLHCKlibrary.render.api.setProjection(mat);
 }
 
+/* \brief output queued objects */
+GLHCKAPI void glhckPrintObjectQueue(void)
+{
+   unsigned int i;
+   __GLHCKobjectQueue *objects;
+
+   objects = &_GLHCKlibrary.render.draw.objects;
+   _glhckPuts("\n--- Object Queue ---");
+   for (i = 0; i != objects->count; ++i)
+      _glhckPrintf("%u. %p", i, objects->queue[i]);
+   _glhckPuts("--------------------");
+   _glhckPrintf("count/alloc: %u/%u", objects->count, objects->allocated);
+   _glhckPuts("--------------------\n");
+}
+
+ /* \brief output queued textures */
+GLHCKAPI void glhckPrintTextureQueue(void)
+{
+   unsigned int i;
+   __GLHCKtextureQueue *textures;
+
+   textures = &_GLHCKlibrary.render.draw.textures;
+   _glhckPuts("\n--- Texture Queue ---");
+   for (i = 0; i != textures->count; ++i)
+      _glhckPrintf("%u. %p", i, textures->queue[i]);
+   _glhckPuts("---------------------");
+   _glhckPrintf("count/alloc: %u/%u", textures->count, textures->allocated);
+   _glhckPuts("--------------------\n");
+}
+
 /* \brief render scene */
 GLHCKAPI void glhckRender(void)
 {
-   unsigned int ti, oi, ts, os;
+   unsigned int ti, oi, ts, os, tc, oc;
    char kt;
    _glhckTexture *t;
    _glhckObject *o;
@@ -275,17 +305,21 @@ GLHCKAPI void glhckRender(void)
    objects  = &_GLHCKlibrary.render.draw.objects;
    textures = &_GLHCKlibrary.render.draw.textures;
 
+   /* store counts for enumeration, +1 for untexture objects */
+   tc = textures->count+1;
+   oc = objects->count;
+
    /* nothing to draw */
-   if (!objects->count)
+   if (!oc)
       return;
 
    /* draw in sorted texture order */
-   for (ti = 0, ts = 0; ti != textures->count+1; ++ti) {
+   for (ti = 0, ts = 0; ti != oc; ++ti) {
       if (ti < textures->count) {
          if (!(t = textures->queue[ti])) continue;
       } else t = NULL; /* untextured object */
 
-      for (oi = 0, os = 0, kt = 0; oi != objects->count; ++oi) {
+      for (oi = 0, os = 0, kt = 0; oi != oc; ++oi) {
          if (!(o = objects->queue[oi])) continue;
 
          /* don't draw if not same texture or opaque,
@@ -300,8 +334,9 @@ GLHCKAPI void glhckRender(void)
 
          /* render object */
          glhckObjectRender(o);
-         glhckObjectFree(o);
+         glhckObjectFree(o); /* referenced on draw call */
          objects->queue[oi] = NULL;
+         --objects->count;
       }
 
       /* check if we need texture again or not */
@@ -309,20 +344,27 @@ GLHCKAPI void glhckRender(void)
          if (ts != ti) textures->queue[ti] = NULL;
          textures->queue[ts++] = t;
       } else {
-         if (t) glhckTextureFree(t); /* ref is increased on draw call! */
-         textures->queue[ti] = NULL;
+         if (t) {
+            glhckTextureFree(t); /* ref is increased on draw call! */
+            textures->queue[ti] = NULL;
+            --textures->count;
+         }
       }
    }
+
+   /* store counts for enumeration, +1 for untexture objects */
+   tc = textures->count+1;
+   oc = objects->count;
 
    /* draw opaque objects next,
     * TODO: this should not be done in texture order,
     * instead draw from farthest to nearest. (I hate opaque objects) */
-   for (ti = 0; ti != textures->count+1; ++ti) {
+   for (ti = 0; ti != tc && oc; ++ti) {
       if (ti < textures->count) {
          if (!(t = textures->queue[ti])) continue;
       } else t = NULL; /* untextured object */
 
-      for (oi = 0, os = 0; oi != objects->count; ++oi) {
+      for (oi = 0, os = 0; oi != oc; ++oi) {
          if (!(o = objects->queue[oi])) continue;
 
          /* don't draw if not same texture */
@@ -334,13 +376,16 @@ GLHCKAPI void glhckRender(void)
 
          /* render object */
          glhckObjectRender(o);
-         glhckObjectFree(o);
+         glhckObjectFree(o); /* referenced on draw call */
          objects->queue[oi] = NULL;
       }
 
       /* this texture is done for */
-      if (t) glhckTextureFree(t); /* ref is increased on draw call! */
-      textures->queue[ti] = NULL;
+      if (t) {
+         glhckTextureFree(t); /* ref is increased on draw call! */
+         textures->queue[ti] = NULL;
+         --textures->count;
+      }
 
       /* no texture, time to break */
       if (!t) break;
@@ -349,12 +394,14 @@ GLHCKAPI void glhckRender(void)
    /* good we got no leftovers \o/ */
    if (objects->count) {
       /* something was left un-drawn :o? */
+      for (oi = 0; oi != objects->count; ++oi) glhckObjectFree(objects->queue[oi]);
       memset(objects->queue, 0, objects->count * sizeof(_glhckObject*));
       objects->count = 0;
    }
 
    if (textures->count) {
       /* something was left un-drawn :o? */
+      for (ti = 0; ti != textures->count; ++ti) glhckTextureFree(textures->queue[ti]);
       memset(textures->queue, 0, textures->count * sizeof(_glhckTexture*));
       textures->count = 0;
    }
