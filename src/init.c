@@ -352,7 +352,7 @@ GLHCKAPI void glhckRender(void)
       }
    }
 
-   /* store counts for enumeration, +1 for untexture objects */
+   /* store counts for enumeration, +1 for untextured objects */
    tc = textures->count+1;
    oc = objects->count;
 
