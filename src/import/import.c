@@ -290,13 +290,25 @@ int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct 
 
    /* post processing below */
 
+   /* format manipulations here */
+
+   /* compression */
    if (flags & GLHCK_TEXTURE_DXT) {
-      if (!(outData = imghckConvertToDXT5(
-                  data->data, data->width, data->height,
-                  _glhckNumChannels(outFormat), &outSize)))
-         goto fail;
-      outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
-      DEBUG(GLHCK_DBG_CRAP, "Imported image converted to DXT5");
+      if ((_glhckNumChannels(outFormat) & 1) == 1) {
+         if (!(outData = imghckConvertToDXT1(
+                     data->data, data->width, data->height,
+                     _glhckNumChannels(outFormat), &outSize)))
+            goto out_of_memory;
+         outFormat = GLHCK_COMPRESSED_RGB_DXT1;
+         DEBUG(GLHCK_DBG_CRAP, "Imported image converted to DXT1");
+      } else {
+         if (!(outData = imghckConvertToDXT5(
+                     data->data, data->width, data->height,
+                     _glhckNumChannels(outFormat), &outSize)))
+            goto out_of_memory;
+         outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
+         DEBUG(GLHCK_DBG_CRAP, "Imported image converted to DXT5");
+      }
    }
 
    /* upload texture */
