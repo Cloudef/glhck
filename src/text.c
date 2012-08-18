@@ -260,7 +260,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
    if ((data = _glhckMalloc(gw*gh))) {
       stbtt_MakeGlyphBitmap(&font->font, data, gw, gh, gw, scale, scale, gid);
       _GLHCKlibrary.render.api.fillTexture(texture->object, data, 0, glyph->x1, glyph->y1, gw, gh, texture->format);
-      free(data);
+      _glhckFree(data);
    }
 
    return glyph;
