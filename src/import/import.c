@@ -296,6 +296,7 @@ int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct 
                   _glhckNumChannels(outFormat), &outSize)))
          goto fail;
       outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
+      DEBUG(GLHCK_DBG_CRAP, "Imported image converted to DXT5");
    }
 
    /* upload texture */
