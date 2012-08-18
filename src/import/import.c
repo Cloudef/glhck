@@ -1,4 +1,5 @@
 #include "../internal.h"
+#include "imghck.h"
 #include "import.h"
 #include <stdio.h>  /* for fopen    */
 #include <limits.h> /* for PATH_MAX */
@@ -277,6 +278,7 @@ fail:
 /* post-processing of image data */
 int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct *data, unsigned int flags)
 {
+   size_t outSize;
    unsigned char *outData = NULL;
    unsigned int outFormat;
    CALL(0, "%p, %p, %u", texture, data, flags);
@@ -284,13 +286,21 @@ int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct 
    /* assign import data to outData */
    outData   = data->data;
    outFormat = GLHCK_RGBA;
+   outSize   = 0; /* let glhckTextureCreate calculate */
 
-   /* format converisons
-    * check flags and convert to
-    * requested format */
+   /* post processing below */
+
+   if (flags & GLHCK_TEXTURE_DXT) {
+      if (!(outData = imghckConvertToDXT5(
+                  data->data, data->width, data->height,
+                  _glhckNumChannels(outFormat), &outSize)))
+         goto fail;
+      outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
+   }
 
    /* upload texture */
-   glhckTextureCreate(texture, outData, data->width, data->height, outFormat, flags);
+   glhckTextureCreate(texture, outData, data->width, data->height,
+         outFormat, outSize, flags);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;

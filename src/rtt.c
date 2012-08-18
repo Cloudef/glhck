@@ -19,7 +19,7 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
    /* init */
    memset(rtt, 0, sizeof(_glhckRtt));
    if (!(glhckTextureCreate(texture, NULL, width, height,
-         mode==GLHCK_RTT_RGB?GLHCK_RGB:GLHCK_RGBA, 0)))
+         mode==GLHCK_RTT_RGB?GLHCK_RGB:GLHCK_RGBA, 0, 0)))
       goto fail;
 
    _GLHCKlibrary.render.api.generateFramebuffers(1, &rtt->object);

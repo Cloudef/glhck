@@ -107,11 +107,7 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
 
       /* default flags if not any specified */
       if ((flags & GLHCK_TEXTURE_DEFAULTS))
-         flags += GLHCK_TEXTURE_POWER_OF_TWO        |
-                  GLHCK_TEXTURE_MIPMAPS             |
-                  GLHCK_TEXTURE_NTSC_SAFE_RGB       |
-                  GLHCK_TEXTURE_INVERT_Y            |
-                  GLHCK_TEXTURE_DXT;
+         flags += GLHCK_TEXTURE_DXT;
 
       /* import image */
       if (_glhckImportImage(texture, file, flags) != RETURN_OK)
@@ -148,7 +144,7 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
    if (src->file)
       texture->file = _glhckStrdup(src->file);
 
-   glhckTextureCreate(texture, src->data, src->width, src->height, src->format, src->flags);
+   glhckTextureCreate(texture, src->data, src->width, src->height, src->format, src->size, src->flags);
    DEBUG(GLHCK_DBG_CRAP, "COPY %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
    /* set ref counter to 1 */
@@ -217,7 +213,7 @@ success:
 
 /* \brief create texture manually. */
 GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
-      int width, int height, unsigned int format, unsigned int flags)
+      int width, int height, unsigned int format, size_t size, unsigned int flags)
 {
    unsigned int object;
    CALL(0, "%p, %u, %d, %d, %d, %u", texture, data,
@@ -226,9 +222,8 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
 
    /* create texture */
    object = _GLHCKlibrary.render.api.createTexture(
-         data, width, height, format,
-         texture->object?texture->object:0,
-         flags);
+         data, width, height, format, size, flags,
+         texture->object?texture->object:0);
 
    if (!object)
       goto fail;
@@ -236,11 +231,13 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
    /* remove old texture data */
    _glhckTextureSetData(texture, NULL);
 
+   /* if size is zero, calculate the size here */
+   if (size == 0) size = width * height * _glhckNumChannels(format);
    texture->object   = object;
    texture->width    = width;
    texture->height   = height;
    texture->format   = format;
-   texture->size     = width * height * _glhckNumChannels(format);
+   texture->size     = size;
 
    if (data) {
       if (!(texture->data = _glhckCopy(data, texture->size)))

@@ -103,6 +103,11 @@ extern "C" {
 #define GLHCK_RGB             0x1907
 #define GLHCK_RGBA            0x1908
 
+/* compressed texture format */
+/* TODO: check available formats and etc bleh stuff */
+#define GLHCK_COMPRESSED_RGB_DXT1  0x83F1
+#define GLHCK_COMPRESSED_RGBA_DXT5 0x83F3
+
 /* geometry type */
 #define GLHCK_POINTS          0x0000
 #define GLHCK_LINES           0x0001
@@ -177,23 +182,16 @@ typedef struct glhckFrustum {
    kmVec3 farCorners[GLHCK_FRUSTUM_CORNER_LAST];
 } glhckFrustum;
 
-/* texture flags (FIXME: no longer SOIL) */
+/* texture flags */
 typedef enum glhckTextureFlags {
-   GLHCK_TEXTURE_POWER_OF_TWO    = 1,
-   GLHCK_TEXTURE_MIPMAPS         = 2,
-   GLHCK_TEXTURE_REPEATS         = 4,
-   GLHCK_TEXTURE_MULTIPLY_ALPHA  = 8,
-   GLHCK_TEXTURE_INVERT_Y        = 16,
-   GLHCK_TEXTURE_DXT             = 32,
-   GLHCK_TEXTURE_DDS_LOAD_DIRECT = 64,
-   GLHCK_TEXTURE_NTSC_SAFE_RGB   = 128,
-   GLHCK_TEXTURE_CoCg_Y          = 256,
-   GLHCK_TEXTURE_RECTANGLE       = 512,
-   GLHCK_TEXTURE_DEFAULTS        = 1024
+   GLHCK_TEXTURE_NONE = 0,
+   GLHCK_TEXTURE_DEFAULTS = 1,
+   GLHCK_TEXTURE_DXT = 2,
 } glhckTextureFlags;
 
 /* material flags */
 typedef enum glhckMaterialFlags {
+   GLHCK_MATERIAL_NONE      = 0,
    GLHCK_MATERIAL_DRAW_AABB = 1,
    GLHCK_MATERIAL_DRAW_OBB  = 2,
    GLHCK_MATERIAL_WIREFRAME = 4,
@@ -355,7 +353,7 @@ GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
 GLHCKAPI short glhckTextureFree(glhckTexture *texture);
 GLHCKAPI int glhckTextureCreate(glhckTexture *texture, unsigned char *data,
-      int width, int height, unsigned int channels, unsigned int flags);
+      int width, int height, unsigned int channels, size_t size, unsigned int flags);
 GLHCKAPI int glhckTextureSave(glhckTexture *texture, const char *path);
 GLHCKAPI void glhckTextureBind(glhckTexture *texture);
 GLHCKAPI void glhckBindTexture(unsigned int texture);

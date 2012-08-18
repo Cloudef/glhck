@@ -307,8 +307,8 @@ typedef void (*__GLHCKrenderAPIfillTexture)      (unsigned int texture, const un
 
 typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *buffer,
                                                        int width, int height, unsigned int format,
-                                                       unsigned int reuse_texture_ID,
-                                                       unsigned int flags);
+                                                       size_t size, unsigned int flags,
+                                                       unsigned int reuse_texture_ID);
 
 /* framebuffer objects */
 typedef void (*__GLHCKrenderAPIgenerateFramebuffers) (size_t count, unsigned int *objects);

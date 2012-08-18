@@ -106,8 +106,7 @@ int main(int argc, char **argv)
    camObj = glhckCameraGetObject(camera);
 
    /* this texture is useless when toggling PMD testing */
-   if (!(texture = glhckTextureNew("test/media/glhck.png",
-               GLHCK_TEXTURE_DEFAULTS)))
+   if (!(texture = glhckTextureNew("test/media/glhck.png", GLHCK_TEXTURE_DEFAULTS)))
       return EXIT_FAILURE;
 
    sprite  = glhckSpriteNewFromFile("test/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);

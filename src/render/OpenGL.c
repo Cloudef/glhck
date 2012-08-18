@@ -169,13 +169,13 @@ static void getPixels(int x, int y, int width, int height,
 /* \brief create texture from data and upload it */
 static unsigned int createTexture(const unsigned char *buffer,
       int width, int height, unsigned int format,
-      unsigned int reuse_texture_ID,
-      unsigned int flags)
+      size_t size, unsigned int flags,
+      unsigned int reuse_texture_ID)
 {
    unsigned int object;
-   CALL(0, "%p, %d, %d, %d, %d, %d", buffer,
-         width, height, format,
-         reuse_texture_ID, flags);
+   CALL(0, "%p, %d, %d, %d, %zu, %d, %d", buffer,
+         width, height, format, size, flags,
+         reuse_texture_ID);
 
    /* create empty texture */
    if (!(object = reuse_texture_ID)) {
@@ -191,9 +191,15 @@ static unsigned int createTexture(const unsigned char *buffer,
    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-   GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0,
-            format, width, height, 0,
-            format, GL_UNSIGNED_BYTE, buffer));
+
+   if (flags & GLHCK_TEXTURE_DXT) {
+      GL_CALL(glCompressedTexImage2D(GL_TEXTURE_2D, 0,
+               format, width, height, 0, size, buffer));
+   } else {
+      GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0,
+               format, width, height, 0,
+               format, GL_UNSIGNED_BYTE, buffer));
+   }
 
 _return:
    RET(0, "%d", object);
