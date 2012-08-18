@@ -241,6 +241,20 @@ int main(int argc, char **argv)
       duration += delta;
    }
 
+   /* check that everything is freed
+    * like should */
+   glhckObjectFree(cube);
+   glhckObjectFree(sprite);
+   glhckObjectFree(sprite2);
+   glhckObjectFree(sprite3);
+   glhckTextureFree(texture);
+   glhckCameraFree(camera);
+   glhckTextFree(text);
+
+   puts("GLHCK channel should have few bytes for queue list,\n"
+        "which is freed on glhckTerminate");
+   glhckMemoryGraph();
+
    /* should cleanup all
     * objects as well */
    glhckTerminate();

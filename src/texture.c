@@ -52,7 +52,7 @@ inline void _glhckTextureInsertToQueue(_glhckTexture *texture)
    }
 
    /* assign the texture to list */
-   textures->queue[textures->count] = texture;
+   textures->queue[textures->count] = glhckTextureRef(texture);
    textures->count++;
 }
 

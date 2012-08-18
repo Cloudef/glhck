@@ -231,6 +231,7 @@ typedef void (*glhckDebugHookFunc)(const char *file, int line, const char *funct
 /* init && terminate */
 GLHCKAPI int glhckInit(int argc, char **argv);
 GLHCKAPI void glhckTerminate(void);
+GLHCKAPI void glhckMassacreWorld(void);
 GLHCKAPI int glhckInitialized(void);
 
 /* display */

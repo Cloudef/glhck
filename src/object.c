@@ -30,7 +30,7 @@ inline void _glhckObjectInsertToQueue(_glhckObject *object)
    }
 
    /* assign the object to list */
-   objects->queue[objects->count] = object;
+   objects->queue[objects->count] = glhckObjectRef(object);
    objects->count++;
 }
 
@@ -581,14 +581,14 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
    assert(object);
 
    /* insert to draw queue, referenced until glhckRender */
-   _glhckObjectInsertToQueue(glhckObjectRef(object));
+   _glhckObjectInsertToQueue(object);
 
    /* insert texture to drawing queue? */
    if (!object->material.texture)
       return;
 
    /* insert object's texture to textures queue, referenced until glhckRender */
-   _glhckTextureInsertToQueue(glhckTextureRef(object->material.texture));
+   _glhckTextureInsertToQueue(object->material.texture);
 }
 
 /* \brief render object */

@@ -471,8 +471,8 @@ for (c = _GLHCKlibrary.world.list; c; c = n) {  \
    DEBUG(GLHCK_DBG_CRAP, "Slaughter: %p");      \
 } _GLHCKlibrary.world.list = NULL;
 
-/* \brief frees virtual display and deinits glhck */
-GLHCKAPI void glhckTerminate(void)
+/* \brief frees all objects that are handled by glhck */
+GLHCKAPI void glhckMassacreWorld(void)
 {
    _glhckObject *o, *on;
    _glhckCamera *c, *cn;
@@ -480,8 +480,8 @@ GLHCKAPI void glhckTerminate(void)
    _glhckAtlas *a, *an;
    _glhckRtt *r, *rn;
    _glhckText *tf, *tfn;
-   TRACE(0);
 
+   TRACE(0);
    if (!_glhckInitialized) return;
 
    /* destroy the world */
@@ -491,6 +491,17 @@ GLHCKAPI void glhckTerminate(void)
    _massacre(tflist, tf, tfn, glhckTextFree);
    _massacre(olist, o, on, glhckObjectFree);
    _massacre(tlist, t, tn, glhckTextureFree);
+}
+
+/* \brief frees virtual display and deinits glhck */
+GLHCKAPI void glhckTerminate(void)
+{
+   TRACE(0);
+
+   if (!_glhckInitialized) return;
+
+   /* destroy world */
+   glhckMassacreWorld();
 
    /* destroy queues */
    _glhckFree(_GLHCKlibrary.render.draw.objects.queue);
