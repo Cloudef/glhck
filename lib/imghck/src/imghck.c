@@ -35,6 +35,7 @@ unsigned char* imghckConvertToDXT1(
     * (8 bytes per 4x4 pixel block) */
    *out_size = ((width+3) >> 2) * ((height+3) >> 2) * 8;
    compressed = (unsigned char*)malloc(*out_size);
+   if (!compressed) return NULL;
 
    /* go through each block */
    for (j = 0; j < height; j += 4) {
@@ -110,6 +111,7 @@ unsigned char* imghckConvertToDXT5(
     * (16 bytes per 4x4 pixel block)  */
    *out_size = ((width+3) >> 2) * ((height+3) >> 2) * 16;
    compressed = (unsigned char*)malloc(*out_size);
+   if (!compressed) return NULL;
 
    /* go through each block */
    for (j = 0; j < height; j += 4) {
