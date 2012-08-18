@@ -353,7 +353,7 @@ GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
 GLHCKAPI short glhckTextureFree(glhckTexture *texture);
 GLHCKAPI int glhckTextureCreate(glhckTexture *texture, unsigned char *data,
-      int width, int height, unsigned int channels, size_t size, unsigned int flags);
+      int width, int height, unsigned int format, unsigned int outFormat, unsigned int flags);
 GLHCKAPI int glhckTextureSave(glhckTexture *texture, const char *path);
 GLHCKAPI void glhckTextureBind(glhckTexture *texture);
 GLHCKAPI void glhckBindTexture(unsigned int texture);

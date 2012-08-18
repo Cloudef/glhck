@@ -1,13 +1,10 @@
 #include "internal.h"
 #include "import/import.h"
+#include "imghck.h"
 #include <assert.h>           /* for assert */
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_TEXTURE
-
-/* TODO:
- * keep track of internal and out formats.
- * this will be useful in future. */
 
 /* ---- TEXTURE CACHE ---- */
 
@@ -78,6 +75,13 @@ inline unsigned int _glhckNumChannels(unsigned int format)
           format==GLHCK_RGBA?4:1;
 }
 
+/* \brief returns if format is compressed format */
+inline int _glhckIsCompressedFormat(unsigned int format)
+{
+   return (format==GLHCK_COMPRESSED_RGB_DXT1 ||
+           format==GLHCK_COMPRESSED_RGBA_DXT5);
+}
+
 /* ---- PUBLIC API ---- */
 
 /* \brief Allocate texture
@@ -144,7 +148,7 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
    if (src->file)
       texture->file = _glhckStrdup(src->file);
 
-   glhckTextureCreate(texture, src->data, src->width, src->height, src->format, src->size, src->flags);
+   glhckTextureCreate(texture, src->data, src->width, src->height, src->format, src->outFormat, src->flags);
    DEBUG(GLHCK_DBG_CRAP, "COPY %dx%d %.2f MiB", texture->width, texture->height, (float)texture->size / 1048576);
 
    /* set ref counter to 1 */
@@ -213,17 +217,24 @@ success:
 
 /* \brief create texture manually. */
 GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
-      int width, int height, unsigned int format, size_t size, unsigned int flags)
+      int width, int height, unsigned int format, unsigned int outFormat, unsigned int flags)
 {
+   size_t size;
    unsigned int object;
-   CALL(0, "%p, %u, %d, %d, %d, %u", texture, data,
+   CALL(0, "%p, %u, %d, %d, %d,  %u", texture, data,
          width, height, format, flags);
    assert(texture);
 
+   if (outFormat == GLHCK_COMPRESSED_RGB_DXT1)
+      size = imghckSizeForDXT1(width, height);
+   else if (outFormat == GLHCK_COMPRESSED_RGBA_DXT5)
+      size = imghckSizeForDXT5(width, height);
+   else
+      size = width * height * _glhckNumChannels(format);
+
    /* create texture */
    object = _GLHCKlibrary.render.api.createTexture(
-         data, width, height, format, size, flags,
-         texture->object?texture->object:0);
+         data, size, width, height, outFormat, texture->object?texture->object:0);
 
    if (!object)
       goto fail;
@@ -232,12 +243,12 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
    _glhckTextureSetData(texture, NULL);
 
    /* if size is zero, calculate the size here */
-   if (size == 0) size = width * height * _glhckNumChannels(format);
-   texture->object   = object;
-   texture->width    = width;
-   texture->height   = height;
-   texture->format   = format;
-   texture->size     = size;
+   texture->object    = object;
+   texture->width     = width;
+   texture->height    = height;
+   texture->format    = format;
+   texture->outFormat = outFormat;
+   texture->size      = size;
 
    if (data) {
       if (!(texture->data = _glhckCopy(data, texture->size)))

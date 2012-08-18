@@ -148,15 +148,7 @@ static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc,
 
 /* ---- Render API ---- */
 
-/* \brief upload texture to renderer */
-static int uploadTexture(_glhckTexture *texture, unsigned int flags)
-{
-   CALL(0, "%p, %d", texture, flags);
-
-   RET(0, "%d", texture->object?RETURN_OK:RETURN_FAIL);
-   return texture->object?RETURN_OK:RETURN_FAIL;
-}
-
+/* \brief get pixels from renderer */
 static void getPixels(int x, int y, int width, int height,
       unsigned int format, unsigned char *data)
 {
@@ -167,15 +159,13 @@ static void getPixels(int x, int y, int width, int height,
 }
 
 /* \brief create texture from data and upload it */
-static unsigned int createTexture(const unsigned char *buffer,
+static unsigned int createTexture(const unsigned char *buffer, size_t size,
       int width, int height, unsigned int format,
-      size_t size, unsigned int flags,
       unsigned int reuse_texture_ID)
 {
    unsigned int object;
-   CALL(0, "%p, %d, %d, %d, %zu, %d, %d", buffer,
-         width, height, format, size, flags,
-         reuse_texture_ID);
+   CALL(0, "%p, %zu, %d, %d, %d, %d", buffer, size,
+         width, height, format, reuse_texture_ID);
 
    /* create empty texture */
    if (!(object = reuse_texture_ID)) {
@@ -192,7 +182,7 @@ static unsigned int createTexture(const unsigned char *buffer,
    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
    GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
-   if (flags & GLHCK_TEXTURE_DXT) {
+   if (_glhckIsCompressedFormat(format)) {
       GL_CALL(glCompressedTexImage2D(GL_TEXTURE_2D, 0,
                format, width, height, 0, size, buffer));
    } else {
@@ -208,15 +198,21 @@ _return:
 
 /* \brief fill texture with data */
 static void fillTexture(unsigned int texture,
-      const unsigned char *data,
+      const unsigned char *data, size_t size,
       int x, int y, int width, int height,
       unsigned int format)
 {
-   CALL(1, "%d, %p, %d, %d, %d, %d, %d", texture,
-         data, x, y, width, height, format);
+   CALL(1, "%d, %p, %zu, %d, %d, %d, %d, %d", texture,
+         data, size, x, y, width, height, format );
    glhckBindTexture(texture);
-   GL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, x, y,
-            width, height, format, GL_UNSIGNED_BYTE, data));
+
+   if (_glhckIsCompressedFormat(format)) {
+      GL_CALL(glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, x, y,
+               width, height, format, size, data));
+   } else{
+      GL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, x, y,
+               width, height, format, GL_UNSIGNED_BYTE, data));
+   }
 }
 
 /* \brief link FBO with texture */
@@ -912,7 +908,6 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(generateTextures, _glGenTextures);
    GLHCK_RENDER_FUNC(deleteTextures, _glDeleteTextures);
    GLHCK_RENDER_FUNC(bindTexture, _glBindTexture);
-   GLHCK_RENDER_FUNC(uploadTexture, uploadTexture);
    GLHCK_RENDER_FUNC(createTexture, createTexture);
    GLHCK_RENDER_FUNC(fillTexture, fillTexture);
 

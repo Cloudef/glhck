@@ -6,6 +6,7 @@
 /* \brief create new rtt */
 GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
 {
+   unsigned int format;
    _glhckRtt *rtt;
    _glhckTexture *texture = NULL;
    CALL(0, "%d, %d, %d", width, height, mode);
@@ -17,9 +18,13 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
       goto fail;
 
    /* init */
+   if (mode == GLHCK_RTT_RGB)
+      format = GLHCK_RGB;
+   else
+      format = GLHCK_RGBA;
+
    memset(rtt, 0, sizeof(_glhckRtt));
-   if (!(glhckTextureCreate(texture, NULL, width, height,
-         mode==GLHCK_RTT_RGB?GLHCK_RGB:GLHCK_RGBA, 0, 0)))
+   if (!(glhckTextureCreate(texture, NULL, width, height, format, format, 0)))
       goto fail;
 
    _GLHCKlibrary.render.api.generateFramebuffers(1, &rtt->object);

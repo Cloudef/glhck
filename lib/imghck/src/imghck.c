@@ -9,13 +9,23 @@ static void imghckCompressDXT5RGBA(
       const unsigned char * uncompressed,
       unsigned char compressed[8]);
 
-/* compress uncompressed buffer with DXT1 compression */
-unsigned char* imghckConvertToDXT1(
-      const unsigned char * uncompressed,
-      unsigned int width, unsigned int height, int channels,
-      size_t *out_size)
+/* size for DXT1 compression with the dimensions */
+size_t imghckSizeForDXT1(unsigned int width, unsigned int height)
 {
-   unsigned char *compressed;
+   return ((width+3) >> 2) * ((height+3) >> 2) * 8;
+}
+
+/* size for DXT5 compression with the dimensions */
+size_t imghckSizeForDXT5(unsigned int width, unsigned int height)
+{
+   return ((width+3) >> 2) * ((height+3) >> 2) * 16;
+}
+
+/* compress uncompressed buffer with DXT1 compression */
+int imghckConvertToDXT1(unsigned char * out,
+      const unsigned char * uncompressed,
+      unsigned int width, unsigned int height, int channels)
+{
    unsigned char ublock[16*3];
    unsigned char cblock[8];
    unsigned int i, j, x, y;
@@ -23,19 +33,13 @@ unsigned char* imghckConvertToDXT1(
    unsigned int block_count = 0;
    unsigned int idx, mx, my;
 
-   assert(width > 0 && height > 0);
+   assert(out != NULL);
    assert(uncompressed != NULL);
+   assert(width > 0 && height > 0);
    assert(channels >= 1 || channels <= 4);
-   *out_size = 0;
 
    /* for channels == 1 or 2, I do not step forward for R,G,B values */
    if (channels < 3) chan_step = 0;
-
-   /* get the RAM for the compressed image
-    * (8 bytes per 4x4 pixel block) */
-   *out_size = ((width+3) >> 2) * ((height+3) >> 2) * 8;
-   compressed = (unsigned char*)malloc(*out_size);
-   if (!compressed) return NULL;
 
    /* go through each block */
    for (j = 0; j < height; j += 4) {
@@ -75,20 +79,17 @@ unsigned char* imghckConvertToDXT1(
          imghckCompressDXT1RGB(3, ublock, cblock);
 
          /* copy the data from the block into the main block */
-         for (x = 0; x < 8; ++x)
-            compressed[index++] = cblock[x];
+         for (x = 0; x < 8; ++x) out[index++] = cblock[x];
       }
    }
-   return compressed;
+   return 1;
 }
 
 /* compress uncompressed buffer with DXT5 compression */
-unsigned char* imghckConvertToDXT5(
+int imghckConvertToDXT5(unsigned char * out,
       const unsigned char * uncompressed,
-      unsigned int width, unsigned int height, int channels,
-      size_t *out_size)
+      unsigned int width, unsigned int height, int channels)
 {
-   unsigned char *compressed;
    unsigned char ublock[16*4];
    unsigned char cblock[8];
    unsigned int i, j, x, y;
@@ -96,22 +97,16 @@ unsigned char* imghckConvertToDXT5(
    unsigned int block_count = 0, has_alpha;
    unsigned int idx, mx, my;
 
-   assert(width > 0 || height > 0);
+   assert(out != NULL);
    assert(uncompressed != NULL);
+   assert(width > 0 || height > 0);
    assert(channels >= 1 && channels <= 4);
-   *out_size = 0;
 
    /* for channels == 1 or 2, I do not step forward for R,G,B vales */
    if (channels < 3) chan_step = 0;
 
    /* channels = 1 or 3 have no alpha, 2 & 4 do have alpha */
    has_alpha = 1 - (channels & 1);
-
-   /* get the RAM for the compressed image
-    * (16 bytes per 4x4 pixel block)  */
-   *out_size = ((width+3) >> 2) * ((height+3) >> 2) * 16;
-   compressed = (unsigned char*)malloc(*out_size);
-   if (!compressed) return NULL;
 
    /* go through each block */
    for (j = 0; j < height; j += 4) {
@@ -151,16 +146,14 @@ unsigned char* imghckConvertToDXT5(
          }
 
          imghckCompressDXT5RGBA(ublock, cblock);
-         for( x = 0; x < 8; ++x )
-            compressed[index++] = cblock[x];
+         for (x = 0; x < 8; ++x) out[index++] = cblock[x];
 
          ++block_count;
          imghckCompressDXT1RGB(4, ublock, cblock);
-         for( x = 0; x < 8; ++x )
-            compressed[index++] = cblock[x];
+         for (x = 0; x < 8; ++x) out[index++] = cblock[x];
       }
    }
-   return compressed;
+   return 1;
 }
 
 /* helper functions */

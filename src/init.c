@@ -44,7 +44,6 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(generateTextures);
    GLHCK_API_CHECK(deleteTextures);
    GLHCK_API_CHECK(bindTexture);
-   GLHCK_API_CHECK(uploadTexture);
    GLHCK_API_CHECK(createTexture);
    GLHCK_API_CHECK(fillTexture);
    GLHCK_API_CHECK(generateFramebuffers);

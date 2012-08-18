@@ -278,15 +278,13 @@ fail:
 /* post-processing of image data */
 int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct *data, unsigned int flags)
 {
-   size_t outSize;
    unsigned char *outData = NULL;
-   unsigned int outFormat;
+   unsigned int outFormat, inFormat;
    CALL(0, "%p, %p, %u", texture, data, flags);
 
-   /* assign import data to outData */
-   outData   = data->data;
-   outFormat = GLHCK_RGBA;
-   outSize   = 0; /* let glhckTextureCreate calculate */
+   /* assign default format for texture,
+    * all imports are in RGBA by default */
+   inFormat = outFormat = GLHCK_RGBA;
 
    /* post processing below */
 
@@ -295,32 +293,36 @@ int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct 
    /* compression */
    if (flags & GLHCK_TEXTURE_DXT) {
       if ((_glhckNumChannels(outFormat) & 1) == 1) {
-         if (!(outData = imghckConvertToDXT1(
-                     data->data, data->width, data->height,
-                     _glhckNumChannels(outFormat), &outSize)))
+         if (!(outData = _glhckMalloc(imghckSizeForDXT1(data->width, data->height))))
             goto out_of_memory;
+
+         imghckConvertToDXT1(outData, data->data, data->width, data->height,
+               _glhckNumChannels(outFormat));
          outFormat = GLHCK_COMPRESSED_RGB_DXT1;
          DEBUG(GLHCK_DBG_CRAP, "Imported image converted to DXT1");
       } else {
-         if (!(outData = imghckConvertToDXT5(
-                     data->data, data->width, data->height,
-                     _glhckNumChannels(outFormat), &outSize)))
+         if (!(outData = _glhckMalloc(imghckSizeForDXT5(data->width, data->height))))
             goto out_of_memory;
+
+         imghckConvertToDXT5(outData, data->data, data->width, data->height,
+               _glhckNumChannels(outFormat));
          outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
          DEBUG(GLHCK_DBG_CRAP, "Imported image converted to DXT5");
       }
    }
 
    /* upload texture */
-   glhckTextureCreate(texture, outData, data->width, data->height,
-         outFormat, outSize, flags);
+   glhckTextureCreate(texture, outData?outData:data->data, data->width, data->height,
+         inFormat, outFormat, flags);
 
+   IFDO(_glhckFree, outData);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 out_of_memory:
    DEBUG(GLHCK_DBG_ERROR, "Out of memory");
 fail:
+   IFDO(_glhckFree, outData);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }

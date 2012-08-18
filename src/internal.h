@@ -52,7 +52,7 @@ typedef enum _glhckReturnValue {
 /* glhck object structs */
 typedef struct _glhckTexture {
    char *file;
-   unsigned int object, flags, format;
+   unsigned int object, flags, format, outFormat;
    unsigned char *data;
    int width, height;
    size_t size;
@@ -245,7 +245,8 @@ typedef struct __GLHCKtextGeometry {
 
 /* \brief special texture for text */
 typedef struct __GLHCKtextTexture {
-   unsigned int object, numRows;
+   unsigned int object, numRows, format;
+   size_t size;
    struct __GLHCKtextGeometry geometry;
    struct __GLHCKtextTextureRow rows[GLHCK_TEXT_MAX_ROWS];
    struct __GLHCKtextTexture *next;
@@ -293,7 +294,7 @@ typedef void (*__GLHCKrenderAPIfrustumDraw)      (_glhckFrustum *frustum, const 
 
 /* screen control */
 typedef void (*__GLHCKrenderAPIgetPixels)        (int x, int y, int width, int height,
-      unsigned int format, unsigned char *data);
+                                                  unsigned int format, unsigned char *data);
 
 /* object generation */
 typedef void (*__GLHCKrenderAPIgenerateTextures) (size_t count, unsigned int *objects);
@@ -301,13 +302,11 @@ typedef void (*__GLHCKrenderAPIdeleteTextures)   (size_t count, unsigned int *ob
 
 /* textures */
 typedef void (*__GLHCKrenderAPIbindTexture)      (unsigned int object);
-typedef int  (*__GLHCKrenderAPIuploadTexture)    (_glhckTexture *texture, unsigned int flags);
-typedef void (*__GLHCKrenderAPIfillTexture)      (unsigned int texture, const unsigned char *data, int x, int y,
-      int width, int height, unsigned int format);
+typedef void (*__GLHCKrenderAPIfillTexture)      (unsigned int texture, const unsigned char *data, size_t size,
+                                                  int x, int y, int width, int height, unsigned int format);
 
-typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *buffer,
+typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *buffer, size_t size,
                                                        int width, int height, unsigned int format,
-                                                       size_t size, unsigned int flags,
                                                        unsigned int reuse_texture_ID);
 
 /* framebuffer objects */
@@ -315,7 +314,7 @@ typedef void (*__GLHCKrenderAPIgenerateFramebuffers) (size_t count, unsigned int
 typedef void (*__GLHCKrenderAPIdeleteFramebuffers)   (size_t count, unsigned int *objects);
 typedef void (*__GLHCKrenderAPIbindFramebuffer)      (unsigned int object);
 typedef int (*__GLHCKrenderAPIlinkFramebufferWithTexture) (unsigned int object, unsigned int texture,
-      unsigned int attachment);
+                                                           unsigned int attachment);
 
 /* parameters */
 typedef void (*__GLHCKrenderAPIgetIntegerv) (unsigned int pname, int *params);
@@ -337,7 +336,6 @@ typedef struct __GLHCKrenderAPI {
    __GLHCKrenderAPIgenerateTextures generateTextures;
    __GLHCKrenderAPIdeleteTextures   deleteTextures;
    __GLHCKrenderAPIbindTexture      bindTexture;
-   __GLHCKrenderAPIuploadTexture    uploadTexture;
    __GLHCKrenderAPIcreateTexture    createTexture;
    __GLHCKrenderAPIfillTexture      fillTexture;
 
@@ -548,6 +546,7 @@ void _glhckCameraWorldUpdate(int width, int height);
 
 /* textures */
 unsigned int _glhckNumChannels(unsigned int format);
+int _glhckIsCompressedFormat(unsigned int format);
 void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
 void _glhckTextureInsertToQueue(_glhckTexture *texture);
 

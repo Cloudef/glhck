@@ -1,5 +1,6 @@
 #include "internal.h"
 #include "helper/vertexdata.h"
+#include "imghck.h"
 #include <stdio.h>
 
 /* traching channel for this file */
@@ -94,7 +95,7 @@ static unsigned int hashint(unsigned int a)
 }
 
 /* \brief creates new texture to the cache */
-static int _glhckTextNewTexture(_glhckText *text, unsigned int object)
+static int _glhckTextNewTexture(_glhckText *text, unsigned int object, size_t size, unsigned int format)
 {
    __GLHCKtextTexture *texture, *t;
    CALL(0, "%p, %d", text, object);
@@ -111,6 +112,8 @@ static int _glhckTextNewTexture(_glhckText *text, unsigned int object)
    t->next = texture;
 
    texture->object = object;
+   texture->size   = size;
+   texture->format = format;
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -126,7 +129,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
       unsigned int code, short isize)
 {
    unsigned int h, tex_object;
-   unsigned char *data;
+   unsigned char *data, *outData;
    int i, x1, y1, x2, y2, gw, rh, gh, gid, advance, lsb;
    float scale;
    float size = (float)isize/10.0f;
@@ -197,13 +200,16 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
                continue;
             }
 
+            unsigned int format = GLHCK_ALPHA;
+            size_t size         = text->tw * text->th;
+
             /* as last resort create new texture, if this was used */
-            tex_object = _GLHCKlibrary.render.api.createTexture(NULL,
-                  text->tw, text->th, GLHCK_ALPHA, 0, 0, 0);
+            tex_object = _GLHCKlibrary.render.api.createTexture(NULL, size,
+                  text->tw, text->th, format, 0);
             if (!tex_object)
                return NULL;
 
-            if (_glhckTextNewTexture(text, tex_object) != RETURN_OK)
+            if (_glhckTextNewTexture(text, tex_object, size, format) != RETURN_OK)
                return NULL;
 
             /* cycle and hope for best */
@@ -253,8 +259,8 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
    /* rasterize */
    if ((data = _glhckMalloc(gw*gh))) {
       stbtt_MakeGlyphBitmap(&font->font, data, gw, gh, gw, scale, scale, gid);
-      _GLHCKlibrary.render.api.fillTexture(texture->object, data, glyph->x1, glyph->y1, gw, gh, GLHCK_ALPHA);
-      _glhckFree(data);
+      _GLHCKlibrary.render.api.fillTexture(texture->object, data, 0, glyph->x1, glyph->y1, gw, gh, texture->format);
+      free(data);
    }
 
    return glyph;
@@ -326,9 +332,12 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    memset(texture, 0, sizeof(__GLHCKtextTexture));
    memset(&texture->geometry, 0, sizeof(__GLHCKtextGeometry));
 
+   texture->format = GLHCK_ALPHA;
+   texture->size   = cachew * cacheh;
+
    /* fill texture with emptiness */
-   texture->object = _GLHCKlibrary.render.api.createTexture(NULL,
-         cachew, cacheh, GLHCK_ALPHA, 0, 0, 0);
+   texture->object = _GLHCKlibrary.render.api.createTexture(NULL, texture->size,
+         cachew, cacheh, texture->format, 0);
    if (!texture->object)
       goto fail;
 
@@ -586,7 +595,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
    for (id = 1, f = text->fcache; f; f = f->next) ++id;
 
    /* load image */
-   if (!(temp = glhckTextureNew(file, 0)))
+   if (!(temp = glhckTextureNew(file, GLHCK_TEXTURE_DXT)))
       goto fail;
 
    /* get data from texture */
@@ -595,13 +604,13 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
 
    /* create texture */
    if (!(texture = _GLHCKlibrary.render.api.createTexture(
-               data, temp->width, temp->height, temp->format, 0, 0, 0)))
+               data, temp->size, temp->width, temp->height, temp->format, 0)))
       goto fail;
 
    /* not needed anymore */
    NULLDO(glhckTextureFree, temp);
 
-   if (_glhckTextNewTexture(text, texture) != RETURN_OK)
+   if (_glhckTextNewTexture(text, texture, temp->size, temp->format) != RETURN_OK)
       goto fail;
 
    /* store normalized line height */
