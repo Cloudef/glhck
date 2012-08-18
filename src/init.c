@@ -362,8 +362,8 @@ GLHCKAPI void glhckRender(void)
       return;
 
    /* draw in sorted texture order */
-   for (ti = 0, ts = 0; ti != oc; ++ti) {
-      if (ti < textures->count) {
+   for (ti = 0, ts = 0; ti != tc; ++ti) {
+      if (ti < tc-1) {
          if (!(t = textures->queue[ti])) continue;
       } else t = NULL; /* untextured object */
 
@@ -404,11 +404,15 @@ GLHCKAPI void glhckRender(void)
    tc = textures->count+1;
    oc = objects->count;
 
+   /* TODO: shift queue here */
+   if (oc) {
+   }
+
    /* draw opaque objects next,
     * TODO: this should not be done in texture order,
     * instead draw from farthest to nearest. (I hate opaque objects) */
    for (ti = 0; ti != tc && oc; ++ti) {
-      if (ti < textures->count) {
+      if (ti < tc-1) {
          if (!(t = textures->queue[ti])) continue;
       } else t = NULL; /* untextured object */
 
@@ -426,6 +430,7 @@ GLHCKAPI void glhckRender(void)
          glhckObjectRender(o);
          glhckObjectFree(o); /* referenced on draw call */
          objects->queue[oi] = NULL;
+         --objects->count;
       }
 
       /* this texture is done for */
@@ -439,6 +444,8 @@ GLHCKAPI void glhckRender(void)
       if (!t) break;
    }
 
+   /* TODO: shift queue here if leftovers */
+
    /* good we got no leftovers \o/ */
    if (objects->count) {
       /* something was left un-drawn :o? */
@@ -449,6 +456,7 @@ GLHCKAPI void glhckRender(void)
 
    if (textures->count) {
       /* something was left un-drawn :o? */
+      DEBUG(GLHCK_DBG_CRAP, "COUNT UNLEFT %u", textures->count);
       for (ti = 0; ti != textures->count; ++ti) glhckTextureFree(textures->queue[ti]);
       memset(textures->queue, 0, textures->count * sizeof(_glhckTexture*));
       textures->count = 0;
