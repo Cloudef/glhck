@@ -15,7 +15,8 @@ GLHCKAPI _glhckObject* glhckModelNew(const char *file, kmScalar size)
       goto fail;
 
    /* import model */
-   _glhckImportModel(object, file, 0);
+   if (_glhckImportModel(object, file, 0) != RETURN_OK)
+      goto fail;
 
    /* scale the cube */
    glhckObjectScalef(object, size, size, size);
