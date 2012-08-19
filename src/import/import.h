@@ -50,6 +50,10 @@ int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct 
 int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags);
 int _glhckFormatPNG(const char *file);
 
+/* JPEG */
+int _glhckImportJPEG(_glhckTexture *texture, const char *file, unsigned int flags);
+int _glhckFormatJPEG(const char *file);
+
 /* TGA */
 int _glhckImportTGA(_glhckTexture *texture, const char *file, unsigned int flags);
 int _glhckFormatTGA(const char *file);

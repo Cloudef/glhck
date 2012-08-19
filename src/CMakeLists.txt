@@ -19,6 +19,7 @@ SET(GLHCK_SRC
    import/import_mmd.c
    import/import_octm.c
    import/import_png.c
+   import/import_jpeg.c
    import/import_tga.c
    import/import_bmp.c)
 
