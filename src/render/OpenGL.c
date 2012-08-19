@@ -355,6 +355,9 @@ static inline void materialState(const _glhckObject *object)
    /* always draw vertices */
    _OpenGL.state.attrib[0] = 1;
 
+   /* enable normals always for now */
+   _OpenGL.state.attrib[2] = 1;
+
 #if GLHCK_VERTEXDATA_COLOR
    /* need color? */
    _OpenGL.state.attrib[3] = object->material.flags & GLHCK_MATERIAL_COLOR;
@@ -588,7 +591,10 @@ static inline void objectStart(const _glhckObject *object) {
 #endif
 
    /* reset color */
-   GL_CALL(glColor3ub(255, 255, 255));
+   GL_CALL(glColor4ub(object->material.color.r,
+                      object->material.color.g,
+                      object->material.color.b,
+                      object->material.color.a));
 
    /* set states and draw */
    materialState(object);

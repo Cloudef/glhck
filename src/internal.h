@@ -216,6 +216,7 @@ typedef struct __GLHCKobjectView {
 
 typedef struct __GLHCKobjectMaterial {
    struct _glhckTexture *texture;
+   glhckColor color;
    unsigned int flags;
 } __GLHCKobjectMaterial;
 

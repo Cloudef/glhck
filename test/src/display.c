@@ -137,6 +137,7 @@ int main(int argc, char **argv)
    } else if ((cube = glhckModelNew(OCTM_PATH, 100.0f))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
+      glhckObjectColorb(cube, 255, 0, 0, 255);
    } else if ((cube = glhckCubeNew(1.0f))) {
       glhckObjectSetTexture(cube, texture);
       cameraPos.z = -20.0f;
@@ -145,7 +146,7 @@ int main(int argc, char **argv)
    unsigned int flags = glhckObjectGetMaterialFlags(cube);
    flags |= GLHCK_MATERIAL_DRAW_AABB;
    flags |= GLHCK_MATERIAL_DRAW_OBB;
-   glhckObjectSetMaterialFlags(cube, flags);
+   glhckObjectMaterialFlags(cube, flags);
 
    glhckMemoryGraph();
 

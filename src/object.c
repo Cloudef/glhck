@@ -448,8 +448,11 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    _glhckObjectUpdateMatrix(object);
 
    /* default material flags */
-   glhckObjectSetMaterialFlags(object, GLHCK_MATERIAL_DEPTH |
-                                       GLHCK_MATERIAL_CULL);
+   glhckObjectMaterialFlags(object, GLHCK_MATERIAL_DEPTH |
+                                    GLHCK_MATERIAL_CULL);
+
+   /* default color */
+   glhckObjectColorb(object, 255, 255, 255, 255);
 
    /* increase reference */
    object->refCounter++;
@@ -641,8 +644,8 @@ GLHCKAPI unsigned int glhckObjectGetMaterialFlags(const glhckObject *object)
    return object->material.flags;
 }
 
-/* \brief set's object material flags */
-GLHCKAPI void glhckObjectSetMaterialFlags(_glhckObject *object, unsigned int flags)
+/* \brief set object's material flags */
+GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags)
 {
    CALL(1, "%p, %u", object, flags);
    assert(object);
@@ -650,8 +653,38 @@ GLHCKAPI void glhckObjectSetMaterialFlags(_glhckObject *object, unsigned int fla
    object->material.flags = flags;
 }
 
+/* \brief get object's color */
+GLHCKAPI const glhckColor* glhckObjectGetColor(const glhckObject *object)
+{
+   CALL(2, "%p", object);
+   assert(object);
+
+   RET(2, "%p", &object->material.color);
+   return &object->material.color;
+}
+
+/* \brief set object's color */
+GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColor *color)
+{
+   CALL(2, "%p, %p", object, color);
+   assert(object && color);
+
+   object->material.color.r = color->r;
+   object->material.color.g = color->g;
+   object->material.color.b = color->b;
+   object->material.color.a = color->a;
+}
+
+/* \brief set object's color (with unsigned char) */
+GLHCKAPI void glhckObjectColorb(glhckObject *object,
+      unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+{
+   glhckColor color = { r, g, b, a };
+   glhckObjectColor(object, &color);
+}
+
 /* \brief get obb bounding box of the object */
-GLHCKAPI const kmAABB*  glhckObjectGetOBB(const _glhckObject *object)
+GLHCKAPI const kmAABB*  glhckObjectGetOBB(const glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
@@ -661,7 +694,7 @@ GLHCKAPI const kmAABB*  glhckObjectGetOBB(const _glhckObject *object)
 }
 
 /* \brief get aabb bounding box of the object */
-GLHCKAPI const kmAABB* glhckObjectGetAABB(const _glhckObject *object)
+GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);

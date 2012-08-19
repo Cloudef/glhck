@@ -290,8 +290,12 @@ GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
       size_t memb, const unsigned int *indices);
 
 /* material */
+GLHCKAPI const glhckColor* glhckObjectGetColor(const glhckObject *object);
+GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColor *color);
+GLHCKAPI void glhckObjectColorb(glhckObject *object,
+      unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI unsigned int glhckObjectGetMaterialFlags(const glhckObject *object);
-GLHCKAPI void glhckObjectSetMaterialFlags(glhckObject *object, unsigned int flags);
+GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags);
 
 /* object control */
 GLHCKAPI const kmAABB* glhckObjectGetOBB(const glhckObject *object);
