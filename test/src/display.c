@@ -116,8 +116,8 @@ int main(int argc, char **argv)
    glhckObjectScalef(sprite2, 0.03f, 0.03f, 0.03f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
-#define SKIP_MMD  0
-#define SKIP_OCTM 0
+#define SKIP_MMD  1
+#define SKIP_OCTM 1
 
 #if SKIP_MMD
 #  define MMD_PATH ""
@@ -128,16 +128,15 @@ int main(int argc, char **argv)
 #if SKIP_OCTM
 #  define OCTM_PATH ""
 #else
-#  define OCTM_PATH "test/media/bunny.ctm"
+#  define OCTM_PATH "test/media/ambulance/ambulance.ctm"
 #endif
 
    if ((cube = glhckModelNew(MMD_PATH, 1.0f))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
-   } else if ((cube = glhckModelNew(OCTM_PATH, 100.0f))) {
+   } else if ((cube = glhckModelNew(OCTM_PATH, 5.0f))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
-      glhckObjectColorb(cube, 255, 0, 0, 255);
    } else if ((cube = glhckCubeNew(1.0f))) {
       glhckObjectSetTexture(cube, texture);
       cameraPos.z = -20.0f;

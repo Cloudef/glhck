@@ -74,8 +74,10 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated)
    CTMuint num_vertices, num_triangles, num_uvs, num_attribs;
    const CTMuint *indices;
    const CTMfloat *vertices = NULL, *normals = NULL, *coords = NULL, *colors = NULL;
-   const char *attribName, *comment;
+   const char *attribName, *comment, *textureFilename;
+   char *texturePath;
    glhckImportVertexData *vertexData = NULL;
+   _glhckTexture *texture;
    CALL(0, "%p, %s, %d", object, file, animated);
 
    if (!(f = fopen(file, "rb")))
@@ -107,7 +109,19 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated)
    }
 
    if (num_uvs) {
-      coords = CTM_CALL(context, ctmGetFloatArray(context, CTM_UV_MAP_1));
+      textureFilename = CTM_CALL(context, ctmGetUVMapString(context, CTM_UV_MAP_1, CTM_FILE_NAME));
+      if (!textureFilename) {
+         textureFilename = CTM_CALL(context, ctmGetUVMapString(context, CTM_UV_MAP_1, CTM_NAME));
+      }
+
+      if ((texturePath = _glhckImportTexturePath(textureFilename, file))) {
+         if ((texture = glhckTextureNew(texturePath, 0))) {
+            coords = CTM_CALL(context, ctmGetFloatArray(context, CTM_UV_MAP_1));
+            glhckObjectSetTexture(object, texture);
+            glhckTextureFree(texture);
+         }
+         free(texturePath);
+      }
    }
 
 #if GLHCK_VERTEXDATA_COLOR
@@ -167,9 +181,6 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated)
 
    /* this object has colors */
    if (colors) object->material.flags |= GLHCK_MATERIAL_COLOR;
-
-   DEBUG(GLHCK_DBG_CRAP, "num vertices: %u", num_vertices);
-   DEBUG(GLHCK_DBG_CRAP, "num indices: %u", num_indices);
 
    /* set geometry */
    glhckObjectInsertIndices(object, num_indices, strip_indices?strip_indices:indices);
