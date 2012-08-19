@@ -116,15 +116,31 @@ int main(int argc, char **argv)
    glhckObjectScalef(sprite2, 0.03f, 0.03f, 0.03f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
-#if 1
-   cube = glhckCubeNew(1.0f);
-   if (cube) glhckObjectSetTexture(cube, texture);
-   cameraPos.z = -20.0f;
+#define SKIP_MMD  1
+#define SKIP_OCTM 0
+
+#if SKIP_MMD
+#  define MMD_PATH ""
 #else
-   cube = glhckModelNew("test/media/madoka/md_m.pmd", 1.0f);
-   cameraPos.y =  10.0f;
-   cameraPos.z = -40.0f;
+#  define MMD_PATH "test/media/madoka/md_m.pmd"
 #endif
+
+#if SKIP_OCTM
+#  define OCTM_PATH ""
+#else
+#  define OCTM_PATH "test/media/bunny.ctm"
+#endif
+
+   if ((cube = glhckModelNew(MMD_PATH, 1.0f))) {
+      cameraPos.y =  10.0f;
+      cameraPos.z = -40.0f;
+   } else if ((cube = glhckModelNew(OCTM_PATH, 100.0f))) {
+      cameraPos.y =  10.0f;
+      cameraPos.z = -40.0f;
+   } else if ((cube = glhckCubeNew(1.0f))) {
+      glhckObjectSetTexture(cube, texture);
+      cameraPos.z = -20.0f;
+   } else return EXIT_FAILURE;
 
    glhckObjectSetMaterialFlags(cube, GLHCK_MATERIAL_DRAW_AABB |
                                      GLHCK_MATERIAL_DRAW_OBB  |

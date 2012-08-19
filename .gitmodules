@@ -10,3 +10,6 @@
 	path = lib/GLEW/src
         url = https://github.com/LuaDist/glew.git
         ignore = dirty
+[submodule "lib/openctm/src"]
+	path = lib/openctm/src
+	url = https://github.com/Danny02/OpenCTM.git

@@ -64,7 +64,7 @@ typedef struct _glhckImageImporter
 
 /* Model importers */
 static _glhckModelImporter modelImporters[] = {
-   //REGISTER_IMPORTER(FORMAT_OCTM, _glhckFormatOpenCTM, _glhckImportOpenCTM, "glhckImportOpenCTM"),
+   REGISTER_IMPORTER(FORMAT_OCTM, _glhckFormatOpenCTM, _glhckImportOpenCTM, "glhckImportOpenCTM"),
    REGISTER_IMPORTER(FORMAT_PMD, _glhckFormatPMD, _glhckImportPMD, "glhckImportPMD"),
    //REGISTER_IMPORTER(FORMAT_ASSIMP, _glhckFormatAssimp, _glhckImportAssimp, "glhckImportAssimp"),
    END_IMPORTERS()
@@ -356,7 +356,7 @@ fail:
  */
 
 /* \brief return tristripped indecies for triangle index data */
-unsigned int* _glhckTriStrip(unsigned int *indices, size_t num_indices, size_t *out_num_indices)
+unsigned int* _glhckTriStrip(const unsigned int *indices, size_t num_indices, size_t *out_num_indices)
 {
 #if GLHCK_TRISTRIP
    unsigned int v1, v2, v3;

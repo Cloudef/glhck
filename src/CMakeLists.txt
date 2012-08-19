@@ -17,6 +17,7 @@ SET(GLHCK_SRC
    render/OpenGL.c
    import/import.c
    import/import_mmd.c
+   import/import_octm.c
    import/import_png.c
    import/import_tga.c
    import/import_bmp.c)
@@ -31,10 +32,11 @@ INCLUDE_DIRECTORIES(
   ${actc_SOURCE_DIR}/src
   ${MMD_SOURCE_DIR}/src
   ${IMGHCK_SOURCE_DIR}/src
+  ${OpenCTM_SOURCE_DIR}/src/lib
 )
 
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck kazmath imghck MMD actc GLEW ${PNG_LIBRARY} ${MATH_LIBRARY})
+TARGET_LINK_LIBRARIES(glhck kazmath imghck openctm MMD actc GLEW ${PNG_LIBRARY} ${MATH_LIBRARY})
 
 INSTALL(TARGETS glhck DESTINATION lib)
