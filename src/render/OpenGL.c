@@ -669,7 +669,7 @@ static inline void textDraw(const _glhckText *text)
                GL_ONE_MINUS_SRC_ALPHA));
    }
 
-   if (!GL_HAS_STATE(GL_TEXTURE)) {
+   if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
       _OpenGL.state.flags |= GL_STATE_TEXTURE;
       _OpenGL.state.attrib[1] = 1;
       GL_CALL(glEnable(GL_TEXTURE_2D));
