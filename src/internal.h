@@ -8,6 +8,8 @@
 #endif
 
 #include "GL/glhck.h"
+#include <float.h>  /* for float   */
+#include <limits.h> /* for limits  */
 #include <string.h> /* for strrchr */
 
 #if defined(_init_c_)
@@ -107,35 +109,35 @@ typedef struct _glhckRtt {
 /* set C casting from internal data format spec */
 #if GLHCK_PRECISION_VERTEX == GLHCK_BYTE
 #  define GLHCK_CAST_VERTEX char
+#  define GLHCK_VERTEX_MAX  CHAR_MAX
 #elif GLHCK_PRECISION_VERTEX == GLHCK_SHORT
 #  define GLHCK_CAST_VERTEX short
+#  define GLHCK_VERTEX_MAX  SHRT_MAX
 #else
 #  define GLHCK_CAST_VERTEX kmScalar
+#  define GLHCK_VERTEX_MAX  FLT_MAX
 #endif
 
 #if GLHCK_PRECISION_COORD == GLHCK_BYTE
-#  define GLHCK_CAST_COORD char
+#  define GLHCK_CAST_COORD  char
+#  define GLHCK_RANGE_COORD CHAR_MAX
 #elif GLHCK_PRECISION_COORD == GLHCK_SHORT
-#  define GLHCK_CAST_COORD short
+#  define GLHCK_CAST_COORD  short
+#  define GLHCK_RANGE_COORD SHRT_MAX
 #else
 #  define GLHCK_CAST_COORD kmScalar
+#  define GLHCK_RANGE_COORD 1
 #endif
 
 #if GLHCK_PRECISION_INDEX == GLHCK_UNSIGNED_BYTE
 #  define GLHCK_CAST_INDEX unsigned char
+#  define GLHCK_INDEX_MAX  UCHAR_MAX
 #elif GLHCK_PRECISION_INDEX == GLHCK_UNSIGNED_SHORT
 #  define GLHCK_CAST_INDEX unsigned short
+#  define GLHCK_INDEX_MAX  USHRT_MAX
 #else
 #  define GLHCK_CAST_INDEX unsigned int
-#endif
-
-/* range of coordinates when not native precision */
-#if GLHCK_PRECISION_COORD == GLHCK_BYTE
-#  define GLHCK_RANGE_COORD 127
-#elif GLHCK_PRECISION_COORD == GLHCK_SHORT
-#  define GLHCK_RANGE_COORD 32767
-#else
-#  define GLHCK_RANGE_COORD 1
+#  define GLHCK_INDEX_MAX  UINT_MAX
 #endif
 
 /* check if import index data format is same as internal

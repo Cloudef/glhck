@@ -3,19 +3,19 @@
 
 /* conversion defines for vertexdata conversion macro */
 #if GLHCK_PRECISION_VERTEX == GLHCK_BYTE
-#  define GLHCK_VERTEX_MAGIC  255.0f - 127.0f
-#  define GLHCK_BIAS_OFFSET   127.0f / 255.0f
-#  define GLHCK_SCALE_OFFSET  127.0f - 1.0f
+#  define GLHCK_VERTEX_MAGIC  UCHAR_MAX - CHAR_MAX
+#  define GLHCK_BIAS_OFFSET   CHAR_MAX / (UCHAR_MAX - 1.0f)
+#  define GLHCK_SCALE_OFFSET  UCHAR_MAX - 1.0f
 #elif GLHCK_PRECISION_VERTEX == GLHCK_SHORT
-#  define GLHCK_VERTEX_MAGIC  65536.0f - 32768.0f
-#  define GLHCK_BIAS_OFFSET   32768.0f / 65536.0f
-#  define GLHCK_SCALE_OFFSET  65536.0f - 1.0f
+#  define GLHCK_VERTEX_MAGIC  USHRT_MAX - SHRT_MAX
+#  define GLHCK_BIAS_OFFSET   SHRT_MAX / (USHRT_MAX - 1.0f)
+#  define GLHCK_SCALE_OFFSET  USHRT_MAX - 1.0f
 #endif
 
 #if GLHCK_PRECISION_COORD == GLHCK_BYTE
-#  define GLHCK_COORD_MAGIC 127.0f - 255.0f
+#  define GLHCK_COORD_MAGIC CHAR_MAX - UCHAR_MAX
 #elif GLHCK_PRECISION_COORD == GLHCK_SHORT
-#  define GLHCK_COORD_MAGIC 65536.0f - 32768.0f
+#  define GLHCK_COORD_MAGIC USHRT_MAX - SHRT_MAX
 #endif
 
 /* helper macro for vertexdata conversion */

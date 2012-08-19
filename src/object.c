@@ -1,6 +1,6 @@
 #include "internal.h"
-#include "helper/vertexdata.h"
 #include <assert.h>  /* for assert */
+#include "helper/vertexdata.h"
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
@@ -45,9 +45,9 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
 
    /* translation */
    kmMat4Translation(&translation,
-         object->view.translation.x + object->geometry.bias.x,
-         object->view.translation.y + object->geometry.bias.y,
-         object->view.translation.z + object->geometry.bias.z);
+         object->view.translation.x + (object->geometry.bias.x * object->view.scaling.x),
+         object->view.translation.y + (object->geometry.bias.y * object->view.scaling.y),
+         object->view.translation.z + (object->geometry.bias.z * object->view.scaling.z));
 
    /* rotation */
    kmMat4RotationX(&rotation, kmDegreesToRadians(object->view.rotation.x));
@@ -58,9 +58,9 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
 
    /* scaling */
    kmMat4Scaling(&scaling,
-         object->view.scaling.x + object->geometry.scale.x,
-         object->view.scaling.y + object->geometry.scale.y,
-         object->view.scaling.z + object->geometry.scale.z);
+         object->view.scaling.x + (object->geometry.scale.x * object->view.scaling.x),
+         object->view.scaling.y + (object->geometry.scale.y * object->view.scaling.y),
+         object->view.scaling.z + (object->geometry.scale.z * object->view.scaling.z));
 
    /* build matrix */
    kmMat4Multiply(&translation, &translation, &rotation);
@@ -200,22 +200,35 @@ static void _glhckConvertVertexData(_glhckObject *object, void *internal,
    vmax.x++; vmax.y++; vmax.z++;
    vmin.x--; vmin.y--; vmin.z--;
 
-   /* do conversion */
+   /* handle vertex data */
    for (i = 0; i != memb; ++i) {
-      /* vertex && normal conversion */
 #if GLHCK_PRECISION_VERTEX == GLHCK_FLOAT
+      /* memcpy without conversion, do centering though */
       if (is3d) {
          memcpy(&internal3d[i].vertex, &import[i].vertex,
                sizeof(_glhckVertex3d));
          memcpy(&internal3d[i].normal, &import[i].normal,
                sizeof(_glhckVertex3d));
+
+         /* shift origin to center */
+         internal3d[i].vertex.x -= 0.5f * (vmax.x - vmin.x) + vmin.x;
+         internal3d[i].vertex.y -= 0.5f * (vmax.y - vmin.y) + vmin.y;
+         internal3d[i].vertex.z -= 0.5f * (vmax.z - vmin.z) + vmin.z;
       } else {
          memcpy(&internal2d[i].vertex, &import[i].vertex,
                sizeof(_glhckVertex2d));
          memcpy(&internal2d[i].normal, &import[i].normal,
                sizeof(_glhckVertex3d));
+
+         /* shift origin to center */
+         internal2d[i].vertex.x -= 0.5f * (vmax.x - vmin.x) + vmin.x;
+         internal2d[i].vertex.y -= 0.5f * (vmax.y - vmin.y) + vmin.y;
       }
 #else
+      /* convert vertex data to correct precision from import precision.
+       * conversion will do the centering as well */
+
+      /* vertices */
       if (no_vconvert) {
          if (is3d) {
             set3d(internal3d[i].vertex, import[i].vertex);
@@ -231,6 +244,8 @@ static void _glhckConvertVertexData(_glhckObject *object, void *internal,
                   vmax, vmin, GLHCK_VERTEX_MAGIC, GLHCK_CAST_VERTEX);
          }
       }
+
+      /* normals */
       if (no_nconvert) {
          if (is3d) {
             set3d(internal3d[i].normal, import[i].normal);
@@ -248,8 +263,8 @@ static void _glhckConvertVertexData(_glhckObject *object, void *internal,
       }
 #endif
 
-      /* texture coord conversion */
 #if GLHCK_PRECISION_COORD == GLHCK_FLOAT
+      /* coords in native precision, memcpy */
       if (is3d) {
          memcpy(&internal3d[i].coord, &import[i].coord,
                sizeof(_glhckCoord2d));
@@ -258,6 +273,7 @@ static void _glhckConvertVertexData(_glhckObject *object, void *internal,
                sizeof(_glhckCoord2d));
       }
 #else
+      /* texture coord conversion */
       if (is3d) {
          internal3d[i].coord.x = import[i].coord.x * GLHCK_RANGE_COORD;
          internal3d[i].coord.y = import[i].coord.y * GLHCK_RANGE_COORD;
@@ -279,9 +295,11 @@ static void _glhckConvertVertexData(_glhckObject *object, void *internal,
 #endif
    }
 
-   /* fix geometry bias && scale after conversion */
-#if GLHCK_PRECISION_VERTEX != GLHCK_FLOAT
+   /* no need to process further */
    if (no_vconvert) return;
+
+#if GLHCK_PRECISION_VERTEX != GLHCK_FLOAT
+   /* fix geometry bias && scale after conversion */
    object->geometry.bias.x = (GLHCK_BIAS_OFFSET) *
       (vmax.x - vmin.x) + vmin.x;
    object->geometry.bias.y = (GLHCK_BIAS_OFFSET) *
@@ -291,7 +309,7 @@ static void _glhckConvertVertexData(_glhckObject *object, void *internal,
       object->geometry.bias.z = (GLHCK_BIAS_OFFSET) *
          (vmax.z - vmin.z) + vmin.z;
    } else {
-      object->geometry.bias.z = 1;
+      object->geometry.bias.z = 0;
    }
 
    object->geometry.scale.x =
@@ -303,12 +321,20 @@ static void _glhckConvertVertexData(_glhckObject *object, void *internal,
       object->geometry.scale.z =
          (vmax.z - vmin.z) / GLHCK_SCALE_OFFSET;
    } else {
-      object->geometry.scale.z = 1;
+      object->geometry.scale.z = 0;
    }
+
+   DEBUG(GLHCK_DBG_CRAP, "Converted bias "VEC3S, VEC3(&object->geometry.bias));
+   DEBUG(GLHCK_DBG_CRAP, "Converted scale "VEC3S, VEC3(&object->geometry.scale));
+#else
+   /* fix bias after centering */
+   object->geometry.bias.x = 0.5f * (vmax.x - vmin.x) + vmin.x;
+   object->geometry.bias.y = 0.5f * (vmax.y - vmin.y) + vmin.y;
+   object->geometry.bias.z = 0.5f * (vmax.z - vmin.z) + vmin.z;
+#endif
 
    /* update matrix */
    _glhckObjectUpdateMatrix(object);
-#endif
 }
 
 /* \brief convert index data to internal format */
@@ -319,8 +345,7 @@ static void _glhckConvertIndexData(GLHCK_CAST_INDEX *internal,
    CALL(0, "%p, %p, %zu", internal, import, memb);
 
    /* TODO: Handle unsigned short indices or just use unsigned int for sake of simplicity? */
-   for (i = 0; i != memb; ++i)
-      internal[i] = import[i];
+   for (i = 0; i != memb; ++i) internal[i] = import[i];
 }
 
 /* \brief calculate object's bounding box */
@@ -898,6 +923,10 @@ GLHCKAPI int glhckObjectInsertVertexData2d(
    CALL(0, "%p, %zu, %p", object, memb, vertexData);
    assert(object);
 
+   /* check vertex precision conflicts */
+   if (memb > GLHCK_INDEX_MAX)
+      goto bad_precision;
+
    /* allocate new buffer */
    if (!(new = (__GLHCKvertexData2d*)_glhckMalloc(memb *
                sizeof(__GLHCKvertexData2d))))
@@ -921,6 +950,9 @@ GLHCKAPI int glhckObjectInsertVertexData2d(
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
+bad_precision:
+   DEBUG(GLHCK_DBG_ERROR, "Internal indices precision is %s, however there are more vertices\n"
+                          "in object(%p) than index can hold.", __STRING(GLHCK_CAST_INDEX), object);
 fail:
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
@@ -946,8 +978,7 @@ GLHCKAPI int glhckObjectInsertIndices(
 
    /* assign new buffer */
 #if GLHCK_NATIVE_IMPORT_INDEXDATA
-   memcpy(new, indices, memb *
-         sizeof(GLHCK_CAST_INDEX));
+   memcpy(new, indices, memb * sizeof(GLHCK_CAST_INDEX));
 #else
    _glhckConvertIndexData(new, indices, memb);
 #endif
