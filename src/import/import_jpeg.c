@@ -63,7 +63,7 @@ out_of_memory:
    DEBUG(GLHCK_DBG_ERROR, "Out of memory, won't load file: %s", file);
    goto fail;
 bad_dimensions:
-   DEBUG(GLHCK_DBG_ERROR, "PNG image has invalid dimension %dx%d", w, h);
+   DEBUG(GLHCK_DBG_ERROR, "JPEG image has invalid dimension %dx%d", w, h);
 fail:
    IFDO(fclose, f);
    RET(0, "%d", RETURN_FAIL);
