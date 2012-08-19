@@ -107,8 +107,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
       goto fail;
 
    /* init */
-   memset(vertexData, 0,
-         mmd->num_vertices * sizeof(glhckImportVertexData));
+   memset(vertexData, 0, mmd->num_vertices * sizeof(glhckImportVertexData));
 
    /* assign data */
    for (i = 0, start = 0; i != mmd->num_materials; ++i) {
@@ -161,8 +160,11 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
       strip_indices           = indices;
    } else NULLDO(_glhckFree, indices);
 
-   glhckObjectInsertVertexData3d(object, mmd->num_vertices, vertexData);
+   /* set geometry */
    glhckObjectInsertIndices(object, num_indices, strip_indices);
+   glhckObjectInsertVertexData3d(object, mmd->num_vertices, vertexData);
+
+   /* finish */
    NULLDO(_glhckFree, vertexData);
    NULLDO(_glhckFree, strip_indices);
    NULLDO(mmd_free, mmd);
