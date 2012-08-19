@@ -286,10 +286,10 @@ static void _glhckConvertVertexData(_glhckObject *object, void *internal,
       /* color is always unsigned char, memcpy it */
 #if GLHCK_VERTEXDATA_COLOR
       if (is3d) {
-         memcpy(&internal3d[i].color, import[i].color,
+         memcpy(&internal3d[i].color, &import[i].color,
                sizeof(glhckColor));
       } else {
-         memcpy(&internal2d[i].color, import[i].color,
+         memcpy(&internal2d[i].color, &import[i].color,
                sizeof(glhckColor));
       }
 #endif
@@ -629,6 +629,16 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
    /* render */
    if (object->geometry.drawFunc)
       object->geometry.drawFunc(object);
+}
+
+/* \brief get object's material flag s*/
+GLHCKAPI unsigned int glhckObjectGetMaterialFlags(const glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   RET(1, "%u", object->material.flags);
+   return object->material.flags;
 }
 
 /* \brief set's object material flags */

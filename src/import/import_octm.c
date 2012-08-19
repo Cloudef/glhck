@@ -144,16 +144,16 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated)
       }
 
       if (coords) {
-         vertexData[ix].coord.x = normals[ix*2+0];
-         vertexData[ix].coord.y = normals[ix*2+1];
+         vertexData[ix].coord.x = coords[ix*2+0];
+         vertexData[ix].coord.y = coords[ix*2+1];
       }
 
 #if GLHCK_VERTEXDATA_COLOR
       if (colors) {
-         vertexData[ix].color.r = normals[ix*4+0];
-         vertexData[ix].color.g = normals[ix*4+1];
-         vertexData[ix].color.b = normals[ix*4+2];
-         vertexData[ix].color.a = normals[ix*4+3];
+         vertexData[ix].color.r = colors[ix*4+0]*255.0f;
+         vertexData[ix].color.g = colors[ix*4+1]*255.0f;
+         vertexData[ix].color.b = colors[ix*4+2]*255.0f;
+         vertexData[ix].color.a = colors[ix*4+3]*255.0f;
       }
 #endif
    }
@@ -164,6 +164,9 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated)
       object->geometry.type   = GLHCK_TRIANGLES;
       num_indices             = num_triangles;
    }
+
+   /* this object has colors */
+   if (colors) object->material.flags |= GLHCK_MATERIAL_COLOR;
 
    DEBUG(GLHCK_DBG_CRAP, "num vertices: %u", num_vertices);
    DEBUG(GLHCK_DBG_CRAP, "num indices: %u", num_indices);

@@ -196,8 +196,9 @@ typedef enum glhckMaterialFlags {
    GLHCK_MATERIAL_DRAW_OBB  = 2,
    GLHCK_MATERIAL_WIREFRAME = 4,
    GLHCK_MATERIAL_ALPHA     = 8,
-   GLHCK_MATERIAL_CULL      = 16,
-   GLHCK_MATERIAL_DEPTH     = 32
+   GLHCK_MATERIAL_COLOR     = 16,
+   GLHCK_MATERIAL_CULL      = 32,
+   GLHCK_MATERIAL_DEPTH     = 64
 } glhckMaterialFlags;
 
 /* rtt modes */
@@ -289,6 +290,7 @@ GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
       size_t memb, const unsigned int *indices);
 
 /* material */
+GLHCKAPI unsigned int glhckObjectGetMaterialFlags(const glhckObject *object);
 GLHCKAPI void glhckObjectSetMaterialFlags(glhckObject *object, unsigned int flags);
 
 /* object control */

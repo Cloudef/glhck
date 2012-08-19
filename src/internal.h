@@ -104,6 +104,9 @@ typedef struct _glhckRtt {
 #define GLHCK_PRECISION_VERTEX GLHCK_SHORT
 #define GLHCK_PRECISION_COORD  GLHCK_SHORT
 #define GLHCK_PRECISION_INDEX  GLHCK_UNSIGNED_SHORT
+#define GLHCK_PRECISION_COLOR  GLHCK_UNSIGNED_BYTE
+
+/* enable vertex color in vertexdata? */
 #define GLHCK_VERTEXDATA_COLOR 0
 
 /* set C casting from internal data format spec */

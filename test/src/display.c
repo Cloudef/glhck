@@ -142,10 +142,11 @@ int main(int argc, char **argv)
       cameraPos.z = -20.0f;
    } else return EXIT_FAILURE;
 
-   glhckObjectSetMaterialFlags(cube, GLHCK_MATERIAL_DRAW_AABB |
-                                     GLHCK_MATERIAL_DRAW_OBB  |
-                                     GLHCK_MATERIAL_CULL      |
-                                     GLHCK_MATERIAL_DEPTH);
+   unsigned int flags = glhckObjectGetMaterialFlags(cube);
+   flags |= GLHCK_MATERIAL_DRAW_AABB;
+   flags |= GLHCK_MATERIAL_DRAW_OBB;
+   glhckObjectSetMaterialFlags(cube, flags);
+
    glhckMemoryGraph();
 
    glhckText *text = glhckTextNew(512, 512);

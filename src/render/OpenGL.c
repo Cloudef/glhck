@@ -25,9 +25,9 @@
 #define GL_DEBUG 1
 
 #if GLHCK_VERTEXDATA_COLOR
-#  define GLHCK_ATTRIB_COUNT 2 /* 4 */
+#  define GLHCK_ATTRIB_COUNT 4 /* 4 */
 #else
-#  define GLHCK_ATTRIB_COUNT 2 /* 3 */
+#  define GLHCK_ATTRIB_COUNT 3 /* 3 */
 #endif
 
 const GLenum _glhckAttribName[] = {
@@ -355,6 +355,11 @@ static inline void materialState(const _glhckObject *object)
    /* always draw vertices */
    _OpenGL.state.attrib[0] = 1;
 
+#if GLHCK_VERTEXDATA_COLOR
+   /* need color? */
+   _OpenGL.state.attrib[3] = object->material.flags & GLHCK_MATERIAL_COLOR;
+#endif
+
    /* need texture? */
    _OpenGL.state.attrib[1] = object->material.texture?1:0;
    _OpenGL.state.flags |= object->material.texture?GL_STATE_TEXTURE:0;
@@ -680,6 +685,13 @@ static inline void textDraw(const _glhckText *text)
       _OpenGL.state.attrib[0] = 1;
       GL_CALL(glEnableClientState(GL_VERTEX_ARRAY));
    }
+
+#if GLHCK_VERTEXDATA_COLOR
+   if (_OpenGL.state.attrib[3]) {
+      _OpenGL.state.attrib[3] = 0;
+      GL_CALL(glDisableClientState(GL_COLOR_ARRAY));
+   }
+#endif
 
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glDisable(GL_DEPTH_TEST));
