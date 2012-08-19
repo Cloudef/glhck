@@ -91,8 +91,7 @@ static void x(unsigned int object)                                   \
 static inline void GL_ERROR(unsigned int line, const char *func, const char *glfunc)
 {
    GLenum error;
-   if ((error = glGetError())
-         != GL_NO_ERROR)
+   if ((error = glGetError()) != GL_NO_ERROR)
       DEBUG(GLHCK_DBG_ERROR, "GL @%d:%-20s %-20s >> %s",
             line, func, glfunc,
             error==GL_INVALID_ENUM?
@@ -455,7 +454,7 @@ static inline void drawOBB(const _glhckObject *object)
    unsigned int i = 0;
    kmVec3 min = object->view.bounding.min;
    kmVec3 max = object->view.bounding.max;
-   const short points[] = {
+   const float points[] = {
                       min.x, min.y, min.z,
                       max.x, min.y, min.z,
                       min.x, min.y, min.z,
@@ -495,7 +494,7 @@ static inline void drawOBB(const _glhckObject *object)
       }
 
    GL_CALL(glColor3ub(0, 255, 0));
-   GL_CALL(glVertexPointer(3, GL_SHORT, 0, &points[0]));
+   GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
    GL_CALL(glColor3ub(255, 255, 255));
 
