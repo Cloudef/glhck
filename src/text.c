@@ -129,7 +129,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
       unsigned int code, short isize)
 {
    unsigned int h, tex_object;
-   unsigned char *data, *outData;
+   unsigned char *data;
    int i, x1, y1, x2, y2, gw, rh, gh, gid, advance, lsb;
    float scale;
    float size = (float)isize/10.0f;
