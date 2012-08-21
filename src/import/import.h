@@ -6,6 +6,7 @@ typedef struct _glhckImagePostProcessStruct
 {
    unsigned long long width, height;
    unsigned char *data;
+   unsigned int format;
 } _glhckImagePostProcessStruct;
 
 /* Load and unload functions when importers are configured

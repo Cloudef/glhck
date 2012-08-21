@@ -159,9 +159,11 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
    importData.width  = w;
    importData.height = h;
    importData.data   = import;
+   importData.format = GLHCK_RGBA;
    if (_glhckImagePostProcess(texture, &importData, flags) != RETURN_OK)
       goto fail;
 
+   /* free */
    NULLDO(_glhckFree, import);
 
    RET(0, "%d", RETURN_OK);
@@ -187,3 +189,5 @@ fail:
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
+
+/* vim: set ts=8 sw=3 tw=0 :*/

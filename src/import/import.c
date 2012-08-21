@@ -285,8 +285,8 @@ int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct 
    CALL(0, "%p, %p, %u", texture, data, flags);
 
    /* assign default format for texture,
-    * all imports are in RGBA by default */
-   inFormat = outFormat = GLHCK_RGBA;
+    * most imports are in RGBA and is preferred. */
+   inFormat = outFormat = data->format;
 
    /* post processing below */
 

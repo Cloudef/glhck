@@ -115,7 +115,7 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated)
       }
 
       if ((texturePath = _glhckImportTexturePath(textureFilename, file))) {
-         if ((texture = glhckTextureNew(texturePath, 0))) {
+         if ((texture = glhckTextureNew(texturePath, GLHCK_TEXTURE_DEFAULTS))) {
             coords = CTM_CALL(context, ctmGetFloatArray(context, CTM_UV_MAP_1));
             glhckObjectSetTexture(object, texture);
             glhckTextureFree(texture);

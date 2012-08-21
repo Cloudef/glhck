@@ -246,6 +246,7 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
    importData.width  = w;
    importData.height = h;
    importData.data   = import;
+   importData.format = GLHCK_RGBA;
    if (_glhckImagePostProcess(texture, &importData, flags) != RETURN_OK)
       goto fail;
 
