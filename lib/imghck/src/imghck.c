@@ -1,5 +1,10 @@
-#include <malloc.h>
 #include <assert.h>
+
+#ifdef __APPLE__
+#   include <malloc/malloc.h>
+#else
+#   include <malloc.h>
+#endif
 
 static void imghckCompressDXT1RGB(
       int channels,
