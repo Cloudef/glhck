@@ -3,9 +3,10 @@
 Nothing interesting here yet...
 Move on.
 
-## Screenshot
+## Screenshots
 
 ![Screenshot](http://cloudef.eu/armpit/glhck-new-utf8-text.png)
+![Screenshot2](http://cloudef.eu/armpit/glhck-openctm.png)
 
 ## Building
 
