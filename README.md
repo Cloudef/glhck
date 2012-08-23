@@ -26,6 +26,9 @@ Move on.
     cd target                             # - cd to your target directory
     make install                          # - install
 
+## Related using GLhck
+*  [glhck-scene][] - QMLON GLhck scene viewer
+*  [spacerocks][] - 2D Asteroids clone
 
 ## Thanks to
 *  [GLEW][] - OpenGL Extension Wrangler
@@ -34,6 +37,9 @@ Move on.
 *  [ACTC][] - Triangle consolidator
 *  [Kazmath][] - C Math library
 *  [STB-stuff][] - Used as freetype replacement
+
+[glhck-scene]: https://github.com/bzar/glhck-scene
+[spacerocks]: https://github.com/bzar/spacerocks
 
 [GLEW]: http://glew.sourceforge.net/
 [GLFW]: http://www.glfw.org/
