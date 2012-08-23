@@ -26,7 +26,7 @@ Move on.
     cd target                             # - cd to your target directory
     make install                          # - install
 
-## Related using GLhck
+## Projects using GLhck
 *  [glhck-scene][] - QMLON GLhck scene viewer
 *  [spacerocks][] - 2D Asteroids clone
 
