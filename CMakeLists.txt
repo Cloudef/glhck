@@ -102,7 +102,7 @@ ENDIF ()
 # Build checks
 # Abort git submodule init && git submodule update
 # has not been ran.
-SET(SUBMODULE_ERROR "Run git submodule init && git submodule update first.")
+SET(SUBMODULE_ERROR "Run 'git submodule update --init --recursive' update first.")
 IF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/kazmath/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
 ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glfw/src/.git)

@@ -10,21 +10,20 @@ Move on.
 
 ## Building
 
-    git submodule init                    # - initialize and fetch
-    git submodule update                  #   submodules
-    mkdir target && cd target             # - create build target directory
-    cmake -DCMAKE_INSTALL_PREFIX=build .. # - run CMake, set install directory
-    make                                  # - compile
+    git submodule update --init --recursive  # - initialize and fetch submodules
+    mkdir target && cd target                # - create build target directory
+    cmake -DCMAKE_INSTALL_PREFIX=build ..    # - run CMake, set install directory
+    make                                     # - compile
 
 ## Running test(s)
 
-    cd target                             # - cd to your target directory
-    ./test/display                        # - for example
+    cd target                                # - cd to your target directory
+    ./test/display                           # - for example
 
 ## Installing
 
-    cd target                             # - cd to your target directory
-    make install                          # - install
+    cd target                                # - cd to your target directory
+    make install                             # - install
 
 ## Projects using GLhck
 *  [glhck-scene][] - QMLON GLhck scene viewer
