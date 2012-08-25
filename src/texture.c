@@ -58,7 +58,7 @@ inline void _glhckTextureInsertToQueue(_glhckTexture *texture)
 
 /* \brief set texture data.
  * NOTE: internal function, so data isn't copied. */
-void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data)
+static void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data)
 {
    CALL(1, "%p, %p", texture, data);
    assert(texture);
@@ -80,6 +80,76 @@ inline int _glhckIsCompressedFormat(unsigned int format)
 {
    return (format==GLHCK_COMPRESSED_RGB_DXT1 ||
            format==GLHCK_COMPRESSED_RGBA_DXT5);
+}
+
+/* \brief assign default flags */
+static void _glhckTextureDefaultFlags(unsigned int *flags)
+{
+   *flags |= GLHCK_TEXTURE_DXT;
+}
+
+/* \brief compress image data internally */
+static unsigned char* _glhckTextureCompress(
+      const unsigned char *data,
+      unsigned int width, unsigned int height,
+      unsigned int format, unsigned int flags,
+      unsigned int *outFormat)
+{
+   unsigned char *compressed = NULL;
+   CALL(0, "%p, %u, %u, %u, %u, %p",
+         data, width, height, format, flags, outFormat);
+   assert(outFormat);
+
+   /* NULL data, just return */
+   if (!data) goto fail;
+
+   /* check if already compressed */
+   if (_glhckIsCompressedFormat(format))
+      goto already_compressed;
+
+   /* get default flags */
+   if (flags & GLHCK_TEXTURE_DEFAULTS)
+      _glhckTextureDefaultFlags(&flags);
+
+   /* check that flags have compression */
+   if (!(flags & GLHCK_TEXTURE_DXT))
+      goto fail;
+
+   /* DXT compression requested */
+   if (flags & GLHCK_TEXTURE_DXT) {
+      if ((_glhckNumChannels(format) & 1) == 1) {
+         /* RGB */
+         if (!(compressed = _glhckMalloc(imghckSizeForDXT1(width, height))))
+            goto out_of_memory;
+
+         imghckConvertToDXT1(compressed, data, width, height,
+               _glhckNumChannels(format));
+         *outFormat = GLHCK_COMPRESSED_RGB_DXT1;
+         DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT1");
+      } else {
+         /* RGBA */
+         if (!(compressed = _glhckMalloc(imghckSizeForDXT5(width, height))))
+            goto out_of_memory;
+
+         imghckConvertToDXT5(compressed, data, width, height,
+               _glhckNumChannels(format));
+         *outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
+         DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT5");
+      }
+   }
+
+   RET(0, "%p", compressed);
+   return compressed;
+
+already_compressed:
+   DEBUG(GLHCK_DBG_WARNING, "Image data is already compressed");
+   goto fail;
+out_of_memory:
+   DEBUG(GLHCK_DBG_ERROR, "Out of memory");
+fail:
+   IFDO(_glhckFree, compressed);
+   RET(0, "%p", NULL);
+   return NULL;
 }
 
 /* ---- PUBLIC API ---- */
@@ -110,8 +180,8 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
          goto fail;
 
       /* default flags if not any specified */
-      if ((flags & GLHCK_TEXTURE_DEFAULTS))
-         flags += GLHCK_TEXTURE_DXT;
+      if (flags & GLHCK_TEXTURE_DEFAULTS)
+         _glhckTextureDefaultFlags(&flags);
 
       /* import image */
       if (_glhckImportImage(texture, file, flags) != RETURN_OK)
@@ -221,10 +291,22 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
 {
    size_t size;
    unsigned int object;
+   unsigned char *compressed = NULL;
    CALL(0, "%p, %u, %d, %d, %d,  %u", texture, data,
          width, height, format, flags);
    assert(texture);
 
+   /* get default flags */
+   if (flags & GLHCK_TEXTURE_DEFAULTS)
+      _glhckTextureDefaultFlags(&flags);
+
+   /* will do compression if requested */
+   if ((compressed = _glhckTextureCompress(data,
+               width, height, outFormat, flags, &outFormat))) {
+      data = compressed;
+   }
+
+   /* check the true data size */
    if (outFormat == GLHCK_COMPRESSED_RGB_DXT1)
       size = imghckSizeForDXT1(width, height);
    else if (outFormat == GLHCK_COMPRESSED_RGBA_DXT5)
@@ -249,7 +331,9 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
    texture->format    = format;
    texture->outFormat = outFormat;
    texture->size      = size;
+   texture->flags     = flags;
 
+   /* copy data */
    if (data) {
       if (!(texture->data = _glhckCopy(data, texture->size)))
          goto fail;
@@ -258,12 +342,23 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
    DEBUG(GLHCK_DBG_CRAP, "NEW(%p) %dx%d %.2f MiB", texture,
          texture->width, texture->height, (float)texture->size / 1048576);
 
+   IFDO(_glhckFree, compressed);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
+   IFDO(_glhckFree, compressed);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
+}
+
+/* \brief recreate texture with new data.
+ * dimensions of texture must be the same. */
+GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, unsigned char *data, unsigned int format)
+{
+   return glhckTextureCreate(texture, data,
+         texture->width, texture->height,
+         format, format, texture->flags);
 }
 
 /* \brief save texture to file in TGA format */

@@ -1,5 +1,4 @@
 #include "../internal.h"
-#include "imghck.h"
 #include "import.h"
 #include <stdio.h>  /* for fopen    */
 #include <limits.h> /* for PATH_MAX */
@@ -291,27 +290,6 @@ int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct 
    /* post processing below */
 
    /* format manipulations here */
-
-   /* compression */
-   if (flags & GLHCK_TEXTURE_DXT) {
-      if ((_glhckNumChannels(outFormat) & 1) == 1) {
-         if (!(outData = _glhckMalloc(imghckSizeForDXT1(data->width, data->height))))
-            goto out_of_memory;
-
-         imghckConvertToDXT1(outData, data->data, data->width, data->height,
-               _glhckNumChannels(outFormat));
-         outFormat = GLHCK_COMPRESSED_RGB_DXT1;
-         DEBUG(GLHCK_DBG_CRAP, "Imported image converted to DXT1");
-      } else {
-         if (!(outData = _glhckMalloc(imghckSizeForDXT5(data->width, data->height))))
-            goto out_of_memory;
-
-         imghckConvertToDXT5(outData, data->data, data->width, data->height,
-               _glhckNumChannels(outFormat));
-         outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
-         DEBUG(GLHCK_DBG_CRAP, "Imported image converted to DXT5");
-      }
-   }
 
    /* upload texture */
    glhckTextureCreate(texture, outData?outData:data->data, data->width, data->height,

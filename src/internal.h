@@ -553,7 +553,6 @@ void _glhckCameraWorldUpdate(int width, int height);
 /* textures */
 unsigned int _glhckNumChannels(unsigned int format);
 int _glhckIsCompressedFormat(unsigned int format);
-void _glhckTextureSetData(_glhckTexture *texture, unsigned char *data);
 void _glhckTextureInsertToQueue(_glhckTexture *texture);
 
 /* tracing && debug functions */

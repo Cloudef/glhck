@@ -1,8 +1,5 @@
 #include "internal.h"
 
-/* Temporary, see TODO below */
-#include "imghck.h"
-
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RTT
 
@@ -17,7 +14,7 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
    if (!(rtt = _glhckMalloc(sizeof(_glhckRtt))))
       goto fail;
 
-   if (!(texture = glhckTextureNew(NULL, 0)))
+   if (!(texture = glhckTextureNew(NULL, GLHCK_TEXTURE_DEFAULTS)))
       goto fail;
 
    /* init */
@@ -27,7 +24,8 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
       format = GLHCK_RGBA;
 
    memset(rtt, 0, sizeof(_glhckRtt));
-   if (!(glhckTextureCreate(texture, NULL, width, height, format, format, 0)))
+   if (!(glhckTextureCreate(texture, NULL, width, height,
+               format, format, GLHCK_TEXTURE_DEFAULTS)))
       goto fail;
 
    _GLHCKlibrary.render.api.generateFramebuffers(1, &rtt->object);
@@ -88,14 +86,12 @@ success:
 /* \brief fill rtt's texture data with current pixels */
 GLHCKAPI int glhckRttFillData(glhckRtt *rtt)
 {
-   unsigned char *data = NULL, *outData = NULL;
+   unsigned char *data = NULL;
    CALL(1, "%p", rtt);
    assert(rtt);
 
-   /* texture will take ownership of this data,
-    * so let's alloc it explictly for TEXTURE channel */
-   data = __glhckMalloc(GLHCK_CHANNEL_TEXTURE,
-                       rtt->texture->width    *
+   /* allocate data for getPixels */
+   data = _glhckMalloc(rtt->texture->width    *
                        rtt->texture->height   *
       _glhckNumChannels(rtt->texture->format) *
                        sizeof(unsigned char));
@@ -103,41 +99,22 @@ GLHCKAPI int glhckRttFillData(glhckRtt *rtt)
    if (!data)
       goto fail;
 
-   outData = __glhckMalloc(GLHCK_CHANNEL_TEXTURE,
-                       rtt->texture->width    *
-                       rtt->texture->height   *
-      _glhckNumChannels(rtt->texture->format) *
-                       sizeof(unsigned char));
-
-   if (!outData)
-      goto fail;
-
+   /* get framebuffer */
    _GLHCKlibrary.render.api.getPixels(0, 0,
          rtt->texture->width, rtt->texture->height,
          rtt->texture->format, data);
 
-   /* texture compression.
-    * TODO: move this to texture object and do only if requested */
-   if (rtt->texture->format == GLHCK_RGBA) {
-      imghckConvertToDXT5(outData, data, rtt->texture->width, rtt->texture->height,
-            _glhckNumChannels(rtt->texture->format));
-   } else {
-      imghckConvertToDXT1(outData, data, rtt->texture->width, rtt->texture->height,
-            _glhckNumChannels(rtt->texture->format));
-   }
-
-   /* set data to texture */
-   _glhckTextureSetData(rtt->texture, outData);
+   /* recreate the texture */
+   glhckTextureRecreate(rtt->texture, data, rtt->texture->format);
 
    /* free data */
-   _glhckFree(data);
+   NULLDO(_glhckFree, data);
 
    RET(1, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
    IFDO(_glhckFree, data);
-   IFDO(_glhckFree, outData);
    RET(1, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }

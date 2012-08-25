@@ -1,6 +1,5 @@
 #include "internal.h"
 #include "helper/vertexdata.h"
-#include "imghck.h"
 #include <stdio.h>
 
 /* traching channel for this file */
@@ -595,7 +594,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
    for (id = 1, f = text->fcache; f; f = f->next) ++id;
 
    /* load image */
-   if (!(temp = glhckTextureNew(file, GLHCK_TEXTURE_DXT)))
+   if (!(temp = glhckTextureNew(file, GLHCK_TEXTURE_DEFAULTS)))
       goto fail;
 
    /* get data from texture */
