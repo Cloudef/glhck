@@ -44,17 +44,14 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
 /* \brief calcualate view matrix */
 static void _glhckCameraViewMatrix(_glhckCamera *camera)
 {
-   kmVec3 tgtv, upvector;
+   kmMat4 mat;
+   kmVec3 upvector;
    CALL(2, "%p", camera);
    assert(camera);
 
-   kmVec3Subtract(&tgtv, &camera->object->view.target,
-         &camera->object->view.translation);
-   kmVec3Normalize(&tgtv, &tgtv);
-   kmVec3Normalize(&upvector, &camera->view.upVector);
-
-   if (kmVec3Dot(&tgtv, &upvector) == 1.f)
-      upvector.x += 0.5f;
+   kmMat4RotationZ(&mat, kmDegreesToRadians(camera->object->view.rotation.z));
+   kmVec3Transform(&upvector, &camera->view.upVector, &mat);
+   kmVec3Normalize(&upvector, &upvector);
 
    kmMat4LookAt(&camera->view.view, &camera->object->view.translation,
          &camera->object->view.target, &upvector);
