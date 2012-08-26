@@ -6,6 +6,7 @@
 /* define for this feature */
 #if GLHCK_USE_NETWORK
 
+#include "packets.h"
 #include <enet/enet.h> /* for enet   */
 
 /* \brief local server struct */
@@ -68,6 +69,45 @@ static void _glhckEnetDestroy(void)
    _GLHCKserver.enet = NULL;
 }
 
+static void _glhckServerManagePacketObject(_glhckNetObjectPacket *packet)
+{
+   _glhckNetObjectPacket object;
+   memset(&object, 0, sizeof(_glhckNetObjectPacket));
+   memcpy(&object.view, &packet->view, sizeof(_glhckNetView));
+   memcpy(object.geometry.bias,   packet->geometry.bias,   sizeof(object.geometry.bias));
+   memcpy(object.geometry.scale,  packet->geometry.scale,  sizeof(object.geometry.scale));
+   memcpy(&object.material.color, &packet->material.color, sizeof(_glhckNetColor));
+
+   object.geometry.indicesCount  = ntohl(packet->geometry.indicesCount);
+   object.geometry.vertexCount   = ntohl(packet->geometry.vertexCount);
+   object.geometry.type          = ntohl(packet->geometry.type);
+   object.geometry.flags         = ntohl(packet->geometry.flags);
+   object.material.flags         = ntohl(packet->material.flags);
+
+
+   printf("- Object Packet\n");
+   printf("[] Geometry\n");
+   printf("   :: Indices: %zu\n", object.geometry.indicesCount);
+   printf("   :: Vertices: %zu\n", object.geometry.vertexCount);
+   printf("   :: Bias: %s\n", object.geometry.bias);
+   printf("   :: Scale: %s\n", object.geometry.scale);
+   printf("   :: Type: %u\n", object.geometry.type);
+   printf("   :: Flags: %u\n", object.geometry.flags);
+   printf("[] View\n");
+   printf("   :: Translation: %s\n", object.view.translation);
+   printf("   :: Target: %s\n", object.view.target);
+   printf("   :: Rotation: %s\n", object.view.rotation);
+   printf("   :: Scaling: %s\n", object.view.scaling);
+   printf("[] Material\n");
+   printf("   :: Color: [%d, %d, %d, %d]\n",
+         object.material.color.r,
+         object.material.color.g,
+         object.material.color.b,
+         object.material.color.a);
+   printf("   :: Flags: %u\n", object.material.flags);
+   printf("EOF\n");
+}
+
 /* \brief update enet state internally */
 static int _glhckEnetUpdate(void)
 {
@@ -87,11 +127,23 @@ static int _glhckEnetUpdate(void)
             break;
 
          case ENET_EVENT_TYPE_RECEIVE:
-            printf("A packet of length %zu containing %s was received from %s on channel %u.\n",
-                  event.packet->dataLength,
-                  (char*)event.packet->data,
-                  (char*)event.peer->data,
-                  event.channelID);
+
+            /* manage packet by kind */
+            printf("ID: %d\n", ((_glhckNetPacket*)event.packet->data)->type);
+            switch (((_glhckNetPacket*)event.packet->data)->type) {
+               case GLHCK_NET_PACKET_OBJECT:
+                  _glhckServerManagePacketObject(
+                        (_glhckNetObjectPacket*)event.packet->data);
+                  break;
+
+               default:
+                  printf("A packet of length %zu containing %s was received from %s on channel %u.\n",
+                     event.packet->dataLength,
+                     (char*)event.packet->data,
+                     (char*)event.peer->data,
+                     event.channelID);
+                  break;
+            }
 
             /* Clean up the packet now that we're done using it. */
             enet_packet_destroy(event.packet);

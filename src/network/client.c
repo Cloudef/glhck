@@ -6,6 +6,7 @@
 /* define for this feature */
 #if GLHCK_USE_NETWORK
 
+#include "packets.h"
 #include <enet/enet.h> /* for enet   */
 
 /* \brief local client struct */
@@ -158,6 +159,15 @@ static int _glhckEnetUpdate(void)
    return RETURN_OK;
 }
 
+/* \brief send packet */
+static void _glhckEnetSend(unsigned char *data, size_t size)
+{
+   ENetPacket *packet;
+   packet = enet_packet_create(data, size, ENET_PACKET_FLAG_RELIABLE);
+   enet_peer_send(_GLHCKclient.peer, 0, packet);
+   enet_host_flush(_GLHCKclient.enet);
+}
+
 /* public api */
 
 /* \brief initialize glhck server */
@@ -221,6 +231,42 @@ GLHCKAPI void glhckClientUpdate(void)
    _glhckEnetUpdate();
 }
 
+/* \brief 'render' object to network */
+GLHCKAPI void glhckClientObjectRender(const glhckObject *object)
+{
+   _glhckNetObjectPacket packet;
+   TRACE(2);
+
+   if (!_glhckClientInitialized)
+      return;
+
+   /* zero out packet */
+   memset(&packet, 0, sizeof(_glhckNetObjectPacket));
+
+   /* header */
+   packet.type = GLHCK_NET_PACKET_OBJECT;
+
+   /* geometry */
+   packet.geometry.indicesCount = htonl(object->geometry.indicesCount);
+   packet.geometry.vertexCount  = htonl(object->geometry.vertexCount);
+   snprintf(packet.geometry.bias,  sizeof(packet.geometry.bias),  VEC3NS, VEC3(&object->geometry.bias));
+   snprintf(packet.geometry.scale, sizeof(packet.geometry.scale), VEC3NS, VEC3(&object->geometry.scale));
+   packet.geometry.type  = htonl(object->geometry.type);
+   packet.geometry.flags = htonl(object->geometry.flags);
+
+   /* view */
+   snprintf(packet.view.translation,  sizeof(packet.view.translation), VEC3NS, VEC3(&object->view.translation));
+   snprintf(packet.view.target,       sizeof(packet.view.target),      VEC3NS, VEC3(&object->view.target));
+   snprintf(packet.view.rotation,     sizeof(packet.view.rotation),    VEC3NS, VEC3(&object->view.rotation));
+   snprintf(packet.view.scaling,      sizeof(packet.view.scaling),     VEC3NS, VEC3(&object->view.scaling));
+
+   /* material */
+   memcpy(&packet.material.color, &object->material.color, sizeof(_glhckNetColor));
+
+   /* send packet */
+   _glhckEnetSend((unsigned char*)&packet, sizeof(_glhckNetObjectPacket));
+}
+
 #else /* ^ network support defined */
 
 static void _glhckClientStub()
@@ -238,6 +284,11 @@ GLHCKAPI void glhckClientKill(void)
    _glhckClientStub();
 }
 GLHCKAPI void glhckClientUpdate(void)
+{
+   _glhckClientStub();
+}
+
+GLHCKAPI void glhckClientObjectRender(const glhckObject *object)
 {
    _glhckClientStub();
 }

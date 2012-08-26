@@ -34,6 +34,7 @@ int main(int argc, char **argv)
 {
    GLFWwindow window;
    glhckCamera *camera;
+   glhckObject *cube;
    int queuePrinted = 0;
 
    float          now          = 0;
@@ -67,12 +68,14 @@ int main(int argc, char **argv)
 
    RUNNING = 1;
 
-   /* test camera */
    if (!(camera = glhckCameraNew()))
       return EXIT_FAILURE;
 
    glhckCameraRange(camera, 1.0f, 1000.0f);
    glhckMemoryGraph();
+
+   if (!(cube = glhckCubeNew(1)))
+      return EXIT_FAILURE;
 
    glfwSetWindowCloseCallback(close_callback);
    glfwSetWindowSizeCallback(resize_callback);
@@ -93,6 +96,7 @@ int main(int argc, char **argv)
       }
 
       glhckClientUpdate();
+      glhckClientObjectRender(cube);
       glhckRender();
 
       /* Actual swap and clear */
@@ -113,6 +117,7 @@ int main(int argc, char **argv)
    }
 
    glhckClientKill();
+   glhckObjectFree(cube);
    glhckCameraFree(camera);
 
    puts("GLHCK channel should have few bytes for queue list,\n"
