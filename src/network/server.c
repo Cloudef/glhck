@@ -72,7 +72,7 @@ static void _glhckEnetDestroy(void)
 static int _glhckEnetUpdate(void)
 {
    ENetEvent event;
-   TRACE(3);
+   TRACE(2);
 
    /* wait up to 1000 milliseconds for an event */
    while (enet_host_service(_GLHCKserver.enet, &event, 1000) > 0) {
@@ -109,7 +109,7 @@ static int _glhckEnetUpdate(void)
       }
    }
 
-   RET(3, "%d", RETURN_OK);
+   RET(2, "%d", RETURN_OK);
    return RETURN_OK;
 }
 
@@ -166,7 +166,7 @@ GLHCKAPI void glhckServerKill(void)
 /* \brief update server state */
 GLHCKAPI void glhckServerUpdate(void)
 {
-   TRACE(3);
+   TRACE(2);
 
    /* is initialized? */
    if (!_glhckServerInitialized)
