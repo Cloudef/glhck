@@ -52,8 +52,11 @@ static void handleCamera(GLFWwindow window, float delta, kmVec3 *cameraPos, kmVe
       cameraPos->z += sin((cameraRot->y + 180) * kmPIOver180) * 25.0f * delta;
    }
 
-   cameraRot->y -= (float)(MOUSEX - LASTMOUSEX) / 7;
+   cameraRot->z = 0;
+   cameraRot->z -=  glfwGetKey(window, GLFW_KEY_Z) * (float)(MOUSEX - LASTMOUSEX) / 7;
+   cameraRot->y -= !glfwGetKey(window, GLFW_KEY_Z) * (float)(MOUSEX - LASTMOUSEX) / 7;
    cameraRot->x -= (float)(MOUSEY - LASTMOUSEY) / 7;
+
    LASTMOUSEX = MOUSEX;
    LASTMOUSEY = MOUSEY;
 }
@@ -192,7 +195,10 @@ int main(int argc, char **argv)
       glhckObjectRotate(camObj, &cameraRot);
 
       /* glhck drawing */
-      glhckObjectRotatef(cube, 30.0f * delta, 0, 30.0f * delta);
+      glhckObjectRotatef(cube,
+            glfwGetKey(window, GLFW_KEY_UP)    * 30.0f * delta,
+            glfwGetKey(window, GLFW_KEY_LEFT)  * 30.0f * delta,
+            glfwGetKey(window, GLFW_KEY_RIGHT) * 30.0f * delta);
       glhckObjectDraw(cube);
 
       /* do spinning effect */

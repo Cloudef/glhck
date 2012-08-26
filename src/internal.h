@@ -20,6 +20,7 @@
 
 /* tracing channels */
 #define GLHCK_CHANNEL_GLHCK      "GLHCK"
+#define GLHCK_CHANNEL_NETWORK    "NETWORK"
 #define GLHCK_CHANNEL_IMPORT     "IMPORT"
 #define GLHCK_CHANNEL_OBJECT     "OBJECT"
 #define GLHCK_CHANNEL_TEXT       "TEXT"

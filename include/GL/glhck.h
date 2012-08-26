@@ -394,7 +394,16 @@ GLHCKAPI void glhckMemoryGraph(void);
 GLHCKAPI void glhckPrintObjectQueue(void);
 GLHCKAPI void glhckPrintTextureQueue(void);
 
-/* Define cleanup */
+/* network */
+GLHCKAPI int glhckServerInit(const char *host, int port);
+GLHCKAPI void glhckServerUpdate(void);
+GLHCKAPI void glhckServerKill(void);
+GLHCKAPI int glhckClientInit(const char *host, int port);
+GLHCKAPI void glhckClientUpdate(void);
+GLHCKAPI void glhckClientKill(void);
+
+
+/* define cleanup */
 #ifdef GLHCK_WINGDIAPI_DEFINED
 #  undef WINGDIAPI
 #  undef GLHCK_WINGDIAPI_DEFINED

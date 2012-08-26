@@ -3,10 +3,8 @@
 #include <limits.h>
 #include <stdio.h>   /* for sscanf */
 
-#if !defined(GLES)
-#  include <GL/glew.h> /* for opengl */
-#else
-#  include <GLES/gl.h> /* for opengl ES */
+#if GLHCK_USE_GLES1
+#  include <GLES/gl.h> /* for opengl ES 1.x */
 #  include <GLES/glext.h>
 #  define GL_FRAMEBUFFER_COMPLETE                        GL_FRAMEBUFFER_COMPLETE_OES
 #  define GL_FRAMEBUFFER_UNDEFINED                       GL_FRAMEBUFFER_COMPLETE_OES
@@ -18,6 +16,13 @@
 #  define GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS        GL_FRAMEBUFFER_COMPLETE_OES
 #  define GL_FRAMEBUFFER_UNSUPPORTED                     GL_FRAMEBUFFER_UNSUPPORTED_OES
 #  define GL_FRAMEBUFFER                                 GL_FRAMEBUFFER_OES
+#  error "GLES 1.x not working yet"
+#elif GLHCK_USE_GLES2
+#  include <GLES2/gl2.h> /* for opengl ES 2.x */
+#  include <GLES2/gl2ext.h>
+#  error "GLES 2.x not implemented"
+#else
+#  include <GL/glew.h> /* for opengl */
 #endif
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
@@ -905,7 +910,7 @@ void _glhckRenderOpenGL(void)
    setClearColor(0,0,0,1);
    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
-#if !defined(GLES)
+#if !defined(GLHCK_USE_GLES1) && !defined(GLHCK_USE_GLES2)
    /* we use GLEW */
    if (glewInit() != GLEW_OK)
       goto fail;

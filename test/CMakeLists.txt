@@ -1,5 +1,7 @@
 SET(TEST_EXE
-   display)
+   display
+   server
+   client)
 
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_OUT_DIR})
 FOREACH (test ${TEST_EXE})

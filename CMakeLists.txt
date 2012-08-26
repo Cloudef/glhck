@@ -3,7 +3,9 @@ PROJECT(glhck)
 
 SET(PROJECT_NAME "GLhck Rendering Engine")
 SET(GLUE_DESCRIPTION "A dead simple OpenGL/GLES rendering engine")
-OPTION(GLHCK_USE_GLES "Build for OpenGL ES" OFF)
+OPTION(GLHCK_USE_NETWORK "Build with network transparency support" OFF)
+OPTION(GLHCK_USE_GLES1 "Build for OpenGL ES 1.x" OFF)
+OPTION(GLHCK_USE_GLES2 "Build for OpenGL ES 2.x" OFF)
 OPTION(GLHCK_KAZMATH_FLOAT "Defines kmScalar as float" ON)
 
 # Debug build
@@ -70,7 +72,7 @@ ENDIF (UNIX)
 # Pandora related build options
 IF (PANDORA)
     ADD_DEFINITIONS(-DPANDORA)
-    SET(GLHCK_USE_GLES 1)
+    SET(GLHCK_USE_GLES1 1)
 ENDIF (PANDORA)
 
 # Use floating point math on kazmath
@@ -78,24 +80,35 @@ IF (GLHCK_KAZMATH_FLOAT)
    ADD_DEFINITIONS(-DGLHCK_KAZMATH_FLOAT -DUSE_SINGLE_PRECISION)
 ENDIF ()
 
+# Use network transparency
+IF (GLHCK_USE_NETWORK)
+   ADD_DEFINITIONS(-DGLHCK_USE_NETWORK)
+ENDIF ()
+
 # These are propably temporary
 # In the end make renderers load this stuff dynamically(?)
 
 IF (GLHCK_USE_GLES)
-   # GLES
+   # GLES 1.x
    SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${glhck_SOURCE_DIR}/CMake/modules)
-   ADD_DEFINITIONS(-DGLES)
+   ADD_DEFINITIONS(-DGLHCK_USE_GLES1)
    FIND_PACKAGE(EGL REQUIRED)
    LIST(APPEND INCLUDE_DIR ${EGL_INCLUDE_DIR})
    LIST(APPEND GLHCK_TEST_LINK ${EGL_LIBRARY})
    FIND_PACKAGE(GLESv1 REQUIRED)
    LIST(APPEND INCLUDE_DIR ${GLESv1_INCLUDE_DIR})
    LIST(APPEND GLHCK_TEST_LINK ${GLESv1_LIBRARY})
+
+   MESSAGE("GLES 1.x support not working yet")
+ELSEIF (GLHCK_USE_GLES2)
+   # GLES 2.x
+   MESSAGE(FATAL_ERROR "GLES 2.x support not yet implemented")
 ELSE ()
    # OPENGL
    FIND_PACKAGE(OpenGL REQUIRED)
    LIST(APPEND GLHCK_TEST_INCL ${OPENGL_INCLUDE_DIR})
    LIST(APPEND GLHCK_TEST_LINK ${OPENGL_gl_LIBRARY} GLEW)
+   MESSAGE("Building GLhck for OpenGL")
 ENDIF ()
 
 
@@ -131,10 +144,12 @@ ELSEIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long")
 ENDIF ()
 
+# Do glhck itself
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(3rdparty)
 ADD_SUBDIRECTORY(test)
 
+# Install
 INSTALL(FILES include/GL/glhck.h DESTINATION include/GL)
 INSTALL(DIRECTORY test/media DESTINATION ./test)
 FILE(COPY test/media DESTINATION ./test)
