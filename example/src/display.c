@@ -64,7 +64,7 @@ static void handleCamera(GLFWwindow window, float delta, kmVec3 *cameraPos, kmVe
 int main(int argc, char **argv)
 {
    GLFWwindow window;
-   glhckTexture *texture;
+   glhckTexture *texture = NULL;
    glhckObject *cube, *sprite, *sprite2, *sprite3, *camObj;
    glhckCamera *camera;
    const kmAABB *aabb;
@@ -108,11 +108,7 @@ int main(int argc, char **argv)
    glhckCameraRange(camera, 1.0f, 1000.0f);
    camObj = glhckCameraGetObject(camera);
 
-   /* this texture is useless when toggling PMD testing */
-   if (!(texture = glhckTextureNew("test/media/glhck.png", GLHCK_TEXTURE_DEFAULTS)))
-      return EXIT_FAILURE;
-
-   sprite  = glhckSpriteNewFromFile("test/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
+   sprite  = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
    sprite2 = glhckObjectCopy(sprite);
    sprite3 = glhckObjectCopy(sprite);
    glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
@@ -125,13 +121,13 @@ int main(int argc, char **argv)
 #if SKIP_MMD
 #  define MMD_PATH ""
 #else
-#  define MMD_PATH "test/media/madoka/md_m.pmd"
+#  define MMD_PATH "example/media/madoka/md_m.pmd"
 #endif
 
 #if SKIP_OCTM
 #  define OCTM_PATH ""
 #else
-#  define OCTM_PATH "test/media/ambulance/ambulance.ctm"
+#  define OCTM_PATH "example/media/ambulance/ambulance.ctm"
 #endif
 
    if ((cube = glhckModelNew(MMD_PATH, 1.0f))) {
@@ -141,6 +137,8 @@ int main(int argc, char **argv)
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {
+      if (!(texture = glhckTextureNew("example/media/glhck.png", GLHCK_TEXTURE_DEFAULTS)))
+         return EXIT_FAILURE;
       glhckObjectSetTexture(cube, texture);
       cameraPos.z = -20.0f;
    } else return EXIT_FAILURE;
@@ -155,8 +153,8 @@ int main(int argc, char **argv)
    glhckText *text = glhckTextNew(512, 512);
    if (!text) return EXIT_FAILURE;
 
-   unsigned int font  = glhckTextNewFont(text, "test/media/sazanami-gothic.ttf");
-   unsigned int font2 = glhckTextNewFont(text, "test/media/DejaVuSans.ttf");
+   unsigned int font  = glhckTextNewFont(text, "example/media/sazanami-gothic.ttf");
+   unsigned int font2 = glhckTextNewFont(text, "example/media/DejaVuSans.ttf");
 
    glfwSetWindowCloseCallback(close_callback);
    glfwSetWindowSizeCallback(resize_callback);
@@ -270,7 +268,7 @@ int main(int argc, char **argv)
    glhckObjectFree(sprite);
    glhckObjectFree(sprite2);
    glhckObjectFree(sprite3);
-   glhckTextureFree(texture);
+   if (texture) glhckTextureFree(texture);
    glhckCameraFree(camera);
    glhckTextFree(text);
 

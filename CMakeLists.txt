@@ -147,9 +147,10 @@ ENDIF ()
 # Do glhck itself
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(3rdparty)
-ADD_SUBDIRECTORY(test)
+ADD_SUBDIRECTORY(example)
+# TODO: add real tests
 
 # Install
 INSTALL(FILES include/GL/glhck.h DESTINATION include/GL)
-INSTALL(DIRECTORY test/media DESTINATION ./test)
-FILE(COPY test/media DESTINATION ./test)
+INSTALL(DIRECTORY example/media DESTINATION ./example)
+FILE(COPY example/media DESTINATION ./example)

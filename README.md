@@ -15,10 +15,10 @@ Move on.
     cmake -DCMAKE_INSTALL_PREFIX=build ..    # - run CMake, set install directory
     make                                     # - compile
 
-## Running test(s)
+## Running example(s)
 
     cd target                                # - cd to your target directory
-    ./test/display                           # - for example
+    ./example/display                        # - for example
 
 ## Installing
 
