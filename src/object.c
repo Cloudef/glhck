@@ -441,7 +441,7 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    memset(&object->material, 0, sizeof(__GLHCKobjectMaterial));
 
    /* default geometry type is tristrip */
-   object->geometry.type = GLHCK_TRIANGLE_STRIP;
+   glhckObjectSetGeometryType(object, GLHCK_TRIANGLE_STRIP);
 
    /* default view matrix */
    glhckObjectScalef(object, 1.0f, 1.0f, 1.0f);
@@ -916,6 +916,15 @@ GLHCKAPI void glhckObjectTransformCoordinates(
    newCoords->transform = *transformed;
    IFDO(_glhckFree, object->geometry.transformedCoordinates);
    object->geometry.transformedCoordinates = newCoords;
+}
+
+/* \brief set object's geometry type */
+GLHCKAPI void glhckObjectSetGeometryType(glhckObject *object, unsigned int type)
+{
+   CALL(1, "%p, %u", object, type);
+   assert(object);
+
+   object->geometry.type = type;
 }
 
 /* \brief insert vertex data into object */

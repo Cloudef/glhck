@@ -288,6 +288,8 @@ GLHCKAPI int glhckObjectInsertVertexData2d(glhckObject *object,
       size_t memb, const glhckImportVertexData *vertexData);
 GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
       size_t memb, const unsigned int *indices);
+GLHCKAPI void glhckObjectSetGeometryType(glhckObject *object,
+      unsigned int type);
 
 /* material */
 GLHCKAPI const glhckColor* glhckObjectGetColor(const glhckObject *object);
