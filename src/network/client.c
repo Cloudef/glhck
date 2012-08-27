@@ -231,6 +231,14 @@ GLHCKAPI void glhckClientUpdate(void)
    _glhckEnetUpdate();
 }
 
+/* convert vector to network bams */
+static void _glhckNetVec3ToBams(_glhckNetVector3d *nv3d, const kmVec3 *km3d)
+{
+   nv3d->x = htonl(*((unsigned int*)&km3d->x)>>16);
+   nv3d->y = htonl(*((unsigned int*)&km3d->y)>>16);
+   nv3d->z = htonl(*((unsigned int*)&km3d->z)>>16);
+}
+
 /* \brief 'render' object to network */
 GLHCKAPI void glhckClientObjectRender(const glhckObject *object)
 {
@@ -249,16 +257,16 @@ GLHCKAPI void glhckClientObjectRender(const glhckObject *object)
    /* geometry */
    packet.geometry.indicesCount = htonl(object->geometry.indicesCount);
    packet.geometry.vertexCount  = htonl(object->geometry.vertexCount);
-   snprintf(packet.geometry.bias,  sizeof(packet.geometry.bias),  VEC3NS, VEC3(&object->geometry.bias));
-   snprintf(packet.geometry.scale, sizeof(packet.geometry.scale), VEC3NS, VEC3(&object->geometry.scale));
+   _glhckNetVec3ToBams(&packet.geometry.bias,  &object->geometry.bias);
+   _glhckNetVec3ToBams(&packet.geometry.scale, &object->geometry.scale);
    packet.geometry.type  = htonl(object->geometry.type);
    packet.geometry.flags = htonl(object->geometry.flags);
 
    /* view */
-   snprintf(packet.view.translation,  sizeof(packet.view.translation), VEC3NS, VEC3(&object->view.translation));
-   snprintf(packet.view.target,       sizeof(packet.view.target),      VEC3NS, VEC3(&object->view.target));
-   snprintf(packet.view.rotation,     sizeof(packet.view.rotation),    VEC3NS, VEC3(&object->view.rotation));
-   snprintf(packet.view.scaling,      sizeof(packet.view.scaling),     VEC3NS, VEC3(&object->view.scaling));
+   _glhckNetVec3ToBams(&packet.view.translation, &object->view.translation);
+   _glhckNetVec3ToBams(&packet.view.target,      &object->view.target);
+   _glhckNetVec3ToBams(&packet.view.rotation,    &object->view.rotation);
+   _glhckNetVec3ToBams(&packet.view.scaling,     &object->view.scaling);
 
    /* material */
    memcpy(&packet.material.color, &object->material.color, sizeof(_glhckNetColor));

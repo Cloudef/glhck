@@ -69,13 +69,22 @@ static void _glhckEnetDestroy(void)
    _GLHCKserver.enet = NULL;
 }
 
+/* convert network bams to vector */
+static void _glhckNetBamsToVec3(kmVec3 *km3d, const _glhckNetVector3d *nv3d)
+{
+   unsigned int x = ntohl(nv3d->x)<<16;
+   unsigned int y = ntohl(nv3d->y)<<16;
+   unsigned int z = ntohl(nv3d->z)<<16;
+   km3d->x = *((float*)&x);
+   km3d->y = *((float*)&y);
+   km3d->z = *((float*)&z);
+}
+
 static void _glhckServerManagePacketObject(_glhckNetObjectPacket *packet)
 {
    _glhckNetObjectPacket object;
    memset(&object, 0, sizeof(_glhckNetObjectPacket));
    memcpy(&object.view, &packet->view, sizeof(_glhckNetView));
-   memcpy(object.geometry.bias,   packet->geometry.bias,   sizeof(object.geometry.bias));
-   memcpy(object.geometry.scale,  packet->geometry.scale,  sizeof(object.geometry.scale));
    memcpy(&object.material.color, &packet->material.color, sizeof(_glhckNetColor));
 
    object.geometry.indicesCount  = ntohl(packet->geometry.indicesCount);
@@ -84,20 +93,29 @@ static void _glhckServerManagePacketObject(_glhckNetObjectPacket *packet)
    object.geometry.flags         = ntohl(packet->geometry.flags);
    object.material.flags         = ntohl(packet->material.flags);
 
+   kmVec3 bias, scale;
+   _glhckNetBamsToVec3(&bias,  &packet->geometry.bias);
+   _glhckNetBamsToVec3(&scale, &packet->geometry.scale);
+
+   kmVec3 translation, target, rotation, scaling;
+   _glhckNetBamsToVec3(&translation,  &packet->view.translation);
+   _glhckNetBamsToVec3(&target,       &packet->view.target);
+   _glhckNetBamsToVec3(&rotation,     &packet->view.rotation);
+   _glhckNetBamsToVec3(&scaling,      &packet->view.scaling);
 
    printf("- Object Packet\n");
    printf("[] Geometry\n");
    printf("   :: Indices: %zu\n", object.geometry.indicesCount);
    printf("   :: Vertices: %zu\n", object.geometry.vertexCount);
-   printf("   :: Bias: %s\n", object.geometry.bias);
-   printf("   :: Scale: %s\n", object.geometry.scale);
+   printf("   :: Bias: "VEC3S"\n", VEC3(&bias));
+   printf("   :: Scale: "VEC3S"\n", VEC3(&scale));
    printf("   :: Type: %u\n", object.geometry.type);
    printf("   :: Flags: %u\n", object.geometry.flags);
    printf("[] View\n");
-   printf("   :: Translation: %s\n", object.view.translation);
-   printf("   :: Target: %s\n", object.view.target);
-   printf("   :: Rotation: %s\n", object.view.rotation);
-   printf("   :: Scaling: %s\n", object.view.scaling);
+   printf("   :: Translation: "VEC3S"\n", VEC3(&translation));
+   printf("   :: Target: "VEC3S"\n", VEC3(&target));
+   printf("   :: Rotation: "VEC3S"\n", VEC3(&rotation));
+   printf("   :: Scaling: "VEC3S"\n", VEC3(&scaling));
    printf("[] Material\n");
    printf("   :: Color: [%d, %d, %d, %d]\n",
          object.material.color.r,

@@ -3,6 +3,14 @@
 
 #define VEC3NS "%f,%f,%f"
 
+typedef struct _glhckNetVector3d {
+   unsigned int x, y, z;
+} _glhckNetVector3d;
+
+typedef struct _glhckNetVector2d {
+   unsigned int x, y;
+} _glhckNetVector2d;
+
 typedef enum _glhckNetPacketType {
    GLHCK_NET_PACKET_OBJECT,
 } _glhckNetPacketType;
@@ -12,7 +20,7 @@ typedef struct _glhckNetColor {
 } _glhckNetColor;
 
 typedef struct _glhckNetView {
-   char translation[32], target[32], rotation[32], scaling[32];
+   _glhckNetVector3d translation, target, rotation, scaling;
 } _glhckNetView;
 
 typedef struct _glhckNetMaterial {
@@ -22,7 +30,7 @@ typedef struct _glhckNetMaterial {
 
 typedef struct _glhckNetGeometry {
    size_t indicesCount, vertexCount;
-   char bias[32], scale[32];
+   _glhckNetVector3d bias, scale;
    unsigned int type, flags;
 } _glhckNetGeometry;
 
