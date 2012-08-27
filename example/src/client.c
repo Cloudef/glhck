@@ -82,6 +82,11 @@ int main(int argc, char **argv)
    glfwSetCursorPosCallback(mousepos_callback);
    glfwSetInputMode(window, GLFW_CURSOR_MODE, GLFW_CURSOR_CAPTURED);
 
+   glhckObjectPositionf(cube, -15.15f, 9999.999f, -360.0f);
+   glhckObjectRotatef(cube, 0.0f, 25.0f, 1.0f);
+   glhckObjectScalef(cube, -1.0f, -99999.0f, 250000.0f);
+   glhckObjectColorb(cube, 0, 255, 255, 85);
+
    while (RUNNING && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
       last  =  now;
       now   =  glfwGetTime();
