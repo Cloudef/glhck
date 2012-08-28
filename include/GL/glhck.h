@@ -290,6 +290,7 @@ GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
       size_t memb, const unsigned int *indices);
 GLHCKAPI void glhckObjectSetGeometryType(glhckObject *object,
       unsigned int type);
+GLHCKAPI unsigned int glhckObjectGetGeometryType(const glhckObject *object);
 
 /* material */
 GLHCKAPI const glhckColor* glhckObjectGetColor(const glhckObject *object);

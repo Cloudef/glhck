@@ -927,6 +927,16 @@ GLHCKAPI void glhckObjectSetGeometryType(glhckObject *object, unsigned int type)
    object->geometry.type = type;
 }
 
+/* \brief get object's geometry type */
+GLHCKAPI unsigned int glhckObjectGetGeometryType(const glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   RET(1, "%u", object->geometry.type);
+   return object->geometry.type;
+}
+
 /* \brief insert vertex data into object */
 GLHCKAPI int glhckObjectInsertVertexData3d(
       _glhckObject *object,
