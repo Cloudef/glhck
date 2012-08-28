@@ -242,37 +242,79 @@ static void _glhckNetVec3ToBams(_glhckNetVector3d *nv3d, const kmVec3 *km3d)
 /* \brief 'render' object to network */
 GLHCKAPI void glhckClientObjectRender(const glhckObject *object)
 {
-   _glhckNetObjectPacket packet;
+   size_t i, psize;
+   psize = sizeof(_glhckNetObjectPacket) +
+           sizeof(_glhckNetVertexData)   * object->geometry.vertexCount +
+           sizeof(unsigned int)          * object->geometry.indicesCount;
+
+   unsigned char data[psize], *offset;
+   _glhckNetObjectPacket *packet;
+   _glhckNetVertexData   *vertexData;
    TRACE(2);
 
    if (!_glhckClientInitialized)
       return;
 
+   packet = (_glhckNetObjectPacket*)data;
+
    /* zero out packet */
-   memset(&packet, 0, sizeof(_glhckNetObjectPacket));
+   memset(data, 0, psize);
 
    /* header */
-   packet.type = GLHCK_NET_PACKET_OBJECT;
+   packet->type = GLHCK_NET_PACKET_OBJECT;
 
    /* geometry */
-   packet.geometry.indicesCount = htonl(object->geometry.indicesCount);
-   packet.geometry.vertexCount  = htonl(object->geometry.vertexCount);
-   _glhckNetVec3ToBams(&packet.geometry.bias,  &object->geometry.bias);
-   _glhckNetVec3ToBams(&packet.geometry.scale, &object->geometry.scale);
-   packet.geometry.type  = htonl(object->geometry.type);
-   packet.geometry.flags = htonl(object->geometry.flags);
+   packet->geometry.indicesCount = htonl(object->geometry.indicesCount);
+   packet->geometry.vertexCount  = htonl(object->geometry.vertexCount);
+   _glhckNetVec3ToBams(&packet->geometry.bias,  &object->geometry.bias);
+   _glhckNetVec3ToBams(&packet->geometry.scale, &object->geometry.scale);
+   packet->geometry.type  = htonl(object->geometry.type);
+   packet->geometry.flags = htonl(object->geometry.flags);
 
    /* view */
-   _glhckNetVec3ToBams(&packet.view.translation, &object->view.translation);
-   _glhckNetVec3ToBams(&packet.view.target,      &object->view.target);
-   _glhckNetVec3ToBams(&packet.view.rotation,    &object->view.rotation);
-   _glhckNetVec3ToBams(&packet.view.scaling,     &object->view.scaling);
+   _glhckNetVec3ToBams(&packet->view.translation, &object->view.translation);
+   _glhckNetVec3ToBams(&packet->view.target,      &object->view.target);
+   _glhckNetVec3ToBams(&packet->view.rotation,    &object->view.rotation);
+   _glhckNetVec3ToBams(&packet->view.scaling,     &object->view.scaling);
 
    /* material */
-   memcpy(&packet.material.color, &object->material.color, sizeof(_glhckNetColor));
+   memcpy(&packet->material.color, &object->material.color, sizeof(_glhckNetColor));
+
+   offset = data + sizeof(_glhckNetObjectPacket);
+
+   for (i = 0; i != object->geometry.vertexCount; ++i) {
+      __GLHCKvertexData2d *internal2d;
+      __GLHCKvertexData3d *internal3d;
+      vertexData = (_glhckNetVertexData*)offset;
+
+      if (object->geometry.flags & GEOMETRY_3D) {
+         internal3d = (__GLHCKvertexData3d*)object->geometry.vertexData;
+         kmVec3 vertex, normal;
+         kmVec3Fill(&vertex,
+               internal3d[i].vertex.x,
+               internal3d[i].vertex.y,
+               internal3d[i].vertex.z);
+         kmVec3Fill(&normal,
+               internal3d[i].normal.x,
+               internal3d[i].normal.y,
+               internal3d[i].normal.z);
+         _glhckNetVec3ToBams(&vertexData->vertex, &vertex);
+         _glhckNetVec3ToBams(&vertexData->normal, &normal);
+      } else {
+         internal2d = (__GLHCKvertexData2d*)object->geometry.vertexData;
+         /* not handled */
+      }
+
+      offset = offset + sizeof(_glhckNetVertexData);
+   }
+
+   for (i = 0; i != object->geometry.indicesCount; ++i) {
+      *((unsigned int*)offset) = htonl(object->geometry.indices[i]);
+      offset = offset + sizeof(unsigned int);
+   }
 
    /* send packet */
-   _glhckEnetSend((unsigned char*)&packet, sizeof(_glhckNetObjectPacket));
+   _glhckEnetSend(data, psize);
 }
 
 #else /* ^ network support defined */

@@ -80,8 +80,13 @@ static void _glhckNetBamsToVec3(kmVec3 *km3d, const _glhckNetVector3d *nv3d)
    km3d->z = *((float*)&z);
 }
 
-static void _glhckServerManagePacketObject(_glhckNetObjectPacket *packet)
+static void _glhckServerManagePacketObject(unsigned char *data)
 {
+   size_t i;
+   unsigned char         *offset;
+   unsigned int          *indices;
+   _glhckNetVertexData   *vertexData;
+   _glhckNetObjectPacket *packet = (_glhckNetObjectPacket*)data;
    _glhckNetObjectPacket object;
    memset(&object, 0, sizeof(_glhckNetObjectPacket));
    memcpy(&object.view, &packet->view, sizeof(_glhckNetView));
@@ -123,6 +128,35 @@ static void _glhckServerManagePacketObject(_glhckNetObjectPacket *packet)
          object.material.color.b,
          object.material.color.a);
    printf("   :: Flags: %u\n", object.material.flags);
+
+   /* raise offset */
+   offset = data + sizeof(_glhckNetObjectPacket);
+
+   /* vertex data is appended next */
+   if (object.geometry.vertexCount) {
+      vertexData = (_glhckNetVertexData*)offset;
+      printf("[] Vertex Data\n");
+      for (i = 0; i != object.geometry.vertexCount; ++i) {
+         kmVec3 vertex, normal;
+         kmVec2 coord;
+         _glhckNetBamsToVec3(&vertex, &vertexData[i].vertex);
+         _glhckNetBamsToVec3(&normal, &vertexData[i].normal);
+         printf("   :: Vertex: "VEC3S"\n", VEC3(&vertex));
+         printf("   :: Normal: "VEC3S"\n", VEC3(&normal));
+      }
+   }
+
+   /* vertex data offset */
+   offset = offset + object.geometry.vertexCount * sizeof(_glhckNetVertexData);
+
+   if (object.geometry.indicesCount) {
+      indices = (unsigned int**)offset;
+      printf("[] Indices\n");
+      for (i = 0; i != object.geometry.indicesCount; ++i) {
+         printf("%u%s", indices[i], (i!=object.geometry.indicesCount?", ":"\n"));
+      }
+   }
+
    printf("EOF\n");
 }
 
@@ -150,8 +184,7 @@ static int _glhckEnetUpdate(void)
             printf("ID: %d\n", ((_glhckNetPacket*)event.packet->data)->type);
             switch (((_glhckNetPacket*)event.packet->data)->type) {
                case GLHCK_NET_PACKET_OBJECT:
-                  _glhckServerManagePacketObject(
-                        (_glhckNetObjectPacket*)event.packet->data);
+                  _glhckServerManagePacketObject(event.packet->data);
                   break;
 
                default:

@@ -1,7 +1,9 @@
 #ifndef __packets_h__
 #define __packets_h__
 
-#define VEC3NS "%f,%f,%f"
+typedef enum _glhckNetPacketType {
+   GLHCK_NET_PACKET_OBJECT,
+} _glhckNetPacketType;
 
 typedef struct _glhckNetVector3d {
    unsigned int x, y, z;
@@ -10,10 +12,6 @@ typedef struct _glhckNetVector3d {
 typedef struct _glhckNetVector2d {
    unsigned int x, y;
 } _glhckNetVector2d;
-
-typedef enum _glhckNetPacketType {
-   GLHCK_NET_PACKET_OBJECT,
-} _glhckNetPacketType;
 
 typedef struct _glhckNetColor {
    unsigned char r, g, b, a;
@@ -33,6 +31,12 @@ typedef struct _glhckNetGeometry {
    _glhckNetVector3d bias, scale;
    unsigned int type, flags;
 } _glhckNetGeometry;
+
+typedef struct _glhckNetVertexData {
+   _glhckNetVector3d vertex, normal;
+   _glhckNetVector2d coord;
+   _glhckNetColor color;
+} _glhckNetVertexData;
 
 typedef struct _glhckNetObjectPacket {
    unsigned char type;
