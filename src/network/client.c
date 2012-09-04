@@ -17,6 +17,128 @@ typedef struct __GLHCKclient {
 static __GLHCKclient _GLHCKclient;
 static char _glhckClientInitialized = 0;
 
+/* convert vector to network bams */
+static void _glhckNetVec3ToBams(_glhckNetVector3d *nv3d, const kmVec3 *km3d)
+{
+   nv3d->x = htonl(*((unsigned int*)&km3d->x)>>16);
+   nv3d->y = htonl(*((unsigned int*)&km3d->y)>>16);
+   nv3d->z = htonl(*((unsigned int*)&km3d->z)>>16);
+}
+
+/* convert network bams to vector */
+static void _glhckNetBamsToVec3(kmVec3 *km3d, const _glhckNetVector3d *nv3d)
+{
+   unsigned int x = ntohl(nv3d->x)<<16;
+   unsigned int y = ntohl(nv3d->y)<<16;
+   unsigned int z = ntohl(nv3d->z)<<16;
+   km3d->x = *((float*)&x);
+   km3d->y = *((float*)&y);
+   km3d->z = *((float*)&z);
+}
+
+/* manage object packet */
+static void _glhckClientManagePacketObject(unsigned char *data)
+{
+   size_t i;
+   unsigned char         *offset;
+   unsigned int          *indices;
+   _glhckNetVertexData   *vertexData;
+   _glhckNetObjectPacket *packet = (_glhckNetObjectPacket*)data;
+   _glhckNetObjectPacket object;
+   memset(&object, 0, sizeof(_glhckNetObjectPacket));
+   memcpy(&object.view, &packet->view, sizeof(_glhckNetView));
+   memcpy(&object.material.color, &packet->material.color, sizeof(_glhckNetColor));
+
+   object.geometry.indicesCount  = ntohl(packet->geometry.indicesCount);
+   object.geometry.vertexCount   = ntohl(packet->geometry.vertexCount);
+   object.geometry.type          = ntohl(packet->geometry.type);
+   object.geometry.flags         = ntohl(packet->geometry.flags);
+   object.material.flags         = ntohl(packet->material.flags);
+
+   kmVec3 translation, target, rotation, scaling;
+   _glhckNetBamsToVec3(&translation,  &packet->view.translation);
+   _glhckNetBamsToVec3(&target,       &packet->view.target);
+   _glhckNetBamsToVec3(&rotation,     &packet->view.rotation);
+   _glhckNetBamsToVec3(&scaling,      &packet->view.scaling);
+
+   printf("- Object Packet\n");
+   printf("[] Geometry\n");
+   printf("   :: Indices: %zu\n", object.geometry.indicesCount);
+   printf("   :: Vertices: %zu\n", object.geometry.vertexCount);
+   printf("   :: Type: %u\n", object.geometry.type);
+   printf("   :: Flags: %u\n", object.geometry.flags);
+   printf("[] View\n");
+   printf("   :: Translation: "VEC3S"\n", VEC3(&translation));
+   printf("   :: Target: "VEC3S"\n", VEC3(&target));
+   printf("   :: Rotation: "VEC3S"\n", VEC3(&rotation));
+   printf("   :: Scaling: "VEC3S"\n", VEC3(&scaling));
+   printf("[] Material\n");
+   printf("   :: Color: [%d, %d, %d, %d]\n",
+         object.material.color.r,
+         object.material.color.g,
+         object.material.color.b,
+         object.material.color.a);
+   printf("   :: Flags: %u\n", object.material.flags);
+
+   /* raise offset */
+   offset = data + sizeof(_glhckNetObjectPacket);
+   glhckImportVertexData *svertices = _glhckMalloc(object.geometry.vertexCount * sizeof(glhckImportVertexData));
+   memset(svertices, 0, object.geometry.vertexCount * sizeof(glhckImportVertexData));
+
+   /* vertex data is appended next */
+   if (object.geometry.vertexCount) {
+      vertexData = (_glhckNetVertexData*)offset;
+      printf("[] Vertex Data\n");
+      for (i = 0; i != object.geometry.vertexCount; ++i) {
+         kmVec3 vertex, normal;
+         kmVec2 coord;
+         _glhckNetBamsToVec3(&vertex, &vertexData[i].vertex);
+         _glhckNetBamsToVec3(&normal, &vertexData[i].normal);
+         printf("   :: Vertex: "VEC3S"\n", VEC3(&vertex));
+         printf("   :: Normal: "VEC3S"\n", VEC3(&normal));
+         kmVec3Assign(&svertices[i].vertex, &vertex);
+         kmVec3Assign(&svertices[i].normal, &normal);
+      }
+   }
+
+   /* vertex data offset */
+   offset = offset + object.geometry.vertexCount * sizeof(_glhckNetVertexData);
+   unsigned int *sindices = _glhckMalloc(object.geometry.indicesCount * sizeof(unsigned int));
+
+   if (object.geometry.indicesCount) {
+      indices = (unsigned int*)offset;
+      printf("[] Indices\n");
+      for (i = 0; i != object.geometry.indicesCount; ++i) {
+         sindices[i] = indices[i];
+         printf("%u%s", indices[i], (i!=object.geometry.indicesCount?", ":"\n"));
+      }
+   }
+
+   glhckObject *gobj = glhckObjectNew();
+   if (object.geometry.vertexCount)
+      glhckObjectInsertVertexData3d(gobj, object.geometry.vertexCount, &svertices[0]);
+   if (object.geometry.indicesCount)
+      glhckObjectInsertIndices(gobj, object.geometry.indicesCount, &sindices[0]);
+
+   glhckObjectSetGeometryType(gobj, object.geometry.type);
+   gobj->geometry.flags = object.geometry.flags;
+
+   glhckObjectPosition(gobj, &translation);
+   glhckObjectRotation(gobj, &rotation);
+   glhckObjectScale(gobj, &scaling);
+
+   gobj->material.flags = object.material.flags;
+   memcpy(&gobj->material.color, &object.material.color, sizeof(glhckColor));
+
+   NULLDO(_glhckFree, svertices);
+   NULLDO(_glhckFree, sindices);
+
+   printf("EOF\n");
+
+   glhckObjectDraw(gobj);
+   glhckObjectFree(gobj);
+}
+
 /* \brief initialize enet internally */
 static int _glhckEnetInit(const char *host, int port)
 {
@@ -126,11 +248,14 @@ static void _glhckEnetDestroy(void)
 /* \brief update enet state internally */
 static int _glhckEnetUpdate(void)
 {
+   int numPackets;
    ENetEvent event;
    TRACE(2);
 
-   /* wait up to 1000 milliseconds for an event */
-   while (enet_host_service(_GLHCKclient.enet, &event, 1000) > 0) {
+   /* check events */
+   numPackets = 0;
+   while (enet_host_service(_GLHCKclient.enet, &event, 0) > 0) {
+      ++numPackets;
       switch (event.type) {
          case ENET_EVENT_TYPE_RECEIVE:
             printf("A packet of length %zu containing %s was received from %s on channel %u.\n",
@@ -138,6 +263,22 @@ static int _glhckEnetUpdate(void)
                   (char*)event.packet->data,
                   (char*)event.peer->data,
                   event.channelID);
+
+            /* manage packet by kind */
+            printf("ID: %d\n", ((_glhckNetPacket*)event.packet->data)->type);
+            switch (((_glhckNetPacket*)event.packet->data)->type) {
+               case GLHCK_NET_PACKET_OBJECT:
+                  _glhckClientManagePacketObject(event.packet->data);
+                  break;
+
+               default:
+                  printf("A packet of length %zu containing %s was received from %s on channel %u.\n",
+                     event.packet->dataLength,
+                     (char*)event.packet->data,
+                     (char*)event.peer->data,
+                     event.channelID);
+                  break;
+            }
 
             /* Clean up the packet now that we're done using it. */
             enet_packet_destroy(event.packet);
@@ -155,8 +296,8 @@ static int _glhckEnetUpdate(void)
       }
    }
 
-   RET(2, "%d", RETURN_OK);
-   return RETURN_OK;
+   RET(2, "%d", numPackets);
+   return numPackets;
 }
 
 /* \brief send packet */
@@ -219,24 +360,16 @@ GLHCKAPI void glhckClientKill(void)
 }
 
 /* \brief update server state */
-GLHCKAPI void glhckClientUpdate(void)
+GLHCKAPI int glhckClientUpdate(void)
 {
    TRACE(2);
 
    /* is initialized? */
    if (!_glhckClientInitialized)
-      return;
+      return 0;
 
    /* updat enet */
-   _glhckEnetUpdate();
-}
-
-/* convert vector to network bams */
-static void _glhckNetVec3ToBams(_glhckNetVector3d *nv3d, const kmVec3 *km3d)
-{
-   nv3d->x = htonl(*((unsigned int*)&km3d->x)>>16);
-   nv3d->y = htonl(*((unsigned int*)&km3d->y)>>16);
-   nv3d->z = htonl(*((unsigned int*)&km3d->z)>>16);
+   return _glhckEnetUpdate();
 }
 
 /* \brief 'render' object to network */
@@ -266,8 +399,6 @@ GLHCKAPI void glhckClientObjectRender(const glhckObject *object)
    /* geometry */
    packet->geometry.indicesCount = htonl(object->geometry.indicesCount);
    packet->geometry.vertexCount  = htonl(object->geometry.vertexCount);
-   _glhckNetVec3ToBams(&packet->geometry.bias,  &object->geometry.bias);
-   _glhckNetVec3ToBams(&packet->geometry.scale, &object->geometry.scale);
    packet->geometry.type  = htonl(object->geometry.type);
    packet->geometry.flags = htonl(object->geometry.flags);
 
@@ -288,7 +419,7 @@ GLHCKAPI void glhckClientObjectRender(const glhckObject *object)
       vertexData = (_glhckNetVertexData*)offset;
 
       if (object->geometry.flags & GEOMETRY_3D) {
-         internal3d = (__GLHCKvertexData3d*)object->geometry.vertexData;
+         internal3d = object->geometry.data.vertex3d;
          kmVec3 vertex, normal;
          kmVec3Fill(&vertex,
                internal3d[i].vertex.x,
@@ -301,7 +432,7 @@ GLHCKAPI void glhckClientObjectRender(const glhckObject *object)
          _glhckNetVec3ToBams(&vertexData->vertex, &vertex);
          _glhckNetVec3ToBams(&vertexData->normal, &normal);
       } else {
-         internal2d = (__GLHCKvertexData2d*)object->geometry.vertexData;
+         internal2d = object->geometry.data.vertex2d;
          /* not handled */
       }
 

@@ -402,7 +402,7 @@ GLHCKAPI int glhckServerInit(const char *host, int port);
 GLHCKAPI void glhckServerUpdate(void);
 GLHCKAPI void glhckServerKill(void);
 GLHCKAPI int glhckClientInit(const char *host, int port);
-GLHCKAPI void glhckClientUpdate(void);
+GLHCKAPI int glhckClientUpdate(void);
 GLHCKAPI void glhckClientKill(void);
 
 

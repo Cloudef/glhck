@@ -361,11 +361,11 @@ static void _glhckObjectCalculateAABB(_glhckObject *object)
 
    is3d = object->geometry.flags & GEOMETRY_3D;
    if (is3d) {
-      internal3d = (__GLHCKvertexData3d*)object->geometry.vertexData;
+      internal3d = object->geometry.data.vertex3d;
       set3d(max, internal3d[0].vertex);
       set3d(min, internal3d[0].vertex);
    } else {
-      internal2d = (__GLHCKvertexData2d*)object->geometry.vertexData;
+      internal2d = object->geometry.data.vertex2d;
       set2d(max, internal2d[0].vertex);
       set2d(min, internal2d[0].vertex);
       max.z = 0;
@@ -387,6 +387,17 @@ static void _glhckObjectCalculateAABB(_glhckObject *object)
    aabb_box.min = min;
    aabb_box.max = max;
    object->view.bounding = aabb_box;
+}
+
+/* \brief free object's vertex data */
+static void _glhckObjectFreeVertexData(_glhckObject *object)
+{
+   assert(object);
+   if (object->geometry.flags & GEOMETRY_3D) {
+      IFDO(_glhckFree, object->geometry.data.vertex3d);
+   } else {
+      IFDO(_glhckFree, object->geometry.data.vertex2d);
+   }
 }
 
 /* update target from rotation */
@@ -489,15 +500,15 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
       object->file = _glhckStrdup(src->file);
 
    /* copy vertex data */
-   if (src->geometry.vertexData) {
+   if (src->geometry.vertexCount) {
       if (object->geometry.flags & GEOMETRY_3D) {
-         if (!(object->geometry.vertexData =
-                  _glhckCopy(src->geometry.vertexData,
+         if (!(object->geometry.data.vertex3d =
+                  _glhckCopy(src->geometry.data.vertex3d,
                      src->geometry.vertexCount * sizeof(__GLHCKvertexData3d))))
             goto fail;
       } else {
-         if (!(object->geometry.vertexData =
-                  _glhckCopy(src->geometry.vertexData,
+         if (!(object->geometry.data.vertex2d =
+                  _glhckCopy(src->geometry.data.vertex2d,
                      src->geometry.vertexCount * sizeof(__GLHCKvertexData2d))))
             goto fail;
       }
@@ -527,7 +538,7 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
 fail:
    if (object) {
       IFDO(_glhckFree, object->file);
-      IFDO(_glhckFree, object->geometry.vertexData);
+      _glhckObjectFreeVertexData(object);
       IFDO(_glhckFree, object->geometry.indices);
    }
    IFDO(_glhckFree, object);
@@ -564,7 +575,7 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    IFDO(_glhckFree, object->file);
 
    /* free geometry */
-   IFDO(_glhckFree, object->geometry.vertexData);
+   _glhckObjectFreeVertexData(object);
    IFDO(_glhckFree, object->geometry.indices);
    IFDO(_glhckFree, object->geometry.transformedCoordinates);
 
@@ -879,8 +890,8 @@ GLHCKAPI void glhckObjectTransformCoordinates(
    oldCoords = object->geometry.transformedCoordinates;
 
    is3d = object->geometry.flags & GEOMETRY_3D;
-   if (is3d) v3d = (__GLHCKvertexData3d*)object->geometry.vertexData;
-   else v2d = (__GLHCKvertexData2d*)object->geometry.vertexData;
+   if (is3d) v3d = object->geometry.data.vertex3d;
+   else      v2d = object->geometry.data.vertex2d;
 
    /* out */
    for (i = 0; i != object->geometry.vertexCount; ++i) {
@@ -943,22 +954,22 @@ GLHCKAPI int glhckObjectInsertVertexData3d(
       size_t memb,
       const glhckImportVertexData *vertexData)
 {
-   __GLHCKvertexData3d *new;
+   __GLHCKvertexData3d *newv;
    CALL(0, "%p, %zu, %p", object, memb, vertexData);
    assert(object);
 
    /* allocate new buffer */
-   if (!(new = (__GLHCKvertexData3d*)_glhckMalloc(memb *
+   if (!(newv = (__GLHCKvertexData3d*)_glhckMalloc(memb *
                sizeof(__GLHCKvertexData3d))))
       goto fail;
 
    /* free old buffer */
-   IFDO(_glhckFree, object->geometry.vertexData);
+   _glhckObjectFreeVertexData(object);
    object->geometry.flags |= GEOMETRY_3D; /* new vertexdata is 3d data */
 
    /* assign new buffer */
-   _glhckConvertVertexData(object, new, vertexData, memb);
-   object->geometry.vertexData = new;
+   _glhckConvertVertexData(object, newv, vertexData, memb);
+   object->geometry.data.vertex3d = newv;
    object->geometry.vertexCount = memb;
 
    /* calculate AABB from vertices */
@@ -981,7 +992,7 @@ GLHCKAPI int glhckObjectInsertVertexData2d(
       size_t memb,
       const glhckImportVertexData *vertexData)
 {
-   __GLHCKvertexData2d *new;
+   __GLHCKvertexData2d *newv;
    CALL(0, "%p, %zu, %p", object, memb, vertexData);
    assert(object);
 
@@ -990,17 +1001,17 @@ GLHCKAPI int glhckObjectInsertVertexData2d(
       goto bad_precision;
 
    /* allocate new buffer */
-   if (!(new = (__GLHCKvertexData2d*)_glhckMalloc(memb *
+   if (!(newv = (__GLHCKvertexData2d*)_glhckMalloc(memb *
                sizeof(__GLHCKvertexData2d))))
       goto fail;
 
    /* free old buffer */
-   IFDO(_glhckFree, object->geometry.vertexData);
+   _glhckObjectFreeVertexData(object);
    object->geometry.flags &= ~GEOMETRY_3D; /* new vertexdata is 2d data */
 
    /* assign new buffer */
-   _glhckConvertVertexData(object, new, vertexData, memb);
-   object->geometry.vertexData = new;
+   _glhckConvertVertexData(object, newv, vertexData, memb);
+   object->geometry.data.vertex2d = newv;
    object->geometry.vertexCount = memb;
 
    /* calculate AABB from vertices */
@@ -1026,12 +1037,12 @@ GLHCKAPI int glhckObjectInsertIndices(
       size_t memb,
       const unsigned int *indices)
 {
-   GLHCK_CAST_INDEX *new;
+   GLHCK_CAST_INDEX *newv;
    CALL(0, "%p, %zu, %p", object, memb, indices);
    assert(object);
 
    /* allocate new buffer */
-   if (!(new = (GLHCK_CAST_INDEX*)_glhckMalloc(memb *
+   if (!(newv = (GLHCK_CAST_INDEX*)_glhckMalloc(memb *
                sizeof(GLHCK_CAST_INDEX))))
       goto fail;
 
@@ -1040,11 +1051,11 @@ GLHCKAPI int glhckObjectInsertIndices(
 
    /* assign new buffer */
 #if GLHCK_NATIVE_IMPORT_INDEXDATA
-   memcpy(new, indices, memb * sizeof(GLHCK_CAST_INDEX));
+   memcpy(newv, indices, memb * sizeof(GLHCK_CAST_INDEX));
 #else
-   _glhckConvertIndexData(new, indices, memb);
+   _glhckConvertIndexData(newv, indices, memb);
 #endif
-   object->geometry.indices = new;
+   object->geometry.indices = newv;
    object->geometry.indicesCount = memb;
 
    RET(0, "%d", RETURN_OK);

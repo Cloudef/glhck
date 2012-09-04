@@ -98,10 +98,6 @@ static void _glhckServerManagePacketObject(unsigned char *data)
    object.geometry.flags         = ntohl(packet->geometry.flags);
    object.material.flags         = ntohl(packet->material.flags);
 
-   kmVec3 bias, scale;
-   _glhckNetBamsToVec3(&bias,  &packet->geometry.bias);
-   _glhckNetBamsToVec3(&scale, &packet->geometry.scale);
-
    kmVec3 translation, target, rotation, scaling;
    _glhckNetBamsToVec3(&translation,  &packet->view.translation);
    _glhckNetBamsToVec3(&target,       &packet->view.target);
@@ -112,8 +108,6 @@ static void _glhckServerManagePacketObject(unsigned char *data)
    printf("[] Geometry\n");
    printf("   :: Indices: %zu\n", object.geometry.indicesCount);
    printf("   :: Vertices: %zu\n", object.geometry.vertexCount);
-   printf("   :: Bias: "VEC3S"\n", VEC3(&bias));
-   printf("   :: Scale: "VEC3S"\n", VEC3(&scale));
    printf("   :: Type: %u\n", object.geometry.type);
    printf("   :: Flags: %u\n", object.geometry.flags);
    printf("[] View\n");
@@ -179,7 +173,6 @@ static int _glhckEnetUpdate(void)
             break;
 
          case ENET_EVENT_TYPE_RECEIVE:
-
             /* manage packet by kind */
             printf("ID: %d\n", ((_glhckNetPacket*)event.packet->data)->type);
             switch (((_glhckNetPacket*)event.packet->data)->type) {
@@ -196,8 +189,11 @@ static int _glhckEnetUpdate(void)
                   break;
             }
 
+            /* Echo the packet to clients */
+            enet_host_broadcast(_GLHCKserver.enet, 0, event.packet);
+
             /* Clean up the packet now that we're done using it. */
-            enet_packet_destroy(event.packet);
+            //enet_packet_destroy(event.packet);
             break;
 
          case ENET_EVENT_TYPE_DISCONNECT:

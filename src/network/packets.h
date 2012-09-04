@@ -28,7 +28,6 @@ typedef struct _glhckNetMaterial {
 
 typedef struct _glhckNetGeometry {
    size_t indicesCount, vertexCount;
-   _glhckNetVector3d bias, scale;
    unsigned int type, flags;
 } _glhckNetGeometry;
 

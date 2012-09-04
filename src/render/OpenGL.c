@@ -307,7 +307,7 @@ static void viewport(int x, int y, int width, int height)
 static inline void geometryPointer3d(const __GLHCKobjectGeometry *geometry)
 {
    /* vertex data */
-   __GLHCKvertexData3d *v = (__GLHCKvertexData3d*)geometry->vertexData;
+   __GLHCKvertexData3d *v =geometry->data.vertex3d;
    GL_CALL(glVertexPointer(3, GLHCK_PRECISION_VERTEX,
             sizeof(__GLHCKvertexData3d), &v[0].vertex));
    GL_CALL(glNormalPointer(GLHCK_PRECISION_VERTEX,
@@ -324,7 +324,7 @@ static inline void geometryPointer3d(const __GLHCKobjectGeometry *geometry)
 static inline void geometryPointer2d(const __GLHCKobjectGeometry *geometry)
 {
    /* vertex data */
-   __GLHCKvertexData2d *v = (__GLHCKvertexData2d*)geometry->vertexData;
+   __GLHCKvertexData2d *v = geometry->data.vertex2d;
    GL_CALL(glVertexPointer(2, GLHCK_PRECISION_VERTEX,
             sizeof(__GLHCKvertexData2d), &v[0].vertex));
    GL_CALL(glNormalPointer(GLHCK_PRECISION_VERTEX,
@@ -642,7 +642,7 @@ static inline void objectDraw3d(const _glhckObject *object)
    CALL(2, "%p", object);
 
    /* no point drawing without vertex data */
-   if (!object->geometry.vertexData ||
+   if (!object->geometry.data.vertex3d ||
        !object->geometry.vertexCount)
       return;
 
@@ -657,7 +657,7 @@ static inline void objectDraw2d(const _glhckObject *object)
    CALL(2, "%p", object);
 
    /* no point drawing without vertex data */
-   if (!object->geometry.vertexData ||
+   if (!object->geometry.data.vertex2d ||
        !object->geometry.vertexCount)
       return;
 

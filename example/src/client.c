@@ -72,6 +72,7 @@ int main(int argc, char **argv)
       return EXIT_FAILURE;
 
    glhckCameraRange(camera, 1.0f, 1000.0f);
+   glhckObjectPositionf(glhckCameraGetObject(camera), 0.0f, 0.0f, -5.0f);
    glhckMemoryGraph();
 
    if (!(cube = glhckCubeNew(1)))
@@ -82,9 +83,8 @@ int main(int argc, char **argv)
    glfwSetCursorPosCallback(mousepos_callback);
    glfwSetInputMode(window, GLFW_CURSOR_MODE, GLFW_CURSOR_CAPTURED);
 
-   glhckObjectPositionf(cube, -15.15f, 9999.999f, -360.0f);
+   glhckObjectPositionf(cube, 0.0f, 0.0f, 0.0f);
    glhckObjectRotatef(cube, 0.0f, 25.0f, 1.0f);
-   glhckObjectScalef(cube, -1.0f, -99999.0f, 250000.0f);
    glhckObjectColorb(cube, 0, 255, 255, 85);
 
    while (RUNNING && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
@@ -100,21 +100,25 @@ int main(int argc, char **argv)
          queuePrinted = 1;
       }
 
-      glhckClientUpdate();
-      glhckClientObjectRender(cube);
-      glhckRender();
+      glhckCameraUpdate(camera);
+      if (glhckClientUpdate()) {
+         glhckClear();
+         glhckRender();
+         glfwSwapBuffers();
+      }
 
-      /* Actual swap and clear */
-      glfwSwapBuffers();
-      glhckClear();
+      /* make cube bit more interesting */
+      glhckObjectRotatef(cube, 0.0f, 30.0f * delta, 0.0f);
 
       if (fpsDelay < now) {
          if (duration > 0.0f) {
             FPS = (float)frameCounter / duration;
             snprintf(WIN_TITLE, sizeof(WIN_TITLE)-1, "OpenGL [FPS: %d]", FPS);
             glfwSetWindowTitle(window, WIN_TITLE);
-            frameCounter = 0; fpsDelay = now + 1; duration = 0;
          }
+         glhckClientObjectRender(cube);
+         fpsDelay = now + 1;
+         frameCounter = 0; duration = 0;
       }
 
       ++frameCounter;

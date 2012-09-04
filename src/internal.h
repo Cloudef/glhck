@@ -197,12 +197,15 @@ typedef enum __GLHCKobjectGeometryFlags {
 
 typedef void (*__GLHCKobjectGeometryDraw) (const struct _glhckObject *object);
 typedef struct __GLHCKobjectGeometry {
-   void *vertexData; /* __GLHCKvertexData2d || __GLHCKvertexData3d */
-   struct __GLHCKcoordTransform *transformedCoordinates;
-   GLHCK_CAST_INDEX *indices;
+   unsigned int type, flags;
    size_t indicesCount, vertexCount;
    kmVec3 bias, scale;
-   unsigned int type, flags;
+   union {
+      __GLHCKvertexData2d *vertex2d;
+      __GLHCKvertexData3d *vertex3d;
+   } data;
+   struct __GLHCKcoordTransform *transformedCoordinates;
+   GLHCK_CAST_INDEX *indices;
    __GLHCKobjectGeometryDraw drawFunc; /* draw function for this geometry */
 } __GLHCKobjectGeometry;
 
@@ -216,9 +219,9 @@ typedef struct __GLHCKobjectView {
 } __GLHCKobjectView;
 
 typedef struct __GLHCKobjectMaterial {
-   struct _glhckTexture *texture;
    glhckColor color;
    unsigned int flags;
+   struct _glhckTexture *texture;
 } __GLHCKobjectMaterial;
 
 typedef struct _glhckObject {
