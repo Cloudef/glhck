@@ -41,8 +41,8 @@ GLHCKAPI _glhckObject* glhckPlaneNew(kmScalar size)
       goto fail;
 
    /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertexData2d(object,
-            LENGTH(vertices), &vertices[0]) != RETURN_OK)
+   if (glhckObjectInsertVertices(object, LENGTH(vertices),
+            GLHCK_VERTEX_V2B, &vertices[0]) != RETURN_OK)
       goto fail;
 
    /* assigning indices would be waste
@@ -87,12 +87,12 @@ GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file,
 GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture,
       size_t width, size_t height)
 {
+   float w, h;
    _glhckObject *object;
-   kmScalar w, h;
    CALL(0, "%p, %zu, %zu", texture, width, height);
 
-   w = (kmScalar)(width?width:texture->width);
-   h = (kmScalar)(height?height:texture->height);
+   w = (float)(width?width:texture->width);
+   h = (float)(height?height:texture->height);
    const glhckImportVertexData vertices[] = {
       {
          {  w,  h, 0 },
@@ -122,8 +122,8 @@ GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture,
       goto fail;
 
    /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertexData2d(object,
-            LENGTH(vertices), &vertices[0]) != RETURN_OK)
+   if (glhckObjectInsertVertices(object, LENGTH(vertices),
+            GLHCK_VERTEX_V2S, &vertices[0]) != RETURN_OK)
       goto fail;
 
    /* don't make things humongous */

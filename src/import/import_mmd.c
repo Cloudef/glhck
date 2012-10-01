@@ -36,7 +36,8 @@ fail:
 }
 
 /* \brief import MikuMikuDance PMD file */
-int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
+int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    FILE *f;
    char *texturePath;
@@ -136,9 +137,15 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
             vertexData[ix].coord.y += 1;
 
          /* if there is packed texture */
-         if (textureList[i])
+         if (textureList[i]) {
+            kmVec2 coord;
+            coord.x = vertexData[ix].coord.x;
+            coord.y = vertexData[ix].coord.y;
             glhckAtlasTransformCoordinates(atlas, textureList[i],
-                  &vertexData[ix].coord, &vertexData[ix].coord);
+                  &coord, &coord);
+            vertexData[ix].coord.x = coord.x;
+            vertexData[ix].coord.y = coord.y;
+         }
 
          indices[i2] = ix;
       }
@@ -155,14 +162,14 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated)
    /* triangle strip geometry */
    if (!(strip_indices = _glhckTriStrip(indices, mmd->num_indices, &num_indices))) {
       /* failed, use non stripped geometry */
-      object->geometry.type   = GLHCK_TRIANGLES;
+      object->geometry->type  = GLHCK_TRIANGLES;
       num_indices             = mmd->num_indices;
       strip_indices           = indices;
    } else NULLDO(_glhckFree, indices);
 
    /* set geometry */
-   glhckObjectInsertIndices(object, num_indices, strip_indices);
-   glhckObjectInsertVertexData3d(object, mmd->num_vertices, vertexData);
+   glhckObjectInsertIndices(object, num_indices, itype, strip_indices);
+   glhckObjectInsertVertices(object, mmd->num_vertices, vtype, vertexData);
 
    /* finish */
    NULLDO(_glhckFree, vertexData);

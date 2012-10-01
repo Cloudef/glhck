@@ -207,19 +207,166 @@ typedef enum glhckRttMode {
    GLHCK_RTT_RGBA
 } glhckRttMode;
 
-/* color struct */
-typedef struct glhckColor {
+/* common datatypes */
+typedef struct glhckRect {
+   float x, y, w, h;
+} glhckRect;
+
+/* vertex datatypes */
+typedef struct glhckColorb {
    unsigned char r, g, b, a;
-} glhckColor;
+} glhckColorb;
 
-/* this data is used on import, uses floats,
- * which will be converted to internal precision */
-typedef struct glhckImportVertexData {
-   kmVec3 vertex, normal;
-   kmVec2 coord;
-   glhckColor color;
-} glhckImportVertexData;
+typedef struct glhckVector3b {
+   char x, y, z;
+} glhckVector3b;
 
+typedef struct glhckVector2b {
+   char x, y;
+} glhckVector2b;
+
+typedef struct glhckVector3s {
+   short x, y, z;
+} glhckVector3s;
+
+typedef struct glhckVector2s {
+   short x, y;
+} glhckVector2s;
+
+typedef struct glhckVector3f {
+   float x, y, z;
+} glhckVector3f;
+
+typedef struct glhckVector2f {
+   float x, y;
+} glhckVector2f;
+
+/* internal vertex data structures,
+ * if you modify the object's vertexdata directly
+ * make sure you cast to the right data type. */
+typedef struct glhckVertexData3b {
+   glhckVector3b vertex;
+   glhckVector3b normal;
+   glhckVector2b coord;
+   glhckColorb color;
+} glhckVertexData3b;
+
+typedef struct glhckVertexData2b {
+   glhckVector2b vertex;
+   glhckVector2b coord;
+   glhckColorb color;
+} glhckVertexData2b;
+
+typedef struct glhckVertexData3s {
+   glhckVector3s vertex;
+   glhckVector3s normal;
+   glhckVector2s coord;
+   glhckColorb color;
+} glhckVertexData3s;
+
+typedef struct glhckVertexData2s {
+   glhckVector2s vertex;
+   glhckVector2s coord;
+   glhckColorb color;
+} glhckVertexData2s;
+
+typedef struct glhckVertexData3f {
+   glhckVector3f vertex;
+   glhckVector3f normal;
+   glhckVector2f coord;
+   glhckColorb color;
+} glhckVertexData3f;
+
+typedef struct glhckVertexData2f {
+   glhckVector2f vertex;
+   glhckVector2f coord;
+   glhckColorb color;
+} glhckVertexData2f;
+
+/* feed glhck the highest precision */
+typedef glhckVertexData3f glhckImportVertexData;
+
+typedef union glhckVertexData {
+      glhckVertexData3b * v3b;
+      glhckVertexData2b * v2b;
+      glhckVertexData3s * v3s;
+      glhckVertexData2s * v2s;
+      glhckVertexData3f * v3f;
+      glhckVertexData2f * v2f;
+} glhckVertexData;
+
+typedef unsigned char glhckIndexb;
+typedef unsigned short glhckIndexs;
+typedef unsigned int glhckIndexi;
+
+/* feed glhck the highest precision */
+typedef glhckIndexi glhckImportIndexData;
+
+typedef union glhckIndexData {
+      glhckIndexb * ivb;
+      glhckIndexs * ivs;
+      glhckIndexi * ivi;
+} glhckIndexData;
+
+/* geometry type enums */
+typedef enum glhckGeometryVertexType {
+   GLHCK_VERTEX_NONE,
+   GLHCK_VERTEX_V3B,
+   GLHCK_VERTEX_V2B,
+   GLHCK_VERTEX_V3S,
+   GLHCK_VERTEX_V2S,
+   GLHCK_VERTEX_V3F,
+   GLHCK_VERTEX_V2F
+} glhckGeometryVertexType;
+
+typedef enum glhckGeometryIndexType {
+   GLHCK_INDEX_NONE,
+   GLHCK_INDEX_BYTE,
+   GLHCK_INDEX_SHORT,
+   GLHCK_INDEX_INTEGER
+} glhckGeometryIndexType;
+
+/* teture coordinate transformation */
+typedef struct glhckCoordTransform {
+   short degrees;
+   glhckRect transform;
+} glhckCoordTransform;
+
+/* datatype that presents object's geometry */
+typedef struct glhckGeometry {
+   /* geometry type (triangles, triangle strip, etc..) */
+   unsigned int type;
+
+   /* vertex && indices types */
+   glhckGeometryVertexType vertexType;
+   glhckGeometryIndexType indexType;
+
+   /* counts for vertices && indices */
+   size_t vertexCount;
+   size_t indexCount;
+
+   /* vertices */
+   glhckVertexData vertices;
+
+   /* indices */
+   glhckIndexData indices;
+
+   /* transformed coordinates */
+   glhckCoordTransform *transformedCoordinates;
+
+   /* geometry transformation needed
+    * after precision conversion */
+   glhckVector3f bias;
+   glhckVector3f scale;
+
+   /* transformed texture range
+    * the texture matrix is scaled with
+    * 1.0f/textureRange of geometry before
+    * sending to OpenGL */
+   float textureRange;
+} glhckGeometry;
+
+/* typedefs for better typing */
 typedef struct _glhckTexture glhckTexture;
 typedef struct _glhckAtlas   glhckAtlas;
 typedef struct _glhckRtt     glhckRtt;
@@ -241,6 +388,7 @@ GLHCKAPI void glhckDisplayClose(void);
 GLHCKAPI void glhckDisplayResize(int width, int height);
 
 /* rendering */
+GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params);
 GLHCKAPI void glhckRenderSetFlags(unsigned int flags);
 GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat);
@@ -280,21 +428,18 @@ GLHCKAPI glhckTexture* glhckObjectGetTexture(const glhckObject *object);
 GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
-GLHCKAPI void glhckObjectTransformCoordinates(glhckObject *object,
-      const kmVec4 *transformed, short degrees);
-GLHCKAPI int glhckObjectInsertVertexData3d(glhckObject *object,
-      size_t memb, const glhckImportVertexData *vertexData);
-GLHCKAPI int glhckObjectInsertVertexData2d(glhckObject *object,
-      size_t memb, const glhckImportVertexData *vertexData);
-GLHCKAPI int glhckObjectInsertIndices(glhckObject *object,
-      size_t memb, const unsigned int *indices);
-GLHCKAPI void glhckObjectSetGeometryType(glhckObject *object,
-      unsigned int type);
-GLHCKAPI unsigned int glhckObjectGetGeometryType(const glhckObject *object);
+GLHCKAPI int glhckObjectInsertVertices(
+      glhckObject *object, size_t memb,
+      glhckGeometryVertexType type,
+      const glhckImportVertexData *vertices);
+GLHCKAPI int glhckObjectInsertIndices(
+      glhckObject *object, size_t memb,
+      glhckGeometryIndexType type,
+      const glhckImportIndexData *indices);
 
 /* material */
-GLHCKAPI const glhckColor* glhckObjectGetColor(const glhckObject *object);
-GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColor *color);
+GLHCKAPI const glhckColorb* glhckObjectGetColor(const glhckObject *object);
+GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColorb *color);
 GLHCKAPI void glhckObjectColorb(glhckObject *object,
       unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI unsigned int glhckObjectGetMaterialFlags(const glhckObject *object);
@@ -326,8 +471,10 @@ GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale);
 GLHCKAPI void glhckObjectScalef(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 
-/* geometry */
+/* pre-defined geometry */
 GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size);
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size,
+         glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar size);
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, size_t x, size_t y);
@@ -343,7 +490,7 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
       const char *s, kmVec2 *min, kmVec2 *max);
 GLHCKAPI void glhckTextColor(glhckText *text,
       unsigned char r, unsigned char g, unsigned char b, unsigned char a);
-GLHCKAPI const glhckColor* glhckGetTextColor(glhckText *text);
+GLHCKAPI const glhckColorb* glhckGetTextColor(glhckText *text);
 GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text,
       unsigned char *data);
 GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file);
@@ -379,7 +526,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two,
 GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(const glhckAtlas *atlas,
       unsigned short index);
 GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *texture,
-      kmVec4 *transformed, short *degrees);
+      glhckRect *transformed, short *degrees);
 GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTexture *texture,
       const kmVec2 *in, kmVec2 *out);
 
@@ -397,6 +544,25 @@ GLHCKAPI void glhckMemoryGraph(void);
 GLHCKAPI void glhckPrintObjectQueue(void);
 GLHCKAPI void glhckPrintTextureQueue(void);
 
+/* vertexdata geometry */
+GLHCKAPI glhckIndexi glhckIndexTypeMaxPrecision(glhckGeometryIndexType type);
+GLHCKAPI const char* glhckIndexTypeString(glhckGeometryIndexType type);
+GLHCKAPI const char* glhckVertexTypeString(glhckGeometryVertexType type);
+GLHCKAPI int glhckVertexTypeHasNormal(glhckGeometryVertexType type);
+GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type);
+GLHCKAPI void glhckGeometryVertexDataForIndex(
+      glhckGeometry *geometry, glhckIndexi ix,
+      glhckVector3f *vertex, glhckVector3f *normal,
+      glhckVector2f *coord, glhckColorb *color,
+      unsigned int *vmagic);
+GLHCKAPI void glhckGeometrySetVertexDataForIndex(
+      glhckGeometry *geometry, glhckIndexi ix,
+      glhckVector3f *vertex, glhckVector3f *normal,
+      glhckVector2f *coord, glhckColorb *color);
+GLHCKAPI void glhckGeometryTransformCoordinates(
+      glhckGeometry *geometry, const glhckRect *transformed, short degrees);
+GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb);
+
 /* network */
 GLHCKAPI int glhckServerInit(const char *host, int port);
 GLHCKAPI void glhckServerUpdate(void);
@@ -404,7 +570,6 @@ GLHCKAPI void glhckServerKill(void);
 GLHCKAPI int glhckClientInit(const char *host, int port);
 GLHCKAPI int glhckClientUpdate(void);
 GLHCKAPI void glhckClientKill(void);
-
 
 /* define cleanup */
 #ifdef GLHCK_WINGDIAPI_DEFINED

@@ -31,7 +31,8 @@ typedef enum _glhckFormat
 } _glhckFormat;
 
 /* Function typedefs */
-typedef int (*_glhckModelImportFunc)(_glhckObject *object, const char *file, int animated);
+typedef int (*_glhckModelImportFunc)(_glhckObject *object, const char *file, int animated,
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 typedef int (*_glhckImageImportFunc)(_glhckTexture *texture, const char *file, unsigned int flags);
 typedef int (*_glhckFormatFunc)(const char *file);
 
@@ -133,7 +134,8 @@ static _glhckModelImporter* _glhckGetModelImporter(const char *file)
  */
 
 /* \brief import model file */
-int _glhckImportModel(_glhckObject *object, const char *file, int animated)
+int _glhckImportModel(_glhckObject *object, const char *file, int animated,
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    _glhckModelImporter *importer;
    int importReturn;
@@ -147,7 +149,7 @@ int _glhckImportModel(_glhckObject *object, const char *file, int animated)
    }
 
    /* import */
-   importReturn = importer->importFunc(object, file, animated);
+   importReturn = importer->importFunc(object, file, animated, itype, vtype);
    RET(0, "%d", importReturn);
    return importReturn;
 }

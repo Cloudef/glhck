@@ -4,8 +4,18 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
 
-/* \brief create new cube object */
-GLHCKAPI _glhckObject* glhckModelNew(const char *file, kmScalar size)
+/* \brief create new object from supported model files */
+GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size)
+{
+   return glhckModelNewEx(file, size,
+         _GLHCKlibrary.render.globalIndexType,
+         _GLHCKlibrary.render.globalVertexType);
+}
+
+/* \brief create new object from supported model files
+ * you can specify the index and vertex precision here */
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size,
+   glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    _glhckObject *object;
    CALL(0, "%s, %f", file, size);
@@ -15,7 +25,7 @@ GLHCKAPI _glhckObject* glhckModelNew(const char *file, kmScalar size)
       goto fail;
 
    /* import model */
-   if (_glhckImportModel(object, file, 0) != RETURN_OK)
+   if (_glhckImportModel(object, file, 0, itype, vtype) != RETURN_OK)
       goto fail;
 
    /* scale the cube */

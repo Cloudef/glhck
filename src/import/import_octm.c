@@ -65,7 +65,8 @@ fail:
 }
 
 /* \brief import OpenCTM file */
-int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated)
+int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    FILE *f;
    size_t num_indices;
@@ -124,14 +125,12 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated)
       }
    }
 
-#if GLHCK_VERTEXDATA_COLOR
    for (i = 0; i != num_attribs; ++i) {
       attribName = ctmGetAttribMapString(context, CTM_ATTRIB_MAP_1 + i, CTM_NAME);
       if (!strcmp(attribName, "Color")) {
          colors = CTM_CALL(context, ctmGetFloatArray(context, CTM_ATTRIB_MAP_1 + i));
       }
    }
-#endif
 
    /* output comment to stdout */
    comment = CTM_CALL(context, ctmGetString(context, CTM_FILE_COMMENT));
@@ -162,20 +161,18 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated)
          vertexData[ix].coord.y = coords[ix*2+1];
       }
 
-#if GLHCK_VERTEXDATA_COLOR
       if (colors) {
          vertexData[ix].color.r = colors[ix*4+0]*255.0f;
          vertexData[ix].color.g = colors[ix*4+1]*255.0f;
          vertexData[ix].color.b = colors[ix*4+2]*255.0f;
          vertexData[ix].color.a = colors[ix*4+3]*255.0f;
       }
-#endif
    }
 
    /* triangle strip geometry */
    if (!(strip_indices = _glhckTriStrip(indices, num_triangles, &num_indices))) {
       /* failed, use non stripped geometry */
-      object->geometry.type   = GLHCK_TRIANGLES;
+      object->geometry->type  = GLHCK_TRIANGLES;
       num_indices             = num_triangles;
    }
 
@@ -183,8 +180,8 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated)
    if (colors) object->material.flags |= GLHCK_MATERIAL_COLOR;
 
    /* set geometry */
-   glhckObjectInsertIndices(object, num_indices, strip_indices?strip_indices:indices);
-   glhckObjectInsertVertexData3d(object, num_vertices, vertexData);
+   glhckObjectInsertIndices(object, num_indices, itype, strip_indices?strip_indices:indices);
+   glhckObjectInsertVertices(object, num_vertices, vtype, vertexData);
 
    /* finish */
    IFDO(_glhckFree, strip_indices);

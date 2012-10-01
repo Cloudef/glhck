@@ -36,8 +36,7 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(getProjection);
    GLHCK_API_CHECK(setClearColor);
    GLHCK_API_CHECK(clear);
-   GLHCK_API_CHECK(objectDraw3d);
-   GLHCK_API_CHECK(objectDraw2d);
+   GLHCK_API_CHECK(objectDraw);
    GLHCK_API_CHECK(textDraw);
    GLHCK_API_CHECK(frustumDraw);
    GLHCK_API_CHECK(getPixels);
@@ -181,6 +180,9 @@ GLHCKAPI int glhckInit(int argc, char **argv)
    /* init trace system */
    _glhckTraceInit(argc, _argv);
 
+   /* set default global precision for glhck */
+   glhckSetGlobalPrecision(GLHCK_INDEX_INTEGER, GLHCK_VERTEX_V3F);
+
    atexit(glhckTerminate);
    _glhckInitialized = 1;
 
@@ -284,6 +286,16 @@ GLHCKAPI void glhckClear(void)
    _GLHCKlibrary.render.api.clear();
 }
 
+/* \brief set global geometry vertexdata precision to glhck */
+GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype,
+      glhckGeometryVertexType vtype)
+{
+   if (itype != GLHCK_INDEX_NONE)
+      _GLHCKlibrary.render.globalIndexType  = itype;
+   if (vtype != GLHCK_VERTEX_NONE)
+      _GLHCKlibrary.render.globalVertexType = vtype;
+}
+
 /* \brief get parameter from renderer */
 GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params) {
    CALL(1, "%u, %p", pname, params);
@@ -296,7 +308,6 @@ GLHCKAPI void glhckRenderSetFlags(unsigned int flags)
    CALL(1, "%u", flags);
    _GLHCKlibrary.render.flags = flags;
 }
-
 
 /* \brief set projection matrix */
 GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat)

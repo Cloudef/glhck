@@ -334,12 +334,12 @@ GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(const glhckAtlas *atlas,
 
 /* \brief return transformed coordinates of packed texture */
 GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *texture,
-      kmVec4 *out, short *degrees)
+      glhckRect *out, short *degrees)
 {
    float atlasWidth, atlasHeight;
    _glhckAtlasArea *packed;
 
-   CALL(2, "%p, %p, "VEC4S", %p", atlas, texture, VEC4(out), degrees);
+   CALL(2, "%p, %p, %p, %p", atlas, texture, out, degrees);
    assert(atlas && texture && out && degrees);
 
    if (!atlas->texture)
@@ -348,7 +348,8 @@ GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *textu
    /* only one texture silly */
    if (_glhckAtlasNumTextures(atlas)==1) {
       *degrees = 0;
-      kmVec4Fill(out, 0, 0, 1, 1);
+      out->x = out->y = 0;
+      out->w = out->h = 1;
       RET(2, "%d", RETURN_OK);
       return RETURN_OK;
    }
@@ -359,8 +360,8 @@ GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *textu
    atlasWidth  = atlas->texture->width;
    atlasHeight = atlas->texture->height;
 
-   out->z = packed->x2 / atlasWidth;
-   out->w = packed->y2 / atlasHeight;
+   out->w = packed->x2 / atlasWidth;
+   out->h = packed->y2 / atlasHeight;
    out->x = packed->x1 / atlasWidth;
    out->y = packed->y1 / atlasHeight;
    *degrees = packed->rotated?-90:0;
@@ -378,7 +379,7 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTextur
       const kmVec2 *in, kmVec2 *out)
 {
    short degrees;
-   kmVec4 transformed;
+   glhckRect transformed;
    kmVec2 center = { 0.5f, 0.5f };
    CALL(2, "%p, %p, "VEC2S", "VEC2S, atlas, texture, VEC2(in), VEC2(out));
 
@@ -393,7 +394,7 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTextur
          != RETURN_OK)
       goto fail;
 
-   if (transformed.z == 0.f || transformed.w == 0.f)
+   if (transformed.w == 0.f || transformed.h == 0.f)
       goto fail;
 
    /* do we need to rotate? */
@@ -401,9 +402,9 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTextur
    else              kmVec2Assign(out, in);
 
    /* out */
-   out->x *= transformed.z;
+   out->x *= transformed.w;
    out->x += transformed.x;
-   out->y *= transformed.w;
+   out->y *= transformed.h;
    out->y += transformed.y;
 
    RET(2, "%d", RETURN_OK);

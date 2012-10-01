@@ -1,6 +1,6 @@
 #include "internal.h"
-#include <assert.h>  /* for assert */
 #include "helper/vertexdata.h"
+#include <assert.h>  /* for assert */
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
@@ -41,13 +41,25 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
    kmVec3 mixxyz, mixyyz, mixyzz;
    kmVec3 maxxyz, maxyyz, maxyzz;
    kmMat4 translation, rotation, scaling, temp;
+   kmVec3 bias, scale;
    CALL(2, "%p", object);
+
+   bias.x  = bias.y  = bias.z  = 1.0f;
+   scale.x = scale.y = scale.z = 1.0f;
+   if (object->geometry) {
+      bias.x = object->geometry->bias.x;
+      bias.y = object->geometry->bias.y;
+      bias.z = object->geometry->bias.z;
+      scale.x = object->geometry->scale.x;
+      scale.y = object->geometry->scale.y;
+      scale.z = object->geometry->scale.z;
+   }
 
    /* translation */
    kmMat4Translation(&translation,
-         object->view.translation.x + (object->geometry.bias.x * object->view.scaling.x),
-         object->view.translation.y + (object->geometry.bias.y * object->view.scaling.y),
-         object->view.translation.z + (object->geometry.bias.z * object->view.scaling.z));
+         object->view.translation.x + (bias.x * object->view.scaling.x),
+         object->view.translation.y + (bias.y * object->view.scaling.y),
+         object->view.translation.z + (bias.z * object->view.scaling.z));
 
    /* rotation */
    kmMat4RotationX(&rotation, kmDegreesToRadians(object->view.rotation.x));
@@ -58,9 +70,9 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
 
    /* scaling */
    kmMat4Scaling(&scaling,
-         object->view.scaling.x + (object->geometry.scale.x * object->view.scaling.x),
-         object->view.scaling.y + (object->geometry.scale.y * object->view.scaling.y),
-         object->view.scaling.z + (object->geometry.scale.z * object->view.scaling.z));
+         object->view.scaling.x + (scale.x * object->view.scaling.x),
+         object->view.scaling.y + (scale.y * object->view.scaling.y),
+         object->view.scaling.z + (scale.z * object->view.scaling.z));
 
    /* build matrix */
    kmMat4Multiply(&translation, &translation, &rotation);
@@ -104,300 +116,29 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
    kmVec3Transform(&maxyzz, &maxyzz, &object->view.matrix);
 
    /* find max edges */
-   set3d(max, object->view.obb.max);
-   max3d(max, maxxyz);
-   max3d(max, maxyyz);
-   max3d(max, maxyzz);
-   max3d(max, mixxyz);
-   max3d(max, mixyyz);
-   max3d(max, mixyzz);
+   glhckSetV3(&max, &object->view.obb.max);
+   glhckMaxV3(&max, &maxxyz);
+   glhckMaxV3(&max, &maxyyz);
+   glhckMaxV3(&max, &maxyzz);
+   glhckMaxV3(&max, &mixxyz);
+   glhckMaxV3(&max, &mixyyz);
+   glhckMaxV3(&max, &mixyzz);
 
    /* find min edges */
-   set3d(min, object->view.obb.min);
-   min3d(min, mixxyz);
-   min3d(min, mixyyz);
-   min3d(min, mixyzz);
-   min3d(min, maxxyz);
-   min3d(min, maxyyz);
-   min3d(min, maxyzz);
+   glhckSetV3(&min, &object->view.obb.min);
+   glhckMinV3(&min, &mixxyz);
+   glhckMinV3(&min, &mixyyz);
+   glhckMinV3(&min, &mixyzz);
+   glhckMinV3(&min, &maxxyz);
+   glhckMinV3(&min, &maxyyz);
+   glhckMinV3(&min, &maxyzz);
 
    /* set edges */
-   set3d(object->view.aabb.max, max);
-   set3d(object->view.aabb.min, min);
+   glhckSetV3(&object->view.aabb.max, &max);
+   glhckSetV3(&object->view.aabb.min, &min);
 
    /* done */
    object->view.update = 0;
-}
-
-/* \brief convert vertex data to internal format */
-static void _glhckConvertVertexData(_glhckObject *object, void *internal,
-      const glhckImportVertexData *import, size_t memb)
-{
-   size_t i;
-   char no_vconvert, no_nconvert, is3d;
-   kmVec3 vmin, vmax,
-          nmin, nmax;
-   __GLHCKvertexData2d *internal2d;
-   __GLHCKvertexData3d *internal3d;
-   CALL(0, "%p, %p, %zu", internal, import, memb);
-
-   is3d = object->geometry.flags & GEOMETRY_3D;
-   if (is3d) internal3d = (__GLHCKvertexData3d*)internal;
-   else      internal2d = (__GLHCKvertexData2d*)internal;
-
-   if (is3d) {
-      set3d(vmax, import[0].vertex);
-      set3d(vmin, import[0].vertex);
-      set3d(nmax, import[0].normal);
-      set3d(nmin, import[0].normal);
-   } else {
-      set2d(vmax, import[0].vertex);
-      set2d(vmin, import[0].vertex);
-      set2d(nmax, import[0].normal);
-      set2d(nmin, import[0].normal);
-      vmax.z = 0;
-      vmin.z = 0;
-      nmax.z = 0;
-      nmin.z = 0;
-   }
-
-   /* find max && min first */
-   for (i = 1; i != memb; ++i) {
-      if (is3d) {
-         max3d(vmax, import[i].vertex);
-         min3d(vmin, import[i].vertex);
-         max3d(nmax, import[i].normal);
-         min3d(nmin, import[i].normal);
-      } else {
-         max2d(vmax, import[i].vertex);
-         min2d(vmin, import[i].vertex);
-         max2d(nmax, import[i].normal);
-         min2d(nmin, import[i].normal);
-      }
-   }
-
-   /* do we need conversion? */
-   no_vconvert = 0;
-   if ((vmax.x + vmin.x == 1 &&
-        vmax.y + vmin.y == 1 &&
-        vmax.z + vmin.z == 1) ||
-       (vmax.x + vmin.x == 0 &&
-        vmax.y + vmin.y == 0 &&
-        vmax.z + vmin.z == 0))
-      no_vconvert = 1;
-
-   no_nconvert = 0;
-   if ((nmax.x + nmin.x == 1 &&
-        nmax.y + nmin.y == 1 &&
-        nmax.z + nmin.z == 1) ||
-       (nmax.x + nmin.x == 0 &&
-        nmax.y + nmin.y == 0 &&
-        nmax.z + nmin.z == 0))
-      no_nconvert = 1;
-
-   /* lie about bounds by 1 point so,
-    * we don't get artifacts */
-   vmax.x++; vmax.y++; vmax.z++;
-   vmin.x--; vmin.y--; vmin.z--;
-
-   /* handle vertex data */
-   for (i = 0; i != memb; ++i) {
-#if GLHCK_PRECISION_VERTEX == GLHCK_FLOAT
-      /* memcpy without conversion, do centering though */
-      if (is3d) {
-         memcpy(&internal3d[i].vertex, &import[i].vertex,
-               sizeof(_glhckVertex3d));
-         memcpy(&internal3d[i].normal, &import[i].normal,
-               sizeof(_glhckVertex3d));
-
-         /* shift origin to center */
-         internal3d[i].vertex.x -= 0.5f * (vmax.x - vmin.x) + vmin.x;
-         internal3d[i].vertex.y -= 0.5f * (vmax.y - vmin.y) + vmin.y;
-         internal3d[i].vertex.z -= 0.5f * (vmax.z - vmin.z) + vmin.z;
-      } else {
-         memcpy(&internal2d[i].vertex, &import[i].vertex,
-               sizeof(_glhckVertex2d));
-         memcpy(&internal2d[i].normal, &import[i].normal,
-               sizeof(_glhckVertex3d));
-
-         /* shift origin to center */
-         internal2d[i].vertex.x -= 0.5f * (vmax.x - vmin.x) + vmin.x;
-         internal2d[i].vertex.y -= 0.5f * (vmax.y - vmin.y) + vmin.y;
-      }
-#else
-      /* convert vertex data to correct precision from import precision.
-       * conversion will do the centering as well */
-
-      /* vertices */
-      if (no_vconvert) {
-         if (is3d) {
-            set3d(internal3d[i].vertex, import[i].vertex);
-         } else {
-            set2d(internal2d[i].vertex, import[i].vertex);
-         }
-      } else {
-         if (is3d) {
-            convert3d(internal3d[i].vertex, import[i].vertex,
-                  vmax, vmin, GLHCK_VERTEX_MAGIC, GLHCK_CAST_VERTEX);
-         } else {
-            convert2d(internal2d[i].vertex, import[i].vertex,
-                  vmax, vmin, GLHCK_VERTEX_MAGIC, GLHCK_CAST_VERTEX);
-         }
-      }
-
-      /* normals */
-      if (no_nconvert) {
-         if (is3d) {
-            set3d(internal3d[i].normal, import[i].normal);
-         } else {
-            set2d(internal2d[i].normal, import[i].normal);
-         }
-      } else {
-         if (is3d) {
-            convert3d(internal3d[i].normal, import[i].normal,
-                  nmax, nmin, GLHCK_VERTEX_MAGIC, GLHCK_CAST_VERTEX);
-         } else {
-            convert2d(internal2d[i].normal, import[i].normal,
-                  nmax, nmin, GLHCK_VERTEX_MAGIC, GLHCK_CAST_VERTEX);
-         }
-      }
-#endif
-
-#if GLHCK_PRECISION_COORD == GLHCK_FLOAT
-      /* coords in native precision, memcpy */
-      if (is3d) {
-         memcpy(&internal3d[i].coord, &import[i].coord,
-               sizeof(_glhckCoord2d));
-      } else {
-         memcpy(&internal2d[i].coord, &import[i].coord,
-               sizeof(_glhckCoord2d));
-      }
-#else
-      /* texture coord conversion */
-      if (is3d) {
-         internal3d[i].coord.x = import[i].coord.x * GLHCK_RANGE_COORD;
-         internal3d[i].coord.y = import[i].coord.y * GLHCK_RANGE_COORD;
-      } else {
-         internal2d[i].coord.x = import[i].coord.x * GLHCK_RANGE_COORD;
-         internal2d[i].coord.y = import[i].coord.y * GLHCK_RANGE_COORD;
-      }
-#endif
-
-      /* color is always unsigned char, memcpy it */
-#if GLHCK_VERTEXDATA_COLOR
-      if (is3d) {
-         memcpy(&internal3d[i].color, &import[i].color,
-               sizeof(glhckColor));
-      } else {
-         memcpy(&internal2d[i].color, &import[i].color,
-               sizeof(glhckColor));
-      }
-#endif
-   }
-
-   /* no need to process further */
-   if (no_vconvert) return;
-
-#if GLHCK_PRECISION_VERTEX != GLHCK_FLOAT
-   /* fix geometry bias && scale after conversion */
-   object->geometry.bias.x = (GLHCK_BIAS_OFFSET) *
-      (vmax.x - vmin.x) + vmin.x;
-   object->geometry.bias.y = (GLHCK_BIAS_OFFSET) *
-      (vmax.y - vmin.y) + vmin.y;
-
-   if (is3d) {
-      object->geometry.bias.z = (GLHCK_BIAS_OFFSET) *
-         (vmax.z - vmin.z) + vmin.z;
-   } else {
-      object->geometry.bias.z = 0;
-   }
-
-   object->geometry.scale.x =
-      (vmax.x - vmin.x) / GLHCK_SCALE_OFFSET;
-   object->geometry.scale.y =
-      (vmax.y - vmin.y) / GLHCK_SCALE_OFFSET;
-
-   if (is3d) {
-      object->geometry.scale.z =
-         (vmax.z - vmin.z) / GLHCK_SCALE_OFFSET;
-   } else {
-      object->geometry.scale.z = 0;
-   }
-
-   DEBUG(GLHCK_DBG_CRAP, "Converted bias "VEC3S, VEC3(&object->geometry.bias));
-   DEBUG(GLHCK_DBG_CRAP, "Converted scale "VEC3S, VEC3(&object->geometry.scale));
-#else
-   /* fix bias after centering */
-   object->geometry.bias.x = 0.5f * (vmax.x - vmin.x) + vmin.x;
-   object->geometry.bias.y = 0.5f * (vmax.y - vmin.y) + vmin.y;
-   object->geometry.bias.z = 0.5f * (vmax.z - vmin.z) + vmin.z;
-#endif
-
-   /* update matrix */
-   _glhckObjectUpdateMatrix(object);
-}
-
-/* \brief convert index data to internal format */
-static void _glhckConvertIndexData(GLHCK_CAST_INDEX *internal,
-      const unsigned int *import, size_t memb)
-{
-   size_t i;
-   CALL(0, "%p, %p, %zu", internal, import, memb);
-
-   /* TODO: Handle unsigned short indices or just use unsigned int for sake of simplicity? */
-   for (i = 0; i != memb; ++i) internal[i] = import[i];
-}
-
-/* \brief calculate object's bounding box */
-static void _glhckObjectCalculateAABB(_glhckObject *object)
-{
-   size_t v;
-   char is3d;
-   kmVec3 min, max;
-   kmAABB aabb_box;
-   __GLHCKvertexData2d *internal2d;
-   __GLHCKvertexData3d *internal3d;
-   CALL(2, "%p", object);
-
-   is3d = object->geometry.flags & GEOMETRY_3D;
-   if (is3d) {
-      internal3d = object->geometry.data.vertex3d;
-      set3d(max, internal3d[0].vertex);
-      set3d(min, internal3d[0].vertex);
-   } else {
-      internal2d = object->geometry.data.vertex2d;
-      set2d(max, internal2d[0].vertex);
-      set2d(min, internal2d[0].vertex);
-      max.z = 0;
-      min.z = 0;
-   }
-
-   /* find min and max corners */
-   for(v = 1; v != object->geometry.vertexCount; ++v) {
-      if (is3d) {
-         max3d(max, internal3d[v].vertex);
-         min3d(min, internal3d[v].vertex);
-      } else {
-         max2d(max, internal2d[v].vertex);
-         min2d(min, internal2d[v].vertex);
-      }
-   }
-
-   /* assign aabb to object */
-   aabb_box.min = min;
-   aabb_box.max = max;
-   object->view.bounding = aabb_box;
-}
-
-/* \brief free object's vertex data */
-static void _glhckObjectFreeVertexData(_glhckObject *object)
-{
-   assert(object);
-   if (object->geometry.flags & GEOMETRY_3D) {
-      IFDO(_glhckFree, object->geometry.data.vertex3d);
-   } else {
-      IFDO(_glhckFree, object->geometry.data.vertex2d);
-   }
 }
 
 /* update target from rotation */
@@ -425,6 +166,11 @@ static inline void _glhckObjectUpdateRotationFromTarget(_glhckObject *object)
    kmVec3GetHorizontalAngle(&object->view.rotation, &toTarget);
 }
 
+/* stub draw function */
+static inline void _glhckObjectStubDraw(const struct _glhckObject *object)
+{
+}
+
 /* set object's filename */
 void _glhckObjectSetFile(_glhckObject *object, const char *file)
 {
@@ -447,12 +193,8 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
 
    /* init object */
    memset(object, 0, sizeof(_glhckObject));
-   memset(&object->geometry, 0, sizeof(__GLHCKobjectGeometry));
    memset(&object->view, 0, sizeof(__GLHCKobjectView));
    memset(&object->material, 0, sizeof(__GLHCKobjectMaterial));
-
-   /* default geometry type is tristrip */
-   glhckObjectSetGeometryType(object, GLHCK_TRIANGLE_STRIP);
 
    /* default view matrix */
    glhckObjectScalef(object, 1.0f, 1.0f, 1.0f);
@@ -464,6 +206,9 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
 
    /* default color */
    glhckObjectColorb(object, 255, 255, 255, 255);
+
+   /* set stub draw function */
+   object->drawFunc = _glhckObjectStubDraw;
 
    /* increase reference */
    object->refCounter++;
@@ -479,7 +224,7 @@ fail:
    return NULL;
 }
 
-/* \brief COPY OBJEct */
+/* \brief copy object */
 GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
 {
    _glhckObject *object;
@@ -491,40 +236,25 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
 
    /* copy static data */
    memset(object, 0, sizeof(_glhckObject));
-   memcpy(&object->geometry, &src->geometry, sizeof(__GLHCKobjectGeometry));
    memcpy(&object->view, &src->view, sizeof(__GLHCKobjectView));
    memcpy(&object->material, &src->material, sizeof(__GLHCKobjectMaterial));
 
    /* copy metadata */
-   if (src->file)
-      object->file = _glhckStrdup(src->file);
-
-   /* copy vertex data */
-   if (src->geometry.vertexCount) {
-      if (object->geometry.flags & GEOMETRY_3D) {
-         if (!(object->geometry.data.vertex3d =
-                  _glhckCopy(src->geometry.data.vertex3d,
-                     src->geometry.vertexCount * sizeof(__GLHCKvertexData3d))))
-            goto fail;
-      } else {
-         if (!(object->geometry.data.vertex2d =
-                  _glhckCopy(src->geometry.data.vertex2d,
-                     src->geometry.vertexCount * sizeof(__GLHCKvertexData2d))))
-            goto fail;
-      }
-   }
-
-   /* copy index data */
-   if (src->geometry.indices) {
-      if (!(object->geometry.indices =
-               _glhckCopy(src->geometry.indices,
-                  src->geometry.indicesCount * sizeof(GLHCK_CAST_INDEX))))
+   if (src->file) {
+      if (!(object->file = _glhckStrdup(src->file)))
          goto fail;
    }
+
+   /* copy geometry */
+   // object->geometry = _glhckGeometryCopy(src->geometry);
+   object->geometry = NULL;
 
    /* copy texture */
    object->material.texture = NULL; /* make sure we don't free reference */
    glhckObjectSetTexture(object, src->material.texture);
+
+   /* assign stub draw to copy */
+   object->drawFunc = _glhckObjectStubDraw;
 
    /* set ref counter to 1 */
    object->refCounter = 1;
@@ -536,12 +266,7 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    return object;
 
 fail:
-   if (object) {
-      IFDO(_glhckFree, object->file);
-      _glhckObjectFreeVertexData(object);
-      IFDO(_glhckFree, object->geometry.indices);
-   }
-   IFDO(_glhckFree, object);
+   IFDO(glhckObjectFree, object);
    RET(0, "%p", NULL);
    return NULL;
 }
@@ -575,9 +300,7 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    IFDO(_glhckFree, object->file);
 
    /* free geometry */
-   _glhckObjectFreeVertexData(object);
-   IFDO(_glhckFree, object->geometry.indices);
-   IFDO(_glhckFree, object->geometry.transformedCoordinates);
+   IFDO(_glhckGeometryFree, object->geometry);
 
    /* free material */
    glhckObjectSetTexture(object, NULL);
@@ -641,8 +364,8 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
       _glhckObjectUpdateMatrix(object);
 
    /* render */
-   if (object->geometry.drawFunc)
-      object->geometry.drawFunc(object);
+   assert(object->drawFunc);
+   object->drawFunc(object);
 }
 
 /* \brief get object's material flag s*/
@@ -665,7 +388,7 @@ GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags)
 }
 
 /* \brief get object's color */
-GLHCKAPI const glhckColor* glhckObjectGetColor(const glhckObject *object)
+GLHCKAPI const glhckColorb* glhckObjectGetColor(const glhckObject *object)
 {
    CALL(2, "%p", object);
    assert(object);
@@ -675,7 +398,7 @@ GLHCKAPI const glhckColor* glhckObjectGetColor(const glhckObject *object)
 }
 
 /* \brief set object's color */
-GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColor *color)
+GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColorb *color)
 {
    CALL(2, "%p, %p", object, color);
    assert(object && color);
@@ -690,7 +413,7 @@ GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColor *color)
 GLHCKAPI void glhckObjectColorb(glhckObject *object,
       unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-   glhckColor color = { r, g, b, a };
+   glhckColorb color = { r, g, b, a };
    glhckObjectColor(object, &color);
 }
 
@@ -866,197 +589,65 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
    glhckObjectScale(object, &scaling);
 }
 
-/* \brief transform coordinates with vec4 (off x, off y, width, height) and rotation */
-GLHCKAPI void glhckObjectTransformCoordinates(
-      _glhckObject *object, const kmVec4 *transformed, short degrees)
-{
-   size_t i;
-   char is3d;
-   kmVec2 out;
-   _glhckCoord2d *coord;
-   __GLHCKvertexData2d *v2d;
-   __GLHCKvertexData3d *v3d;
-   __GLHCKcoordTransform *newCoords, *oldCoords;
-   kmVec2 center = { 0.5f, 0.5f };
-   CALL(2, "%p, "VEC4S", %d", object, VEC4(transformed), degrees);
-
-   if (transformed->z == 0.f || transformed->w == 0.f)
-      return;
-
-   if (!(newCoords = _glhckMalloc(sizeof(__GLHCKcoordTransform))))
-      return;
-
-   /* old coordinates */
-   oldCoords = object->geometry.transformedCoordinates;
-
-   is3d = object->geometry.flags & GEOMETRY_3D;
-   if (is3d) v3d = object->geometry.data.vertex3d;
-   else      v2d = object->geometry.data.vertex2d;
-
-   /* out */
-   for (i = 0; i != object->geometry.vertexCount; ++i) {
-      if (is3d) coord = &v3d[i].coord;
-      else coord = &v2d[i].coord;
-
-      out.x = (kmScalar)coord->x/GLHCK_RANGE_COORD;
-      out.y = (kmScalar)coord->y/GLHCK_RANGE_COORD;
-
-      if (oldCoords) {
-         if (oldCoords->degrees != 0)
-            kmVec2RotateBy(&out, &out, -oldCoords->degrees, &center);
-
-         out.x -= oldCoords->transform.x;
-         out.x /= oldCoords->transform.z;
-         out.y -= oldCoords->transform.y;
-         out.y /= oldCoords->transform.w;
-      }
-
-      if (degrees != 0)
-         kmVec2RotateBy(&out, &out, degrees, &center);
-
-      out.x *= transformed->z;
-      out.x += transformed->x;
-      out.y *= transformed->w;
-      out.y += transformed->y;
-
-      coord->x = out.x * GLHCK_RANGE_COORD;
-      coord->y = out.y * GLHCK_RANGE_COORD;
-   }
-
-   newCoords->degrees   = degrees;
-   newCoords->transform = *transformed;
-   IFDO(_glhckFree, object->geometry.transformedCoordinates);
-   object->geometry.transformedCoordinates = newCoords;
-}
-
-/* \brief set object's geometry type */
-GLHCKAPI void glhckObjectSetGeometryType(glhckObject *object, unsigned int type)
-{
-   CALL(1, "%p, %u", object, type);
-   assert(object);
-
-   object->geometry.type = type;
-}
-
-/* \brief get object's geometry type */
-GLHCKAPI unsigned int glhckObjectGetGeometryType(const glhckObject *object)
+/* \brief get geometry from object */
+GLHCKAPI glhckGeometry* glhckObjectGetGeometry(_glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
 
-   RET(1, "%u", object->geometry.type);
-   return object->geometry.type;
+   RET(1, "%p", object->geometry);
+   return object->geometry;
 }
 
-/* \brief insert vertex data into object */
-GLHCKAPI int glhckObjectInsertVertexData3d(
-      _glhckObject *object,
-      size_t memb,
-      const glhckImportVertexData *vertexData)
-{
-   __GLHCKvertexData3d *newv;
-   CALL(0, "%p, %zu, %p", object, memb, vertexData);
-   assert(object);
-
-   /* allocate new buffer */
-   if (!(newv = (__GLHCKvertexData3d*)_glhckMalloc(memb *
-               sizeof(__GLHCKvertexData3d))))
-      goto fail;
-
-   /* free old buffer */
-   _glhckObjectFreeVertexData(object);
-   object->geometry.flags |= GEOMETRY_3D; /* new vertexdata is 3d data */
-
-   /* assign new buffer */
-   _glhckConvertVertexData(object, newv, vertexData, memb);
-   object->geometry.data.vertex3d = newv;
-   object->geometry.vertexCount = memb;
-
-   /* calculate AABB from vertices */
-   _glhckObjectCalculateAABB(object);
-
-   /* insert correct draw function */
-   object->geometry.drawFunc = _GLHCKlibrary.render.api.objectDraw3d;
-
-   RET(0, "%d", RETURN_OK);
-   return RETURN_OK;
-
-fail:
-   RET(0, "%d", RETURN_FAIL);
-   return RETURN_FAIL;
-}
-
-/* \brief insert 2d vertex data into object */
-GLHCKAPI int glhckObjectInsertVertexData2d(
-      _glhckObject *object,
-      size_t memb,
-      const glhckImportVertexData *vertexData)
-{
-   __GLHCKvertexData2d *newv;
-   CALL(0, "%p, %zu, %p", object, memb, vertexData);
-   assert(object);
-
-   /* check vertex precision conflicts */
-   if (memb > GLHCK_INDEX_MAX)
-      goto bad_precision;
-
-   /* allocate new buffer */
-   if (!(newv = (__GLHCKvertexData2d*)_glhckMalloc(memb *
-               sizeof(__GLHCKvertexData2d))))
-      goto fail;
-
-   /* free old buffer */
-   _glhckObjectFreeVertexData(object);
-   object->geometry.flags &= ~GEOMETRY_3D; /* new vertexdata is 2d data */
-
-   /* assign new buffer */
-   _glhckConvertVertexData(object, newv, vertexData, memb);
-   object->geometry.data.vertex2d = newv;
-   object->geometry.vertexCount = memb;
-
-   /* calculate AABB from vertices */
-   _glhckObjectCalculateAABB(object);
-
-   /* insert correct draw function */
-   object->geometry.drawFunc = _GLHCKlibrary.render.api.objectDraw2d;
-
-   RET(0, "%d", RETURN_OK);
-   return RETURN_OK;
-
-bad_precision:
-   DEBUG(GLHCK_DBG_ERROR, "Internal indices precision is %s, however there are more vertices\n"
-                          "in object(%p) than index can hold.", __STRING(GLHCK_CAST_INDEX), object);
-fail:
-   RET(0, "%d", RETURN_FAIL);
-   return RETURN_FAIL;
-}
-
-/* \brief insert index data into object */
+/* \brief insert indices to object */
 GLHCKAPI int glhckObjectInsertIndices(
-      _glhckObject *object,
-      size_t memb,
-      const unsigned int *indices)
+      glhckObject *object, size_t memb,
+      glhckGeometryIndexType type,
+      const glhckImportIndexData *indices)
 {
-   GLHCK_CAST_INDEX *newv;
-   CALL(0, "%p, %zu, %p", object, memb, indices);
+   CALL(0, "%p, %zu, %d, %p", object, memb, type, indices);
    assert(object);
 
-   /* allocate new buffer */
-   if (!(newv = (GLHCK_CAST_INDEX*)_glhckMalloc(memb *
-               sizeof(GLHCK_CAST_INDEX))))
+   /* create new geometry for object, if not one already */
+   if (!object->geometry) {
+      if (!(object->geometry = _glhckGeometryNew()))
+         goto fail;
+   }
+
+   /* do the work (tm) */
+   if (!_glhckGeometryInsertIndices(object->geometry, memb, type, indices))
       goto fail;
 
-   /* free old buffer */
-   IFDO(_glhckFree, object->geometry.indices);
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
 
-   /* assign new buffer */
-#if GLHCK_NATIVE_IMPORT_INDEXDATA
-   memcpy(newv, indices, memb * sizeof(GLHCK_CAST_INDEX));
-#else
-   _glhckConvertIndexData(newv, indices, memb);
-#endif
-   object->geometry.indices = newv;
-   object->geometry.indicesCount = memb;
+fail:
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
+}
+
+/* \brief insert vertices to object */
+GLHCKAPI int glhckObjectInsertVertices(
+      glhckObject *object, size_t memb,
+      glhckGeometryVertexType type,
+      const glhckImportVertexData *vertices)
+{
+   CALL(0, "%p, %zu, %d, %p", object, memb, type, vertices);
+   assert(object);
+
+   /* create new geometry for object, if not one already */
+   if (!object->geometry) {
+      if (!(object->geometry = _glhckGeometryNew()))
+         goto fail;
+   }
+
+   /* do the work (tm) */
+   if (!_glhckGeometryInsertVertices(object->geometry, memb, type, vertices))
+      goto fail;
+
+   object->drawFunc = _GLHCKlibrary.render.api.objectDraw;
+   glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
+   _glhckObjectUpdateMatrix(object);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;

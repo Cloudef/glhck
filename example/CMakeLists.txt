@@ -1,7 +1,5 @@
 SET(EXAMPLE_EXE
-   display
-   server
-   client)
+   display)
 
 FOREACH (example ${EXAMPLE_EXE})
    PROJECT(${example})

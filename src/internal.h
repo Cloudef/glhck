@@ -27,6 +27,7 @@
 #define GLHCK_CHANNEL_FRUSTUM    "FRUSTUM"
 #define GLHCK_CHANNEL_CAMERA     "CAMERA"
 #define GLHCK_CHANNEL_GEOMETRY   "GEOMETRY"
+#define GLHCK_CHANNEL_VDATA      "VERTEXDATA"
 #define GLHCK_CHANNEL_TEXTURE    "TEXTURE"
 #define GLHCK_CHANNEL_ATLAS      "ATLAS"
 #define GLHCK_CHANNEL_RTT        "RTT"
@@ -41,8 +42,21 @@
 /* build importers as seperate dynamic libraries? */
 #define GLHCK_IMPORT_DYNAMIC 0
 
-/* public structs typedeffed to seperate internal code */
-typedef glhckFrustum _glhckFrustum;
+/* disable triangle stripping? */
+#define GLHCK_TRISTRIP 1
+
+/* opengl mapped constants */
+#define GLHCK_COLOR_ATTACHMENT   0x8CE0
+#define GLHCK_DEPTH_ATTACHMENT   0x8D00
+
+#define GLHCK_BYTE            0x1400
+#define GLHCK_UNSIGNED_BYTE   0x1401
+#define GLHCK_SHORT           0x1402
+#define GLHCK_UNSIGNED_SHORT  0x1403
+#define GLHCK_INT             0x1404
+#define GLHCK_UNSIGNED_INT    0x1405
+#define GLHCK_FLOAT           0x1406
+#define GLHCK_STENCIL_ATTACHMENT 0x8D20
 
 /* return variables used throughout library */
 typedef enum _glhckReturnValue {
@@ -81,133 +95,17 @@ typedef struct _glhckAtlas {
    struct _glhckAtlas *next;
 } _glhckAtlas;
 
-#define GLHCK_COLOR_ATTACHMENT   0x8CE0
-#define GLHCK_DEPTH_ATTACHMENT   0x8D00
-#define GLHCK_STENCIL_ATTACHMENT 0x8D20
-
 typedef struct _glhckRtt {
    unsigned int object;
-   _glhckTexture *texture;
+   struct _glhckTexture *texture;
    short refCounter;
    struct _glhckRtt *next;
 } _glhckRtt;
-
-/* precision constants */
-#define GLHCK_BYTE            0x1400
-#define GLHCK_UNSIGNED_BYTE   0x1401
-#define GLHCK_SHORT           0x1402
-#define GLHCK_UNSIGNED_SHORT  0x1403
-#define GLHCK_INT             0x1404
-#define GLHCK_UNSIGNED_INT    0x1405
-#define GLHCK_FLOAT           0x1406
-
-/* internal data format */
-#define GLHCK_PRECISION_VERTEX GLHCK_SHORT
-#define GLHCK_PRECISION_COORD  GLHCK_SHORT
-#define GLHCK_PRECISION_INDEX  GLHCK_UNSIGNED_SHORT
-#define GLHCK_PRECISION_COLOR  GLHCK_UNSIGNED_BYTE
-
-/* enable vertex color in vertexdata? */
-#define GLHCK_VERTEXDATA_COLOR 0
-
-/* set C casting from internal data format spec */
-#if GLHCK_PRECISION_VERTEX == GLHCK_BYTE
-#  define GLHCK_CAST_VERTEX char
-#  define GLHCK_VERTEX_MAX  CHAR_MAX
-#elif GLHCK_PRECISION_VERTEX == GLHCK_SHORT
-#  define GLHCK_CAST_VERTEX short
-#  define GLHCK_VERTEX_MAX  SHRT_MAX
-#else
-#  define GLHCK_CAST_VERTEX kmScalar
-#  define GLHCK_VERTEX_MAX  FLT_MAX
-#endif
-
-#if GLHCK_PRECISION_COORD == GLHCK_BYTE
-#  define GLHCK_CAST_COORD  char
-#  define GLHCK_RANGE_COORD CHAR_MAX
-#elif GLHCK_PRECISION_COORD == GLHCK_SHORT
-#  define GLHCK_CAST_COORD  short
-#  define GLHCK_RANGE_COORD SHRT_MAX
-#else
-#  define GLHCK_CAST_COORD kmScalar
-#  define GLHCK_RANGE_COORD 1
-#endif
-
-#if GLHCK_PRECISION_INDEX == GLHCK_UNSIGNED_BYTE
-#  define GLHCK_CAST_INDEX unsigned char
-#  define GLHCK_INDEX_MAX  UCHAR_MAX
-#elif GLHCK_PRECISION_INDEX == GLHCK_UNSIGNED_SHORT
-#  define GLHCK_CAST_INDEX unsigned short
-#  define GLHCK_INDEX_MAX  USHRT_MAX
-#else
-#  define GLHCK_CAST_INDEX unsigned int
-#  define GLHCK_INDEX_MAX  UINT_MAX
-#endif
-
-/* check if import index data format is same as internal
- * if true, we can just memcpy the import data without conversion. */
-#define GLHCK_NATIVE_IMPORT_INDEXDATA 0
-#if GLHCK_PRECISION_INDEX == GLHCK_UNSIGNED_INT
-#  undef  GLHCK_NATIVE_IMPORT_INDEXDATA
-#  define GLHCK_NATIVE_IMPORT_INDEXDATA 1
-#endif
-
-/* disable triangle stripping? */
-#define GLHCK_TRISTRIP 1
-
-typedef struct _glhckVertex3d {
-   GLHCK_CAST_VERTEX x, y, z;
-} _glhckVertex3d;
-
-typedef struct _glhckVertex2d {
-   GLHCK_CAST_VERTEX x, y;
-} _glhckVertex2d;
-
-typedef struct _glhckCoord2d {
-   GLHCK_CAST_COORD x, y;
-} _glhckCoord2d;
-
-typedef struct __GLHCKvertexData3d {
-   struct _glhckVertex3d vertex;
-   struct _glhckVertex3d normal;
-   struct _glhckCoord2d coord;
-#if GLHCK_VERTEXDATA_COLOR
-   struct glhckColor color;
-#endif
-} __GLHCKvertexData3d;
-
-typedef struct __GLHCKvertexData2d {
-   struct _glhckVertex2d vertex;
-   struct _glhckVertex3d normal;
-   struct _glhckCoord2d coord;
-#if GLHCK_VERTEXDATA_COLOR
-   struct glhckColor color;
-#endif
-} __GLHCKvertexData2d;
 
 typedef struct __GLHCKcoordTransform {
    short degrees;
    kmVec4 transform;
 } __GLHCKcoordTransform;
-
-typedef enum __GLHCKobjectGeometryFlags {
-   GEOMETRY_NONE = 0,
-   GEOMETRY_3D   = 1, /* otherwise assumed as 2D */
-} __GLHCKobjectGeometryFlags;
-
-typedef void (*__GLHCKobjectGeometryDraw) (const struct _glhckObject *object);
-typedef struct __GLHCKobjectGeometry {
-   unsigned int type, flags;
-   size_t indicesCount, vertexCount;
-   kmVec3 bias, scale;
-   union {
-      __GLHCKvertexData2d *vertex2d;
-      __GLHCKvertexData3d *vertex3d;
-   } data;
-   struct __GLHCKcoordTransform *transformedCoordinates;
-   GLHCK_CAST_INDEX *indices;
-   __GLHCKobjectGeometryDraw drawFunc; /* draw function for this geometry */
-} __GLHCKobjectGeometry;
 
 typedef struct __GLHCKobjectView {
    kmVec3 translation, target, rotation, scaling;
@@ -215,20 +113,23 @@ typedef struct __GLHCKobjectView {
    kmAABB bounding;
    kmAABB aabb; /* transformed bounding (axis aligned) */
    kmAABB obb;  /* transformed bounding (oriented) */
+   struct __GLHCKcoordTransform *transformedCoordinates;
    char update;
 } __GLHCKobjectView;
 
 typedef struct __GLHCKobjectMaterial {
-   glhckColor color;
    unsigned int flags;
+   struct glhckColorb color;
    struct _glhckTexture *texture;
 } __GLHCKobjectMaterial;
 
+typedef void (*__GLHCKobjectDraw) (const struct _glhckObject *object);
 typedef struct _glhckObject {
    char *file;
-   struct __GLHCKobjectGeometry geometry;
+   struct glhckGeometry *geometry;
    struct __GLHCKobjectView view;
    struct __GLHCKobjectMaterial material;
+   __GLHCKobjectDraw drawFunc;
    short refCounter;
    struct _glhckObject *next;
 } _glhckObject;
@@ -241,15 +142,9 @@ typedef struct __GLHCKtextTextureRow {
    short x, y, h;
 } __GLHCKtextTextureRow;
 
-/* \brief text vertex data */
-typedef struct __GLHCKtextVertexData {
-   struct _glhckVertex2d vertex;
-   struct _glhckCoord2d coord;
-} __GLHCKtextVertexData;
-
 /* \brief text geometry data */
 typedef struct __GLHCKtextGeometry {
-   struct __GLHCKtextVertexData vertexData[GLHCK_TEXT_VERT_COUNT];
+   struct glhckVertexData2s vertexData[GLHCK_TEXT_VERT_COUNT];
    size_t vertexCount;
 } __GLHCKtextGeometry;
 
@@ -266,7 +161,8 @@ typedef struct __GLHCKtextTexture {
 typedef struct _glhckText {
    int tw, th;
    float itw, ith;
-   glhckColor color;
+   struct glhckColorb color;
+   float textureRange;
    struct __GLHCKtextFont *fcache;
    struct __GLHCKtextTexture *tcache;
    struct _glhckText *next;
@@ -297,10 +193,9 @@ typedef void (*__GLHCKrenderAPIsetProjection)    (const kmMat4 *m);
 typedef const kmMat4* (*__GLHCKrenderAPIgetProjection)  (void);
 typedef void (*__GLHCKrenderAPIsetClearColor)    (float r, float g, float b, float a);
 typedef void (*__GLHCKrenderAPIclear)            (void);
-typedef void (*__GLHCKrenderAPIobjectDraw3d)     (const _glhckObject *object);
-typedef void (*__GLHCKrenderAPIobjectDraw2d)     (const _glhckObject *object);
+typedef void (*__GLHCKrenderAPIobjectDraw)       (const _glhckObject *object);
 typedef void (*__GLHCKrenderAPItextDraw)         (const _glhckText *text);
-typedef void (*__GLHCKrenderAPIfrustumDraw)      (_glhckFrustum *frustum, const kmMat4 *model);
+typedef void (*__GLHCKrenderAPIfrustumDraw)      (glhckFrustum *frustum, const kmMat4 *model);
 
 /* screen control */
 typedef void (*__GLHCKrenderAPIgetPixels)        (int x, int y, int width, int height,
@@ -336,8 +231,7 @@ typedef struct __GLHCKrenderAPI {
    __GLHCKrenderAPIgetProjection    getProjection;
    __GLHCKrenderAPIsetClearColor    setClearColor;
    __GLHCKrenderAPIclear            clear;
-   __GLHCKrenderAPIobjectDraw3d     objectDraw3d;
-   __GLHCKrenderAPIobjectDraw2d     objectDraw2d;
+   __GLHCKrenderAPIobjectDraw       objectDraw;
    __GLHCKrenderAPItextDraw         textDraw;
    __GLHCKrenderAPIfrustumDraw      frustumDraw;
 
@@ -392,6 +286,8 @@ typedef struct __GLHCKrender {
    unsigned int flags;
    struct __GLHCKrenderAPI api;
    struct __GLHCKrenderDraw draw;
+   glhckGeometryIndexType globalIndexType;
+   glhckGeometryVertexType globalVertexType;
 } __GLHCKrender;
 
 typedef struct __GLHCKworld {
@@ -563,6 +459,19 @@ void _glhckTextureInsertToQueue(_glhckTexture *texture);
 void _glhckTraceInit(int argc, const char **argv);
 void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...);
 void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *fmt, ...);
+
+/* internal geometry vertexdata */
+glhckGeometry *_glhckGeometryNew(void);
+glhckGeometry *_glhckGeometryCopy(glhckGeometry *src);
+short _glhckGeometryFree(glhckGeometry *geometry);
+int _glhckGeometryInsertVertices(
+      glhckGeometry *geometry, size_t memb,
+      glhckGeometryVertexType type,
+      const glhckImportVertexData *vertices);
+int _glhckGeometryInsertIndices(
+      glhckGeometry *geometry, size_t memb,
+      glhckGeometryIndexType type,
+      const glhckImportIndexData *indices);
 
 #endif /* _internal_h_ */
 

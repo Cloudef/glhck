@@ -1,59 +1,43 @@
 #ifndef __vertexdata_h__
 #define __vertexdata_h__
 
-/* conversion defines for vertexdata conversion macro */
-#if GLHCK_PRECISION_VERTEX == GLHCK_BYTE
-#  define GLHCK_VERTEX_MAGIC  UCHAR_MAX - CHAR_MAX
-#  define GLHCK_BIAS_OFFSET   CHAR_MAX / (UCHAR_MAX - 1.0f)
-#  define GLHCK_SCALE_OFFSET  UCHAR_MAX - 1.0f
-#elif GLHCK_PRECISION_VERTEX == GLHCK_SHORT
-#  define GLHCK_VERTEX_MAGIC  USHRT_MAX - SHRT_MAX
-#  define GLHCK_BIAS_OFFSET   SHRT_MAX / (USHRT_MAX - 1.0f)
-#  define GLHCK_SCALE_OFFSET  USHRT_MAX - 1.0f
-#endif
+/* conversion constants for vertexdata conversion */
+#define GLHCK_BYTE_CMAGIC  CHAR_MAX
+#define GLHCK_BYTE_VMAGIC  UCHAR_MAX - CHAR_MAX
+#define GLHCK_BYTE_VBIAS   CHAR_MAX / (UCHAR_MAX - 1.0f)
+#define GLHCK_BYTE_VSCALE  UCHAR_MAX - 1.0f
 
-#if GLHCK_PRECISION_COORD == GLHCK_BYTE
-#  define GLHCK_COORD_MAGIC CHAR_MAX - UCHAR_MAX
-#elif GLHCK_PRECISION_COORD == GLHCK_SHORT
-#  define GLHCK_COORD_MAGIC USHRT_MAX - SHRT_MAX
-#endif
+#define GLHCK_SHORT_CMAGIC  SHRT_MAX
+#define GLHCK_SHORT_VMAGIC  USHRT_MAX - SHRT_MAX
+#define GLHCK_SHORT_VBIAS   SHRT_MAX / (USHRT_MAX - 1.0f)
+#define GLHCK_SHORT_VSCALE  USHRT_MAX - 1.0f
 
-/* helper macro for vertexdata conversion */
-#define convert2d(dst, src, max, min, magic, cast)                         \
-dst.x = (cast)floorf(((src.x - min.x) / (max.x - min.x)) * magic + 0.5f);  \
-dst.y = (cast)floorf(((src.y - min.y) / (max.y - min.y)) * magic + 0.5f);
-#define convert3d(dst, src, max, min, magic, cast)                         \
-convert2d(dst, src, max, min, magic, cast)                                 \
-dst.z = (cast)floorf(((src.z - min.z) / (max.z - min.z)) * magic + 0.5f);
+/* assign 2D v2 vector to v1 vector regardless
+ * of datatype */
+#define glhckSetV2(v1, v2) \
+   (v1)->x = (v2)->x;      \
+   (v1)->y = (v2)->y;
 
-/* find max && min ranges */
-#define max2d(dst, src) \
-if (src.x > dst.x)      \
-   dst.x = src.x;       \
-if (src.y > dst.y)      \
-   dst.y = src.y;
-#define max3d(dst, src) \
-max2d(dst, src)         \
-if (src.z > dst.z)      \
-   dst.z = src.z;
-#define min2d(dst, src) \
-if (src.x < dst.x)      \
-   dst.x = src.x;       \
-if (src.y < dst.y)      \
-   dst.y = src.y;
-#define min3d(dst, src) \
-min2d(dst, src)         \
-if (src.z < dst.z)      \
-   dst.z = src.z;
+/* assign 3D v2 vector to v1 vector regardless
+ * of datatype */
+#define glhckSetV3(v1, v2) \
+   glhckSetV2(v1, v2);     \
+   (v1)->z = (v2)->z;
 
-/* assign 3d */
-#define set2d(dst, src) \
-dst.x = src.x;          \
-dst.y = src.y;
-#define set3d(dst, src) \
-set2d(dst, src)         \
-dst.z = src.z;
+/* assign the max units from vectors to v1 */
+#define glhckMaxV2(v1, v2) \
+   if ((v1)->x < (v2)->x) (v1)->x = (v2)->x; \
+   if ((v1)->y < (v2)->y) (v1)->y = (v2)->y;
+#define glhckMaxV3(v1, v2) \
+   glhckMaxV2(v1, v2);     \
+   if ((v1)->z < (v2)->z) (v1)->z = (v2)->z;
+
+/* assign the min units from vectors to v1 */
+#define glhckMinV2(v1, v2) \
+   if ((v1)->x > (v2)->x) (v1)->x = (v2)->x; \
+   if ((v1)->y > (v2)->y) (v1)->y = (v2)->y;
+#define glhckMinV3(v1, v2) \
+   glhckMinV2(v1, v2);     \
+   if ((v1)->z > (v2)->z) (v1)->z = (v2)->z;
 
 #endif /* __vertexdata_h__ */
-
-/* vim: set ts=8 sw=3 tw=0 :*/

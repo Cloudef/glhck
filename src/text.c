@@ -19,8 +19,8 @@
 
 /* \brief quad helper struct */
 typedef struct __GLHCKtextQuad {
-   struct _glhckVertex2d v1, v2;
-   struct _glhckCoord2d t1, t2;
+   glhckVector2s v1, v2;
+   glhckVector2s t1, t2;
 } __GLHCKtextQuad;
 
 /* \brief glyph object */
@@ -269,7 +269,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
 static int _getQuad(_glhckText *text, __GLHCKtextFont *font, __GLHCKtextGlyph *glyph,
       short isize, float *x, float *y, __GLHCKtextQuad *q)
 {
-   kmVec2 v1, v2, t1, t2;
+   glhckVector2f v1, v2, t1, t2;
    int rx, ry;
    float scale = 1.0f;
 
@@ -292,18 +292,18 @@ static int _getQuad(_glhckText *text, __GLHCKtextFont *font, __GLHCKtextGlyph *g
    memcpy(&q->v1, &v1, sizeof(_glhckVertex2d));
    memcpy(&q->v2, &v2, sizeof(_glhckVertex2d));
 #else
-   set2d(q->v1, v1);
-   set2d(q->v2, v2);
+   glhckSetV2(&q->v1, &v1);
+   glhckSetV2(&q->v2, &v2);
 #endif
 
 #if GLHCK_PRECISION_COORD == GLHCK_FLOAT
    memcpy(&q->t1, &t1, sizeof(_glhckCoord2d));
    memcpy(&q->t2, &t2, sizeof(_glhckCoord2d));
 #else
-   q->t1.x = t1.x * GLHCK_RANGE_COORD;
-   q->t1.y = t1.y * GLHCK_RANGE_COORD;
-   q->t2.x = t2.x * GLHCK_RANGE_COORD;
-   q->t2.y = t2.y * GLHCK_RANGE_COORD;
+   q->t1.x = t1.x * text->textureRange;
+   q->t1.y = t1.y * text->textureRange;
+   q->t2.x = t2.x * text->textureRange;
+   q->t2.y = t2.y * text->textureRange;
 #endif
 
    *x += scale * glyph->xadv;
@@ -345,6 +345,7 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    text->itw = (float)1.0f/cachew;
    text->ith = (float)1.0f/cacheh;
    text->tcache = texture;
+   text->textureRange = GLHCK_SHORT_CMAGIC;
 
    /* default color */
    glhckTextColor(text, 255, 255, 255, 255);
@@ -457,10 +458,10 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
       if (_getQuad(text, font, glyph, isize, &x, &y, &q) != RETURN_OK)
          continue;
 
-      min2d((*min), q.v1);
-      max2d((*max), q.v1);
-      min2d((*min), q.v2);
-      max2d((*max), q.v2);
+      glhckMinV2(min, &q.v1);
+      glhckMaxV2(max, &q.v1);
+      glhckMinV2(min, &q.v2);
+      glhckMaxV2(max, &q.v2);
    }
 }
 
@@ -478,7 +479,7 @@ GLHCKAPI void glhckTextColor(glhckText *text,
 }
 
 /* \brief get text color */
-GLHCKAPI const glhckColor* glhckTextGetColor(glhckText *text)
+GLHCKAPI const glhckColorb* glhckTextGetColor(glhckText *text)
 {
    CALL(1, "%p", text);
    assert(text);
@@ -703,7 +704,7 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
    unsigned int i, codepoint, state = 0;
    short isize = (short)size*10.0f;
    size_t vcount;
-   __GLHCKtextVertexData *v, *d;
+   glhckVertexData2s *v, *d;
    __GLHCKtextTexture *texture;
    __GLHCKtextGlyph *glyph;
    __GLHCKtextFont *font;

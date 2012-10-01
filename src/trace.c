@@ -25,6 +25,7 @@ __GLHCKtraceChannel _traceChannels[] =
    { GLHCK_CHANNEL_TEXT,     0 },
    { GLHCK_CHANNEL_CAMERA,   0 },
    { GLHCK_CHANNEL_GEOMETRY, 0 },
+   { GLHCK_CHANNEL_VDATA,    0 },
    { GLHCK_CHANNEL_TEXTURE,  0 },
    { GLHCK_CHANNEL_ATLAS,    0 },
    { GLHCK_CHANNEL_RTT,      0 },

@@ -3,6 +3,7 @@ SET(GLHCK_SRC
    alloc.c
    trace.c
    util.c
+   geometry.c
    object.c
    text.c
    frustum.c
@@ -15,8 +16,6 @@ SET(GLHCK_SRC
    geometry/plane.c
    geometry/cube.c
    render/OpenGL.c
-   network/server.c
-   network/client.c
    import/import.c
    import/import_mmd.c
    import/import_octm.c

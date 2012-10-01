@@ -464,7 +464,7 @@ GLHCKAPI void glhckClientKill(void)
 {
    _glhckClientStub();
 }
-GLHCKAPI void glhckClientUpdate(void)
+GLHCKAPI int glhckClientUpdate(void)
 {
    _glhckClientStub();
 }
