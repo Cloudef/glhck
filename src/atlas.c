@@ -348,8 +348,8 @@ GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *textu
    /* only one texture silly */
    if (_glhckAtlasNumTextures(atlas)==1) {
       *degrees = 0;
-      out->x = out->y = 0;
-      out->w = out->h = 1;
+      out->x = out->y = 0.0f;
+      out->w = out->h = 1.0f;
       RET(2, "%d", RETURN_OK);
       return RETURN_OK;
    }

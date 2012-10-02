@@ -51,7 +51,7 @@ void _glhckConvertVertexData(
    CALL(0, "%d, %p, %zu, %p, %p", type, import, memb, bias, scale);
 
    /* default bias scale */
-   bias->x  = bias->y  = bias->z  = 1.0f;
+   bias->x  = bias->y  = bias->z  = 0.0f;
    scale->x = scale->y = scale->z = 1.0f;
 
    glhckSetV3(&vmax, &import[0].vertex);

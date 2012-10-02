@@ -319,12 +319,6 @@ static void viewport(int x, int y, int width, int height)
 /* \brief pass interleaved vertex data to OpenGL nicely. */
 static inline void geometryPointer(const glhckGeometry *geometry)
 {
-   /* set texture coords according to how geometry wants them */
-   GL_CALL(glMatrixMode(GL_TEXTURE));
-   GL_CALL(glLoadIdentity());
-   GL_CALL(glScalef(1.0f/geometry->textureRange, 1.0f/geometry->textureRange, 1.0f));
-   GL_CALL(glMatrixMode(GL_MODELVIEW));
-
    //printf("%s (%zu) : %.0f\n", glhckVertexTypeString(geometry->vertexType), geometry->vertexCount, geometry->textureRange);
 
    /* vertex data */
@@ -635,6 +629,11 @@ static inline void drawAABB(const _glhckObject *object)
 
 /* \brief begin object draw */
 static inline void objectStart(const _glhckObject *object) {
+   /* set texture coords according to how geometry wants them */
+   GL_CALL(glMatrixMode(GL_TEXTURE));
+   GL_CALL(glLoadIdentity());
+   GL_CALL(glScalef(1.0f/object->geometry->textureRange, 1.0f/object->geometry->textureRange, 1.0f));
+
    /* load view matrix */
    GL_CALL(glMatrixMode(GL_MODELVIEW));
 #ifdef GLHCK_KAZMATH_FLOAT

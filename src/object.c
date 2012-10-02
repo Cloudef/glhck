@@ -44,7 +44,7 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
    kmVec3 bias, scale;
    CALL(2, "%p", object);
 
-   bias.x  = bias.y  = bias.z  = 1.0f;
+   bias.x  = bias.y  = bias.z  = 0.0f;
    scale.x = scale.y = scale.z = 1.0f;
    if (object->geometry) {
       bias.x = object->geometry->bias.x;
@@ -70,9 +70,9 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
 
    /* scaling */
    kmMat4Scaling(&scaling,
-         object->view.scaling.x + (scale.x * object->view.scaling.x),
-         object->view.scaling.y + (scale.y * object->view.scaling.y),
-         object->view.scaling.z + (scale.z * object->view.scaling.z));
+         scale.x * object->view.scaling.x,
+         scale.y * object->view.scaling.y,
+         scale.z * object->view.scaling.z);
 
    /* build matrix */
    kmMat4Multiply(&translation, &translation, &rotation);

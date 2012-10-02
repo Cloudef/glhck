@@ -1,6 +1,7 @@
 #include "internal.h"
 #include "import/import.h"
 #include "imghck.h"
+#include <stdio.h>            /* for file io */
 #include <assert.h>           /* for assert */
 
 /* tracing channel for this file */
@@ -364,6 +365,7 @@ GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, unsigned char *data, un
 /* \brief save texture to file in TGA format */
 GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
 {
+   FILE *f = NULL;
    CALL(0, "%p, %s", texture, path);
    assert(texture);
 
@@ -380,12 +382,21 @@ GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
          "LUMINANCE ALPHA":"LUMINANCE",
          _glhckNumChannels(texture->format));
 
+   /* open for read */
+   if (!(f = fopen(path, "wb")))
+      goto fail;
+
+   /* dump raw data */
+   fwrite(texture->data, 1, texture->size, f);
+   NULLDO(fclose, f);
+
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 format_fail:
    _glhckPuts("\1Err.. Sorry only RGBA texture save for now.");
 fail:
+   IFDO(fclose, f);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
