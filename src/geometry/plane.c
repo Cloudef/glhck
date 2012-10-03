@@ -10,6 +10,8 @@
 GLHCKAPI _glhckObject* glhckPlaneNew(kmScalar size)
 {
    _glhckObject *object;
+   glhckGeometryVertexType vtype;
+
    static const glhckImportVertexData vertices[] = {
       {
          {  1,  1, 0 },      /* vertices */
@@ -40,9 +42,13 @@ GLHCKAPI _glhckObject* glhckPlaneNew(kmScalar size)
    if (!(object = glhckObjectNew()))
       goto fail;
 
+   /* choose internal vertexdata precision */
+   vtype = _GLHCKlibrary.render.globalVertexType;
+   if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V3B;
+
    /* insert vertices to object's geometry */
    if (glhckObjectInsertVertices(object, LENGTH(vertices),
-            GLHCK_VERTEX_V2B, &vertices[0]) != RETURN_OK)
+            vtype, &vertices[0]) != RETURN_OK)
       goto fail;
 
    /* assigning indices would be waste
@@ -89,8 +95,9 @@ GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture,
 {
    float w, h;
    _glhckObject *object;
-   CALL(0, "%p, %zu, %zu", texture, width, height);
+   glhckGeometryVertexType vtype;
 
+   CALL(0, "%p, %zu, %zu", texture, width, height);
    w = (float)(width?width:texture->width);
    h = (float)(height?height:texture->height);
    const glhckImportVertexData vertices[] = {
@@ -120,6 +127,11 @@ GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture,
    /* create new object */
    if (!(object = glhckObjectNew()))
       goto fail;
+
+   /* choose internal vertexdata precision */
+   vtype = _GLHCKlibrary.render.globalVertexType;
+   if (vtype == GLHCK_VERTEX_NONE)
+      vtype = glhckVertexTypeGetV2Counterpart(glhckVertexTypeForSize(w, h));
 
    /* insert vertices to object's geometry */
    if (glhckObjectInsertVertices(object, LENGTH(vertices),

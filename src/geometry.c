@@ -37,8 +37,40 @@ glhckMagicDefine(glhckMagic2b, glhckMagic3b,
 glhckMagicDefine(glhckMagic2s, glhckMagic3s,
       glhckVector2s, glhckVector3s, short, GLHCK_SHORT_VMAGIC);
 
+/* \brief get min/max from import data */
+static void _glhckMaxMinImportData(const glhckImportVertexData *import, size_t memb,
+      glhckVector3f *vmin, glhckVector3f *vmax, glhckVector3f *nmin, glhckVector3f *nmax)
+{
+   size_t i;
+   glhckSetV3(vmax, &import[0].vertex);
+   glhckSetV3(vmin, &import[0].vertex);
+   glhckSetV3(nmax, &import[0].normal);
+   glhckSetV3(nmin, &import[0].normal);
+
+   /* find max && min first */
+   for (i = 1; i != memb; ++i) {
+      glhckMaxV3(vmax, &import[i].vertex);
+      glhckMinV3(vmin, &import[i].vertex);
+      glhckMaxV3(nmax, &import[i].normal);
+      glhckMinV3(nmin, &import[i].normal);
+   }
+}
+
+/* \brief get /min/max from index data */
+static void _glhckMaxMinIndexData(const glhckImportIndexData *import, size_t memb,
+      unsigned int *mini, unsigned int *maxi)
+{
+   size_t i;
+
+   *mini = *maxi = import[0];
+   for (i = 1; i != memb; ++i) {
+      if (*mini > import[i]) *mini = import[i];
+      if (*maxi < import[i]) *maxi = import[i];
+   }
+}
+
 /* \brief convert vertex data to internal format */
-void _glhckConvertVertexData(
+static void _glhckConvertVertexData(
       glhckGeometryVertexType type, glhckVertexData internal,
       const glhckImportVertexData *import, size_t memb,
       glhckVector3f *bias, glhckVector3f *scale)
@@ -54,18 +86,9 @@ void _glhckConvertVertexData(
    bias->x  = bias->y  = bias->z  = 0.0f;
    scale->x = scale->y = scale->z = 1.0f;
 
-   glhckSetV3(&vmax, &import[0].vertex);
-   glhckSetV3(&vmin, &import[0].vertex);
-   glhckSetV3(&nmax, &import[0].normal);
-   glhckSetV3(&nmin, &import[0].normal);
-
-   /* find max && min first */
-   for (i = 1; i != memb; ++i) {
-      glhckMaxV3(&vmax, &import[i].vertex);
-      glhckMinV3(&vmin, &import[i].vertex);
-      glhckMaxV3(&nmax, &import[i].normal);
-      glhckMinV3(&nmin, &import[i].normal);
-   }
+   /* get min and max from import data */
+   _glhckMaxMinImportData(import, memb,
+         &vmin, &vmax, &nmin, &nmax);
 
    /* do we need conversion? */
    no_convert = 0;
@@ -181,7 +204,8 @@ void _glhckConvertVertexData(
       }
    }
 
-   printf("CONV: "VEC3S" : "VEC3S" (%d:%f:%f)\n", VEC3(&vmax),  VEC3(&vmin), no_convert, biasMagic, scaleMagic);
+   DEBUG(GLHCK_DBG_CRAP, "CONV: "VEC3S" : "VEC3S" (%d:%f:%f)",
+         VEC3(&vmax),  VEC3(&vmin), no_convert, biasMagic, scaleMagic);
 
    /* no need to process further */
    if (no_convert) return;
@@ -387,8 +411,15 @@ int _glhckGeometryInsertVertices(
 {
    void *data = NULL;
    glhckVertexData vd;
+   glhckVector3f vmin, vmax,
+                 nmin, nmax, mmax;
    CALL(0, "%p, %zu, %d, %p", geometry, memb, type, vertices);
    assert(geometry);
+
+   /* default to V3F on NONE type */
+   if (type == GLHCK_VERTEX_NONE) {
+      type = GLHCK_VERTEX_V3F;
+   }
 
    /* check vertex precision conflicts */
    if (memb > glhckIndexTypeMaxPrecision(geometry->indexType))
@@ -450,8 +481,15 @@ int _glhckGeometryInsertIndices(
 {
    void *data = NULL;
    glhckIndexData id;
+   unsigned int mini, maxi;
    CALL(0, "%p, %zu, %d, %p", geometry, memb, type, indices);
    assert(geometry);
+
+   /* autodetect */
+   if (type == GLHCK_INDEX_NONE) {
+      _glhckMaxMinIndexData(indices, memb, &mini, &maxi);
+      type = glhckIndexTypeForValue(maxi);
+   }
 
    /* check vertex precision conflicts */
    if (geometry->vertexCount > glhckIndexTypeMaxPrecision(geometry->indexType))
@@ -577,6 +615,49 @@ GLHCKAPI const char* glhckIndexTypeString(glhckGeometryIndexType type)
    return "GLHCK_INDEX_NONE";
 }
 
+/* \brief is value withing precision range? */
+GLHCKAPI int glhckIndexTypeWithinRange(unsigned int value, glhckGeometryIndexType type)
+{
+   return (value <  glhckIndexTypeMaxPrecision(type) &&
+           value > -glhckIndexTypeMaxPrecision(type));
+}
+
+/* \brief you should feed this function the value with highest precision */
+GLHCKAPI glhckGeometryIndexType glhckIndexTypeForValue(unsigned int value)
+{
+   glhckGeometryIndexType itype = GLHCK_INDEX_INTEGER;
+   if (glhckIndexTypeWithinRange(value, GLHCK_INDEX_BYTE))
+      itype = GLHCK_INDEX_BYTE;
+   else if (glhckIndexTypeWithinRange(value, GLHCK_INDEX_SHORT))
+      itype = GLHCK_INDEX_SHORT;
+
+   return itype;
+}
+
+/* \brief get maxium precision for vertex */
+GLHCKAPI float glhckVertexTypeMaxPrecision(glhckGeometryVertexType type)
+{
+   switch (type) {
+      case GLHCK_VERTEX_V3B:
+      case GLHCK_VERTEX_V2B:
+         return CHAR_MAX;
+
+      case GLHCK_VERTEX_V3S:
+      case GLHCK_VERTEX_V2S:
+         return SHRT_MAX;
+
+      case GLHCK_VERTEX_V3F:
+      case GLHCK_VERTEX_V2F:
+         break;
+
+      default:
+         break;
+   }
+
+   /* default */
+   return 0;
+}
+
 /* \brief get string for vertex precision type */
 GLHCKAPI const char* glhckVertexTypeString(glhckGeometryVertexType type)
 {
@@ -605,6 +686,50 @@ GLHCKAPI const char* glhckVertexTypeString(glhckGeometryVertexType type)
 
    /* default */
    return "GLHCK_VERTEX_NONE";
+}
+
+/* \brief get v2 counterpart of the vertexdata */
+GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV2Counterpart(glhckGeometryVertexType type)
+{
+   switch (type) {
+      case GLHCK_VERTEX_V3B:
+      case GLHCK_VERTEX_V2B:
+         return GLHCK_VERTEX_V2B;
+
+      case GLHCK_VERTEX_V3S:
+      case GLHCK_VERTEX_V2S:
+         return GLHCK_VERTEX_V2S;
+
+      case GLHCK_VERTEX_V3F:
+      case GLHCK_VERTEX_V2F:
+         return GLHCK_VERTEX_V2F;
+
+      default:
+         break;
+   }
+
+   /* default */
+   return type;
+}
+
+/* \brief is value withing precision range? */
+GLHCKAPI int glhckVertexTypeWithinRange(float value, glhckGeometryVertexType type)
+{
+   return (value <  glhckVertexTypeMaxPrecision(type) &&
+           value > -glhckVertexTypeMaxPrecision(type));
+}
+
+/* \brief get optimal vertex type for size */
+GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(size_t width, size_t height)
+{
+   glhckGeometryVertexType vtype = GLHCK_VERTEX_V3F;
+   if (glhckVertexTypeWithinRange(width, GLHCK_VERTEX_V3B) &&
+         glhckVertexTypeWithinRange(height, GLHCK_VERTEX_V3B))
+      vtype = GLHCK_VERTEX_V3B;
+   else if (glhckVertexTypeWithinRange(width, GLHCK_VERTEX_V3S) &&
+         glhckVertexTypeWithinRange(height, GLHCK_VERTEX_V3S))
+      vtype = GLHCK_VERTEX_V3S;
+   return vtype;
 }
 
 /* \brief does vertex type have normal? */

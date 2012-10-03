@@ -547,9 +547,17 @@ GLHCKAPI void glhckPrintTextureQueue(void);
 /* vertexdata geometry */
 GLHCKAPI glhckIndexi glhckIndexTypeMaxPrecision(glhckGeometryIndexType type);
 GLHCKAPI const char* glhckIndexTypeString(glhckGeometryIndexType type);
+GLHCKAPI int glhckIndexTypeWithinRange(unsigned int value, glhckGeometryIndexType type);
+GLHCKAPI glhckGeometryIndexType glhckIndexTypeForValue(unsigned int value);
+
+GLHCKAPI float glhckVertexTypeMaxPrecision(glhckGeometryVertexType type);
 GLHCKAPI const char* glhckVertexTypeString(glhckGeometryVertexType type);
+GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV2Counterpart(glhckGeometryVertexType type);
+GLHCKAPI int glhckVertexTypeWithinRange(float value, glhckGeometryVertexType type);
+GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(size_t width, size_t height);
 GLHCKAPI int glhckVertexTypeHasNormal(glhckGeometryVertexType type);
 GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type);
+
 GLHCKAPI void glhckGeometryVertexDataForIndex(
       glhckGeometry *geometry, glhckIndexi ix,
       glhckVector3f *vertex, glhckVector3f *normal,

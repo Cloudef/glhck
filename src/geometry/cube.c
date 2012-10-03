@@ -10,6 +10,7 @@
 GLHCKAPI _glhckObject* glhckCubeNew(kmScalar size)
 {
    _glhckObject *object;
+   glhckGeometryVertexType vtype;
 
    const glhckImportVertexData vertices[] = {
       {
@@ -158,9 +159,13 @@ GLHCKAPI _glhckObject* glhckCubeNew(kmScalar size)
    if (!(object = glhckObjectNew()))
       goto fail;
 
+   /* choose internal vertexdata precision */
+   vtype = _GLHCKlibrary.render.globalVertexType;
+   if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V3B;
+
    /* insert vertices to object's geometry */
    if (glhckObjectInsertVertices(object, LENGTH(vertices),
-            GLHCK_VERTEX_V3B, &vertices[0]) != RETURN_OK)
+            vtype, &vertices[0]) != RETURN_OK)
       goto fail;
 
    /* assigning indices would be waste

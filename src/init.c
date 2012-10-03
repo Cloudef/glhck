@@ -180,8 +180,9 @@ GLHCKAPI int glhckInit(int argc, char **argv)
    /* init trace system */
    _glhckTraceInit(argc, _argv);
 
-   /* set default global precision for glhck */
-   glhckSetGlobalPrecision(GLHCK_INDEX_INTEGER, GLHCK_VERTEX_V3F);
+   /* set default global precision for glhck to use with geometry
+    * NOTE: _NONE means that glhck and importers choose the best precision. */
+   glhckSetGlobalPrecision(GLHCK_INDEX_NONE, GLHCK_VERTEX_NONE);
 
    atexit(glhckTerminate);
    _glhckInitialized = 1;
