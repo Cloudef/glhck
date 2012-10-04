@@ -130,10 +130,10 @@ int main(int argc, char **argv)
 #  define OCTM_PATH "example/media/ambulance/ambulance.ctm"
 #endif
 
-   if ((cube = glhckModelNew(MMD_PATH, 1.0f))) {
+   if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
-   } else if ((cube = glhckModelNew(OCTM_PATH, 5.0f))) {
+   } else if ((cube = glhckModelNewEx(OCTM_PATH, 5.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {
