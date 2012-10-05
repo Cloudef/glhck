@@ -3,7 +3,6 @@ PROJECT(glhck)
 
 SET(PROJECT_NAME "GLhck Rendering Engine")
 SET(GLUE_DESCRIPTION "A dead simple OpenGL/GLES rendering engine")
-OPTION(GLHCK_USE_NETWORK "Build with network transparency support" OFF)
 OPTION(GLHCK_USE_GLES1 "Build for OpenGL ES 1.x" OFF)
 OPTION(GLHCK_USE_GLES2 "Build for OpenGL ES 2.x" OFF)
 OPTION(GLHCK_KAZMATH_FLOAT "Defines kmScalar as float" ON)
@@ -78,11 +77,6 @@ ENDIF (PANDORA)
 # Use floating point math on kazmath
 IF (GLHCK_KAZMATH_FLOAT)
    ADD_DEFINITIONS(-DGLHCK_KAZMATH_FLOAT -DUSE_SINGLE_PRECISION)
-ENDIF ()
-
-# Use network transparency
-IF (GLHCK_USE_NETWORK)
-   ADD_DEFINITIONS(-DGLHCK_USE_NETWORK)
 ENDIF ()
 
 # These are propably temporary

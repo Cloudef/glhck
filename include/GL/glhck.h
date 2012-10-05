@@ -571,14 +571,6 @@ GLHCKAPI void glhckGeometryTransformCoordinates(
       glhckGeometry *geometry, const glhckRect *transformed, short degrees);
 GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb);
 
-/* network */
-GLHCKAPI int glhckServerInit(const char *host, int port);
-GLHCKAPI void glhckServerUpdate(void);
-GLHCKAPI void glhckServerKill(void);
-GLHCKAPI int glhckClientInit(const char *host, int port);
-GLHCKAPI int glhckClientUpdate(void);
-GLHCKAPI void glhckClientKill(void);
-
 /* define cleanup */
 #ifdef GLHCK_WINGDIAPI_DEFINED
 #  undef WINGDIAPI
