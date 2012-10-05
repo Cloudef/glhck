@@ -1,8 +1,9 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(glhck)
+SET(GLHCK_NAME "GLhck Rendering Engine")
+SET(GLHCK_DESCRIPTION "A dead simple OpenGL/GLES rendering engine")
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${glhck_SOURCE_DIR}/CMake/modules)
 
-SET(PROJECT_NAME "GLhck Rendering Engine")
-SET(GLUE_DESCRIPTION "A dead simple OpenGL/GLES rendering engine")
 OPTION(GLHCK_USE_GLES1 "Build for OpenGL ES 1.x" OFF)
 OPTION(GLHCK_USE_GLES2 "Build for OpenGL ES 2.x" OFF)
 OPTION(GLHCK_KAZMATH_FLOAT "Defines kmScalar as float" ON)
@@ -84,7 +85,6 @@ ENDIF ()
 
 IF (GLHCK_USE_GLES)
    # GLES 1.x
-   SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${glhck_SOURCE_DIR}/CMake/modules)
    ADD_DEFINITIONS(-DGLHCK_USE_GLES1)
    FIND_PACKAGE(EGL REQUIRED)
    LIST(APPEND INCLUDE_DIR ${EGL_INCLUDE_DIR})
@@ -107,8 +107,7 @@ ENDIF ()
 
 
 # Build checks
-# Abort git submodule init && git submodule update
-# has not been ran.
+# Abort git submodule init && git submodule update has not been ran.
 SET(SUBMODULE_ERROR "Run 'git submodule update --init --recursive' update first.")
 IF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/kazmath/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
@@ -116,12 +115,10 @@ ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glfw/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
 ENDIF ()
 
-# Throw the error, if unix try fix it first
+# Throw the error
 IF (SUBMODULE_ERROR_THROW)
    MESSAGE(FATAL_ERROR ${SUBMODULE_ERROR})
 ENDIF ()
-
-SET(GLHCK_INCLUDE_DIR ${glhck_SOURCE_DIR}/include)
 
 # Do it (tm)
 ADD_SUBDIRECTORY(lib)
@@ -138,13 +135,13 @@ ELSEIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long")
 ENDIF ()
 
-# Do glhck itself
+# Do glhck
 ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(3rdparty)
 ADD_SUBDIRECTORY(example)
-# TODO: add real tests
+# FIXME: add real tests
 
 # Install
-INSTALL(FILES include/GL/glhck.h DESTINATION include/GL)
+INSTALL(FILES include/glhck/glhck.h DESTINATION include/glhck)
 INSTALL(DIRECTORY example/media DESTINATION ./example)
 FILE(COPY example/media DESTINATION ./example)

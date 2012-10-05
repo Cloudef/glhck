@@ -14,10 +14,10 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
    switch(camera->view.projectionType)
    {
       case GLHCK_PROJECTION_ORTHOGRAPHIC:
-         w = camera->view.viewport.z > camera->view.viewport.w ? 1 :
-               camera->view.viewport.z / camera->view.viewport.w;
-         h = camera->view.viewport.z < camera->view.viewport.w ? 1 :
-               camera->view.viewport.w / camera->view.viewport.z;
+         w = camera->view.viewport.w > camera->view.viewport.h ? 1 :
+               camera->view.viewport.w / camera->view.viewport.h;
+         h = camera->view.viewport.w < camera->view.viewport.h ? 1 :
+               camera->view.viewport.h / camera->view.viewport.w;
 
          distanceFromZero = sqrtf(camera->object->view.translation.x * camera->object->view.translation.x +
                                   camera->object->view.translation.y * camera->object->view.translation.y +
@@ -35,7 +35,7 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
          kmMat4PerspectiveProjection(
                &camera->view.projection,
                camera->view.fov,
-               camera->view.viewport.z/camera->view.viewport.w,
+               camera->view.viewport.w/camera->view.viewport.h,
                camera->view.near, camera->view.far);
          break;
    }
@@ -78,8 +78,8 @@ void _glhckCameraWorldUpdate(int width, int height)
       glhckCameraViewportf(camera,
             camera->view.viewport.x,
             camera->view.viewport.y,
-            camera->view.viewport.z + diffw,
-            camera->view.viewport.w + diffh);
+            camera->view.viewport.w + diffw,
+            camera->view.viewport.h + diffh);
    }
 
    /* no camera binded, upload default projection */
@@ -93,7 +93,9 @@ void _glhckCameraWorldUpdate(int width, int height)
    }
 }
 
-/* public api */
+/***
+ * public api
+ ***/
 
 /* \brief allocate new camera */
 GLHCKAPI glhckCamera* glhckCameraNew(void)
@@ -195,8 +197,8 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
       _GLHCKlibrary.render.api.viewport(
             camera->view.viewport.x,
             camera->view.viewport.y,
-            camera->view.viewport.z,
-            camera->view.viewport.w);
+            camera->view.viewport.w,
+            camera->view.viewport.h);
 
    if (camera->view.update || camera->object->view.update) {
       _glhckCameraViewMatrix(camera);
@@ -220,9 +222,9 @@ GLHCKAPI void glhckCameraReset(glhckCamera *camera)
    kmVec3Fill(&camera->object->view.rotation, 0, 0, 0);
    kmVec3Fill(&camera->object->view.target, 0, 0, 0);
    kmVec3Fill(&camera->object->view.translation, 0, 0, 0);
-   kmVec4Fill(&camera->view.viewport, 0, 0,
-         _GLHCKlibrary.render.width,
-         _GLHCKlibrary.render.height);
+   memset(&camera->view.viewport, 0, sizeof(glhckRect));
+   camera->view.viewport.w = _GLHCKlibrary.render.width;
+   camera->view.viewport.h = _GLHCKlibrary.render.height;
 
    _glhckCameraProjectionMatrix(camera);
 }
@@ -298,28 +300,27 @@ GLHCKAPI void glhckCameraRange(glhckCamera *camera,
 }
 
 /* \brief set camera's viewport */
-GLHCKAPI void glhckCameraViewport(glhckCamera *camera, const kmVec4 *viewport)
+GLHCKAPI void glhckCameraViewport(glhckCamera *camera, const glhckRect *viewport)
 {
-   CALL(1, "%p, "VEC4S, camera, VEC4(viewport));
+   CALL(1, "%p, "RECTS, camera, RECT(viewport));
    assert(camera);
 
    if (camera->view.viewport.x == viewport->x &&
        camera->view.viewport.y == viewport->y &&
-       camera->view.viewport.z == viewport->z &&
-       camera->view.viewport.w == viewport->w)
+       camera->view.viewport.w == viewport->w &&
+       camera->view.viewport.h == viewport->h)
       return;
 
-   kmVec4Assign(&camera->view.viewport, viewport);
+   memcpy(&camera->view.viewport, viewport, sizeof(glhckRect));
    _glhckCameraProjectionMatrix(camera);
    camera->view.update = 1;
 }
 
 /* \brief set camera's viewport (kmScalar) */
 GLHCKAPI void glhckCameraViewportf(glhckCamera *camera,
-      const kmScalar x, const kmScalar y,
-      const kmScalar w, const kmScalar h)
+      int x, int y, int w, int h)
 {
-   const kmVec4 viewport = { x, y, w, h };
+   const glhckRect viewport = { x, y, w, h };
    glhckCameraViewport(camera, &viewport);
 }
 

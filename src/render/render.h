@@ -1,5 +1,5 @@
-#ifndef __render_h__
-#define __render_h__
+#ifndef __glhck_render_h__
+#define __glhck_render_h__
 
 /* helper macros */
 #define GLHCK_RENDER_INIT(x)        _GLHCKlibrary.render.name  = x
@@ -9,6 +9,6 @@
 /* renderers */
 void _glhckRenderOpenGL(void);
 
-#endif /* __render_h__ */
+#endif /* __glhck_render_h__ */
 
 /* vim: set ts=8 sw=3 tw=0 :*/

@@ -1,11 +1,22 @@
 #include "internal.h"
-#include "helper/vertexdata.h"
+#include <limits.h> /* for type limits */
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_VDATA
 
 /* This file contains all the methods that access
  * object's internal vertexdata, since the GLHCK object's
  * internal vertexdata structure is quite complex */
+
+/* conversion constants for vertexdata conversion */
+#define GLHCK_BYTE_CMAGIC  CHAR_MAX
+#define GLHCK_BYTE_VMAGIC  UCHAR_MAX - CHAR_MAX
+#define GLHCK_BYTE_VBIAS   CHAR_MAX / (UCHAR_MAX - 1.0f)
+#define GLHCK_BYTE_VSCALE  UCHAR_MAX - 1.0f
+
+#define GLHCK_SHORT_CMAGIC  SHRT_MAX
+#define GLHCK_SHORT_VMAGIC  USHRT_MAX - SHRT_MAX
+#define GLHCK_SHORT_VBIAS   SHRT_MAX / (USHRT_MAX - 1.0f)
+#define GLHCK_SHORT_VSCALE  USHRT_MAX - 1.0f
 
 /* 1. 2D vector conversion function name
  * 2. 3D vector conversion function name
@@ -411,8 +422,6 @@ int _glhckGeometryInsertVertices(
 {
    void *data = NULL;
    glhckVertexData vd;
-   glhckVector3f vmin, vmax,
-                 nmin, nmax, mmax;
    CALL(0, "%p, %zu, %d, %p", geometry, memb, type, vertices);
    assert(geometry);
 
@@ -571,7 +580,9 @@ short _glhckGeometryFree(glhckGeometry *geometry)
    return 0;
 }
 
-/* public api */
+/***
+ * public api
+ ***/
 
 /* \brief return the maxium index precision allowed for object */
 GLHCKAPI glhckIndexi glhckIndexTypeMaxPrecision(glhckGeometryIndexType type)

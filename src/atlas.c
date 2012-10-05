@@ -46,7 +46,9 @@ static void _glhckAtlasDropRects(_glhckAtlas *atlas)
    }
 }
 
-/* public api */
+/***
+ * public api
+ ***/
 
 /* \brief create new atlas object */
 GLHCKAPI glhckAtlas* glhckAtlasNew(void)
@@ -190,7 +192,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
 {
    int width, height, maxTexSize;
    unsigned short count;
-   kmVec4 old_clear;
+   glhckColorb old_clear;
    kmMat4 old_projection;
    _glhckTexturePacker *tp;
    _glhckAtlasRect *rect;
@@ -254,7 +256,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    _GLHCKlibrary.render.api.setProjection(&ortho);
 
    /* set clear color */
-   old_clear = _GLHCKlibrary.render.draw.clearColor;
+   memcpy(&old_clear, &_GLHCKlibrary.render.draw.clearColor, sizeof(glhckColorb));
    _GLHCKlibrary.render.api.setClearColor(0,0,0,0);
 
    glhckRttBegin(rtt);
@@ -285,12 +287,12 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    glhckRttEnd(rtt);
 
    /* restore old projection && size
-    * TODO: get size from renderer */
+    * FIXME: get size from renderer */
    _GLHCKlibrary.render.api.setProjection(&old_projection);
    _GLHCKlibrary.render.api.viewport(0, 0, _GLHCKlibrary.render.width,
          _GLHCKlibrary.render.height);
    _GLHCKlibrary.render.api.setClearColor(
-         old_clear.x, old_clear.y, old_clear.z, old_clear.w);
+         old_clear.r, old_clear.g, old_clear.b, old_clear.a);
 
    /* free plane */
    glhckObjectFree(plane);
@@ -381,7 +383,7 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTextur
    short degrees;
    glhckRect transformed;
    kmVec2 center = { 0.5f, 0.5f };
-   CALL(2, "%p, %p, "VEC2S", "VEC2S, atlas, texture, VEC2(in), VEC2(out));
+   CALL(2, "%p, %p, %p, %p", atlas, texture, in, out);
 
    /* only one texture */
    if (_glhckAtlasNumTextures(atlas)==1) {

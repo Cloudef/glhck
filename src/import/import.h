@@ -1,5 +1,5 @@
-#ifndef __import_h__
-#define __import_h__
+#ifndef __glhck_import_h__
+#define __glhck_import_h__
 
 /* Import struct for post processing */
 typedef struct _glhckImagePostProcessStruct
@@ -84,6 +84,6 @@ int _glhckIsValidImageDimension(unsigned long long w,  unsigned long long h);
 /* \brief returns tristripped indecies from triangle indecies */
 unsigned int* _glhckTriStrip(const unsigned int *indices, size_t num_indices, size_t *out_num_indices);
 
-#endif /* __import_h__ */
+#endif /* __glhck_import_h__ */
 
 /* vim: set ts=8 sw=3 tw=0 :*/

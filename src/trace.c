@@ -143,7 +143,9 @@ void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLev
    _glhckDebugHook(file, line, func, level, buffer);
 }
 
-/* public api */
+/***
+ * public api
+ ***/
 
 /* \brief set debug hook */
 GLHCKAPI void glhckSetDebugHook(glhckDebugHookFunc func)

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "GL/glfw3.h"
-#include "GL/glhck.h"
+#include "glhck/glhck.h"
 
 static int RUNNING = 0;
 static int WIDTH = 800, HEIGHT = 480;

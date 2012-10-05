@@ -56,11 +56,11 @@ ENDIF ()
 
 # include directories
 INCLUDE_DIRECTORIES(
-  ${GLHCK_INCLUDE_DIR}
-  ${kazmath_SOURCE_DIR}/src
-  ${actc_SOURCE_DIR}/src
-  ${IMGHCK_SOURCE_DIR}/src
-  ${OPT_INCL}
+   ${glhck_SOURCE_DIR}/include
+   ${kazmath_SOURCE_DIR}/src
+   ${actc_SOURCE_DIR}/src
+   ${IMGHCK_SOURCE_DIR}/src
+   ${OPT_INCL}
 )
 
 ADD_DEFINITIONS(-fPIC)

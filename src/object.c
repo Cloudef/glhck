@@ -1,5 +1,4 @@
 #include "internal.h"
-#include "helper/vertexdata.h"
 #include <assert.h>  /* for assert */
 
 /* tracing channel for this file */
@@ -180,7 +179,9 @@ void _glhckObjectSetFile(_glhckObject *object, const char *file)
    if (file) object->file = _glhckStrdup(file);
 }
 
-/* public api */
+/***
+ * public api
+ ***/
 
 /* \brief new object */
 GLHCKAPI glhckObject *glhckObjectNew(void)

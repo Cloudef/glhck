@@ -1,5 +1,5 @@
 #include "internal.h"
-#include "helper/vertexdata.h"
+#include <limits.h> /* for SHRT_MAX */
 #include <stdio.h>
 
 /* traching channel for this file */
@@ -310,7 +310,9 @@ static int _getQuad(_glhckText *text, __GLHCKtextFont *font, __GLHCKtextGlyph *g
    return RETURN_OK;
 }
 
-/* public api */
+/***
+ * public api
+ ***/
 
 /* \brief create new text stack */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
@@ -345,7 +347,7 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    text->itw = (float)1.0f/cachew;
    text->ith = (float)1.0f/cacheh;
    text->tcache = texture;
-   text->textureRange = GLHCK_SHORT_CMAGIC;
+   text->textureRange = SHRT_MAX;
 
    /* default color */
    glhckTextColor(text, 255, 255, 255, 255);

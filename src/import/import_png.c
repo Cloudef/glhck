@@ -1,7 +1,6 @@
 /* PNG loader taken from imlib2 */
 
 #include "../internal.h"
-#include "../helper/imagedata.h"
 #include "import.h"
 #include <stdio.h>
 #include <png.h>

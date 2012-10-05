@@ -240,11 +240,16 @@ fbo_fail:
 }
 
 /* \brief set clear color */
-static void setClearColor(float r, float g, float b, float a)
+static void setClearColor(char r, char g, char b, char a)
 {
    TRACE(1);
-   GL_CALL(glClearColor(r, g, b, a));
-   kmVec4Fill(&_GLHCKlibrary.render.draw.clearColor, r, g, b, a);
+   float fr = (float)r/255, fg = (float)g/255, fb = (float)b/255;
+   float fa = (float)a/255;
+
+   GL_CALL(glClearColor(fr, fg, fb, fa));
+   _GLHCKlibrary.render.draw.clearColor.r = r;
+   _GLHCKlibrary.render.draw.clearColor.g = g;
+   _GLHCKlibrary.render.draw.clearColor.b = b;
 }
 
 
@@ -253,7 +258,7 @@ static void clear(void)
 {
    TRACE(2);
 
-   /* clear buffers, TODO: keep track of em */
+   /* clear buffers, FIXME: keep track of em */
    GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
    /* reset stats */
@@ -460,7 +465,7 @@ static inline void materialState(const _glhckObject *object)
    }
 
    /* disable culling for strip geometry
-    * TODO: Fix the stripping to get rid of this */
+    * FIXME: Fix the stripping to get rid of this */
    if (GL_HAS_STATE(GL_STATE_CULL) &&
        object->geometry->type == GLHCK_TRIANGLE_STRIP) {
       GL_CALL(glDisable(GL_CULL_FACE));

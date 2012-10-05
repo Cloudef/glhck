@@ -1,18 +1,18 @@
-#ifndef _internal_h_
-#define _internal_h_
+#ifndef __glhck_internal_h__
+#define __glhck_internal_h__
 
-#if defined(_init_c_)
+#if defined(_glhck_c_)
 #  define GLHCKGLOBAL
 #else
 #  define GLHCKGLOBAL extern
 #endif
 
-#include "GL/glhck.h"
+#include "glhck/glhck.h"
+#include "helper/common.h" /* for macros, etc */
 #include <float.h>  /* for float   */
-#include <limits.h> /* for limits  */
 #include <string.h> /* for strrchr */
 
-#if defined(_init_c_)
+#if defined(_glhck_c_)
    char _glhckInitialized = 0;
 #else
    GLHCKGLOBAL char _glhckInitialized;
@@ -66,7 +66,7 @@ typedef enum _glhckReturnValue {
    RETURN_FALSE   =  !RETURN_TRUE
 } _glhckReturnValue;
 
-/* glhck object structs */
+/* texture container */
 typedef struct _glhckTexture {
    char *file;
    unsigned int object, flags, format, outFormat;
@@ -77,10 +77,20 @@ typedef struct _glhckTexture {
    struct _glhckTexture *next;
 } _glhckTexture;
 
+/* texture packer container */
+typedef struct _glhckTexturePacker {
+   unsigned short debug_count, texture_index, texture_count;
+   int longest_edge, total_area;
+   struct tpNode *free_list;
+   struct tpTexture *textures;
+} _glhckTexturePacker;
+
+/* representation of packed area */
 typedef struct _glhckAtlasArea {
    int x1, y1, x2, y2, rotated;
 } _glhckAtlasArea;
 
+/* representation of packed texture */
 typedef struct _glhckAtlasRect {
    struct _glhckTexture *texture;
    unsigned short index;
@@ -88,6 +98,7 @@ typedef struct _glhckAtlasRect {
    struct _glhckAtlasRect *next;
 } _glhckAtlasRect;
 
+/* atlas container */
 typedef struct _glhckAtlas {
    struct _glhckAtlasRect *rect;
    struct _glhckTexture *texture;
@@ -95,6 +106,7 @@ typedef struct _glhckAtlas {
    struct _glhckAtlas *next;
 } _glhckAtlas;
 
+/* rtt container */
 typedef struct _glhckRtt {
    unsigned int object;
    struct _glhckTexture *texture;
@@ -102,27 +114,24 @@ typedef struct _glhckRtt {
    struct _glhckRtt *next;
 } _glhckRtt;
 
-typedef struct __GLHCKcoordTransform {
-   short degrees;
-   kmVec4 transform;
-} __GLHCKcoordTransform;
-
+/* object's view container */
 typedef struct __GLHCKobjectView {
    kmVec3 translation, target, rotation, scaling;
    kmMat4 matrix;
    kmAABB bounding;
    kmAABB aabb; /* transformed bounding (axis aligned) */
    kmAABB obb;  /* transformed bounding (oriented) */
-   struct __GLHCKcoordTransform *transformedCoordinates;
    char update;
 } __GLHCKobjectView;
 
+/* material container */
 typedef struct __GLHCKobjectMaterial {
    unsigned int flags;
    struct glhckColorb color;
    struct _glhckTexture *texture;
 } __GLHCKobjectMaterial;
 
+/* object container */
 typedef void (*__GLHCKobjectDraw) (const struct _glhckObject *object);
 typedef struct _glhckObject {
    char *file;
@@ -137,18 +146,18 @@ typedef struct _glhckObject {
 #define GLHCK_TEXT_MAX_ROWS   128
 #define GLHCK_TEXT_VERT_COUNT (6*128)
 
-/* \brief row data of texture */
+/* row data of text texture */
 typedef struct __GLHCKtextTextureRow {
    short x, y, h;
 } __GLHCKtextTextureRow;
 
-/* \brief text geometry data */
+/* representation of text geometry */
 typedef struct __GLHCKtextGeometry {
    struct glhckVertexData2s vertexData[GLHCK_TEXT_VERT_COUNT];
    size_t vertexCount;
 } __GLHCKtextGeometry;
 
-/* \brief special texture for text */
+/* text texture container */
 typedef struct __GLHCKtextTexture {
    unsigned int object, numRows, format;
    size_t size;
@@ -157,7 +166,7 @@ typedef struct __GLHCKtextTexture {
    struct __GLHCKtextTexture *next;
 } __GLHCKtextTexture;
 
-/* \brief text object */
+/* text container */
 typedef struct _glhckText {
    int tw, th;
    float itw, ith;
@@ -168,15 +177,17 @@ typedef struct _glhckText {
    struct _glhckText *next;
 } _glhckText;
 
+/* camera's view container */
 typedef struct __GLHCKcameraView {
    glhckProjectionType projectionType;
    kmScalar near, far, fov;
    kmVec3 upVector;
-   kmVec4 viewport;
    kmMat4 view, projection, mvp;
+   glhckRect viewport;
    char update;
 } __GLHCKcameraView;
 
+/* camera container */
 typedef struct _glhckCamera {
    struct _glhckObject *object;
    struct __GLHCKcameraView view;
@@ -185,13 +196,12 @@ typedef struct _glhckCamera {
    struct _glhckCamera *next;
 } _glhckCamera;
 
-/* library global data */
 /* render api */
 typedef void (*__GLHCKrenderAPIterminate)        (void);
 typedef void (*__GLHCKrenderAPIviewport)         (int x, int y, int width, int height);
 typedef void (*__GLHCKrenderAPIsetProjection)    (const kmMat4 *m);
 typedef const kmMat4* (*__GLHCKrenderAPIgetProjection)  (void);
-typedef void (*__GLHCKrenderAPIsetClearColor)    (float r, float g, float b, float a);
+typedef void (*__GLHCKrenderAPIsetClearColor)    (char r, char g, char b, char a);
 typedef void (*__GLHCKrenderAPIclear)            (void);
 typedef void (*__GLHCKrenderAPIobjectDraw)       (const _glhckObject *object);
 typedef void (*__GLHCKrenderAPItextDraw)         (const _glhckText *text);
@@ -224,6 +234,7 @@ typedef int (*__GLHCKrenderAPIlinkFramebufferWithTexture) (unsigned int object, 
 /* parameters */
 typedef void (*__GLHCKrenderAPIgetIntegerv) (unsigned int pname, int *params);
 
+/* glhck render api */
 typedef struct __GLHCKrenderAPI {
    __GLHCKrenderAPIterminate        terminate;
    __GLHCKrenderAPIviewport         viewport;
@@ -251,34 +262,40 @@ typedef struct __GLHCKrenderAPI {
    __GLHCKrenderAPIgetIntegerv getIntegerv;
 } __GLHCKrenderAPI;
 
+/* glhck texture state */
 typedef struct __GLHCKtexture {
    unsigned int bind;
 } __GLHCKtexture;
 
+/* glhck camera state */
 typedef struct __GLHCKcamera {
    struct _glhckCamera *bind;
 } __GLHCKcamera;
 
 #define GLHCK_QUEUE_ALLOC_STEP 15
 
+/* glhck object queue */
 typedef struct __GLHCKobjectQueue {
    unsigned int allocated, count;
    struct _glhckObject **queue;
 } __GLHCKobjectQueue;
 
+/* glhck texture queue */
 typedef struct __GLHCKtextureQueue {
    unsigned int allocated, count;
    struct _glhckTexture **queue;
 } __GLHCKtextureQueue;
 
+/* glhck render draw state */
 typedef struct __GLHCKrenderDraw {
-   kmVec4 clearColor;
+   glhckColorb clearColor;
    unsigned int texture, drawCount;
    struct _glhckCamera  *camera;
    struct __GLHCKobjectQueue objects;
    struct __GLHCKtextureQueue textures;
 } __GLHCKrenderDraw;
 
+/* glhck render properties */
 typedef struct __GLHCKrender {
    int width, height;
    const char *name;
@@ -290,6 +307,7 @@ typedef struct __GLHCKrender {
    glhckGeometryVertexType globalVertexType;
 } __GLHCKrender;
 
+/* glhck world */
 typedef struct __GLHCKworld {
    struct _glhckObject  *olist;
    struct _glhckCamera  *clist;
@@ -299,17 +317,20 @@ typedef struct __GLHCKworld {
    struct _glhckText    *tflist;
 } __GLHCKworld;
 
+/* glhck trace channel */
 typedef struct __GLHCKtraceChannel {
    const char *name;
    char active;
 } __GLHCKtraceChannel;
 
+/* glhck tracing */
 typedef struct __GLHCKtrace {
    unsigned char level;
    struct __GLHCKtraceChannel *channel;
 } __GLHCKtrace;
 
 #ifndef NDEBUG
+/* glhck allocation tracing */
 typedef struct __GLHCKalloc {
    const char *channel;
    void *ptr;
@@ -318,6 +339,7 @@ typedef struct __GLHCKalloc {
 } __GLHCKalloc;
 #endif
 
+/* glhck global state */
 typedef struct __GLHCKlibrary {
    struct __GLHCKrender render;
    struct __GLHCKworld world;
@@ -328,60 +350,11 @@ typedef struct __GLHCKlibrary {
 } __GLHCKlibrary;
 
 /* define global object */
-GLHCKGLOBAL struct __GLHCKlibrary _GLHCKlibrary;
-
-typedef struct _glhckTexturePacker {
-   unsigned short debug_count, texture_index, texture_count;
-   int longest_edge, total_area;
-   struct tpNode *free_list;
-   struct tpTexture *textures;
-} _glhckTexturePacker;
-
-/* helpful macros */
-#define VEC2(v)   (v)?(v)->x:-1, (v)?(v)->y:-1
-#define VEC2S     "vec2[%f, %f]"
-#define VEC3(v)   (v)?(v)->x:-1, (v)?(v)->y:-1, (v)?(v)->z:-1
-#define VEC3S     "vec3[%f, %f, %f]"
-#define VEC4(v)   (v)?(v)->x:-1, (v)?(v)->y:-1, (v)?(v)->z:-1, (v)?(v)->w:-1
-#define VEC4S     "vec3[%f, %f, %f, %f]"
-
-/* call prioritory for free calls to reference counted objects.
- * use this on CALL(), function call on reference counted object's free function. */
-#define FREE_CALL_PRIO(o) o?o->refCounter==1?0:3:0
-#define FREE_RET_PRIO(o)  o?3:0
-
-/* insert to glhck world */
-#define _glhckWorldInsert(list, object, cast)   \
-{                                               \
-   cast i;                                      \
-   if (!(i = _GLHCKlibrary.world.list))         \
-      _GLHCKlibrary.world.list = object;        \
-   else {                                       \
-      for (; i && i->next; i = i->next);        \
-      i->next = object;                         \
-   }                                            \
-}
-
-/* remove from glhck world */
-#define _glhckWorldRemove(list, object, cast)      \
-{                                                  \
-   cast i;                                         \
-   if (object == (i = _GLHCKlibrary.world.list))   \
-      _GLHCKlibrary.world.list = object->next;     \
-   else {                                          \
-      for (; i && i->next != object; i = i->next); \
-      if (i) i->next = object->next;               \
-      else _GLHCKlibrary.world.list = NULL;        \
-   }                                               \
-}
-
-/* if exists then perform function and set NULL
- * used mainly to shorten if (x) free(x); x = NULL; */
-#define IFDO(f, x) { if (x) f(x); x = NULL; }
-
-/* perform function and set NULL (no checks)
- * used mainly to shorten free(x); x = NULL; */
-#define NULLDO(f, x) { f(x); x = NULL; }
+#if defined(_glhck_c_)
+   struct __GLHCKlibrary _GLHCKlibrary;
+#else
+   GLHCKGLOBAL struct __GLHCKlibrary _GLHCKlibrary;
+#endif
 
 /* tracking allocation macros */
 #define _glhckMalloc(x)    __glhckMalloc(GLHCK_CHANNEL, x)
@@ -395,13 +368,14 @@ typedef struct _glhckTexturePacker {
 #define TRACE_FMT       "\2%4d\1: \5%-20s \4%s\2()"
 #define CALL_FMT(fmt)   "\2%4d\1: \5%-20s \4%s\2(\5"fmt"\2)"
 #define RET_FMT(fmt)    "\2%4d\1: \5%-20s \4%s\2()\3 => \2(\5"fmt"\2)"
-
 #define DEBUG(level, fmt, ...)   _glhckPassDebug(THIS_FILE, __LINE__, __func__, level, fmt, ##__VA_ARGS__)
 #define TRACE(level)             _glhckTrace(level, GLHCK_CHANNEL, __func__, TRACE_FMT,      __LINE__, THIS_FILE, __func__)
 #define CALL(level, args, ...)   _glhckTrace(level, GLHCK_CHANNEL, __func__, CALL_FMT(args), __LINE__, THIS_FILE, __func__, ##__VA_ARGS__)
 #define RET(level, args, ...)    _glhckTrace(level, GLHCK_CHANNEL, __func__, RET_FMT(args),  __LINE__, THIS_FILE, __func__, ##__VA_ARGS__)
 
-/* private api */
+/***
+ * private api
+ ***/
 
 /* internal allocation functions */
 void* __glhckMalloc(const char *channel, size_t size);
@@ -473,6 +447,6 @@ int _glhckGeometryInsertIndices(
       glhckGeometryIndexType type,
       const glhckImportIndexData *indices);
 
-#endif /* _internal_h_ */
+#endif /* __glhck_internal_h__ */
 
 /* vim: set ts=8 sw=3 tw=0 :*/

@@ -1,4 +1,4 @@
-#define _init_c_
+#define _glhck_c_
 #include "internal.h"
 #include "render/render.h"
 #include <stdlib.h> /* for atexit */
@@ -140,7 +140,9 @@ static void _glhckSetBacktrace(void)
 
 #endif /* NDEBUG */
 
-/* public api */
+/***
+ * public api
+ ***/
 
 /* \brief initialize */
 GLHCKAPI int glhckInit(int argc, char **argv)
@@ -167,7 +169,7 @@ GLHCKAPI int glhckInit(int argc, char **argv)
       _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckTexture*));
    _GLHCKlibrary.render.draw.textures.allocated += GLHCK_QUEUE_ALLOC_STEP;
 
-   /* TODO: change the signal calls in these functions to sigaction's */
+   /* FIXME: change the signal calls in these functions to sigaction's */
 #ifndef NDEBUG
    /* set FPE handler */
    _glhckSetFPE(argc, _argv);
@@ -416,12 +418,12 @@ GLHCKAPI void glhckRender(void)
    tc = textures->count+1;
    oc = objects->count;
 
-   /* TODO: shift queue here */
+   /* FIXME: shift queue here */
    if (oc) {
    }
 
    /* draw opaque objects next,
-    * TODO: this should not be done in texture order,
+    * FIXME: this should not be done in texture order,
     * instead draw from farthest to nearest. (I hate opaque objects) */
    for (ti = 0; ti != tc && oc; ++ti) {
       if (ti < tc-1) {
@@ -456,7 +458,7 @@ GLHCKAPI void glhckRender(void)
       if (!t) break;
    }
 
-   /* TODO: shift queue here if leftovers */
+   /* FIXME: shift queue here if leftovers */
 
    /* good we got no leftovers \o/ */
    if (objects->count) {

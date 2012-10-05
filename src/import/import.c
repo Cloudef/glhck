@@ -332,7 +332,7 @@ fail:
    }                                      \
 }
 
-/* TODO: fix winding of strips (allow using backface culling without artifacts)
+/* FIXME: fix winding of strips (allow using backface culling without artifacts)
  * - if the length of the first part of the strip is odd, the strip must be reversed
  * - to reverse the strip, write it in reverse order. If the position of the original face in this new reversed strip is odd, you’re done. Else replicate the first index.
  */

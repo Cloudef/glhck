@@ -91,7 +91,9 @@ extern "C" {
 #  define GLHCKAPI
 #endif
 
-/* public api below */
+/***
+ * public api
+ ***/
 
 /* texture format */
 #define GLHCK_RED             0x1903
@@ -104,7 +106,7 @@ extern "C" {
 #define GLHCK_RGBA            0x1908
 
 /* compressed texture format */
-/* TODO: check available formats and etc bleh stuff */
+/* FIXME: check available formats and etc bleh stuff */
 #define GLHCK_COMPRESSED_RGB_DXT1  0x83F1
 #define GLHCK_COMPRESSED_RGBA_DXT5 0x83F3
 
@@ -413,10 +415,9 @@ GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(const glhckCamera *camera);
 GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov);
 GLHCKAPI void glhckCameraRange(glhckCamera *camera,
       const kmScalar near, const kmScalar far);
-GLHCKAPI void glhckCameraViewport(glhckCamera *camera, const kmVec4 *viewport);
+GLHCKAPI void glhckCameraViewport(glhckCamera *camera, const glhckRect *viewport);
 GLHCKAPI void glhckCameraViewportf(glhckCamera *camera,
-      const kmScalar x, const kmScalar y,
-      const kmScalar w, const kmScalar h);
+      int x, int y, int w, int h);
 GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *camera);
 
 /* objects */

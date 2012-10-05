@@ -230,7 +230,9 @@ void _glhckFree(void *ptr)
    free(ptr);
 }
 
-/* public api */
+/***
+ * public api
+ ***/
 
 /* \brief output memory usage graph */
 GLHCKAPI void glhckMemoryGraph(void)
