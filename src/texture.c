@@ -382,6 +382,7 @@ GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
          "LUMINANCE ALPHA":"LUMINANCE",
          _glhckNumChannels(texture->format));
 
+#if 0
    /* open for read */
    if (!(f = fopen(path, "wb")))
       goto fail;
@@ -389,6 +390,7 @@ GLHCKAPI int glhckTextureSave(_glhckTexture *texture, const char *path)
    /* dump raw data */
    fwrite(texture->data, 1, texture->size, f);
    NULLDO(fclose, f);
+#endif
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;

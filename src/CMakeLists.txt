@@ -1,5 +1,5 @@
 SET(GLHCK_SRC
-   init.c
+   glhck.c
    alloc.c
    trace.c
    util.c
