@@ -24,7 +24,7 @@ inline void _glhckObjectInsertToQueue(_glhckObject *object)
             sizeof(_glhckObject*));
 
       /* epic fail here */
-      if (objects->queue) return;
+      if (!objects->queue) return;
       objects->allocated += GLHCK_QUEUE_ALLOC_STEP;
    }
 

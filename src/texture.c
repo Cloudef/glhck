@@ -48,7 +48,7 @@ inline void _glhckTextureInsertToQueue(_glhckTexture *texture)
             sizeof(_glhckTexture*));
 
       /* epic fail here */
-      if (textures->queue) return;
+      if (!textures->queue) return;
       textures->allocated += GLHCK_QUEUE_ALLOC_STEP;
    }
 
