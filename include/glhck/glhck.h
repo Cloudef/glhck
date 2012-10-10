@@ -550,11 +550,13 @@ GLHCKAPI void glhckPrintObjectQueue(void);
 GLHCKAPI void glhckPrintTextureQueue(void);
 
 /* vertexdata geometry */
+GLHCKAPI size_t glhckIndexTypeElementSize(glhckGeometryIndexType type);
 GLHCKAPI glhckIndexi glhckIndexTypeMaxPrecision(glhckGeometryIndexType type);
 GLHCKAPI const char* glhckIndexTypeString(glhckGeometryIndexType type);
 GLHCKAPI int glhckIndexTypeWithinRange(unsigned int value, glhckGeometryIndexType type);
 GLHCKAPI glhckGeometryIndexType glhckIndexTypeForValue(unsigned int value);
 
+GLHCKAPI size_t glhckVertexTypeElementSize(glhckGeometryVertexType type);
 GLHCKAPI float glhckVertexTypeMaxPrecision(glhckGeometryVertexType type);
 GLHCKAPI const char* glhckVertexTypeString(glhckGeometryVertexType type);
 GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV2Counterpart(glhckGeometryVertexType type);
@@ -575,9 +577,9 @@ GLHCKAPI void glhckGeometrySetVertexDataForIndex(
 GLHCKAPI void glhckGeometryTransformCoordinates(
       glhckGeometry *geometry, const glhckRect *transformed, short degrees);
 GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb);
-GLHCKAPI void glhckGeometrySetVertices(glhckGeometry *geometry,
+GLHCKAPI int glhckGeometrySetVertices(glhckGeometry *geometry,
       glhckGeometryVertexType type, void *data, size_t memb);
-GLHCKAPI void glhckGeometrySetIndices(glhckGeometry *geometry,
+GLHCKAPI int glhckGeometrySetIndices(glhckGeometry *geometry,
       glhckGeometryIndexType type, void *data, size_t memb);
 
 /* define cleanup */
