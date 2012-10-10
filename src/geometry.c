@@ -307,56 +307,6 @@ static void _glhckGeometryFreeVertices(glhckGeometry *geometry)
    geometry->textureRange = 1.0f;
 }
 
-/* \brief assign vertices to object */
-static void _glhckGeometrySetVertices(glhckGeometry *geometry,
-      glhckGeometryVertexType type, void *data, size_t memb)
-{
-   float textureRange = 1.0f;
-
-   /* free old vertices */
-   _glhckGeometryFreeVertices(geometry);
-
-   /* assign vertices depending on type */
-   switch (type) {
-      case GLHCK_VERTEX_V3B:
-         geometry->vertices.v3b = (glhckVertexData3b*)data;
-         textureRange = GLHCK_BYTE_CMAGIC;
-         break;
-
-      case GLHCK_VERTEX_V2B:
-         geometry->vertices.v2b = (glhckVertexData2b*)data;
-         textureRange = GLHCK_BYTE_CMAGIC;
-         break;
-
-      case GLHCK_VERTEX_V3S:
-         geometry->vertices.v3s = (glhckVertexData3s*)data;
-         textureRange = GLHCK_SHORT_CMAGIC;
-         break;
-
-      case GLHCK_VERTEX_V2S:
-         geometry->vertices.v2s = (glhckVertexData2s*)data;
-         textureRange = GLHCK_SHORT_CMAGIC;
-         break;
-
-      case GLHCK_VERTEX_V3F:
-         geometry->vertices.v3f = (glhckVertexData3f*)data;
-         break;
-
-      case GLHCK_VERTEX_V2F:
-         geometry->vertices.v2f = (glhckVertexData2f*)data;
-         break;
-
-      default:
-         return;
-         break;
-   }
-
-   /* set vertex type */
-   geometry->vertexType   = type;
-   geometry->vertexCount  = memb;
-   geometry->textureRange = textureRange;
-}
-
 /* \brief free indices from object */
 static void _glhckGeometryFreeIndices(glhckGeometry *geometry)
 {
@@ -381,37 +331,6 @@ static void _glhckGeometryFreeIndices(glhckGeometry *geometry)
    /* set index type to none */
    geometry->indexType  = GLHCK_INDEX_NONE;
    geometry->indexCount = 0;
-}
-
-/* \brief assign indices to object */
-static void _glhckGeometrySetIndices(glhckGeometry *geometry,
-      glhckGeometryIndexType type, void *data, size_t memb)
-{
-   /* free old indices */
-   _glhckGeometryFreeIndices(geometry);
-
-   /* assign indices depending on type */
-   switch (type) {
-      case GLHCK_INDEX_BYTE:
-         geometry->indices.ivb = (glhckIndexb*)data;
-         break;
-
-      case GLHCK_INDEX_SHORT:
-         geometry->indices.ivs = (glhckIndexs*)data;
-         break;
-
-      case GLHCK_INDEX_INTEGER:
-         geometry->indices.ivi = (glhckIndexi*)data;
-         break;
-
-      default:
-         return;
-         break;
-   }
-
-   /* set index type */
-   geometry->indexType  = type;
-   geometry->indexCount = memb;
 }
 
 /* \brief insert vertices into object */
@@ -467,7 +386,7 @@ int _glhckGeometryInsertVertices(
 
    /* convert and assign */
    _glhckConvertVertexData(type, vd, vertices, memb, &geometry->bias, &geometry->scale);
-   _glhckGeometrySetVertices(geometry, type, data, memb);
+   glhckGeometrySetVertices(geometry, type, data, memb);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -525,7 +444,7 @@ int _glhckGeometryInsertIndices(
 
    /* convert and assign */
    _glhckConvertIndexData(type, id, indices, memb);
-   _glhckGeometrySetIndices(geometry, type, data, memb);
+   glhckGeometrySetIndices(geometry, type, data, memb);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -939,6 +858,87 @@ GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb)
 
    glhckSetV3(&bb->min, &min);
    glhckSetV3(&bb->max, &max);
+}
+
+/* \brief assign indices to object */
+GLHCKAPI void glhckGeometrySetIndices(glhckGeometry *geometry,
+      glhckGeometryIndexType type, void *data, size_t memb)
+{
+   /* free old indices */
+   _glhckGeometryFreeIndices(geometry);
+
+   /* assign indices depending on type */
+   switch (type) {
+      case GLHCK_INDEX_BYTE:
+         geometry->indices.ivb = (glhckIndexb*)data;
+         break;
+
+      case GLHCK_INDEX_SHORT:
+         geometry->indices.ivs = (glhckIndexs*)data;
+         break;
+
+      case GLHCK_INDEX_INTEGER:
+         geometry->indices.ivi = (glhckIndexi*)data;
+         break;
+
+      default:
+         return;
+         break;
+   }
+
+   /* set index type */
+   geometry->indexType  = type;
+   geometry->indexCount = memb;
+}
+
+/* \brief assign vertices to object */
+GLHCKAPI void glhckGeometrySetVertices(glhckGeometry *geometry,
+      glhckGeometryVertexType type, void *data, size_t memb)
+{
+   float textureRange = 1.0f;
+
+   /* free old vertices */
+   _glhckGeometryFreeVertices(geometry);
+
+   /* assign vertices depending on type */
+   switch (type) {
+      case GLHCK_VERTEX_V3B:
+         geometry->vertices.v3b = (glhckVertexData3b*)data;
+         textureRange = GLHCK_BYTE_CMAGIC;
+         break;
+
+      case GLHCK_VERTEX_V2B:
+         geometry->vertices.v2b = (glhckVertexData2b*)data;
+         textureRange = GLHCK_BYTE_CMAGIC;
+         break;
+
+      case GLHCK_VERTEX_V3S:
+         geometry->vertices.v3s = (glhckVertexData3s*)data;
+         textureRange = GLHCK_SHORT_CMAGIC;
+         break;
+
+      case GLHCK_VERTEX_V2S:
+         geometry->vertices.v2s = (glhckVertexData2s*)data;
+         textureRange = GLHCK_SHORT_CMAGIC;
+         break;
+
+      case GLHCK_VERTEX_V3F:
+         geometry->vertices.v3f = (glhckVertexData3f*)data;
+         break;
+
+      case GLHCK_VERTEX_V2F:
+         geometry->vertices.v2f = (glhckVertexData2f*)data;
+         break;
+
+      default:
+         return;
+         break;
+   }
+
+   /* set vertex type */
+   geometry->vertexType   = type;
+   geometry->vertexCount  = memb;
+   geometry->textureRange = textureRange;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

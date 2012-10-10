@@ -437,6 +437,7 @@ GLHCKAPI int glhckObjectInsertIndices(
       glhckObject *object, size_t memb,
       glhckGeometryIndexType type,
       const glhckImportIndexData *indices);
+GLHCKAPI void glhckObjectUpdate(glhckObject *object);
 
 /* material */
 GLHCKAPI const glhckColorb* glhckObjectGetColor(const glhckObject *object);
@@ -471,6 +472,9 @@ GLHCKAPI const kmVec3* glhckObjectGetScale(const glhckObject *object);
 GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale);
 GLHCKAPI void glhckObjectScalef(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
+
+GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object);
+GLHCKAPI glhckGeometry* glhckObjectGetGeometry(glhckObject *object);
 
 /* pre-defined geometry */
 GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size);
@@ -571,6 +575,10 @@ GLHCKAPI void glhckGeometrySetVertexDataForIndex(
 GLHCKAPI void glhckGeometryTransformCoordinates(
       glhckGeometry *geometry, const glhckRect *transformed, short degrees);
 GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb);
+GLHCKAPI void glhckGeometrySetVertices(glhckGeometry *geometry,
+      glhckGeometryVertexType type, void *data, size_t memb);
+GLHCKAPI void glhckGeometrySetIndices(glhckGeometry *geometry,
+      glhckGeometryIndexType type, void *data, size_t memb);
 
 /* define cleanup */
 #ifdef GLHCK_WINGDIAPI_DEFINED

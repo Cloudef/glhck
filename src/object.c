@@ -590,8 +590,21 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
    glhckObjectScale(object, &scaling);
 }
 
+/* \brief create new geometry for object, replacing existing one. */
+GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   IFDO(_glhckGeometryFree, object->geometry);
+   object->geometry = _glhckGeometryNew();
+
+   RET(1, "%p", object->geometry);
+   return object->geometry;
+}
+
 /* \brief get geometry from object */
-GLHCKAPI glhckGeometry* glhckObjectGetGeometry(_glhckObject *object)
+GLHCKAPI glhckGeometry* glhckObjectGetGeometry(glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
@@ -646,16 +659,28 @@ GLHCKAPI int glhckObjectInsertVertices(
    if (!_glhckGeometryInsertVertices(object->geometry, memb, type, vertices))
       goto fail;
 
-   object->drawFunc = _GLHCKlibrary.render.api.objectDraw;
-   glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
-   _glhckObjectUpdateMatrix(object);
-
+   glhckObjectUpdate(object);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
+}
+
+/* \brief update/recalculate object's internal state */
+GLHCKAPI void glhckObjectUpdate(glhckObject *object)
+{
+   TRACE(1);
+   assert(object);
+
+   /* no geometry, useless to proceed further */
+   if (!object->geometry)
+      return;
+
+   glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
+   _glhckObjectUpdateMatrix(object);
+   object->drawFunc = _GLHCKlibrary.render.api.objectDraw;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/
