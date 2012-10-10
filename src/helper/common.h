@@ -43,7 +43,7 @@
 
 #define RECT(r)   (r)?(r)->x:-1, (r)?(r)->y:-1, (r)?(r)->w:-1, (r)?(r)->h:-1
 #define RECTS     "rect[%f, %f, %f, %f]"
-#define COLB(c)   (c)?(c)->r:0, (c)?(c)->g:0, (c)?(c)->b:0, (c)?(c)->a
+#define COLB(c)   (c)?(c)->r:0, (c)?(c)->g:0, (c)?(c)->b:0, (c)?(c)->a:0
 #define COLBS     "colb[%d, %d, %d, %d]"
 #define VEC2(v)   (v)?(v)->x:-1, (v)?(v)->y:-1
 #define VEC2S     "vec2[%f, %f]"
