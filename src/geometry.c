@@ -274,27 +274,27 @@ static void _glhckGeometryFreeVertices(glhckGeometry *geometry)
    /* free vertices depending on type */
    switch (geometry->vertexType) {
       case GLHCK_VERTEX_V3B:
-         _glhckFree(geometry->vertices.v3b);
+         IFDO(_glhckFree, geometry->vertices.v3b);
          break;
 
       case GLHCK_VERTEX_V2B:
-         _glhckFree(geometry->vertices.v2b);
+         IFDO(_glhckFree, geometry->vertices.v2b);
          break;
 
       case GLHCK_VERTEX_V3S:
-         _glhckFree(geometry->vertices.v3s);
+         IFDO(_glhckFree, geometry->vertices.v3s);
          break;
 
       case GLHCK_VERTEX_V2S:
-         _glhckFree(geometry->vertices.v2s);
+         IFDO(_glhckFree, geometry->vertices.v2s);
          break;
 
       case GLHCK_VERTEX_V3F:
-         _glhckFree(geometry->vertices.v3f);
+         IFDO(_glhckFree, geometry->vertices.v3f);
          break;
 
       case GLHCK_VERTEX_V2F:
-         _glhckFree(geometry->vertices.v2f);
+         IFDO(_glhckFree, geometry->vertices.v2f);
          break;
 
       default:
@@ -313,15 +313,15 @@ static void _glhckGeometryFreeIndices(glhckGeometry *geometry)
    /* free indices depending on type */
    switch (geometry->indexType) {
       case GLHCK_INDEX_BYTE:
-         _glhckFree(geometry->indices.ivb);
+         IFDO(_glhckFree, geometry->indices.ivb);
          break;
 
       case GLHCK_INDEX_SHORT:
-         _glhckFree(geometry->indices.ivs);
+         IFDO(_glhckFree, geometry->indices.ivs);
          break;
 
       case GLHCK_INDEX_INTEGER:
-         _glhckFree(geometry->indices.ivi);
+         IFDO(_glhckFree, geometry->indices.ivi);
          break;
 
       default:
