@@ -1001,7 +1001,7 @@ GLHCKAPI int glhckGeometrySetIndices(glhckGeometry *geometry,
    CALL(0, "%p, %d, %p, %zu", geometry, type, data, memb);
    assert(geometry);
 
-   size = memb * glhckVertexTypeElementSize(type);
+   size = memb * glhckIndexTypeElementSize(type);
    if (!(idata = _glhckMalloc(size)))
       goto fail;
 
@@ -1025,7 +1025,7 @@ GLHCKAPI int glhckGeometrySetVertices(glhckGeometry *geometry,
    CALL(0, "%p, %d, %p, %zu", geometry, type, data, memb);
    assert(geometry);
 
-   size = memb * glhckIndexTypeElementSize(type);
+   size = memb * glhckVertexTypeElementSize(type);
    if (!(vdata = _glhckMalloc(size)))
       goto fail;
 
