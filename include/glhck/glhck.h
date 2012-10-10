@@ -474,7 +474,7 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
       const kmScalar x, const kmScalar y, const kmScalar z);
 
 GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object);
-GLHCKAPI glhckGeometry* glhckObjectGetGeometry(glhckObject *object);
+GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object);
 
 /* pre-defined geometry */
 GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size);

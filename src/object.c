@@ -604,7 +604,7 @@ GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object)
 }
 
 /* \brief get geometry from object */
-GLHCKAPI glhckGeometry* glhckObjectGetGeometry(glhckObject *object)
+GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
