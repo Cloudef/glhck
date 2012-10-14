@@ -48,6 +48,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
    _glhckTexture *texture = NULL, **textureList = NULL;
    glhckImportVertexData *vertexData = NULL;
    unsigned int *indices = NULL, *strip_indices = NULL;
+   unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
    CALL(0, "%p, %s, %d", object, file, animated);
 
    if (!(f = fopen(file, "rb")))
@@ -162,14 +163,15 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
    /* triangle strip geometry */
    if (!(strip_indices = _glhckTriStrip(indices, mmd->num_indices, &num_indices))) {
       /* failed, use non stripped geometry */
-      object->geometry->type  = GLHCK_TRIANGLES;
-      num_indices             = mmd->num_indices;
-      strip_indices           = indices;
+      geometryType   = GLHCK_TRIANGLES;
+      num_indices    = mmd->num_indices;
+      strip_indices  = indices;
    } else NULLDO(_glhckFree, indices);
 
    /* set geometry */
    glhckObjectInsertIndices(object, num_indices, itype, strip_indices);
    glhckObjectInsertVertices(object, mmd->num_vertices, vtype, vertexData);
+   object->geometry->type = geometryType;
 
    /* finish */
    NULLDO(_glhckFree, vertexData);

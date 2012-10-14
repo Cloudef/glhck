@@ -79,6 +79,7 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
    char *texturePath;
    glhckImportVertexData *vertexData = NULL;
    _glhckTexture *texture;
+   unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
    CALL(0, "%p, %s, %d", object, file, animated);
 
    if (!(f = fopen(file, "rb")))
@@ -172,8 +173,8 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
    /* triangle strip geometry */
    if (!(strip_indices = _glhckTriStrip(indices, num_triangles, &num_indices))) {
       /* failed, use non stripped geometry */
-      object->geometry->type  = GLHCK_TRIANGLES;
-      num_indices             = num_triangles;
+      geometryType = GLHCK_TRIANGLES;
+      num_indices  = num_triangles;
    }
 
    /* this object has colors */
@@ -182,6 +183,7 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
    /* set geometry */
    glhckObjectInsertIndices(object, num_indices, itype, strip_indices?strip_indices:indices);
    glhckObjectInsertVertices(object, num_vertices, vtype, vertexData);
+   object->geometry->type = geometryType;
 
    /* finish */
    IFDO(_glhckFree, strip_indices);
