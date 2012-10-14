@@ -324,7 +324,7 @@ static void viewport(int x, int y, int width, int height)
 /* \brief pass interleaved vertex data to OpenGL nicely. */
 static inline void geometryPointer(const glhckGeometry *geometry)
 {
-   //printf("%s (%zu) : %.0f\n", glhckVertexTypeString(geometry->vertexType), geometry->vertexCount, geometry->textureRange);
+   // printf("%s (%zu) : %.0f\n", glhckVertexTypeString(geometry->vertexType), geometry->vertexCount, geometry->textureRange);
 
    /* vertex data */
    switch (geometry->vertexType) {
@@ -366,10 +366,11 @@ static inline void geometryPointer(const glhckGeometry *geometry)
    GL_CALL(glDrawElements(type, geometry->indexCount, \
             iprec, &geometry->indices.tunion[0]))
 
-
 /* \brief draw interleaved geometry */
 static inline void geometryDraw(const glhckGeometry *geometry, unsigned int type)
 {
+   // printf("%s (%zu)\n", glhckIndexTypeString(geometry->indexType), geometry->indexCount);
+
    if (geometry->indexType != GLHCK_INDEX_NONE) {
       switch (geometry->indexType) {
          case GLHCK_INDEX_BYTE:
