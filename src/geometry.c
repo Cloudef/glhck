@@ -553,6 +553,9 @@ glhckGeometry* _glhckGeometryNew(void)
    /* default geometry type */
    geometry->type = GLHCK_TRIANGLE_STRIP;
 
+   /* default scale */
+   geometry->scale.x = geometry->scale.y = geometry->scale.z = 1.0f;
+
    return geometry;
 }
 
