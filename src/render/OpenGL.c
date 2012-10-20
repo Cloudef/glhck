@@ -614,6 +614,7 @@ static inline void drawAABB(const _glhckObject *object)
          GL_CALL(glDisableClientState(_glhckAttribName[i]));
       }
 
+   GL_CALL(glMatrixMode(GL_MODELVIEW));
    GL_CALL(glLoadIdentity());
    GL_CALL(glColor3ub(0, 0, 255));
    GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
@@ -621,7 +622,11 @@ static inline void drawAABB(const _glhckObject *object)
    GL_CALL(glColor3ub(255, 255, 255));
 
    /* go back */
+#ifdef GLHCK_KAZMATH_FLOAT
    GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
+#else
+   GL_CALL(glLoadMatrixd((double*)&object->view.matrix));
+#endif
 
    /* re enable stuff we disabled */
    if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
