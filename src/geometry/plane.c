@@ -7,10 +7,21 @@
 #define LENGTH(X) (sizeof X / sizeof X[0])
 
 /* \brief create new plane object */
-GLHCKAPI _glhckObject* glhckPlaneNew(kmScalar size)
+GLHCKAPI glhckObject* glhckPlaneNew(kmScalar size)
+{
+   glhckGeometryVertexType vtype;
+
+   /* choose internal vertexdata precision */
+   vtype = _GLHCKlibrary.render.globalVertexType;
+   if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V2B;
+   return glhckPlaneNewEx(size, GLHCK_INDEX_NONE, vtype);
+}
+
+/* \brief create new plane object (precision specify) */
+GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar size,
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    _glhckObject *object;
-   glhckGeometryVertexType vtype;
 
    static const glhckImportVertexData vertices[] = {
       {
@@ -41,10 +52,6 @@ GLHCKAPI _glhckObject* glhckPlaneNew(kmScalar size)
    /* create new object */
    if (!(object = glhckObjectNew()))
       goto fail;
-
-   /* choose internal vertexdata precision */
-   vtype = _GLHCKlibrary.render.globalVertexType;
-   if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V3B;
 
    /* insert vertices to object's geometry */
    if (glhckObjectInsertVertices(object, LENGTH(vertices),
@@ -90,7 +97,7 @@ GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file,
 }
 
 /* \brief create new sprite */
-GLHCKAPI _glhckObject* glhckSpriteNew(glhckTexture *texture,
+GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture,
       size_t width, size_t height)
 {
    float w, h;

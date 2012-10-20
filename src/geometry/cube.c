@@ -7,10 +7,21 @@
 #define LENGTH(X) (sizeof X / sizeof X[0])
 
 /* \brief create new cube object */
-GLHCKAPI _glhckObject* glhckCubeNew(kmScalar size)
+GLHCKAPI glhckObject* glhckCubeNew(kmScalar size)
+{
+   glhckGeometryVertexType vtype;
+
+   /* choose internal vertexdata precision */
+   vtype = _GLHCKlibrary.render.globalVertexType;
+   if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V3B;
+   return glhckCubeNewEx(size, GLHCK_INDEX_NONE, vtype);
+}
+
+/* \brief create new cube object (specify precision) */
+GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size,
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    _glhckObject *object;
-   glhckGeometryVertexType vtype;
 
    const glhckImportVertexData vertices[] = {
       {
@@ -158,10 +169,6 @@ GLHCKAPI _glhckObject* glhckCubeNew(kmScalar size)
    /* create new object */
    if (!(object = glhckObjectNew()))
       goto fail;
-
-   /* choose internal vertexdata precision */
-   vtype = _GLHCKlibrary.render.globalVertexType;
-   if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V3B;
 
    /* insert vertices to object's geometry */
    if (glhckObjectInsertVertices(object, LENGTH(vertices),
