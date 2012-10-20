@@ -304,14 +304,14 @@ static void _glhckGeometryFreeVertices(glhckGeometry *geometry)
    /* set vertex type to none */
    geometry->vertexType   = GLHCK_VERTEX_NONE;
    geometry->vertexCount  = 0;
-   geometry->textureRange = 1.0f;
+   geometry->textureRange = 1;
 }
 
 /* \brief assign vertices to object internally */
 static void _glhckGeometrySetVertices(glhckGeometry *geometry,
       glhckGeometryVertexType type, void *data, size_t memb)
 {
-   float textureRange = 1.0f;
+   unsigned short textureRange = 1;
 
    /* free old vertices */
    _glhckGeometryFreeVertices(geometry);
@@ -934,8 +934,8 @@ GLHCKAPI void glhckGeometryTransformCoordinates(
    for (i = 0; i != geometry->vertexCount; ++i) {
       glhckGeometryVertexDataForIndex(geometry, i,
             NULL, NULL, &coord, NULL, NULL);
-      out.x = coord.x/geometry->textureRange;
-      out.y = coord.y/geometry->textureRange;
+      out.x = (float)coord.x/geometry->textureRange;
+      out.y = (float)coord.y/geometry->textureRange;
 
       if (geometry->transformedCoordinates) {
          if (geometry->transformedCoordinates->degrees != 0)

@@ -171,7 +171,7 @@ typedef struct _glhckText {
    int tw, th;
    float itw, ith;
    struct glhckColorb color;
-   float textureRange;
+   unsigned short textureRange;
    struct __GLHCKtextFont *fcache;
    struct __GLHCKtextTexture *tcache;
    struct _glhckText *next;

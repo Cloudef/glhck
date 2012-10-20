@@ -365,7 +365,7 @@ typedef struct glhckGeometry {
     * the texture matrix is scaled with
     * 1.0f/textureRange of geometry before
     * sending to OpenGL */
-   float textureRange;
+   unsigned short textureRange;
 } glhckGeometry;
 
 /* typedefs for better typing */
@@ -481,7 +481,11 @@ GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size);
 GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size,
          glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
+GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size,
+            glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar size);
+GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar size,
+            glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, size_t x, size_t y);
 GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file,
       size_t width, size_t height, unsigned int flags);
