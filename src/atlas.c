@@ -245,7 +245,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    if (!(rtt = glhckRttNew(width, height, GLHCK_RTT_RGBA)))
       goto fail;
 
-   if (!(plane = glhckPlaneNew(1)))
+   if (!(plane = glhckPlaneNewEx(1, GLHCK_INDEX_NONE, GLHCK_VERTEX_V2F)))
       goto fail;
 
    kmMat4OrthographicProjection(&ortho, 0, width, 0, height, -1.0f, 1.0f);
