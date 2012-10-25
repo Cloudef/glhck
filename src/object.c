@@ -627,9 +627,8 @@ GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object)
 
 /* \brief insert indices to object */
 GLHCKAPI int glhckObjectInsertIndices(
-      glhckObject *object, size_t memb,
-      glhckGeometryIndexType type,
-      const glhckImportIndexData *indices)
+      glhckObject *object, glhckGeometryIndexType type,
+      const glhckImportIndexData *indices, size_t memb)
 {
    CALL(0, "%p, %zu, %d, %p", object, memb, type, indices);
    assert(object);
@@ -654,9 +653,8 @@ fail:
 
 /* \brief insert vertices to object */
 GLHCKAPI int glhckObjectInsertVertices(
-      glhckObject *object, size_t memb,
-      glhckGeometryVertexType type,
-      const glhckImportVertexData *vertices)
+      glhckObject *object, glhckGeometryVertexType type,
+      const glhckImportVertexData *vertices, size_t memb)
 {
    CALL(0, "%p, %zu, %d, %p", object, memb, type, vertices);
    assert(object);

@@ -171,8 +171,8 @@ GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size,
       goto fail;
 
    /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertices(object, LENGTH(vertices),
-            vtype, &vertices[0]) != RETURN_OK)
+   if (glhckObjectInsertVertices(object, vtype,
+            &vertices[0], LENGTH(vertices)) != RETURN_OK)
       goto fail;
 
    /* assigning indices would be waste

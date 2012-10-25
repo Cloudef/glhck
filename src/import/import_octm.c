@@ -181,8 +181,8 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
    if (colors) object->material.flags |= GLHCK_MATERIAL_COLOR;
 
    /* set geometry */
-   glhckObjectInsertIndices(object, num_indices, itype, strip_indices?strip_indices:indices);
-   glhckObjectInsertVertices(object, num_vertices, vtype, vertexData);
+   glhckObjectInsertIndices(object, itype, strip_indices?strip_indices:indices, num_indices);
+   glhckObjectInsertVertices(object, vtype, vertexData, num_vertices);
    object->geometry->type = geometryType;
 
    /* finish */

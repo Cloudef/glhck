@@ -169,8 +169,8 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
    } else NULLDO(_glhckFree, indices);
 
    /* set geometry */
-   glhckObjectInsertIndices(object, num_indices, itype, strip_indices);
-   glhckObjectInsertVertices(object, mmd->num_vertices, vtype, vertexData);
+   glhckObjectInsertIndices(object, itype, strip_indices, num_indices);
+   glhckObjectInsertVertices(object, vtype, vertexData, mmd->num_vertices);
    object->geometry->type = geometryType;
 
    /* finish */

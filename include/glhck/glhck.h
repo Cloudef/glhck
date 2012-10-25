@@ -430,13 +430,11 @@ GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertices(
-      glhckObject *object, size_t memb,
-      glhckGeometryVertexType type,
-      const glhckImportVertexData *vertices);
+      glhckObject *object, glhckGeometryVertexType type,
+      const glhckImportVertexData *vertices, size_t memb);
 GLHCKAPI int glhckObjectInsertIndices(
-      glhckObject *object, size_t memb,
-      glhckGeometryIndexType type,
-      const glhckImportIndexData *indices);
+      glhckObject *object, glhckGeometryIndexType type,
+      const glhckImportIndexData *indices, size_t memb);
 GLHCKAPI void glhckObjectUpdate(glhckObject *object);
 
 /* material */
