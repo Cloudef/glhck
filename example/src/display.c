@@ -94,7 +94,15 @@ int main(int argc, char **argv)
 
    puts("-!- glfwinit");
 
+#if GLHCK_USE_GLES1
+   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+   glfwWindowHint(GLFW_DEPTH_BITS, 16);
+#elif GLHCK_USE_GLES2
+   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+   glfwWindowHint(GLFW_DEPTH_BITS, 16);
+#else
    glfwWindowHint(GLFW_DEPTH_BITS, 24);
+#endif
    if (!(window = glfwCreateWindow(WIDTH, HEIGHT, GLFW_WINDOWED, "display test", NULL)))
       return EXIT_FAILURE;
 
