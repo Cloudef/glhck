@@ -43,13 +43,8 @@ SET(OPT_INCL
    ${OpenCTM_SOURCE_DIR}/src/lib
    ${MMD_SOURCE_DIR}/src)
 
-# enet for network transparency
-IF (GLHCK_USE_NETWORK)
-   SET(OPT_LIBS ${OPT_LIBS} enet)
-ENDIF ()
-
 # no GLEW on GLES build
-IF (NOT GLHCK_USE_GLES)
+IF (NOT GLHCK_USE_GLES1)
    SET(OPT_LIBS ${OPT_LIBS} GLEW)
    SET(OPT_INCL ${OPT_INCL} ${GLEW_SOURCE_DIR}/src/include)
 ENDIF ()

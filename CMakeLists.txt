@@ -83,7 +83,7 @@ ENDIF ()
 # These are propably temporary
 # In the end make renderers load this stuff dynamically(?)
 
-IF (GLHCK_USE_GLES)
+IF (GLHCK_USE_GLES1)
    # GLES 1.x
    ADD_DEFINITIONS(-DGLHCK_USE_GLES1)
    FIND_PACKAGE(EGL REQUIRED)

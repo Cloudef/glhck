@@ -16,7 +16,7 @@
 #  define GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS        GL_FRAMEBUFFER_COMPLETE_OES
 #  define GL_FRAMEBUFFER_UNSUPPORTED                     GL_FRAMEBUFFER_UNSUPPORTED_OES
 #  define GL_FRAMEBUFFER                                 GL_FRAMEBUFFER_OES
-#  error "GLES 1.x not working yet"
+#  warning "GLES 1.x not working yet"
 #elif GLHCK_USE_GLES2
 #  include <GLES2/gl2.h> /* for opengl ES 2.x */
 #  include <GLES2/gl2ext.h>
@@ -24,6 +24,16 @@
 #else
 #  include <GL/glew.h> /* for opengl */
 #endif
+
+#if defined(GLHCK_USE_GLES1)
+#  ifdef GL_OES_element_index_uint
+#     ifndef GL_UNSIGNED_INT
+#        define GL_UNSIGNED_INT                   0x1405
+#     endif
+#  endif
+#else
+#error "GLHCK needs GL_OES_element_index_uint for GLESv1 support!"
+#endif /* GLESv1 SUPPORT */
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #define RENDER_NAME "OpenGL Renderer"
