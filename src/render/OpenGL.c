@@ -30,9 +30,9 @@
 #     ifndef GL_UNSIGNED_INT
 #        define GL_UNSIGNED_INT                   0x1405
 #     endif
+#  else
+#     error "GLHCK needs GL_OES_element_index_uint for GLESv1 support!"
 #  endif
-#else
-#error "GLHCK needs GL_OES_element_index_uint for GLESv1 support!"
 #endif /* GLESv1 SUPPORT */
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
