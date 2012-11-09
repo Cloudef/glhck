@@ -92,9 +92,14 @@ int main(int argc, char **argv)
    if (!glfwInit())
       return EXIT_FAILURE;
 
+   puts("-!- glfwinit");
+
    glfwWindowHint(GLFW_DEPTH_BITS, 24);
    if (!(window = glfwCreateWindow(WIDTH, HEIGHT, GLFW_WINDOWED, "display test", NULL)))
       return EXIT_FAILURE;
+
+   glfwMakeContextCurrent(window);
+   puts("-!- window create");
 
    /* Turn on VSYNC if driver allows */
    glfwSwapInterval(1);
@@ -102,8 +107,12 @@ int main(int argc, char **argv)
    if (!glhckInit(argc, argv))
       return EXIT_FAILURE;
 
+   puts("-!- glhck init");
+
    if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_AUTO))
       return EXIT_FAILURE;
+
+   puts("-!- glhck display create");
 
    RUNNING = 1;
 
