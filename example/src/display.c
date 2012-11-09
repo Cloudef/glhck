@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef GLHCK_USE_GLES1
+#  define GLFW_INCLUDE_ES1
+#endif
+#ifdef GLHCK_USE_GLES2
+#  define GLFW_INCLUDE_ES2
+#endif
 #include "GL/glfw3.h"
 #include "glhck/glhck.h"
 
@@ -86,8 +92,8 @@ int main(int argc, char **argv)
    if (!glfwInit())
       return EXIT_FAILURE;
 
-   glfwOpenWindowHint(GLFW_DEPTH_BITS, 24);
-   if (!(window = glfwOpenWindow(WIDTH, HEIGHT, GLFW_WINDOWED, "display test", NULL)))
+   glfwWindowHint(GLFW_DEPTH_BITS, 24);
+   if (!(window = glfwCreateWindow(WIDTH, HEIGHT, GLFW_WINDOWED, "display test", NULL)))
       return EXIT_FAILURE;
 
    /* Turn on VSYNC if driver allows */
@@ -246,7 +252,7 @@ int main(int argc, char **argv)
       glhckTextRender(text);
 
       /* Actual swap and clear */
-      glfwSwapBuffers();
+      glfwSwapBuffers(window);
       glhckClear();
 
       if (fpsDelay < now) {
