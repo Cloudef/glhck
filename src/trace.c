@@ -122,7 +122,8 @@ void _glhckTrace(int level, const char *channel, const char *function, const cha
 }
 
 /* \brief pass debug info */
-void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *fmt, ...)
+void _glhckPassDebug(const char *file, int line, const char *func,
+      glhckDebugLevel level, const char *channel, const char *fmt, ...)
 {
    va_list args;
    char buffer[LINE_MAX];
@@ -135,7 +136,8 @@ void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLev
    if (!_glhckDebugHook) {
       /* by default, we assume debug prints are
        * useless if tracing. */
-      if (_glhckTraceIsActive(GLHCK_CHANNEL_TRACE)) return;
+      if (_glhckTraceIsActive(GLHCK_CHANNEL_TRACE) ||
+            !_glhckTraceIsActive(channel)) return;
       _glhckPrintf(DBG_FMT, line, file, buffer);
       return;
    }

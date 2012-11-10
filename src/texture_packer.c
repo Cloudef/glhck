@@ -331,9 +331,9 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
    if (force_power_of_two)
       height = next_pow2(height);
 
-   DEBUG(0, "\4Total area: \3%d", tp->total_area);
-   DEBUG(0, "\4Count: \3%d", count);
-   DEBUG(0, "\1Initial size: \3%d\5x\3%d", width, height);
+   _glhckPrintf("\4Total area: \3%d", tp->total_area);
+   _glhckPrintf("\4Count: \3%d", count);
+   _glhckPrintf("\1Initial size: \3%d\5x\3%d", width, height);
 
    /* more sane packing area */
    if (width > height) {
@@ -350,7 +350,7 @@ int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *in_width, int *in_heig
       }
    }
 
-   DEBUG(0, "\2Good size: \3%d\5x\3%d", width, height);
+   _glhckPrintf("\2Good size: \3%d\5x\3%d", width, height);
 
    tp->debug_count = 0;
    glhckTexturePackerNodeNew(tp, 0, 0, width, height);

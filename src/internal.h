@@ -368,7 +368,7 @@ typedef struct __GLHCKlibrary {
 #define TRACE_FMT       "\2%4d\1: \5%-20s \4%s\2()"
 #define CALL_FMT(fmt)   "\2%4d\1: \5%-20s \4%s\2(\5"fmt"\2)"
 #define RET_FMT(fmt)    "\2%4d\1: \5%-20s \4%s\2()\3 => \2(\5"fmt"\2)"
-#define DEBUG(level, fmt, ...)   _glhckPassDebug(THIS_FILE, __LINE__, __func__, level, fmt, ##__VA_ARGS__)
+#define DEBUG(level, fmt, ...)   _glhckPassDebug(THIS_FILE, __LINE__, __func__, level, GLHCK_CHANNEL, fmt, ##__VA_ARGS__)
 #define TRACE(level)             _glhckTrace(level, GLHCK_CHANNEL, __func__, TRACE_FMT,      __LINE__, THIS_FILE, __func__)
 #define CALL(level, args, ...)   _glhckTrace(level, GLHCK_CHANNEL, __func__, CALL_FMT(args), __LINE__, THIS_FILE, __func__, ##__VA_ARGS__)
 #define RET(level, args, ...)    _glhckTrace(level, GLHCK_CHANNEL, __func__, RET_FMT(args),  __LINE__, THIS_FILE, __func__, ##__VA_ARGS__)
@@ -432,7 +432,7 @@ void _glhckTextureInsertToQueue(_glhckTexture *texture);
 /* tracing && debug functions */
 void _glhckTraceInit(int argc, const char **argv);
 void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...);
-void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *fmt, ...);
+void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *channel, const char *fmt, ...);
 
 /* internal geometry vertexdata */
 glhckGeometry *_glhckGeometryNew(void);
