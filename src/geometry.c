@@ -87,8 +87,8 @@ static void _glhckConvertVertexData(
       glhckVector3f *bias, glhckVector3f *scale)
 {
    size_t i;
-   char no_convert;
-   float biasMagic, scaleMagic;
+   char no_convert = 0;
+   float biasMagic = 0.0f, scaleMagic = 0.0f;
    glhckVector3f vmin, vmax,
                  nmin, nmax;
    CALL(0, "%d, %p, %zu, %p, %p", type, import, memb, bias, scale);
@@ -102,7 +102,6 @@ static void _glhckConvertVertexData(
          &vmin, &vmax, &nmin, &nmax);
 
    /* do we need conversion? */
-   no_convert = 0;
    if ((vmax.x + vmin.x == 1 &&
         vmax.y + vmin.y == 1 &&
         vmax.z + vmin.z == 1) ||
