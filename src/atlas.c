@@ -248,10 +248,10 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    if (!(plane = glhckPlaneNewEx(1, GLHCK_INDEX_NONE, GLHCK_VERTEX_V2F)))
       goto fail;
 
+   /* create projection for drawing */
    kmMat4OrthographicProjection(&ortho, 0, width, 0, height, -1.0f, 1.0f);
    kmMat4Translation(&ortho, -1, -1, 0);
 
-   _GLHCKlibrary.render.api.viewport(0, 0, width, height);
    memcpy(&old_projection, _GLHCKlibrary.render.api.getProjection(), sizeof(kmMat4));
    _GLHCKlibrary.render.api.setProjection(&ortho);
 
@@ -286,11 +286,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    glhckRttFillData(rtt);
    glhckRttEnd(rtt);
 
-   /* restore old projection && size
-    * FIXME: get size from renderer */
+   /* restore old state */
    _GLHCKlibrary.render.api.setProjection(&old_projection);
-   _GLHCKlibrary.render.api.viewport(0, 0, _GLHCKlibrary.render.width,
-         _GLHCKlibrary.render.height);
    _GLHCKlibrary.render.api.setClearColor(
          old_clear.r, old_clear.g, old_clear.b, old_clear.a);
 

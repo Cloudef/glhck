@@ -135,6 +135,7 @@ GLHCKAPI void glhckRttBegin(const glhckRtt *rtt)
    CALL(2, "%p", rtt);
    assert(rtt);
    _GLHCKlibrary.render.api.bindFramebuffer(rtt->object);
+   _GLHCKlibrary.render.api.viewport(0, 0, rtt->texture->width, rtt->texture->height);
 }
 
 /* \brief end rendering to rtt */
@@ -142,6 +143,7 @@ GLHCKAPI void glhckRttEnd(const glhckRtt *rtt)
 {
    CALL(2, "%p", rtt);
    assert(rtt);
+   _GLHCKlibrary.render.api.viewport(0, 0, _GLHCKlibrary.render.width, _GLHCKlibrary.render.height);
    _GLHCKlibrary.render.api.bindFramebuffer(0);
 }
 
