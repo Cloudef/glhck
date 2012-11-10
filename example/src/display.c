@@ -132,8 +132,12 @@ int main(int argc, char **argv)
    camObj = glhckCameraGetObject(camera);
 
    sprite  = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
-   sprite2 = glhckObjectCopy(sprite);
-   sprite3 = glhckObjectCopy(sprite);
+   sprite2 = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
+   sprite3 = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
+
+   // FIXME: copy is broken again \o/
+   //sprite2 = glhckObjectCopy(sprite);
+   //sprite3 = glhckObjectCopy(sprite);
    glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
    glhckObjectScalef(sprite2, 0.03f, 0.03f, 0.03f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
@@ -179,6 +183,22 @@ int main(int argc, char **argv)
    unsigned int font  = glhckTextNewFont(text, "example/media/sazanami-gothic.ttf");
    unsigned int font2 = glhckTextNewFont(text, "example/media/DejaVuSans.ttf");
 
+   glhckRtt *rtt = glhckRttNew(124, 24, GLHCK_RTT_RGBA);
+   glhckObject *rttText = NULL;
+   glhckTextColor(text, 255, 255, 255, 255);
+   glhckTextDraw(text, font, 24, 0, 20, "RTT Text", NULL);
+   if (rtt) {
+      glhckRttBegin(rtt);
+      glhckTextRender(text);
+      glhckRttFillData(rtt);
+      glhckRttEnd(rtt);
+      rttText = glhckSpriteNew(glhckRttGetTexture(rtt), 6, 1);
+      glhckObjectMaterialFlags(rttText, GLHCK_MATERIAL_ALPHA);
+      glhckObjectRotatef(rttText, 0, 180, 0);
+      glhckObjectPositionf(rttText, 12, 0, 0);
+      glhckRttFree(rtt);
+   }
+
    glfwSetWindowCloseCallback(close_callback);
    glfwSetWindowSizeCallback(resize_callback);
    glfwSetCursorPosCallback(mousepos_callback);
@@ -217,9 +237,9 @@ int main(int argc, char **argv)
 
       /* glhck drawing */
       glhckObjectRotatef(cube,
-            glfwGetKey(window, GLFW_KEY_UP)    * 30.0f * delta,
-            glfwGetKey(window, GLFW_KEY_LEFT)  * 30.0f * delta,
-            glfwGetKey(window, GLFW_KEY_RIGHT) * 30.0f * delta);
+            30.0f * delta,
+            30.0f * delta,
+            30.0f * delta);
       glhckObjectDraw(cube);
 
       /* do spinning effect */
@@ -244,6 +264,7 @@ int main(int argc, char **argv)
       glhckObjectDraw(sprite);
       glhckObjectDraw(sprite2);
       glhckObjectDraw(sprite3);
+      if (rttText) glhckObjectDraw(rttText);
 
       if (!queuePrinted) {
          glhckPrintTextureQueue();
