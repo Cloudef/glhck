@@ -260,6 +260,7 @@ static void setClearColor(char r, char g, char b, char a)
    _GLHCKlibrary.render.draw.clearColor.r = r;
    _GLHCKlibrary.render.draw.clearColor.g = g;
    _GLHCKlibrary.render.draw.clearColor.b = b;
+   _GLHCKlibrary.render.draw.clearColor.a = a;
 }
 
 
