@@ -358,7 +358,7 @@ typedef struct __GLHCKlibrary {
 
 /* tracking allocation macros */
 #define _glhckMalloc(x)    __glhckMalloc(GLHCK_CHANNEL, x)
-#define _glhckCalloc(x,y)  __glhcKCalloc(GLHCK_CHANNEL, x, y)
+#define _glhckCalloc(x,y)  __glhckCalloc(GLHCK_CHANNEL, x, y)
 #define _glhckStrdup(x)    __glhckStrdup(GLHCK_CHANNEL, x)
 #define _glhckCopy(x,y)    __glhckCopy(GLHCK_CHANNEL, x, y)
 
