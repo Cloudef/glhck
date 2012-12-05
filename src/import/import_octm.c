@@ -69,10 +69,10 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    FILE *f;
-   size_t num_indices;
-   unsigned int i, ix, *strip_indices = NULL;
+   size_t numIndices;
+   unsigned int i, ix, *stripIndices = NULL;
    CTMcontext context = NULL;
-   CTMuint num_vertices, num_triangles, num_uvs, num_attribs;
+   CTMuint num_vertices, numTriangles, numUvs, numAttribs;
    const CTMuint *indices;
    const CTMfloat *vertices = NULL, *normals = NULL, *coords = NULL, *colors = NULL;
    const char *attribName, *comment, *textureFilename;
@@ -99,18 +99,18 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
    vertices      = CTM_CALL(context, ctmGetFloatArray(context, CTM_VERTICES));
    indices       = CTM_CALL(context, ctmGetIntegerArray(context, CTM_INDICES));
    num_vertices  = CTM_CALL(context, ctmGetInteger(context, CTM_VERTEX_COUNT));
-   num_triangles = CTM_CALL(context, ctmGetInteger(context, CTM_TRIANGLE_COUNT));
-   num_uvs       = CTM_CALL(context, ctmGetInteger(context, CTM_UV_MAP_COUNT));
-   num_attribs   = CTM_CALL(context, ctmGetInteger(context, CTM_ATTRIB_MAP_COUNT));
+   numTriangles = CTM_CALL(context, ctmGetInteger(context, CTM_TRIANGLE_COUNT));
+   numUvs       = CTM_CALL(context, ctmGetInteger(context, CTM_UV_MAP_COUNT));
+   numAttribs   = CTM_CALL(context, ctmGetInteger(context, CTM_ATTRIB_MAP_COUNT));
 
    /* indices count now */
-   num_triangles *= 3;
+   numTriangles *= 3;
 
    if (ctmGetInteger(context, CTM_HAS_NORMALS) == CTM_TRUE) {
       normals = CTM_CALL(context, ctmGetFloatArray(context, CTM_NORMALS));
    }
 
-   if (num_uvs) {
+   if (numUvs) {
       textureFilename = CTM_CALL(context, ctmGetUVMapString(context, CTM_UV_MAP_1, CTM_FILE_NAME));
       if (!textureFilename) {
          textureFilename = CTM_CALL(context, ctmGetUVMapString(context, CTM_UV_MAP_1, CTM_NAME));
@@ -126,7 +126,7 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
       }
    }
 
-   for (i = 0; i != num_attribs; ++i) {
+   for (i = 0; i != numAttribs; ++i) {
       attribName = ctmGetAttribMapString(context, CTM_ATTRIB_MAP_1 + i, CTM_NAME);
       if (!strcmp(attribName, "Color")) {
          colors = CTM_CALL(context, ctmGetFloatArray(context, CTM_ATTRIB_MAP_1 + i));
@@ -138,13 +138,10 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
    if (comment) DEBUG(GLHCK_DBG_CRAP, "%s", comment);
 
    /* process vertex data to import format */
-   if (!(vertexData = _glhckMalloc(num_vertices * sizeof(glhckImportVertexData))))
+   if (!(vertexData = _glhckCalloc(num_vertices, sizeof(glhckImportVertexData))))
       goto fail;
 
-   /* init */
-   memset(vertexData, 0, num_vertices * sizeof(glhckImportVertexData));
-
-   for (i = 0; i != num_triangles; ++i) {
+   for (i = 0; i != numTriangles; ++i) {
       ix = indices[i];
 
       vertexData[ix].vertex.x = vertices[ix*3+0];
@@ -171,22 +168,22 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
    }
 
    /* triangle strip geometry */
-   if (!(strip_indices = _glhckTriStrip(indices, num_triangles, &num_indices))) {
+   if (!(stripIndices = _glhckTriStrip(indices, numTriangles, &numIndices))) {
       /* failed, use non stripped geometry */
       geometryType = GLHCK_TRIANGLES;
-      num_indices  = num_triangles;
+      numIndices  = numTriangles;
    }
 
    /* this object has colors */
    if (colors) object->material.flags |= GLHCK_MATERIAL_COLOR;
 
    /* set geometry */
-   glhckObjectInsertIndices(object, itype, strip_indices?strip_indices:indices, num_indices);
+   glhckObjectInsertIndices(object, itype, stripIndices?stripIndices:indices, numIndices);
    glhckObjectInsertVertices(object, vtype, vertexData, num_vertices);
    object->geometry->type = geometryType;
 
    /* finish */
-   IFDO(_glhckFree, strip_indices);
+   IFDO(_glhckFree, stripIndices);
    NULLDO(_glhckFree, vertexData);
    NULLDO(ctmFreeContext, context);
 
@@ -197,7 +194,7 @@ read_fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s", file);
    goto fail;
 fail:
-   IFDO(_glhckFree, strip_indices);
+   IFDO(_glhckFree, stripIndices);
    IFDO(_glhckFree, vertexData);
    IFDO(fclose, f);
    IFDO(ctmFreeContext, context);

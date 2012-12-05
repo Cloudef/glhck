@@ -100,10 +100,8 @@ static int _glhckTextNewTexture(_glhckText *text, unsigned int object, size_t si
    CALL(0, "%p, %d", text, object);
    assert(text);
 
-   if (!(texture = _glhckMalloc(sizeof(__GLHCKtextTexture))))
+   if (!(texture = _glhckCalloc(1, sizeof(__GLHCKtextTexture))))
       goto fail;
-   memset(texture, 0, sizeof(__GLHCKtextTexture));
-   memset(&texture->geometry, 0, sizeof(__GLHCKtextGeometry));
 
    /* assign */
    for (t = text->tcache; t && t->next; t = t->next);
@@ -322,16 +320,12 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    CALL(0, "%d, %d", cachew, cacheh);
 
    /* allocate text stack */
-   if (!(text = _glhckMalloc(sizeof(_glhckText))))
+   if (!(text = _glhckCalloc(1, sizeof(_glhckText))))
       goto fail;
-   memset(text, 0, sizeof(_glhckText));
 
    /* allocate texture */
-   if (!(texture = _glhckMalloc(sizeof(__GLHCKtextTexture))))
+   if (!(texture = _glhckCalloc(1, sizeof(__GLHCKtextTexture))))
       goto fail;
-
-   memset(texture, 0, sizeof(__GLHCKtextTexture));
-   memset(&texture->geometry, 0, sizeof(__GLHCKtextGeometry));
 
    texture->format = GLHCK_ALPHA;
    texture->size   = cachew * cacheh;
@@ -500,11 +494,10 @@ GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text, unsigned char 
    assert(text && data);
 
    /* allocate font */
-   if (!(font = _glhckMalloc(sizeof(__GLHCKtextFont))))
+   if (!(font = _glhckCalloc(1, sizeof(__GLHCKtextFont))))
       goto fail;
 
    /* init */
-   memset(font, 0, sizeof(__GLHCKtextFont));
    memset(font->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
    for (id = 1, f = text->fcache; f; f = f->next) ++id;
    font->data = data;
@@ -588,11 +581,10 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
    assert(text && file);
 
     /* allocate font */
-   if (!(font = _glhckMalloc(sizeof(__GLHCKtextFont))))
+   if (!(font = _glhckCalloc(1, sizeof(__GLHCKtextFont))))
       goto fail;
 
    /* init */
-   memset(font, 0, sizeof(__GLHCKtextFont));
    memset(font->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
    for (id = 1, f = text->fcache; f; f = f->next) ++id;
 

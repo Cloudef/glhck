@@ -544,10 +544,8 @@ glhckGeometry* _glhckGeometryNew(void)
 {
    glhckGeometry *geometry;
 
-   if (!(geometry = _glhckMalloc(sizeof(glhckGeometry))))
+   if (!(geometry = _glhckCalloc(1, sizeof(glhckGeometry))))
       return NULL;
-
-   memset(geometry, 0, sizeof(glhckGeometry));
 
    /* default geometry type */
    geometry->type = GLHCK_TRIANGLE_STRIP;

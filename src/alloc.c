@@ -30,19 +30,15 @@ static void trackAlloc(const char *channel, void *ptr, size_t size)
    data = _GLHCKlibrary.alloc;
 
    /* track */
-   if (!data)
-      data = _GLHCKlibrary.alloc = malloc(sizeof(__GLHCKalloc));
-   else {
-      for (; data && data->next; data = data->next);
-      data = data->next = malloc(sizeof(__GLHCKalloc));
-   }
+   for (; data && data->next; data = data->next);
+   if (data) data = data->next = calloc(1, sizeof(__GLHCKalloc));
+   else      data = _GLHCKlibrary.alloc = calloc(1, sizeof(__GLHCKalloc));
 
    /* alloc failed */
    if (!data)
       return;
 
    /* init */
-   memset(data, 0, sizeof(__GLHCKalloc));
    data->size = size;
    data->ptr = ptr;
    data->channel = channel;
@@ -72,7 +68,7 @@ static void trackFree(const void *ptr)
           data = data->next);
 
    /* free */
-   if ((found = data->next)) {
+   if (data && (found = data->next)) {
       data->next = found->next;
       free(found);
    }

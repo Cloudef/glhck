@@ -189,13 +189,8 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    _glhckObject *object;
    TRACE(0);
 
-   if (!(object = _glhckMalloc(sizeof(_glhckObject))))
+   if (!(object = _glhckCalloc(1, sizeof(_glhckObject))))
       goto fail;
-
-   /* init object */
-   memset(object, 0, sizeof(_glhckObject));
-   memset(&object->view, 0, sizeof(__GLHCKobjectView));
-   memset(&object->material, 0, sizeof(__GLHCKobjectMaterial));
 
    /* default view matrix */
    glhckObjectScalef(object, 1.0f, 1.0f, 1.0f);
@@ -232,11 +227,10 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    CALL(0, "%p", src);
    assert(src);
 
-   if (!(object = _glhckMalloc(sizeof(_glhckObject))))
+   if (!(object = _glhckCalloc(1, sizeof(_glhckObject))))
       goto fail;
 
    /* copy static data */
-   memset(object, 0, sizeof(_glhckObject));
    memcpy(&object->view, &src->view, sizeof(__GLHCKobjectView));
    memcpy(&object->material, &src->material, sizeof(__GLHCKobjectMaterial));
 

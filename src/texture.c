@@ -167,11 +167,9 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
       goto success;
 
    /* allocate texture */
-   if (!(texture = (_glhckTexture*)_glhckMalloc(sizeof(_glhckTexture))))
+   if (!(texture = (_glhckTexture*)_glhckCalloc(1, sizeof(_glhckTexture))))
       goto fail;
 
-   /* init texture */
-   memset(texture, 0, sizeof(_glhckTexture));
    texture->refCounter++;
 
    /* If file is passed, then try import it */

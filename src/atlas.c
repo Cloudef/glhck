@@ -56,11 +56,8 @@ GLHCKAPI glhckAtlas* glhckAtlasNew(void)
    _glhckAtlas *atlas;
    TRACE(0);
 
-   if (!(atlas = _glhckMalloc(sizeof(_glhckAtlas))))
+   if (!(atlas = _glhckCalloc(1, sizeof(_glhckAtlas))))
       goto fail;
-
-   /* init altas */
-   memset(atlas, 0, sizeof(_glhckAtlas));
 
    /* increase reference */
    atlas->refCounter++;
@@ -123,18 +120,15 @@ GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture)
    /* insert here */
    if (!(rect = atlas->rect)) {
       rect = atlas->rect =
-         _glhckMalloc(sizeof(_glhckAtlasRect));
+         _glhckCalloc(1, sizeof(_glhckAtlasRect));
    } else {
       for (; rect && rect->next; rect = rect->next);
       rect = rect->next =
-         _glhckMalloc(sizeof(_glhckAtlasRect));
+         _glhckCalloc(1, sizeof(_glhckAtlasRect));
    }
 
    if (!rect)
       goto fail;
-
-   /* init rect */
-   memset(rect, 0, sizeof(_glhckAtlasRect));
 
    /* assign reference */
    rect->texture  = glhckTextureRef(texture);

@@ -41,13 +41,13 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
 {
    FILE *f;
    char *texturePath;
-   size_t i, i2, ix, start, num_faces, num_indices;
+   size_t i, i2, ix, start, numFaces, numIndices;
    mmd_header header;
    mmd_data *mmd = NULL;
    _glhckAtlas *atlas = NULL;
    _glhckTexture *texture = NULL, **textureList = NULL;
    glhckImportVertexData *vertexData = NULL;
-   unsigned int *indices = NULL, *strip_indices = NULL;
+   glhckImportIndexData *indices = NULL, *stripIndices = NULL;
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
    CALL(0, "%p, %s, %d", object, file, animated);
 
@@ -73,22 +73,19 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
    NULLDO(fclose, f);
 
    DEBUG(GLHCK_DBG_CRAP, "V: %d", mmd->num_vertices);
-   DEBUG(GLHCK_DBG_CRAP, "I: %d", mmd->num_indices);
+   DEBUG(GLHCK_DBG_CRAP, "I: %d", mmd->numIndices);
 
-   if (!(vertexData = _glhckMalloc(mmd->num_vertices * sizeof(glhckImportVertexData))))
+   if (!(vertexData = _glhckCalloc(mmd->num_vertices, sizeof(glhckImportVertexData))))
       goto mmd_no_memory;
 
-   if (!(indices = _glhckMalloc(mmd->num_indices * sizeof(unsigned int))))
+   if (!(indices = _glhckMalloc(mmd->numIndices * sizeof(unsigned int))))
       goto mmd_no_memory;
 
-   if (!(textureList = _glhckMalloc(mmd->num_materials * sizeof(_glhckTexture*))))
+   if (!(textureList = _glhckCalloc(mmd->num_materials, sizeof(_glhckTexture*))))
       goto mmd_no_memory;
 
    if (!(atlas = glhckAtlasNew()))
       goto mmd_no_memory;
-
-   /* init texture list */
-   memset(textureList, 0, mmd->num_materials * sizeof(_glhckTexture*));
 
    /* add all textures to atlas packer */
    for (i = 0; i != mmd->num_materials; ++i) {
@@ -108,13 +105,10 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
    if (glhckAtlasPack(atlas, 1, 0) != RETURN_OK)
       goto fail;
 
-   /* init */
-   memset(vertexData, 0, mmd->num_vertices * sizeof(glhckImportVertexData));
-
    /* assign data */
    for (i = 0, start = 0; i != mmd->num_materials; ++i) {
-      num_faces = mmd->face[i];
-      for (i2 = start; i2 != start + num_faces; ++i2) {
+      numFaces = mmd->face[i];
+      for (i2 = start; i2 != start + numFaces; ++i2) {
          ix = mmd->indices[i2];
 
          /* vertices */
@@ -150,7 +144,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
 
          indices[i2] = ix;
       }
-      start += num_faces;
+      start += numFaces;
    }
 
    /* assign texture ot object */
@@ -161,21 +155,21 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
    NULLDO(_glhckFree, textureList);
 
    /* triangle strip geometry */
-   if (!(strip_indices = _glhckTriStrip(indices, mmd->num_indices, &num_indices))) {
+   if (!(stripIndices = _glhckTriStrip(indices, mmd->numIndices, &numIndices))) {
       /* failed, use non stripped geometry */
       geometryType   = GLHCK_TRIANGLES;
-      num_indices    = mmd->num_indices;
-      strip_indices  = indices;
+      numIndices    = mmd->numIndices;
+      stripIndices  = indices;
    } else NULLDO(_glhckFree, indices);
 
    /* set geometry */
-   glhckObjectInsertIndices(object, itype, strip_indices, num_indices);
+   glhckObjectInsertIndices(object, itype, stripIndices, numIndices);
    glhckObjectInsertVertices(object, vtype, vertexData, mmd->num_vertices);
    object->geometry->type = geometryType;
 
    /* finish */
    NULLDO(_glhckFree, vertexData);
-   NULLDO(_glhckFree, strip_indices);
+   NULLDO(_glhckFree, stripIndices);
    NULLDO(mmd_free, mmd);
 
    RET(0, "%d", RETURN_OK);
@@ -196,7 +190,7 @@ fail:
    IFDO(_glhckFree, textureList);
    IFDO(_glhckFree, vertexData);
    IFDO(_glhckFree, indices);
-   IFDO(_glhckFree, strip_indices);
+   IFDO(_glhckFree, stripIndices);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }

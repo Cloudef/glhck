@@ -342,8 +342,8 @@ unsigned int* _glhckTriStrip(const unsigned int *indices, size_t num_indices, si
 {
 #if GLHCK_TRISTRIP
    unsigned int v1, v2, v3;
-   unsigned int *out_indices = NULL, test;
-   size_t i, prim_count, tmp;
+   unsigned int *outIndices = NULL, test;
+   size_t i, primCount, tmp;
    ACTCData *tc = NULL;
    CALL(0, "%p, %zu, %p", indices, num_indices, out_num_indices);
 
@@ -352,7 +352,7 @@ unsigned int* _glhckTriStrip(const unsigned int *indices, size_t num_indices, si
    while ((test-=3)>3);
    if (test != 3 && test != 0) goto not_valid;
 
-   if (!(out_indices = _glhckMalloc(num_indices * sizeof(unsigned int))))
+   if (!(outIndices = _glhckMalloc(num_indices * sizeof(unsigned int))))
       goto out_of_memory;
 
    if (!(tc = actcNew()))
@@ -374,23 +374,23 @@ unsigned int* _glhckTriStrip(const unsigned int *indices, size_t num_indices, si
    ACTC_CALL(actcEndInput(tc));
 
    /* output data */
-   tmp = num_indices; i = 0; prim_count = 0;
+   tmp = num_indices; i = 0; primCount = 0;
    ACTC_CALL(actcBeginOutput(tc));
    while (actcStartNextPrim(tc, &v1, &v2) != ACTC_DATABASE_EMPTY) {
-      if (i + (prim_count?5:3) > num_indices)
+      if (i + (primCount?5:3) > num_indices)
          goto no_profit;
-      if (prim_count) {
-         out_indices[i++] = v3;
-         out_indices[i++] = v1;
+      if (primCount) {
+         outIndices[i++] = v3;
+         outIndices[i++] = v1;
       }
-      out_indices[i++] = v1;
-      out_indices[i++] = v2;
+      outIndices[i++] = v1;
+      outIndices[i++] = v2;
       while (actcGetNextVert(tc, &v3) != ACTC_PRIM_COMPLETE) {
          if (i + 1 > num_indices)
             goto no_profit;
-         out_indices[i++] = v3;
+         outIndices[i++] = v3;
       }
-      prim_count++;
+      primCount++;
    }
    ACTC_CALL(actcEndOutput(tc));
    puts("");
@@ -399,12 +399,12 @@ unsigned int* _glhckTriStrip(const unsigned int *indices, size_t num_indices, si
 
    printf("%zu indices\n", num_indices);
    printf("%zu out indicies\n", i);
-   printf("%zu tristrips\n", prim_count);
+   printf("%zu tristrips\n", primCount);
    printf("%zu profit\n", num_indices - i);
    actcDelete(tc);
 
-   RET(0, "%p", out_indices);
-   return out_indices;
+   RET(0, "%p", outIndices);
+   return outIndices;
 
 not_valid:
    DEBUG(GLHCK_DBG_ERROR, "Tristripper: not valid triangle indices");
@@ -419,7 +419,7 @@ no_profit:
    DEBUG(GLHCK_DBG_CRAP, "Tripstripper: no profit from stripping, fallback to triangles");
 fail:
    IFDO(actcDelete, tc);
-   IFDO(_glhckFree, out_indices);
+   IFDO(_glhckFree, outIndices);
    RET(0, "%p", NULL);
    return NULL;
 #else

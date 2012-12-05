@@ -39,10 +39,6 @@ int _glhckFormatPMD(const char *file);
 int _glhckImportAssimp(_glhckObject *object, const char *file, int animated,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 int _glhckFormatAssimp(const char *file);
-
-/* Assimp wrapper */
-//int _glhckImportAssimp(_glhckObject *object, const char *file, int animated);
-//int _glhckFormatAssimp(const char *file);
 #endif
 
 /* Wraps around the other imports by figuring out the header

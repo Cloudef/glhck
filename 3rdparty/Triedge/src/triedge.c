@@ -87,10 +87,9 @@ int main(int argc, char **argv)
 
    if (!(in_indices = malloc(num_indices * sizeof(unsigned int))))
       goto no_memory;
-   if (!(out_indices = malloc(num_indices * sizeof(unsigned int))))
+   if (!(out_indices = calloc(num_indices, sizeof(unsigned int))))
       goto no_memory;
 
-   memset(out_indices, 0, num_indices * sizeof(unsigned int));
    for (i = 0; i != num_indices; ++i)
       in_indices[i] = strtol(read_indices[i], (char **) NULL, 10);
    strsplitClear(&read_indices);

@@ -11,7 +11,7 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
    _glhckTexture *texture = NULL;
    CALL(0, "%d, %d, %d", width, height, mode);
 
-   if (!(rtt = _glhckMalloc(sizeof(_glhckRtt))))
+   if (!(rtt = _glhckCalloc(1, sizeof(_glhckRtt))))
       goto fail;
 
    if (!(texture = glhckTextureNew(NULL, GLHCK_TEXTURE_DEFAULTS)))
@@ -23,7 +23,6 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
    else
       format = GLHCK_RGBA;
 
-   memset(rtt, 0, sizeof(_glhckRtt));
    if (!(glhckTextureCreate(texture, NULL, width, height,
                format, format, GLHCK_TEXTURE_DEFAULTS)))
       goto fail;
