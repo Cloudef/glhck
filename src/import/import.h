@@ -35,6 +35,11 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 int _glhckFormatPMD(const char *file);
 
+/* Assimp Wrapper http://assimp.sourceforge.net/ */
+int _glhckImportAssimp(_glhckObject *object, const char *file, int animated,
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+int _glhckFormatAssimp(const char *file);
+
 /* Assimp wrapper */
 //int _glhckImportAssimp(_glhckObject *object, const char *file, int animated);
 //int _glhckFormatAssimp(const char *file);

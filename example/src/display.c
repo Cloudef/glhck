@@ -142,8 +142,9 @@ int main(int argc, char **argv)
    glhckObjectScalef(sprite2, 0.03f, 0.03f, 0.03f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
-#define SKIP_MMD  0
-#define SKIP_OCTM 0
+#define SKIP_MMD  1
+#define SKIP_OCTM 1
+#define SKIP_ASSIMP 0
 
 #if SKIP_MMD
 #  define MMD_PATH ""
@@ -157,10 +158,19 @@ int main(int argc, char **argv)
 #  define OCTM_PATH "example/media/ambulance/ambulance.ctm"
 #endif
 
+#if SKIP_ASSIMP
+#  define ASSIMP_PATH ""
+#else
+#  define ASSIMP_PATH "example/media/cartoon/cartoon.3ds"
+#endif
+
    if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckModelNewEx(OCTM_PATH, 5.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+      cameraPos.y =  10.0f;
+      cameraPos.z = -40.0f;
+   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 1.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {

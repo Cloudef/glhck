@@ -12,17 +12,18 @@ SET(GLHCK_SRC
    atlas.c
    rtt.c
    texture_packer.c
-   geometry/model.c
-   geometry/plane.c
    geometry/cube.c
+   geometry/plane.c
+   geometry/model.c
    render/OpenGL.c
    import/import.c
-   import/import_mmd.c
-   import/import_octm.c
-   import/import_png.c
    import/import_jpeg.c
+   import/import_png.c
    import/import_tga.c
-   import/import_bmp.c)
+   import/import_bmp.c
+   import/import_octm.c
+   import/import_mmd.c
+   import/import_assimp.c)
 
 FIND_PACKAGE(PNG REQUIRED)
 FIND_PACKAGE(JPEG REQUIRED)
@@ -60,6 +61,6 @@ INCLUDE_DIRECTORIES(
 
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck kazmath imghck actc ${OPT_LIBS} ${MATH_LIBRARY})
+TARGET_LINK_LIBRARIES(glhck kazmath imghck actc assimp ${OPT_LIBS} ${MATH_LIBRARY})
 
 INSTALL(TARGETS glhck DESTINATION lib)
