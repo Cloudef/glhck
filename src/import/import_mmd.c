@@ -73,12 +73,12 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
    NULLDO(fclose, f);
 
    DEBUG(GLHCK_DBG_CRAP, "V: %d", mmd->num_vertices);
-   DEBUG(GLHCK_DBG_CRAP, "I: %d", mmd->numIndices);
+   DEBUG(GLHCK_DBG_CRAP, "I: %d", mmd->num_indices);
 
    if (!(vertexData = _glhckCalloc(mmd->num_vertices, sizeof(glhckImportVertexData))))
       goto mmd_no_memory;
 
-   if (!(indices = _glhckMalloc(mmd->numIndices * sizeof(unsigned int))))
+   if (!(indices = _glhckMalloc(mmd->num_indices * sizeof(unsigned int))))
       goto mmd_no_memory;
 
    if (!(textureList = _glhckCalloc(mmd->num_materials, sizeof(_glhckTexture*))))
@@ -155,10 +155,10 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
    NULLDO(_glhckFree, textureList);
 
    /* triangle strip geometry */
-   if (!(stripIndices = _glhckTriStrip(indices, mmd->numIndices, &numIndices))) {
+   if (!(stripIndices = _glhckTriStrip(indices, mmd->num_indices, &numIndices))) {
       /* failed, use non stripped geometry */
       geometryType   = GLHCK_TRIANGLES;
-      numIndices    = mmd->numIndices;
+      numIndices    = mmd->num_indices;
       stripIndices  = indices;
    } else NULLDO(_glhckFree, indices);
 
