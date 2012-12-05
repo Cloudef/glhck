@@ -171,8 +171,10 @@ GLHCKAPI int glhckInit(int argc, char **argv)
 
    /* FIXME: change the signal calls in these functions to sigaction's */
 #ifndef NDEBUG
+#if 0
    /* set FPE handler */
    _glhckSetFPE(argc, _argv);
+#endif
 
    /* setup backtrace handler
     * make this optional.. */
