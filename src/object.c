@@ -4,6 +4,11 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
 
+#define PERFORM_ON_CHILDS(parent, function)              \
+   { unsigned int _cbc_;                                 \
+   for (_cbc_ = 0; _cbc_ != parent->numChilds; ++_cbc_)  \
+      function(parent->childs[_cbc_]); }
+
 /* \brief assign object to draw list */
 inline void _glhckObjectInsertToQueue(_glhckObject *object)
 {
@@ -291,6 +296,13 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
+   /* remove itself from parent */
+   if (object->parent)
+      glhckObjectRemoveChildren(object->parent, object);
+
+   /* remove all children objects */
+   glhckObjectRemoveAllChildren(object);
+
    /* free metadata */
    IFDO(_glhckFree, object->file);
 
@@ -309,6 +321,59 @@ GLHCKAPI short glhckObjectFree(glhckObject *object)
 success:
    RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
    return object?object->refCounter:0;
+}
+
+/* \brief add children object */
+GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child)
+{
+   size_t i;
+   glhckObject **newChilds = NULL;
+   assert(object != child);
+
+   /* already added? */
+   for (i = 0; i != object->numChilds; ++i)
+      if (child == object->childs[i]) return;
+
+   /* add child */
+   if (!(newChilds = _glhckMalloc((object->numChilds+1) * sizeof(glhckObject*))))
+      return;
+
+   for (i = 0; i != object->numChilds; ++i) newChilds[i] = object->childs[i];
+   newChilds[object->numChilds] = glhckObjectRef(child);
+   IFDO(_glhckFree, object->childs);
+   object->childs = newChilds;
+   object->numChilds++;
+}
+
+/* \brief remove children object */
+GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child)
+{
+   size_t i;
+   glhckObject **newChilds = NULL;
+   assert(object != child);
+
+   if (!(newChilds = _glhckMalloc((object->numChilds-1) * sizeof(glhckObject*))))
+      return;
+
+   for (i = 0; i != object->numChilds; ++i) {
+      if (object->childs[i] != child) newChilds[i] = object->childs[i];
+      else glhckObjectFree(object->childs[i]);
+   }
+
+   IFDO(_glhckFree, object->childs);
+   object->childs = newChilds;
+   object->numChilds--;
+}
+
+/* \brief remove all children objects */
+GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object)
+{
+   size_t i;
+   if (!object->childs) return;
+   for (i = 0; i != object->numChilds; ++i)
+      glhckObjectFree(object->childs[i]);
+   NULLDO(_glhckFree, object->childs);
+   object->numChilds = 0;
 }
 
 /* \brief set object's texture */
@@ -358,6 +423,9 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
 
    /* insert object's texture to textures queue, referenced until glhckRender */
    _glhckTextureInsertToQueue(object->material.texture);
+
+   /* draw childs as well */
+   PERFORM_ON_CHILDS(object, glhckObjectDraw);
 }
 
 /* \brief render object */
@@ -373,6 +441,9 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
    /* render */
    assert(object->drawFunc);
    object->drawFunc(object);
+
+   /* render childs as well */
+   PERFORM_ON_CHILDS(object, glhckObjectRender);
 }
 
 /* \brief get object's material flag s*/

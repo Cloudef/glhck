@@ -140,6 +140,9 @@ typedef struct _glhckObject {
    struct __GLHCKobjectMaterial material;
    __GLHCKobjectDraw drawFunc;
    short refCounter;
+   size_t numChilds;
+   struct _glhckObject *parent;
+   struct _glhckObject **childs;
    struct _glhckObject *next;
 } _glhckObject;
 
