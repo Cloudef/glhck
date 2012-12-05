@@ -73,7 +73,7 @@ typedef struct _glhckTexture {
    unsigned char *data;
    int width, height;
    size_t size;
-   short refCounter;
+   size_t refCounter;
    struct _glhckTexture *next;
 } _glhckTexture;
 
@@ -102,7 +102,7 @@ typedef struct _glhckAtlasRect {
 typedef struct _glhckAtlas {
    struct _glhckAtlasRect *rect;
    struct _glhckTexture *texture;
-   short refCounter;
+   size_t refCounter;
    struct _glhckAtlas *next;
 } _glhckAtlas;
 
@@ -110,7 +110,7 @@ typedef struct _glhckAtlas {
 typedef struct _glhckRtt {
    unsigned int object;
    struct _glhckTexture *texture;
-   short refCounter;
+   size_t refCounter;
    struct _glhckRtt *next;
 } _glhckRtt;
 
@@ -139,7 +139,7 @@ typedef struct _glhckObject {
    struct __GLHCKobjectView view;
    struct __GLHCKobjectMaterial material;
    __GLHCKobjectDraw drawFunc;
-   short refCounter;
+   size_t refCounter;
    size_t numChilds;
    struct _glhckObject *parent;
    struct _glhckObject **childs;
@@ -174,7 +174,7 @@ typedef struct _glhckText {
    int tw, th;
    float itw, ith;
    struct glhckColorb color;
-   unsigned short textureRange;
+   unsigned int textureRange;
    struct __GLHCKtextFont *fcache;
    struct __GLHCKtextTexture *tcache;
    struct _glhckText *next;
@@ -195,7 +195,7 @@ typedef struct _glhckCamera {
    struct _glhckObject *object;
    struct __GLHCKcameraView view;
    struct glhckFrustum frustum;
-   short refCounter;
+   size_t refCounter;
    struct _glhckCamera *next;
 } _glhckCamera;
 
@@ -440,7 +440,7 @@ void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLev
 /* internal geometry vertexdata */
 glhckGeometry *_glhckGeometryNew(void);
 glhckGeometry *_glhckGeometryCopy(glhckGeometry *src);
-short _glhckGeometryFree(glhckGeometry *geometry);
+void _glhckGeometryFree(glhckGeometry *geometry);
 int _glhckGeometryInsertVertices(
       glhckGeometry *geometry, size_t memb,
       glhckGeometryVertexType type,

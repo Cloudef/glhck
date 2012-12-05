@@ -570,14 +570,13 @@ glhckGeometry* _glhckGeometryCopy(glhckGeometry *src)
 }
 
 /* \brief release geometry object */
-short _glhckGeometryFree(glhckGeometry *geometry)
+void _glhckGeometryFree(glhckGeometry *geometry)
 {
    assert(geometry);
    IFDO(_glhckFree, geometry->transformedCoordinates);
    _glhckGeometryFreeVertices(geometry);
    _glhckGeometryFreeIndices(geometry);
    _glhckFree(geometry);
-   return 0;
 }
 
 /***

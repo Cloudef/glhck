@@ -153,7 +153,7 @@ GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *camera)
 }
 
 /* \brief free camera */
-GLHCKAPI short glhckCameraFree(glhckCamera *camera)
+GLHCKAPI size_t glhckCameraFree(glhckCamera *camera)
 {
    CALL(FREE_CALL_PRIO(camera), "%p", camera);
    assert(camera);

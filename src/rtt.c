@@ -56,7 +56,7 @@ fail:
 }
 
 /* \brief free rtt object */
-GLHCKAPI short glhckRttFree(glhckRtt *rtt)
+GLHCKAPI size_t glhckRttFree(glhckRtt *rtt)
 {
    CALL(FREE_CALL_PRIO(rtt), "%p", rtt);
    assert(rtt);

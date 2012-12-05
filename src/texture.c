@@ -251,7 +251,7 @@ GLHCKAPI _glhckTexture* glhckTextureRef(_glhckTexture *texture)
 }
 
 /* \brief free texture */
-GLHCKAPI short glhckTextureFree(_glhckTexture *texture)
+GLHCKAPI size_t glhckTextureFree(_glhckTexture *texture)
 {
    CALL(FREE_CALL_PRIO(texture), "%p", texture);
    assert(texture);

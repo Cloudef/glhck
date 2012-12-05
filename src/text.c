@@ -360,7 +360,7 @@ fail:
 }
 
 /* \brief free text stack */
-GLHCKAPI short glhckTextFree(glhckText *text)
+GLHCKAPI size_t glhckTextFree(glhckText *text)
 {
    __GLHCKtextFont *f, *fn;
    __GLHCKtextTexture *t, *tn;

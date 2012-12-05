@@ -285,7 +285,7 @@ GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object)
 }
 
 /* \brief free object */
-GLHCKAPI short glhckObjectFree(glhckObject *object)
+GLHCKAPI size_t glhckObjectFree(glhckObject *object)
 {
    CALL(FREE_CALL_PRIO(object), "%p", object);
    assert(object);

@@ -74,7 +74,7 @@ fail:
 }
 
 /* \brief free atlas */
-GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas)
+GLHCKAPI size_t glhckAtlasFree(glhckAtlas *atlas)
 {
    CALL(FREE_CALL_PRIO(atlas), "%p", atlas);
    assert(atlas);

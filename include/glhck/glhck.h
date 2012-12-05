@@ -365,7 +365,7 @@ typedef struct glhckGeometry {
     * the texture matrix is scaled with
     * 1.0f/textureRange of geometry before
     * sending to OpenGL */
-   unsigned short textureRange;
+   unsigned int textureRange;
 } glhckGeometry;
 
 /* typedefs for better typing */
@@ -404,7 +404,7 @@ GLHCKAPI void glhckFrustumRender(glhckFrustum *frustum, const kmMat4 *model);
 /* cameras */
 GLHCKAPI glhckCamera* glhckCameraNew(void);
 GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *camera);
-GLHCKAPI short glhckCameraFree(glhckCamera *camera);
+GLHCKAPI size_t glhckCameraFree(glhckCamera *camera);
 GLHCKAPI void glhckCameraUpdate(glhckCamera *camera);
 GLHCKAPI void glhckCameraReset(glhckCamera *camera);
 GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionType projectionType);
@@ -424,7 +424,7 @@ GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *camera);
 GLHCKAPI glhckObject* glhckObjectNew(void);
 GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src);
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
-GLHCKAPI short glhckObjectFree(glhckObject *object);
+GLHCKAPI size_t glhckObjectFree(glhckObject *object);
 GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child);
 GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child);
 GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object);
@@ -493,7 +493,7 @@ GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file,
 
 /* text */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
-GLHCKAPI short glhckTextFree(glhckText *text);
+GLHCKAPI size_t glhckTextFree(glhckText *text);
 GLHCKAPI void glhckTextGetMetrics(glhckText *text, unsigned int font_id,
       float size, float *ascender, float *descender, float *lineh);
 GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
@@ -518,7 +518,7 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
 GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
 GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
-GLHCKAPI short glhckTextureFree(glhckTexture *texture);
+GLHCKAPI size_t glhckTextureFree(glhckTexture *texture);
 GLHCKAPI int glhckTextureCreate(glhckTexture *texture, unsigned char *data,
       int width, int height, unsigned int format, unsigned int outFormat, unsigned int flags);
 GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, unsigned char *data, unsigned int format);
@@ -528,7 +528,7 @@ GLHCKAPI void glhckBindTexture(unsigned int texture);
 
 /* texture atlases */
 GLHCKAPI glhckAtlas* glhckAtlasNew(void);
-GLHCKAPI short glhckAtlasFree(glhckAtlas *atlas);
+GLHCKAPI size_t glhckAtlasFree(glhckAtlas *atlas);
 GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture);
 GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *atlas);
 GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two,
@@ -542,7 +542,7 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTextur
 
 /* render to texture */
 GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode);
-GLHCKAPI short glhckRttFree(glhckRtt *rtt);
+GLHCKAPI size_t glhckRttFree(glhckRtt *rtt);
 GLHCKAPI int glhckRttFillData(glhckRtt *rtt);
 GLHCKAPI glhckTexture* glhckRttGetTexture(const glhckRtt *rtt);
 GLHCKAPI void glhckRttBegin(const glhckRtt *rtt);
