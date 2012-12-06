@@ -44,15 +44,23 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
 /* \brief calcualate view matrix */
 static void _glhckCameraViewMatrix(_glhckCamera *camera)
 {
-   kmMat4 mat;
+   kmMat4 rotation;
    kmVec3 upvector;
    CALL(2, "%p", camera);
    assert(camera);
 
-   kmMat4RotationZ(&mat, kmDegreesToRadians(camera->object->view.rotation.z));
-   kmVec3Transform(&upvector, &camera->view.upVector, &mat);
-   kmVec3Normalize(&upvector, &upvector);
+   /* assuming upvector is normalized */
+   kmMat4Identity(&rotation);
+   kmMat4RotationPitchYawRoll(&rotation,
+         kmDegreesToRadians(camera->object->view.rotation.x),
+         kmDegreesToRadians(camera->object->view.rotation.y),
+         kmDegreesToRadians(camera->object->view.rotation.z));
+   kmVec3Transform(&upvector, &camera->view.upVector, &rotation);
+   upvector.x *= -camera->view.upVector.x;
+   upvector.y *= -camera->view.upVector.y;
+   upvector.z *= -camera->view.upVector.z;
 
+   /* build view matrix */
    kmMat4LookAt(&camera->view.view, &camera->object->view.translation,
          &camera->object->view.target, &upvector);
 
