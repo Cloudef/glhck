@@ -31,7 +31,7 @@ static int buildModel(const char *file, _glhckObject *object,
    glhckImportIndexData *stripIndices = NULL;
 
    if (!numVertices)
-      return RETURN_FAIL;
+      return RETURN_OK;
 
    /* triangle strip geometry */
    if (!(stripIndices = _glhckTriStrip(indices, numIndices, &numStrippedIndices))) {
@@ -44,7 +44,7 @@ static int buildModel(const char *file, _glhckObject *object,
    glhckObjectInsertIndices(object, itype, (stripIndices?stripIndices:indices), numStrippedIndices);
    glhckObjectInsertVertices(object, vtype, vertexData, numVertices);
    object->geometry->type = geometryType;
-   NULLDO(_glhckFree, stripIndices);
+   IFDO(_glhckFree, stripIndices);
    return RETURN_OK;
 }
 
@@ -72,7 +72,7 @@ static void joinMesh(const char *file, const struct aiScene *sc,
 }
 
 static int processModel(const char *file, _glhckObject *object,
-      const struct aiScene *sc, const struct aiNode *nd,
+      _glhckObject *current, const struct aiScene *sc, const struct aiNode *nd,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype, int animated)
 {
    unsigned int m, f;
@@ -82,6 +82,7 @@ static int processModel(const char *file, _glhckObject *object,
    glhckImportVertexData *vertexData = NULL;
    const struct aiMesh *mesh;
    const struct aiFace *face;
+   int canFreeCurrent = 0;
 
    printf("%d\n",nd->mNumMeshes);
    printf("%d\n",nd->mNumChildren);
@@ -120,23 +121,26 @@ static int processModel(const char *file, _glhckObject *object,
       voffset += mesh->mNumVertices;
    }
 
-   if (buildModel(file, object, numIndices,  numVertices,
+   if (buildModel(file, current, numIndices,  numVertices,
             indices, vertexData, itype, vtype, animated) == RETURN_OK) {
-      NULLDO(_glhckFree, vertexData);
-      NULLDO(_glhckFree, indices);
-      return RETURN_OK;
+      if (!(current = glhckObjectNew()))
+         goto fail;
+      glhckObjectAddChildren(object, current);
+      canFreeCurrent = 1;
    }
 
    for (m = 0; m != nd->mNumChildren; ++m) {
-      if (processModel(file, object, sc, nd->mChildren[m],
-               itype, vtype, animated) == RETURN_OK)
-         return RETURN_OK;
+      if (processModel(file, object, current, sc, nd->mChildren[m],
+               itype, vtype, animated) == RETURN_OK) {
+         if (!(current = glhckObjectNew()))
+            goto fail;
+         glhckObjectAddChildren(object, current);
+         canFreeCurrent = 1;
+      }
    }
 
-   /* TODO: child import.. (from nd)
-    * glhck first needs child objects */
-
-   return RETURN_FAIL;
+   if (canFreeCurrent) glhckObjectFree(current);
+   return RETURN_OK;
 
 assimp_no_memory:
    DEBUG(GLHCK_DBG_ERROR, "Assimp not enough memory.");
@@ -170,7 +174,7 @@ int _glhckImportAssimp(_glhckObject *object, const char *file, int animated,
    if (!scene) goto assimp_fail;
 
    /* process the model */
-   if (processModel(file, object, scene, scene->mRootNode,
+   if (processModel(file, object, object, scene, scene->mRootNode,
             itype, vtype, animated) != RETURN_OK)
       goto fail;
 

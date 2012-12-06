@@ -170,7 +170,7 @@ int main(int argc, char **argv)
    } else if ((cube = glhckModelNewEx(OCTM_PATH, 5.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
-   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 1.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 10.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {
