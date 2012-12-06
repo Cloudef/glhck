@@ -412,6 +412,7 @@ GLHCKAPI glhckFrustum* glhckCameraGetFrustum(glhckCamera *camera);
 GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(const glhckCamera *camera);
 GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(const glhckCamera *camera);
 GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(const glhckCamera *camera);
+GLHCKAPI void glhckCameraUpVector(glhckCamera *camera, const kmVec3 *upVector);
 GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov);
 GLHCKAPI void glhckCameraRange(glhckCamera *camera,
       const kmScalar near, const kmScalar far);

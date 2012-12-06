@@ -63,10 +63,8 @@ static void _glhckCameraViewMatrix(_glhckCamera *camera)
    /* build view matrix */
    kmMat4LookAt(&camera->view.view, &camera->object->view.translation,
          &camera->object->view.target, &upvector);
-
    kmMat4Multiply(&camera->view.mvp,
          &camera->view.projection, &camera->view.view);
-
    glhckFrustumBuild(&camera->frustum, &camera->view.mvp);
 }
 
@@ -280,6 +278,13 @@ GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(const glhckCamera *camera)
    assert(camera);
    RET(1, "%p", &camera->view.mvp);
    return &camera->view.mvp;
+}
+
+/* \brief set camera's up vector */
+GLHCKAPI void glhckCameraUpVector(glhckCamera *camera, const kmVec3 *upVector)
+{
+   CALL(1, "%p, "VEC3S, camera, VEC3(upVector));
+   kmVec3Assign(&camera->view.upVector, upVector);
 }
 
 /* \brief set camera's fov */
