@@ -71,10 +71,10 @@ int main(int argc, char **argv)
 {
    GLFWwindow window;
    glhckTexture *texture = NULL;
-   glhckObject *cube, *sprite, *sprite2, *sprite3, *camObj;
+   glhckObject *cube, *sprite, *cube2, *sprite3, *camObj;
    glhckCamera *camera;
    const kmAABB *aabb;
-   kmVec3 cameraPos = { 0, 0, 0 };
+   kmVec3 cameraPos = {   0, 0, 0 };
    kmVec3 cameraRot = { 180, 180, 0 };
    float spinRadius;
    int queuePrinted = 0;
@@ -131,15 +131,17 @@ int main(int argc, char **argv)
    glhckCameraRange(camera, 1.0f, 1000.0f);
    camObj = glhckCameraGetObject(camera);
 
-   sprite  = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
-   sprite2 = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
+   if (!(texture = glhckTextureNew("example/media/glhck.png", GLHCK_TEXTURE_DEFAULTS)))
+      return EXIT_FAILURE;
+
+   sprite  = glhckSpriteNew(texture, 0, 0);
    sprite3 = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
+   cube2   = glhckCubeNew(1.0f);
+   glhckObjectSetTexture(cube2, texture);
 
    // FIXME: copy is broken again \o/
-   //sprite2 = glhckObjectCopy(sprite);
    //sprite3 = glhckObjectCopy(sprite);
    glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
-   glhckObjectScalef(sprite2, 0.03f, 0.03f, 0.03f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
 #define SKIP_MMD  1
@@ -174,8 +176,6 @@ int main(int argc, char **argv)
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {
-      if (!(texture = glhckTextureNew("example/media/glhck.png", GLHCK_TEXTURE_DEFAULTS)))
-         return EXIT_FAILURE;
       glhckObjectSetTexture(cube, texture);
       cameraPos.z = -20.0f;
    } else return EXIT_FAILURE;
@@ -216,6 +216,7 @@ int main(int argc, char **argv)
 
    glhckProjectionType projectionType = GLHCK_PROJECTION_PERSPECTIVE;
 
+   float xspin = 0.0f;
    while (RUNNING && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
       last  =  now;
       now   =  glfwGetTime();
@@ -251,6 +252,8 @@ int main(int argc, char **argv)
             30.0f * delta,
             30.0f * delta,
             30.0f * delta);
+#else
+      glhckObjectTarget(cube, glhckObjectGetPosition(sprite));
 #endif
       glhckObjectDraw(cube);
 
@@ -261,20 +264,20 @@ int main(int argc, char **argv)
          aabb->max.z>aabb->max.y?aabb->max.z:aabb->max.y;
       spinRadius += 5.0f;
 
+      xspin += 30.0f * delta;
       glhckObjectPositionf(sprite,
-            spinRadius*sin((glhckObjectGetRotation(cube))->x/8),
-            (glhckObjectGetOBB(cube))->max.y,
-            spinRadius*cos((glhckObjectGetRotation(cube))->x/8));
-      glhckObjectTarget(sprite, glhckObjectGetPosition(cube));
+            spinRadius*sin(xspin/8),
+            (glhckObjectGetOBB(cube))->max.y*cos(xspin/12)*spinRadius,
+            spinRadius);
 
-      glhckObjectPositionf(sprite2,
-            spinRadius*sin((glhckObjectGetRotation(cube))->z/8),
-            (spinRadius*cos((glhckObjectGetRotation(cube))->z/8)+aabb->max.y/2),
+      glhckObjectPositionf(cube2,
+            spinRadius*sin(xspin/20),
+            spinRadius*cos(xspin/20),
             (glhckObjectGetOBB(cube))->max.z);
-      glhckObjectTarget(sprite2, glhckObjectGetPosition(cube));
+      glhckObjectTarget(cube2, glhckObjectGetPosition(cube));
 
       glhckObjectDraw(sprite);
-      glhckObjectDraw(sprite2);
+      glhckObjectDraw(cube2);
       glhckObjectDraw(sprite3);
       if (rttText) glhckObjectDraw(rttText);
 
@@ -322,7 +325,7 @@ int main(int argc, char **argv)
     * like should */
    glhckObjectFree(cube);
    glhckObjectFree(sprite);
-   glhckObjectFree(sprite2);
+   glhckObjectFree(cube2);
    glhckObjectFree(sprite3);
    if (texture) glhckTextureFree(texture);
    glhckCameraFree(camera);
