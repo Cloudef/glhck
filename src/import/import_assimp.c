@@ -50,7 +50,8 @@ static int buildModel(const char *file, _glhckObject *object,
 
 static void joinMesh(const char *file, const struct aiScene *sc,
       const struct aiNode *nd, const struct aiMesh *mesh, int animated,
-      glhckImportIndexData *indices, glhckImportVertexData *vertexData)
+      glhckImportIndexData *indices, glhckImportVertexData *vertexData,
+      glhckAtlas *atlas, glhckTexture *texture)
 {
    unsigned int f, i, skip;
    glhckImportIndexData index;
@@ -62,13 +63,72 @@ static void joinMesh(const char *file, const struct aiScene *sc,
 
       for (i = 0; i != face->mNumIndices; ++i) {
          index = face->mIndices[i];
-         vertexData[index].vertex.x = mesh->mVertices[index].x;
-         vertexData[index].vertex.y = mesh->mVertices[index].y;
-         vertexData[index].vertex.z = mesh->mVertices[index].z;
+
+         if (mesh->mVertices) {
+            vertexData[index].vertex.x = mesh->mVertices[index].x;
+            vertexData[index].vertex.y = mesh->mVertices[index].y;
+            vertexData[index].vertex.z = mesh->mVertices[index].z;
+         }
+
+         if (mesh->mNormals) {
+            vertexData[index].normal.x = mesh->mNormals[index].x;
+            vertexData[index].normal.y = mesh->mNormals[index].y;
+            vertexData[index].normal.z = mesh->mNormals[index].z;
+         }
+
+         if (mesh->mTextureCoords[0]) {
+            vertexData[index].coord.x = mesh->mTextureCoords[0][index].x;
+            vertexData[index].coord.y = mesh->mTextureCoords[0][index].y;
+
+            /* fix coords */
+            if (vertexData[index].coord.x < 0.0f)
+               vertexData[index].coord.x += 1;
+            if (vertexData[index].coord.y < 0.0f)
+               vertexData[index].coord.y += 1;
+
+         }
+
+         /* offset texture coords to fit atlas texture */
+         if (atlas && texture) {
+            kmVec2 coord;
+            coord.x = vertexData[index].coord.x;
+            coord.y = vertexData[index].coord.y;
+            glhckAtlasTransformCoordinates(atlas, texture, &coord, &coord);
+            vertexData[index].coord.x = coord.x;
+            vertexData[index].coord.y = coord.y;
+         }
 
          indices[skip+i] = index;
       } skip += face->mNumIndices;
    }
+}
+
+glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl)
+{
+   glhckTexture *texture;
+   struct aiString textureName;
+   enum aiTextureMapping textureMapping;
+   enum aiTextureOp op;
+   enum aiTextureMapMode textureMapMode[3];
+   unsigned int uvwIndex, flags;
+   float blend;
+   char *texturePath;
+
+   if (!aiGetMaterialTextureCount(mtl, aiTextureType_DIFFUSE))
+      return NULL;
+
+   if (aiGetMaterialTexture(mtl, aiTextureType_DIFFUSE, 0,
+            &textureName, &textureMapping, &uvwIndex, &blend, &op,
+            textureMapMode, &flags) != AI_SUCCESS)
+      return NULL;
+
+   if (!(texturePath = _glhckImportTexturePath(textureName.data, file)))
+      return NULL;
+
+   DEBUG(0, "%s", texturePath);
+   texture = glhckTextureNew(texturePath, 0);
+   free(texturePath);
+   return texture;
 }
 
 static int processModel(const char *file, _glhckObject *object,
@@ -80,13 +140,22 @@ static int processModel(const char *file, _glhckObject *object,
    size_t ioffset, voffset;
    glhckImportIndexData *indices = NULL;
    glhckImportVertexData *vertexData = NULL;
+   glhckTexture **textureList = NULL, *texture;
+   glhckAtlas *atlas = NULL;
    const struct aiMesh *mesh;
    const struct aiFace *face;
    int canFreeCurrent = 0;
+   int hasTexture = 0;
 
-   printf("%d\n",nd->mNumMeshes);
-   printf("%d\n",nd->mNumChildren);
+   /* prepare atlas for texture combining */
+   if (!(atlas = glhckAtlasNew()))
+      goto assimp_no_memory;
 
+   /* texturelist for offseting coordinates */
+   if (!(textureList = _glhckCalloc(nd->mNumMeshes, sizeof(_glhckTexture*))))
+      goto assimp_no_memory;
+
+   /* gather statistics */
    for (m = 0; m != nd->mNumMeshes; ++m) {
       mesh = sc->mMeshes[nd->mMeshes[m]];
       if (!mesh->mVertices) continue;
@@ -97,22 +166,44 @@ static int processModel(const char *file, _glhckObject *object,
          numIndices += face->mNumIndices;
       }
       numVertices += mesh->mNumVertices;
+
+      if ((texture = textureFromMaterial(file,
+                  sc->mMaterials[mesh->mMaterialIndex]))) {
+         glhckAtlasInsertTexture(atlas, texture);
+         glhckTextureFree(texture);
+         textureList[m] = texture;
+         hasTexture = 1;
+      }
    }
 
    DEBUG(GLHCK_DBG_CRAP, "I: %d", numIndices);
    DEBUG(GLHCK_DBG_CRAP, "V: %d", numVertices);
 
+   /* allocate vertices */
    if (!(vertexData = _glhckCalloc(numVertices, sizeof(glhckImportVertexData))))
       goto assimp_no_memory;
 
+   /* allocate indices */
    if (!(indices = _glhckMalloc(numIndices * sizeof(glhckImportIndexData))))
       goto assimp_no_memory;
 
+   /* pack combined textures */
+   if (hasTexture) {
+      if (glhckAtlasPack(atlas, 1, 0) != RETURN_OK)
+         goto fail;
+   } else {
+      NULLDO(glhckAtlasFree, atlas);
+      NULLDO(_glhckFree, textureList);
+   }
+
+   /* join vertex data */
    for (m = 0, ioffset = 0, voffset = 0; m != nd->mNumMeshes; ++m) {
       mesh = sc->mMeshes[nd->mMeshes[m]];
       if (!mesh->mVertices) continue;
 
-      joinMesh(file, sc, nd, mesh, animated, indices+ioffset, vertexData+voffset);
+      joinMesh(file, sc, nd, mesh, animated,
+            indices+ioffset, vertexData+voffset, atlas, texture);
+
       for (f = 0; f != mesh->mNumFaces; ++f) {
          face = &mesh->mFaces[f];
          if (!face) goto fail;
@@ -121,19 +212,26 @@ static int processModel(const char *file, _glhckObject *object,
       voffset += mesh->mNumVertices;
    }
 
+   /* finally build the model */
    if (buildModel(file, current, numIndices,  numVertices,
             indices, vertexData, itype, vtype, animated) == RETURN_OK) {
-      if (!(current = glhckObjectNew()))
-         goto fail;
+      if (hasTexture) glhckObjectSetTexture(current, glhckAtlasGetTexture(atlas));
+      if (!(current = glhckObjectNew())) goto fail;
       glhckObjectAddChildren(object, current);
       canFreeCurrent = 1;
    }
 
+   /* free stuff */
+   IFDO(glhckAtlasFree, atlas);
+   IFDO(_glhckFree, textureList);
+   NULLDO(_glhckFree, vertexData);
+   NULLDO(_glhckFree, indices);
+
+   /* process childrens */
    for (m = 0; m != nd->mNumChildren; ++m) {
       if (processModel(file, object, current, sc, nd->mChildren[m],
                itype, vtype, animated) == RETURN_OK) {
-         if (!(current = glhckObjectNew()))
-            goto fail;
+         if (!(current = glhckObjectNew())) goto fail;
          glhckObjectAddChildren(object, current);
          canFreeCurrent = 1;
       }
@@ -147,6 +245,9 @@ assimp_no_memory:
 fail:
    IFDO(_glhckFree, vertexData);
    IFDO(_glhckFree, indices);
+   IFDO(_glhckFree, textureList);
+   IFDO(glhckAtlasFree, atlas);
+   if (canFreeCurrent) glhckObjectFree(current);
    return RETURN_FAIL;
 }
 

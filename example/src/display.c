@@ -161,7 +161,7 @@ int main(int argc, char **argv)
 #if SKIP_ASSIMP
 #  define ASSIMP_PATH ""
 #else
-#  define ASSIMP_PATH "example/media/cartoon/cartoon.3ds"
+#  define ASSIMP_PATH "example/media/cartoon/cartoon.obj"
 #endif
 
    if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
@@ -245,11 +245,13 @@ int main(int argc, char **argv)
       glhckObjectTargetf(camObj, cameraPos.x, cameraPos.y, cameraPos.z + 1);
       glhckObjectRotate(camObj, &cameraRot);
 
+#if 0
       /* glhck drawing */
       glhckObjectRotatef(cube,
             30.0f * delta,
             30.0f * delta,
             30.0f * delta);
+#endif
       glhckObjectDraw(cube);
 
       /* do spinning effect */
