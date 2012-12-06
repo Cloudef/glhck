@@ -44,7 +44,7 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
    kmVec3 min, max;
    kmVec3 mixxyz, mixyyz, mixyzz;
    kmVec3 maxxyz, maxyyz, maxyzz;
-   kmMat4 translation, rotation, scaling, temp;
+   kmMat4 translation, rotation, scaling;
    kmVec3 bias, scale;
    CALL(2, "%p", object);
 
@@ -67,11 +67,11 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
          object->view.translation.z + (bias.z * object->view.scaling.z));
 
    /* rotation */
-   kmMat4RotationX(&rotation, kmDegreesToRadians(object->view.rotation.x));
-   kmMat4Multiply(&rotation, &rotation,
-         kmMat4RotationY(&temp, kmDegreesToRadians(object->view.rotation.y)));
-   kmMat4Multiply(&rotation, &rotation,
-         kmMat4RotationZ(&temp, kmDegreesToRadians(object->view.rotation.z)));
+   kmMat4Identity(&rotation);
+   kmMat4RotationPitchYawRoll(&rotation,
+         kmDegreesToRadians(object->view.rotation.x),
+         kmDegreesToRadians(object->view.rotation.y),
+         kmDegreesToRadians(object->view.rotation.z));
 
    /* scaling */
    kmMat4Scaling(&scaling,
