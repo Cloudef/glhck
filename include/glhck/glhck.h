@@ -425,6 +425,9 @@ GLHCKAPI glhckObject* glhckObjectNew(void);
 GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src);
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
 GLHCKAPI size_t glhckObjectFree(glhckObject *object);
+
+GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object);
+GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, size_t *num_children);
 GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child);
 GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child);
 GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object);

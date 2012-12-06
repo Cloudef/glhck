@@ -50,10 +50,11 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
 
    bias.x  = bias.y  = bias.z  = 0.0f;
    scale.x = scale.y = scale.z = 1.0f;
+
    if (object->geometry) {
-      bias.x = object->geometry->bias.x;
-      bias.y = object->geometry->bias.y;
-      bias.z = object->geometry->bias.z;
+      bias.x  = object->geometry->bias.x;
+      bias.y  = object->geometry->bias.y;
+      bias.z  = object->geometry->bias.z;
       scale.x = object->geometry->scale.x;
       scale.y = object->geometry->scale.y;
       scale.z = object->geometry->scale.z;
@@ -81,6 +82,10 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
    /* build matrix */
    kmMat4Multiply(&translation, &translation, &rotation);
    kmMat4Multiply(&object->view.matrix, &translation, &scaling);
+
+   /* parent matrix affects us! */
+   if (object->parent)
+      kmMat4Multiply(&object->view.matrix, &object->parent->view.matrix, &object->view.matrix);
 
    /* update transformed obb */
    kmVec3Transform(&object->view.obb.min, &object->view.bounding.min, &object->view.matrix);
@@ -143,6 +148,7 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
 
    /* done */
    object->view.update = 0;
+   PERFORM_ON_CHILDS(object, _glhckObjectUpdateMatrix);
 }
 
 /* update target from rotation */
@@ -323,16 +329,34 @@ success:
    return object?object->refCounter:0;
 }
 
+/* \brief get object's parent */
+GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object)
+{
+   CALL(3, "%p", object);
+   RET(3, "%p", object->parent);
+   return object->parent;
+}
+
+/* \brief get object's children */
+GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, size_t *num_children)
+{
+   CALL(3, "%p, %p", object, num_children);
+   if (num_children) *num_children = object->numChilds;
+   RET(3, "%p", object->childs);
+   return object->childs;
+}
+
 /* \brief add children object */
 GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child)
 {
    size_t i;
    glhckObject **newChilds = NULL;
+   CALL(0, "%p, %p", object, child);
    assert(object != child);
 
    /* already added? */
-   for (i = 0; i != object->numChilds; ++i)
-      if (child == object->childs[i]) return;
+   if (child->parent == object) return;
+   if (child->parent) glhckObjectRemoveChildren(child->parent, child);
 
    /* add child */
    if (!(newChilds = _glhckMalloc((object->numChilds+1) * sizeof(glhckObject*))))
@@ -340,6 +364,8 @@ GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child)
 
    for (i = 0; i != object->numChilds; ++i) newChilds[i] = object->childs[i];
    newChilds[object->numChilds] = glhckObjectRef(child);
+   child->parent = object;
+
    IFDO(_glhckFree, object->childs);
    object->childs = newChilds;
    object->numChilds++;
@@ -350,14 +376,21 @@ GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child)
 {
    size_t i;
    glhckObject **newChilds = NULL;
+   CALL(0, "%p, %p", object, child);
    assert(object != child);
 
+   /* do we have the child? */
+   if (child->parent != object) return;
+
+   /* remove child */
    if (!(newChilds = _glhckMalloc((object->numChilds-1) * sizeof(glhckObject*))))
       return;
 
+   child->parent = NULL;
+   glhckObjectFree(child);
    for (i = 0; i != object->numChilds; ++i) {
-      if (object->childs[i] != child) newChilds[i] = object->childs[i];
-      else glhckObjectFree(object->childs[i]);
+      if (object->childs[i] == child) continue;
+      newChilds[i] = object->childs[i];
    }
 
    IFDO(_glhckFree, object->childs);
@@ -369,9 +402,14 @@ GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child)
 GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object)
 {
    size_t i;
+   CALL(0, "%p", object);
+
    if (!object->childs) return;
-   for (i = 0; i != object->numChilds; ++i)
+   for (i = 0; i != object->numChilds; ++i) {
+      object->childs[i]->parent = NULL;
       glhckObjectFree(object->childs[i]);
+   }
+
    NULLDO(_glhckFree, object->childs);
    object->numChilds = 0;
 }
