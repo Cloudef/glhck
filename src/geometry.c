@@ -971,7 +971,7 @@ GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb)
    size_t i;
    glhckVector3f vertex;
    glhckVector3f min, max;
-   CALL(2, "%p, &p", geometry, bb);
+   CALL(2, "%p, %p", geometry, bb);
    assert(geometry && bb);
 
    glhckGeometryVertexDataForIndex(geometry, 0,
@@ -981,7 +981,7 @@ GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb)
 
    /* find min and max vertices */
    for(i = 1; i != geometry->vertexCount; ++i) {
-      glhckGeometryVertexDataForIndex(geometry, 0,
+      glhckGeometryVertexDataForIndex(geometry, i,
             &vertex, NULL, NULL, NULL, NULL);
       glhckMaxV3(&max, &vertex);
       glhckMinV3(&min, &vertex);
