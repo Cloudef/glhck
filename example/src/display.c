@@ -234,6 +234,7 @@ int main(int argc, char **argv)
          glhckRenderSetProjection(&identity);
       } else if (glfwGetKey(window, GLFW_KEY_I)) {
          kmMat4 mat2d, pos;
+         glhckCameraUpdate(camera); /* updates the frustum */
          kmMat4Translation(&pos, -cameraPos.x, -cameraPos.y, -cameraPos.z);
          kmMat4Scaling(&mat2d, -2.0f/WIDTH, 2.0f/HEIGHT, 0.0f);
          kmMat4Multiply(&mat2d, &mat2d, &pos);
