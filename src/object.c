@@ -44,7 +44,7 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
    kmVec3 min, max;
    kmVec3 mixxyz, mixyyz, mixyzz;
    kmVec3 maxxyz, maxyyz, maxyzz;
-   kmMat4 translation, rotation, scaling;
+   kmMat4 translation, rotation, scaling, tmp;
    kmVec3 bias, scale;
    CALL(2, "%p", object);
 
@@ -67,11 +67,14 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
          object->view.translation.z + (bias.z * object->view.scaling.z));
 
    /* rotation */
-   kmMat4Identity(&rotation);
-   kmMat4RotationPitchYawRoll(&rotation,
-         kmDegreesToRadians(object->view.rotation.x),
-         kmDegreesToRadians(object->view.rotation.y),
+   kmMat4RotationAxisAngle(&rotation, &(kmVec3){0,0,1},
          kmDegreesToRadians(object->view.rotation.z));
+   kmMat4RotationAxisAngle(&tmp, &(kmVec3){0,1,0},
+         kmDegreesToRadians(object->view.rotation.y));
+   kmMat4Multiply(&rotation, &rotation, &tmp);
+   kmMat4RotationAxisAngle(&tmp, &(kmVec3){1,0,0},
+         kmDegreesToRadians(object->view.rotation.x));
+   kmMat4Multiply(&rotation, &rotation, &tmp);
 
    /* scaling */
    kmMat4Scaling(&scaling,
@@ -479,9 +482,6 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
    /* render */
    assert(object->drawFunc);
    object->drawFunc(object);
-
-   /* render childs as well */
-   PERFORM_ON_CHILDS(object, glhckObjectRender);
 }
 
 /* \brief get object's material flag s*/
