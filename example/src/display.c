@@ -74,8 +74,8 @@ int main(int argc, char **argv)
    glhckObject *cube, *sprite, *cube2, *sprite3, *camObj;
    glhckCamera *camera;
    const kmAABB *aabb;
-   kmVec3 cameraPos = {   0, 0, 0 };
-   kmVec3 cameraRot = {   0, 0, 0 };
+   kmVec3 cameraPos = { 0, 0, 0 };
+   kmVec3 cameraRot = { 0, 0, 0 };
    float spinRadius;
    int queuePrinted = 0;
    float          now          = 0;
@@ -144,8 +144,8 @@ int main(int argc, char **argv)
    glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
-#define SKIP_MMD  1
-#define SKIP_OCTM 1
+#define SKIP_MMD    1
+#define SKIP_OCTM   0
 #define SKIP_ASSIMP 0
 
 #if SKIP_MMD
@@ -204,7 +204,7 @@ int main(int argc, char **argv)
       glhckRttFillData(rtt);
       glhckRttEnd(rtt);
       rttText = glhckSpriteNew(glhckRttGetTexture(rtt), 6, 1);
-      glhckObjectMaterialFlags(rttText, GLHCK_MATERIAL_ALPHA);
+      glhckObjectMaterialFlags(rttText, glhckObjectGetMaterialFlags(rttText)|GLHCK_MATERIAL_ALPHA);
       glhckObjectRotatef(rttText, 0, 180, 0);
       glhckObjectPositionf(rttText, 12, 0, 0);
       glhckRttFree(rtt);
@@ -234,7 +234,7 @@ int main(int argc, char **argv)
          glhckRenderSetProjection(&identity);
       } else if (glfwGetKey(window, GLFW_KEY_I)) {
          kmMat4 mat2d, pos;
-         glhckCameraUpdate(camera); /* updates the frustum */
+         glhckCameraUpdate(camera);
          kmMat4Translation(&pos, -cameraPos.x, -cameraPos.y, -cameraPos.z);
          kmMat4Scaling(&mat2d, -2.0f/WIDTH, 2.0f/HEIGHT, 0.0f);
          kmMat4Multiply(&mat2d, &mat2d, &pos);
