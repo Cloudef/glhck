@@ -136,6 +136,8 @@ int main(int argc, char **argv)
    sprite  = glhckSpriteNew(texture, 0, 0);
    sprite3 = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
    cube2   = glhckCubeNew(1.0f);
+   glhckObjectMaterialFlags(cube2, glhckObjectGetMaterialFlags(cube2)|
+         GLHCK_MATERIAL_DRAW_OBB|GLHCK_MATERIAL_DRAW_AABB);
    glhckObjectScalef(cube2, 1.0f, 1.0f, 2.0f);
    glhckObjectSetTexture(cube2, texture);
 
