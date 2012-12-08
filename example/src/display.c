@@ -205,9 +205,9 @@ int main(int argc, char **argv)
       glhckRttEnd(rtt);
       rttText = glhckSpriteNew(glhckRttGetTexture(rtt), 6, 1);
       glhckObjectMaterialFlags(rttText, glhckObjectGetMaterialFlags(rttText)|GLHCK_MATERIAL_ALPHA);
-      glhckObjectRotatef(rttText, 0, 180, 0);
-      glhckObjectPositionf(rttText, 12, 0, 0);
+      glhckObjectPositionf(rttText, 2.0f, 2.5f, 0);
       glhckRttFree(rtt);
+      glhckObjectAddChildren(cube2, rttText);
    }
 
    glfwSetWindowCloseCallback(close_callback);
@@ -267,8 +267,9 @@ int main(int argc, char **argv)
       glhckObjectPositionf(cube2,
             spinRadius*sin(xspin/20),
             spinRadius*cos(xspin/20),
-            0);
+            spinRadius*sin(xspin/40));
       glhckObjectTarget(cube2, glhckObjectGetPosition(cube));
+      glhckObjectTarget(sprite3, glhckObjectGetPosition(camObj));
 
       glhckObjectDraw(sprite);
       glhckObjectDraw(cube2);
