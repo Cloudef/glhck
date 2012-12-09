@@ -459,11 +459,10 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
    _glhckObjectInsertToQueue(object);
 
    /* insert texture to drawing queue? */
-   if (!object->material.texture)
-      return;
-
-   /* insert object's texture to textures queue, referenced until glhckRender */
-   _glhckTextureInsertToQueue(object->material.texture);
+   if (object->material.texture) {
+      /* insert object's texture to textures queue, referenced until glhckRender */
+      _glhckTextureInsertToQueue(object->material.texture);
+   }
 
    /* draw childs as well */
    PERFORM_ON_CHILDS(object, glhckObjectDraw);

@@ -147,7 +147,7 @@ int main(int argc, char **argv)
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
 #define SKIP_MMD    1
-#define SKIP_OCTM   0
+#define SKIP_OCTM   1
 #define SKIP_ASSIMP 0
 
 #if SKIP_MMD
@@ -165,7 +165,7 @@ int main(int argc, char **argv)
 #if SKIP_ASSIMP
 #  define ASSIMP_PATH ""
 #else
-#  define ASSIMP_PATH "example/media/cartoon/cartoon.obj"
+#  define ASSIMP_PATH "example/media/base/BaseV1.obj"
 #endif
 
    if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
