@@ -423,20 +423,17 @@ GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture)
    CALL(1, "%p, %p", object, texture);
    assert(object);
 
-   if (object->geometry) {
-      if (object->geometry->textureRange != 1 &&
-         ((texture->width  > object->geometry->textureRange) ||
-          (texture->height > object->geometry->textureRange)))
-         goto fail;
+   /* sanity warning */
+   if (object->geometry && object->geometry->textureRange > 1) {
+      if ((texture->width  > object->geometry->textureRange) ||
+          (texture->height > object->geometry->textureRange)) {
+         DEBUG(GLHCK_DBG_WARNING, "Texture dimensions are above the maximum precision of object's vertexdata (%s:%u)",
+               glhckVertexTypeString(object->geometry->vertexType), object->geometry->textureRange);
+      }
    }
 
    IFDO(glhckTextureFree, object->material.texture);
    if (texture) object->material.texture = glhckTextureRef(texture);
-   return;
-
-fail:
-   DEBUG(GLHCK_DBG_WARNING, "Texture dimensions are above the maximum precision of object's vertexdata (%s:%u)",
-         glhckVertexTypeString(object->geometry->vertexType), object->geometry->textureRange);
 }
 
 /* \brief get object's texture */
