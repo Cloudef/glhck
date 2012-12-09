@@ -649,8 +649,7 @@ GLHCKAPI const char* glhckIndexTypeString(glhckGeometryIndexType type)
 /* \brief is value withing precision range? */
 GLHCKAPI int glhckIndexTypeWithinRange(unsigned int value, glhckGeometryIndexType type)
 {
-   return (value <  glhckIndexTypeMaxPrecision(type) &&
-           value > -glhckIndexTypeMaxPrecision(type));
+   return (value <  glhckIndexTypeMaxPrecision(type));
 }
 
 /* \brief you should feed this function the value with highest precision */
