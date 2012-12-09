@@ -182,6 +182,10 @@ static inline void _glhckObjectUpdateRotationFromTarget(_glhckObject *object)
 /* stub draw function */
 static inline void _glhckObjectStubDraw(const struct _glhckObject *object)
 {
+   if (object->geometry && object->geometry->vertexType != GLHCK_VERTEX_NONE) {
+      DEBUG(GLHCK_DBG_WARNING, "Stub draw function called for object which actually has vertexdata!");
+      DEBUG(GLHCK_DBG_WARNING, "Did you forget to call glhckObjectUpdate() after inserting vertex data?");
+   }
 }
 
 /* set object's filename */
