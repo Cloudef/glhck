@@ -146,6 +146,15 @@ typedef enum glhckRenderType {
    GLHCK_RENDER_NULL,
 } glhckRenderType;
 
+/* driver type */
+typedef enum glhckDriverType {
+   GLHCK_DRIVER_NONE,
+   GLHCK_DRIVER_NVIDIA,
+   GLHCK_DRIVER_ATI,
+   GLHCK_DRIVER_MESA,
+   GLHCK_DRIVER_OTHER,
+} glhckDriverType;
+
 /* renderer flags (nothing here atm) */
 typedef enum glhckRenderFlags {
    GLHCK_RENDER_FLAG_NONE = 0,
@@ -391,6 +400,7 @@ GLHCKAPI void glhckDisplayClose(void);
 GLHCKAPI void glhckDisplayResize(int width, int height);
 
 /* rendering */
+GLHCKAPI glhckDriverType glhckRenderGetDriver(void);
 GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params);
 GLHCKAPI void glhckRenderSetFlags(unsigned int flags);

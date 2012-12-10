@@ -7,6 +7,10 @@
  * object's internal vertexdata, since the GLHCK object's
  * internal vertexdata structure is quite complex */
 
+/* FIXME:
+ * When moving to modern OpenGL api,
+ * we can propably convert coordinates to unsigned types. */
+
 /* conversion constants for vertexdata conversion */
 #define GLHCK_BYTE_CMAGIC  CHAR_MAX
 #define GLHCK_BYTE_VMAGIC  UCHAR_MAX - CHAR_MAX
@@ -314,6 +318,17 @@ static void _glhckGeometrySetVertices(glhckGeometry *geometry,
 
    /* free old vertices */
    _glhckGeometryFreeVertices(geometry);
+
+   /* fglrx on linux at least seems to fail with byte vertices.
+    * workaround for now until I stumble upon why it's wrong. */
+   if (_GLHCKlibrary.render.driver == GLHCK_DRIVER_ATI) {
+      if (type == GLHCK_VERTEX_V2B || type == GLHCK_VERTEX_V3B) {
+         DEBUG(GLHCK_DBG_WARNING, "ATi has problems with BYTE precision vertexdata.");
+         DEBUG(GLHCK_DBG_WARNING, "Will use SHORT precision instead, just a friendly warning.");
+      }
+      if (type == GLHCK_VERTEX_V3B) type = GLHCK_VERTEX_V3S;
+      if (type == GLHCK_VERTEX_V2B) type = GLHCK_VERTEX_V2S;
+   }
 
    /* assign vertices depending on type */
    switch (type) {

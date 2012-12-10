@@ -310,6 +310,14 @@ GLHCKAPI void glhckClear(void)
    _GLHCKlibrary.render.api.clear();
 }
 
+/* \brief return detected driver type */
+GLHCKAPI glhckDriverType glhckRenderGetDriver(void)
+{
+   GLHCK_INITIALIZED();
+   TRACE(0);
+   return _GLHCKlibrary.render.driver;
+}
+
 /* \brief set global geometry vertexdata precision to glhck */
 GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype,
       glhckGeometryVertexType vtype)

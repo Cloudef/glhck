@@ -49,17 +49,12 @@
 /* disable triangle stripping? */
 #define GLHCK_TRISTRIP 1
 
+/* floating point precision text? */
+#define GLHCK_TEXT_FLOAT_PRECISION 1
+
 /* opengl mapped constants */
 #define GLHCK_COLOR_ATTACHMENT   0x8CE0
 #define GLHCK_DEPTH_ATTACHMENT   0x8D00
-
-#define GLHCK_BYTE            0x1400
-#define GLHCK_UNSIGNED_BYTE   0x1401
-#define GLHCK_SHORT           0x1402
-#define GLHCK_UNSIGNED_SHORT  0x1403
-#define GLHCK_INT             0x1404
-#define GLHCK_UNSIGNED_INT    0x1405
-#define GLHCK_FLOAT           0x1406
 #define GLHCK_STENCIL_ATTACHMENT 0x8D20
 
 /* return variables used throughout library */
@@ -155,12 +150,16 @@ typedef struct _glhckObject {
 
 /* row data of text texture */
 typedef struct __GLHCKtextTextureRow {
-   short x, y, h;
+   unsigned short x, y, h;
 } __GLHCKtextTextureRow;
 
 /* representation of text geometry */
 typedef struct __GLHCKtextGeometry {
+#if GLHCK_TEXT_FLOAT_PRECISION
+   struct glhckVertexData2f vertexData[GLHCK_TEXT_VERT_COUNT];
+#else
    struct glhckVertexData2s vertexData[GLHCK_TEXT_VERT_COUNT];
+#endif
    size_t vertexCount;
 } __GLHCKtextGeometry;
 
@@ -307,6 +306,7 @@ typedef struct __GLHCKrender {
    int width, height;
    const char *name;
    glhckRenderType type;
+   glhckDriverType driver;
    unsigned int flags;
    struct __GLHCKrenderAPI api;
    struct __GLHCKrenderDraw draw;

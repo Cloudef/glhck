@@ -781,11 +781,11 @@ static inline void textDraw(const _glhckText *text)
       if (!texture->geometry.vertexCount)
          continue;
       glhckBindTexture(texture->object);
-      GL_CALL(glVertexPointer(2, GL_SHORT,
-            sizeof(glhckVertexData2s),
+      GL_CALL(glVertexPointer(2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
+            (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
             &texture->geometry.vertexData[0].vertex));
-      GL_CALL(glTexCoordPointer(2, GL_SHORT,
-            sizeof(glhckVertexData2s),
+      GL_CALL(glTexCoordPointer(2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
+            (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
             &texture->geometry.vertexData[0].coord));
       GL_CALL(glDrawArrays(GLHCK_TRISTRIP?GL_TRIANGLE_STRIP:GL_TRIANGLES,
                0, texture->geometry.vertexCount));
@@ -896,6 +896,16 @@ static int renderInfo(void)
    for (; version &&
           !sscanf(version, "%d.%d.%d", &major, &minor, &patch);
           ++version);
+
+   /* try to identify driver */
+   if (_glhckStrupstr(vendor, "MESA"))
+      _GLHCKlibrary.render.driver = GLHCK_DRIVER_MESA;
+   else if (strstr(vendor, "NVIDIA"))
+      _GLHCKlibrary.render.driver = GLHCK_DRIVER_NVIDIA;
+   else if (strstr(vendor, "ATI"))
+      _GLHCKlibrary.render.driver = GLHCK_DRIVER_ATI;
+   else
+      _GLHCKlibrary.render.driver = GLHCK_DRIVER_OTHER;
 
    DEBUG(3, "%s [%u.%u.%u] [%s]\n", RENDER_NAME, major, minor, patch, vendor);
    extensions = (char*)GL_CALL(glGetString(GL_EXTENSIONS));

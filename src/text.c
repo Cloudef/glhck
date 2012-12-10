@@ -19,8 +19,13 @@
 
 /* \brief quad helper struct */
 typedef struct __GLHCKtextQuad {
+#if GLHCK_TEXT_FLOAT_PRECISION /* floats ftw */
+   glhckVector2f v1, v2;
+   glhckVector2f t1, t2;
+#else /* short version */
    glhckVector2s v1, v2;
    glhckVector2s t1, t2;
+#endif
 } __GLHCKtextQuad;
 
 /* \brief glyph object */
@@ -286,18 +291,18 @@ static int _getQuad(_glhckText *text, __GLHCKtextFont *font, __GLHCKtextGlyph *g
    t1.x = (glyph->x2) * text->itw;
    t2.y = (glyph->y2) * text->ith;
 
-#if GLHCK_PRECISION_VERTEX == GLHCK_FLOAT
-   memcpy(&q->v1, &v1, sizeof(_glhckVertex2d));
-   memcpy(&q->v2, &v2, sizeof(_glhckVertex2d));
-#else
+#if GLHCK_TEXT_FLOAT_PRECISION /* floats ftw */
+   memcpy(&q->v1, &v1, sizeof(glhckVector2f));
+   memcpy(&q->v2, &v2, sizeof(glhckVector2f));
+#else /* short precision version */
    glhckSetV2(&q->v1, &v1);
    glhckSetV2(&q->v2, &v2);
 #endif
 
-#if GLHCK_PRECISION_COORD == GLHCK_FLOAT
-   memcpy(&q->t1, &t1, sizeof(_glhckCoord2d));
-   memcpy(&q->t2, &t2, sizeof(_glhckCoord2d));
-#else
+#if GLHCK_TEXT_FLOAT_PRECISION /* floats ftw */
+   memcpy(&q->t1, &t1, sizeof(glhckVector2f));
+   memcpy(&q->t2, &t2, sizeof(glhckVector2f));
+#else /* short precision version */
    q->t1.x = t1.x * text->textureRange;
    q->t1.y = t1.y * text->textureRange;
    q->t2.x = t2.x * text->textureRange;
@@ -341,7 +346,12 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    text->itw = (float)1.0f/cachew;
    text->ith = (float)1.0f/cacheh;
    text->tcache = texture;
+
+#if GLHCK_TEXT_FLOAT_PRECISION
+   text->textureRange = 1;
+#else
    text->textureRange = SHRT_MAX;
+#endif
 
    /* default color */
    glhckTextColor(text, 255, 255, 255, 255);
@@ -698,7 +708,11 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
    unsigned int i, codepoint, state = 0;
    short isize = (short)size*10.0f;
    size_t vcount;
+#if GLHCK_TEXT_FLOAT_PRECISION
+   glhckVertexData2f *v, *d;
+#else
    glhckVertexData2s *v, *d;
+#endif
    __GLHCKtextTexture *texture;
    __GLHCKtextGlyph *glyph;
    __GLHCKtextFont *font;
