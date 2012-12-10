@@ -83,7 +83,9 @@ void _glhckTraceInit(int argc, const char **argv)
    if (!split) return;
 
    for (i = 0; i != count; ++i) {
-      if (!strncmp(split[i], "2", 1))
+      if (!strncmp(split[i], "-color", 6))
+         _GLHCKlibrary.misc.coloredLog = 0;
+      else if (!strncmp(split[i], "2", 1))
          _GLHCKlibrary.trace.level = 2;
       else if (!strncmp(split[i], "1", 1))
          _GLHCKlibrary.trace.level = 1;
@@ -152,6 +154,7 @@ void _glhckPassDebug(const char *file, int line, const char *func,
 /* \brief set debug hook */
 GLHCKAPI void glhckSetDebugHook(glhckDebugHookFunc func)
 {
+   GLHCK_INITIALIZED();
    _glhckDebugHook = func;
 }
 

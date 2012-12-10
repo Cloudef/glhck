@@ -51,6 +51,7 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(linkFramebufferWithTexture);
    GLHCK_API_CHECK(getIntegerv);
 }
+#undef GLHCK_API_CHECK
 
 /* \brief builds and sends the default projection to renderer */
 void _glhckDefaultProjection(int width, int height)
@@ -148,10 +149,9 @@ static void _glhckSetBacktrace(void)
 GLHCKAPI int glhckInit(int argc, char **argv)
 {
    const char ** _argv = (const char **)argv;
-   CALL(0, "%d, %p", argc, argv);
 
    if (_glhckInitialized)
-      goto success;
+      return RETURN_OK;
 
    /* reset global state */
    memset(&_GLHCKlibrary,                 0, sizeof(__GLHCKlibrary));
@@ -168,6 +168,20 @@ GLHCKAPI int glhckInit(int argc, char **argv)
    _GLHCKlibrary.render.draw.textures.queue =
       _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckTexture*));
    _GLHCKlibrary.render.draw.textures.allocated += GLHCK_QUEUE_ALLOC_STEP;
+
+   /* our data structure are intialized now */
+
+   /* FIXME(?):
+    * Maybe get rid of the _GLHCKlibrary global variable.
+    * Instead make init return pointer to allocated context variable,
+    * and let user pass it around.
+    *
+    * This would make the library a lot easier for concurrency as well. */
+   atexit(glhckTerminate);
+   _glhckInitialized = 1;
+
+   /* enable color by default */
+   glhckLogColor(1);
 
    /* FIXME: change the signal calls in these functions to sigaction's */
 #ifndef NDEBUG
@@ -187,12 +201,6 @@ GLHCKAPI int glhckInit(int argc, char **argv)
    /* set default global precision for glhck to use with geometry
     * NOTE: _NONE means that glhck and importers choose the best precision. */
    glhckSetGlobalPrecision(GLHCK_INDEX_NONE, GLHCK_VERTEX_NONE);
-
-   atexit(glhckTerminate);
-   _glhckInitialized = 1;
-
-success:
-   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 }
 
@@ -202,13 +210,21 @@ GLHCKAPI int glhckInitialized(void)
    return _glhckInitialized;
 }
 
+GLHCKAPI void glhckLogColor(char color)
+{
+   GLHCK_INITIALIZED();
+   if (color != _GLHCKlibrary.misc.coloredLog && !color)
+      _glhckNormal();
+   _GLHCKlibrary.misc.coloredLog = color;
+}
+
 /* \brief creates virtual display and inits renderer */
 GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderType)
 {
+   GLHCK_INITIALIZED();
    CALL(0, "%d, %d, %d", width, height, renderType);
 
-   if (!_glhckInitialized ||
-       (width <= 0 && height <= 0))
+   if (width <= 0 && height <= 0)
       goto fail;
 
    /* autodetect */
@@ -247,10 +263,11 @@ fail:
 /* \brief close the virutal display */
 GLHCKAPI void glhckDisplayClose(void)
 {
+   GLHCK_INITIALIZED();
    TRACE(0);
 
    /* nothing to terminate */
-   if (!_glhckInitialized || !_GLHCKlibrary.render.name)
+   if (!_GLHCKlibrary.render.name)
       return;
 
    _GLHCKlibrary.render.api.terminate();
@@ -260,11 +277,12 @@ GLHCKAPI void glhckDisplayClose(void)
 /* \brief resize virtual display */
 GLHCKAPI void glhckDisplayResize(int width, int height)
 {
+   GLHCK_INITIALIZED();
    CALL(1, "%d, %d", width, height);
    assert(width > 0 && height > 0);
 
    /* nothing to resize */
-   if (!_glhckInitialized || !_GLHCKlibrary.render.name)
+   if (!_GLHCKlibrary.render.name)
       return;
 
    if (_GLHCKlibrary.render.width  == width &&
@@ -282,10 +300,11 @@ GLHCKAPI void glhckDisplayResize(int width, int height)
 /* \brief clear scene */
 GLHCKAPI void glhckClear(void)
 {
+   GLHCK_INITIALIZED();
    TRACE(2);
 
    /* can't clear */
-   if (!_glhckInitialized || !_GLHCKlibrary.render.name)
+   if (!_GLHCKlibrary.render.name)
       return;
 
    _GLHCKlibrary.render.api.clear();
@@ -295,6 +314,8 @@ GLHCKAPI void glhckClear(void)
 GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype,
       glhckGeometryVertexType vtype)
 {
+   GLHCK_INITIALIZED();
+   CALL(0, "%u, %u", itype, vtype);
    if (itype != GLHCK_INDEX_NONE)
       _GLHCKlibrary.render.globalIndexType  = itype;
    if (vtype != GLHCK_VERTEX_NONE)
@@ -303,6 +324,7 @@ GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype,
 
 /* \brief get parameter from renderer */
 GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params) {
+   GLHCK_INITIALIZED();
    CALL(1, "%u, %p", pname, params);
    _GLHCKlibrary.render.api.getIntegerv(pname, params);
 }
@@ -310,6 +332,7 @@ GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params) {
 /* \brief set render flags */
 GLHCKAPI void glhckRenderSetFlags(unsigned int flags)
 {
+   GLHCK_INITIALIZED();
    CALL(1, "%u", flags);
    _GLHCKlibrary.render.flags = flags;
 }
@@ -317,6 +340,7 @@ GLHCKAPI void glhckRenderSetFlags(unsigned int flags)
 /* \brief set projection matrix */
 GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat)
 {
+   GLHCK_INITIALIZED();
    CALL(1, "%p", mat);
    _GLHCKlibrary.render.api.setProjection(mat);
 }
@@ -326,6 +350,7 @@ GLHCKAPI void glhckPrintObjectQueue(void)
 {
    unsigned int i;
    __GLHCKobjectQueue *objects;
+   GLHCK_INITIALIZED();
 
    objects = &_GLHCKlibrary.render.draw.objects;
    _glhckPuts("\n--- Object Queue ---");
@@ -341,6 +366,7 @@ GLHCKAPI void glhckPrintTextureQueue(void)
 {
    unsigned int i;
    __GLHCKtextureQueue *textures;
+   GLHCK_INITIALIZED();
 
    textures = &_GLHCKlibrary.render.draw.textures;
    _glhckPuts("\n--- Texture Queue ---");
@@ -360,6 +386,7 @@ GLHCKAPI void glhckRender(void)
    _glhckObject *o;
    __GLHCKobjectQueue *objects;
    __GLHCKtextureQueue *textures;
+   GLHCK_INITIALIZED();
    TRACE(2);
 
    /* can't render */
@@ -496,9 +523,8 @@ GLHCKAPI void glhckMassacreWorld(void)
    _glhckAtlas *a, *an;
    _glhckRtt *r, *rn;
    _glhckText *tf, *tfn;
-
+   GLHCK_INITIALIZED();
    TRACE(0);
-   if (!_glhckInitialized) return;
 
    /* destroy the world */
    _massacre(clist, c, cn, glhckCameraFree);
@@ -512,9 +538,10 @@ GLHCKAPI void glhckMassacreWorld(void)
 /* \brief frees virtual display and deinits glhck */
 GLHCKAPI void glhckTerminate(void)
 {
-   TRACE(0);
-
+   /* just return if library not initialized.
+    * we avoid assert for atExit call */
    if (!_glhckInitialized) return;
+   TRACE(0);
 
    /* destroy world */
    glhckMassacreWorld();

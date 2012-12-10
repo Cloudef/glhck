@@ -342,6 +342,11 @@ typedef struct __GLHCKalloc {
 } __GLHCKalloc;
 #endif
 
+/* misc glhck options */
+typedef struct __GLHCKmisc {
+   char coloredLog;
+} __GLHCKmisc;
+
 /* glhck global state */
 typedef struct __GLHCKlibrary {
    struct __GLHCKrender render;
@@ -350,6 +355,7 @@ typedef struct __GLHCKlibrary {
 #ifndef NDEBUG
    struct __GLHCKalloc *alloc;
 #endif
+   struct __GLHCKmisc misc;
 } __GLHCKlibrary;
 
 /* define global object */
@@ -358,6 +364,11 @@ typedef struct __GLHCKlibrary {
 #else
    GLHCKGLOBAL struct __GLHCKlibrary _GLHCKlibrary;
 #endif
+
+/* api check macro
+ * don't use with internal api
+ * should be first call in GLHCKAPI public functions that access _GLHCKlibrary */
+#define GLHCK_INITIALIZED() assert(_glhckInitialized && "call glhckInit() first");
 
 /* tracking allocation macros */
 #define _glhckMalloc(x)    __glhckMalloc(GLHCK_CHANNEL, x)

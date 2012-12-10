@@ -383,6 +383,7 @@ GLHCKAPI int glhckInit(int argc, char **argv);
 GLHCKAPI void glhckTerminate(void);
 GLHCKAPI void glhckMassacreWorld(void);
 GLHCKAPI int glhckInitialized(void);
+GLHCKAPI void glhckLogColor(char color);
 
 /* display */
 GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderType);

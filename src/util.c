@@ -14,6 +14,8 @@
 /* \brief output in red */
 inline void _glhckRed(void)
 {
+   if (!_GLHCKlibrary.misc.coloredLog) return;
+
 #if defined(__unix__) || defined(__APPLE__)
    printf("\33[31m");
 #endif
@@ -28,6 +30,8 @@ inline void _glhckRed(void)
 /* \brief output in green */
 inline void _glhckGreen(void)
 {
+   if (!_GLHCKlibrary.misc.coloredLog) return;
+
 #if defined(__unix__) || defined(__APPLE__)
    printf("\33[32m");
 #endif
@@ -42,6 +46,8 @@ inline void _glhckGreen(void)
 /* \brief output in blue */
 inline void _glhckBlue(void)
 {
+   if (!_GLHCKlibrary.misc.coloredLog) return;
+
 #if defined(__unix__) || defined(__APPLE__)
    printf("\33[34m");
 #endif
@@ -56,6 +62,8 @@ inline void _glhckBlue(void)
 /* \brief output in yellow */
 inline void _glhckYellow(void)
 {
+   if (!_GLHCKlibrary.misc.coloredLog) return;
+
 #if defined(__unix__) || defined(__APPLE__)
    printf("\33[33m");
 #endif
@@ -70,6 +78,8 @@ inline void _glhckYellow(void)
 /* \brief output in white */
 inline void _glhckWhite(void)
 {
+   if (!_GLHCKlibrary.misc.coloredLog) return;
+
 #if defined(__unix__) || defined(__APPLE__)
    printf("\33[37m");
 #endif
@@ -84,6 +94,8 @@ inline void _glhckWhite(void)
 /* \brief reset output color */
 inline void _glhckNormal(void)
 {
+   if (!_GLHCKlibrary.misc.coloredLog) return;
+
 #if defined(__unix__) || defined(__APPLE__)
    printf("\33[0m");
 #endif
