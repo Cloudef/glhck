@@ -477,8 +477,13 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
 /* \brief render object */
 GLHCKAPI void glhckObjectRender(glhckObject *object)
 {
+   glhckObject *parent;
    CALL(2, "%p", object);
    assert(object);
+
+   /* lets make sure parents are updated first */
+   for (parent = object->parent; parent; parent = parent->parent)
+      if (parent->view.update) _glhckObjectUpdateMatrix(parent);
 
    /* does view matrix need update? */
    if (object->view.update)
