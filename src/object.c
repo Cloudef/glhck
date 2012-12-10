@@ -38,9 +38,44 @@ inline void _glhckObjectInsertToQueue(_glhckObject *object)
    objects->count++;
 }
 
-/* \brief update view matrix of object */
-static void _glhckObjectUpdateMatrix(_glhckObject *object)
+/* update target from rotation */
+static inline void _glhckObjectUpdateTargetFromRotation(_glhckObject *object)
 {
+   kmVec3 rotToDir;
+   const kmVec3 forwards = { 0, 0, 1 };
+   CALL(2, "%p", object);
+   assert(object);
+
+   /* update target */
+   kmVec3RotationToDirection(&rotToDir, &object->view.rotation, &forwards);
+   kmVec3Add(&object->view.target, &object->view.translation, &rotToDir);
+}
+
+/* update rotation from target */
+static inline void _glhckObjectUpdateRotationFromTarget(_glhckObject *object)
+{
+   kmVec3 toTarget;
+   CALL(2, "%p", object);
+   assert(object);
+
+   /* update rotation */
+   kmVec3Subtract(&toTarget, &object->view.target, &object->view.translation);
+   kmVec3GetHorizontalAngle(&object->view.rotation, &toTarget);
+}
+
+/* stub draw function */
+static inline void _glhckObjectStubDraw(const struct _glhckObject *object)
+{
+   if (object->geometry && object->geometry->vertexType != GLHCK_VERTEX_NONE) {
+      DEBUG(GLHCK_DBG_WARNING, "Stub draw function called for object which actually has vertexdata!");
+      DEBUG(GLHCK_DBG_WARNING, "Did you forget to call glhckObjectUpdate() after inserting vertex data?");
+   }
+}
+
+/* \brief update view matrix of object */
+void _glhckObjectUpdateMatrix(_glhckObject *object)
+{
+   unsigned int i;
    kmVec3 min, max;
    kmVec3 mixxyz, mixyyz, mixyzz;
    kmVec3 maxxyz, maxyyz, maxyzz;
@@ -87,8 +122,9 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
    kmMat4Multiply(&object->view.matrix, &translation, &scaling);
 
    /* parent matrix affects us! */
-   if (object->parent)
+   if (object->parent) {
       kmMat4Multiply(&object->view.matrix, &object->parent->view.matrix, &object->view.matrix);
+   }
 
    /* update transformed obb */
    kmVec3Transform(&object->view.obb.min, &object->view.bounding.min, &object->view.matrix);
@@ -149,43 +185,12 @@ static void _glhckObjectUpdateMatrix(_glhckObject *object)
    glhckSetV3(&object->view.aabb.max, &max);
    glhckSetV3(&object->view.aabb.min, &min);
 
+   /* update childs on next draw */
+   for (i = 0; i != object->numChilds; ++i)
+      object->childs[i]->view.update = 1;
+
    /* done */
    object->view.update = 0;
-   PERFORM_ON_CHILDS(object, _glhckObjectUpdateMatrix);
-}
-
-/* update target from rotation */
-static inline void _glhckObjectUpdateTargetFromRotation(_glhckObject *object)
-{
-   kmVec3 rotToDir;
-   const kmVec3 forwards = { 0, 0, 1 };
-   CALL(2, "%p", object);
-   assert(object);
-
-   /* update target */
-   kmVec3RotationToDirection(&rotToDir, &object->view.rotation, &forwards);
-   kmVec3Add(&object->view.target, &object->view.translation, &rotToDir);
-}
-
-/* update rotation from target */
-static inline void _glhckObjectUpdateRotationFromTarget(_glhckObject *object)
-{
-   kmVec3 toTarget;
-   CALL(2, "%p", object);
-   assert(object);
-
-   /* update rotation */
-   kmVec3Subtract(&toTarget, &object->view.target, &object->view.translation);
-   kmVec3GetHorizontalAngle(&object->view.rotation, &toTarget);
-}
-
-/* stub draw function */
-static inline void _glhckObjectStubDraw(const struct _glhckObject *object)
-{
-   if (object->geometry && object->geometry->vertexType != GLHCK_VERTEX_NONE) {
-      DEBUG(GLHCK_DBG_WARNING, "Stub draw function called for object which actually has vertexdata!");
-      DEBUG(GLHCK_DBG_WARNING, "Did you forget to call glhckObjectUpdate() after inserting vertex data?");
-   }
 }
 
 /* set object's filename */

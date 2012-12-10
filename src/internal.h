@@ -438,6 +438,7 @@ void _glhckDefaultProjection(int width, int height);
 /* objects */
 void _glhckObjectSetFile(_glhckObject *object, const char *file);
 void _glhckObjectInsertToQueue(_glhckObject *object);
+void _glhckObjectUpdateMatrix(_glhckObject *object);
 
 /* camera */
 void _glhckCameraWorldUpdate(int width, int height);

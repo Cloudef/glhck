@@ -209,6 +209,9 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
             camera->view.viewport.h);
 
    if (camera->view.update || camera->object->view.update) {
+      /* we have childs so make sure the object's matrix gets updated */
+      if (camera->object->view.update && camera->object->numChilds)
+         _glhckObjectUpdateMatrix(camera->object);
       _glhckCameraViewMatrix(camera);
       camera->view.update = 0;
    }
