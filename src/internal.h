@@ -12,6 +12,10 @@
 #include <float.h>  /* for float   */
 #include <string.h> /* for strrchr */
 
+/* FIXME: Most structures here and especially in glhck.h
+ * need to be reordered and padded so they align better memory.
+ * Especially the vertexdata structs. */
+
 #if defined(_glhck_c_)
    char _glhckInitialized = 0;
 #else
