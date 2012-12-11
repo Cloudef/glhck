@@ -105,8 +105,8 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture,
    glhckGeometryVertexType vtype;
 
    CALL(0, "%p, %zu, %zu", texture, width, height);
-   w = (float)(width?width:texture->width);
-   h = (float)(height?height:texture->height);
+   w = (float)(width?width:texture->width)/2.0f;
+   h = (float)(height?height:texture->height)/2.0f;
    const glhckImportVertexData vertices[] = {
       {
          {  w,  h, 0 },
