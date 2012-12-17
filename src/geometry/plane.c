@@ -7,18 +7,18 @@
 #define LENGTH(X) (sizeof X / sizeof X[0])
 
 /* \brief create new plane object */
-GLHCKAPI glhckObject* glhckPlaneNew(kmScalar size)
+GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height)
 {
    glhckGeometryVertexType vtype;
 
    /* choose internal vertexdata precision */
    vtype = _GLHCKlibrary.render.globalVertexType;
    if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V2B;
-   return glhckPlaneNewEx(size, GLHCK_INDEX_NONE, vtype);
+   return glhckPlaneNewEx(width, height, GLHCK_INDEX_NONE, vtype);
 }
 
 /* \brief create new plane object (precision specify) */
-GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar size,
+GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    _glhckObject *object;
@@ -47,7 +47,7 @@ GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar size,
       }
    };
 
-   CALL(0, "%f", size);
+   CALL(0, "%f, %f", width, height);
 
    /* create new object */
    if (!(object = glhckObjectNew()))
@@ -62,7 +62,7 @@ GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar size,
     * on the plane geometry */
 
    /* scale the cube */
-   glhckObjectScalef(object, size, size, size);
+   glhckObjectScalef(object, width/2.0f, height/2.0f, 1.0f);
 
    RET(0, "%p", object);
    return object;
@@ -153,7 +153,7 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture,
    glhckObjectScalef(object, w, w, w);
 
    /* pass reference to object */
-   glhckObjectSetTexture(object, texture);
+   glhckObjectTexture(object, texture);
 
    /* set filename of object */
    _glhckObjectSetFile(object, texture->file);

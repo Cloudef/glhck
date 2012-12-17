@@ -4,10 +4,10 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
 
-#define PERFORM_ON_CHILDS(parent, function)              \
+#define PERFORM_ON_CHILDS(parent, function, ...)         \
    { unsigned int _cbc_;                                 \
    for (_cbc_ = 0; _cbc_ != parent->numChilds; ++_cbc_)  \
-      function(parent->childs[_cbc_]); }
+      function(parent->childs[_cbc_], ##__VA_ARGS__); }
 
 /* \brief assign object to draw list */
 inline void _glhckObjectInsertToQueue(_glhckObject *object)
@@ -72,6 +72,60 @@ static inline void _glhckObjectStubDraw(const struct _glhckObject *object)
    }
 }
 
+/* \brief build translation matrix for object */
+static void _glhckObjectBuildTranslation(_glhckObject *object, kmMat4 *translation)
+{
+   kmVec3 bias;
+   bias.x = bias.y = bias.z = 0.0f;
+
+   if (object->geometry) {
+      bias.x = object->geometry->bias.x;
+      bias.y = object->geometry->bias.y;
+      bias.z = object->geometry->bias.z;
+   }
+
+   /* translation */
+   kmMat4Translation(translation,
+         object->view.translation.x + (bias.x * object->view.scaling.x),
+         object->view.translation.y + (bias.y * object->view.scaling.y),
+         object->view.translation.z + (bias.z * object->view.scaling.z));
+}
+
+/* \brief build rotation matrix for object */
+static void _glhckObjectBuildRotation(_glhckObject *object, kmMat4 *rotation)
+{
+   kmMat4 tmp;
+
+   /* rotation */
+   kmMat4RotationAxisAngle(rotation, &(kmVec3){0,0,1},
+         kmDegreesToRadians(object->view.rotation.z));
+   kmMat4RotationAxisAngle(&tmp, &(kmVec3){0,1,0},
+         kmDegreesToRadians(object->view.rotation.y));
+   kmMat4Multiply(rotation, rotation, &tmp);
+   kmMat4RotationAxisAngle(&tmp, &(kmVec3){1,0,0},
+         kmDegreesToRadians(object->view.rotation.x));
+   kmMat4Multiply(rotation, rotation, &tmp);
+}
+
+/* \brief build scaling matrix for object */
+static void _glhckObjectBuildScaling(_glhckObject *object, kmMat4 *scaling)
+{
+   kmVec3 scale;
+   scale.x = scale.y = scale.z = 1.0f;
+
+   if (object->geometry) {
+      scale.x = object->geometry->scale.x;
+      scale.y = object->geometry->scale.y;
+      scale.z = object->geometry->scale.z;
+   }
+
+   /* scaling */
+   kmMat4Scaling(scaling,
+         scale.x * object->view.scaling.x,
+         scale.y * object->view.scaling.y,
+         scale.z * object->view.scaling.z);
+}
+
 /* \brief update view matrix of object */
 void _glhckObjectUpdateMatrix(_glhckObject *object)
 {
@@ -79,51 +133,34 @@ void _glhckObjectUpdateMatrix(_glhckObject *object)
    kmVec3 min, max;
    kmVec3 mixxyz, mixyyz, mixyzz;
    kmVec3 maxxyz, maxyyz, maxyzz;
-   kmMat4 translation, rotation, scaling, tmp;
-   kmVec3 bias, scale;
+   kmMat4 translation, rotation, scaling;
    CALL(2, "%p", object);
 
-   bias.x  = bias.y  = bias.z  = 0.0f;
-   scale.x = scale.y = scale.z = 1.0f;
+   /* build affection matrices */
+   _glhckObjectBuildTranslation(object, &translation);
+   _glhckObjectBuildRotation(object, &rotation);
+   _glhckObjectBuildScaling(object, &scaling);
 
-   if (object->geometry) {
-      bias.x  = object->geometry->bias.x;
-      bias.y  = object->geometry->bias.y;
-      bias.z  = object->geometry->bias.z;
-      scale.x = object->geometry->scale.x;
-      scale.y = object->geometry->scale.y;
-      scale.z = object->geometry->scale.z;
-   }
-
-   /* translation */
-   kmMat4Translation(&translation,
-         object->view.translation.x + (bias.x * object->view.scaling.x),
-         object->view.translation.y + (bias.y * object->view.scaling.y),
-         object->view.translation.z + (bias.z * object->view.scaling.z));
-
-   /* rotation */
-   kmMat4RotationAxisAngle(&rotation, &(kmVec3){0,0,1},
-         kmDegreesToRadians(object->view.rotation.z));
-   kmMat4RotationAxisAngle(&tmp, &(kmVec3){0,1,0},
-         kmDegreesToRadians(object->view.rotation.y));
-   kmMat4Multiply(&rotation, &rotation, &tmp);
-   kmMat4RotationAxisAngle(&tmp, &(kmVec3){1,0,0},
-         kmDegreesToRadians(object->view.rotation.x));
-   kmMat4Multiply(&rotation, &rotation, &tmp);
-
-   /* scaling */
-   kmMat4Scaling(&scaling,
-         scale.x * object->view.scaling.x,
-         scale.y * object->view.scaling.y,
-         scale.z * object->view.scaling.z);
-
-   /* build matrix */
+   /* build view matrix */
    kmMat4Multiply(&translation, &translation, &rotation);
    kmMat4Multiply(&object->view.matrix, &translation, &scaling);
 
    /* parent matrix affects us! */
    if (object->parent) {
-      kmMat4Multiply(&object->view.matrix, &object->parent->view.matrix, &object->view.matrix);
+      if (object->affectionFlags & GLHCK_AFFECT_SCALING) {
+         _glhckObjectBuildScaling(object->parent, &scaling);
+         kmMat4Multiply(&object->view.matrix, &scaling, &object->view.matrix);
+      }
+
+      if (object->affectionFlags & GLHCK_AFFECT_ROTATION) {
+         _glhckObjectBuildRotation(object->parent, &rotation);
+         kmMat4Multiply(&object->view.matrix, &rotation, &object->view.matrix);
+      }
+
+      if (object->affectionFlags & GLHCK_AFFECT_TRANSLATION) {
+         _glhckObjectBuildTranslation(object->parent, &translation);
+         kmMat4Multiply(&object->view.matrix, &translation, &object->view.matrix);
+      }
    }
 
    /* update transformed obb */
@@ -223,6 +260,10 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    glhckObjectMaterialFlags(object, GLHCK_MATERIAL_DEPTH |
                                     GLHCK_MATERIAL_CULL);
 
+   /* default affection flags */
+   glhckObjectParentAffection(object, GLHCK_AFFECT_TRANSLATION |
+                                      GLHCK_AFFECT_ROTATION);
+
    /* default color */
    glhckObjectColorb(object, 255, 255, 255, 255);
 
@@ -269,7 +310,7 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
 
    /* copy texture */
    object->material.texture = NULL; /* make sure we don't free reference */
-   glhckObjectSetTexture(object, src->material.texture);
+   glhckObjectTexture(object, src->material.texture);
 
    /* assign stub draw to copy */
    object->drawFunc = _glhckObjectStubDraw;
@@ -328,7 +369,7 @@ GLHCKAPI size_t glhckObjectFree(glhckObject *object)
    IFDO(_glhckGeometryFree, object->geometry);
 
    /* free material */
-   glhckObjectSetTexture(object, NULL);
+   glhckObjectTexture(object, NULL);
 
    /* remove from world */
    _glhckWorldRemove(olist, object, _glhckObject*);
@@ -341,10 +382,51 @@ success:
    return object?object->refCounter:0;
 }
 
+/* \brief is object treated as root? */
+GLHCKAPI int glhckObjectIsRoot(const glhckObject *object)
+{
+   CALL(3, "%p", object);
+   assert(object);
+   RET(3, "%d", object->flags & GLHCK_OBJECT_ROOT);
+   return object->flags & GLHCK_OBJECT_ROOT;
+}
+
+/* \brief make object as root, or demote it */
+GLHCKAPI void glhckObjectMakeRoot(glhckObject *object, int root)
+{
+   CALL(3, "%p", object);
+   assert(object);
+   if (root) object->flags |= GLHCK_OBJECT_ROOT;
+   else object->flags &= ~GLHCK_OBJECT_ROOT;
+}
+
+/* \brief get object's affection flags */
+GLHCKAPI unsigned int glhckObjectGetParentAffection(const glhckObject *object)
+{
+   CALL(3, "%p", object);
+   assert(object);
+   RET(3, "%u", object->affectionFlags);
+   return object->affectionFlags;
+}
+
+/* \brief set object's affection flags */
+GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned int affectionFlags)
+{
+   CALL(3, "%p", object);
+   assert(object);
+
+   /* we need to update matrix on next draw */
+   if (object->affectionFlags != affectionFlags)
+      object->view.update = 1;
+
+   object->affectionFlags = affectionFlags;
+}
+
 /* \brief get object's parent */
 GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object)
 {
    CALL(3, "%p", object);
+   assert(object);
    RET(3, "%p", object->parent);
    return object->parent;
 }
@@ -353,6 +435,7 @@ GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object)
 GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, size_t *num_children)
 {
    CALL(3, "%p, %p", object, num_children);
+   assert(object);
    if (num_children) *num_children = object->numChilds;
    RET(3, "%p", object->childs);
    return object->childs;
@@ -364,7 +447,7 @@ GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child)
    size_t i;
    glhckObject **newChilds = NULL;
    CALL(0, "%p, %p", object, child);
-   assert(object != child);
+   assert(object && child && object != child);
 
    /* already added? */
    if (child->parent == object) return;
@@ -389,7 +472,7 @@ GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child)
    size_t i;
    glhckObject **newChilds = NULL;
    CALL(0, "%p, %p", object, child);
-   assert(object != child);
+   assert(object && child && object != child);
 
    /* do we have the child? */
    if (child->parent != object) return;
@@ -415,6 +498,7 @@ GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object)
 {
    size_t i;
    CALL(0, "%p", object);
+   assert(object);
 
    if (!object->childs) return;
    for (i = 0; i != object->numChilds; ++i) {
@@ -426,8 +510,17 @@ GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object)
    object->numChilds = 0;
 }
 
+/* \brief remove object from parent */
+GLHCKAPI void glhckObjectRemoveFromParent(glhckObject *object)
+{
+   CALL(0, "%p", object);
+   assert(object);
+   if (!object->parent) return;
+   glhckObjectRemoveChildren(object->parent, object);
+}
+
 /* \brief set object's texture */
-GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture)
+GLHCKAPI void glhckObjectTexture(glhckObject *object, glhckTexture *texture)
 {
    CALL(1, "%p, %p", object, texture);
    assert(object);
@@ -443,6 +536,11 @@ GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture)
 
    IFDO(glhckTextureFree, object->material.texture);
    if (texture) object->material.texture = glhckTextureRef(texture);
+
+   /* set texture on all the childs */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectTexture, texture);
+   }
 }
 
 /* \brief get object's texture */
@@ -511,6 +609,11 @@ GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags)
    assert(object);
 
    object->material.flags = flags;
+
+   /* set material flags on all the childs */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectMaterialFlags, flags);
+   }
 }
 
 /* \brief get object's color */
@@ -533,6 +636,11 @@ GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColorb *color)
    object->material.color.g = color->g;
    object->material.color.b = color->b;
    object->material.color.a = color->a;
+
+   /* set color on all the childs */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectColor, color);
+   }
 }
 
 /* \brief set object's color (with unsigned char) */
@@ -546,21 +654,45 @@ GLHCKAPI void glhckObjectColorb(glhckObject *object,
 /* \brief get obb bounding box of the object */
 GLHCKAPI const kmAABB*  glhckObjectGetOBB(const glhckObject *object)
 {
+   const kmAABB *obb;
+   unsigned int i;
    CALL(1, "%p", object);
    assert(object);
 
-   RET(1, "%p", object->view.obb);
-   return &object->view.obb;
+   /* if performed on root, get the largest obb */
+   obb = &object->view.obb;
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      for (i = 0; i != object->numChilds; ++i) {
+         if (obb->max.x < object->childs[i]->view.obb.max.x &&
+             obb->max.y < object->childs[i]->view.obb.max.y)
+            obb = & object->childs[i]->view.obb;
+      }
+   }
+
+   RET(1, "%p", obb);
+   return obb;
 }
 
 /* \brief get aabb bounding box of the object */
 GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object)
 {
+   const kmAABB *aabb;
+   unsigned int i;
    CALL(1, "%p", object);
    assert(object);
 
-   RET(1, "%p", object->view.aabb);
-   return &object->view.aabb;
+   /* if performed on root, get the largest aabb */
+   aabb = &object->view.aabb;
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      for (i = 0; i != object->numChilds; ++i) {
+         if (aabb->max.x < object->childs[i]->view.aabb.max.x &&
+             aabb->max.y < object->childs[i]->view.aabb.max.y)
+            aabb = & object->childs[i]->view.aabb;
+      }
+   }
+
+   RET(1, "%p", aabb);
+   return aabb;
 }
 
 /* \brief get object position */
@@ -804,6 +936,11 @@ GLHCKAPI void glhckObjectUpdate(glhckObject *object)
    glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
    _glhckObjectUpdateMatrix(object);
    object->drawFunc = _GLHCKlibrary.render.api.objectDraw;
+
+   /* perform update on all the childs */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectUpdate);
+   }
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

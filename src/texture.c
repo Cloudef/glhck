@@ -315,7 +315,8 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
 
    /* create texture */
    object = _GLHCKlibrary.render.api.createTexture(
-         data, size, width, height, outFormat, texture->object?texture->object:0);
+         data, size, width, height, outFormat,
+         texture->object?texture->object:0, flags);
 
    if (!object)
       goto fail;

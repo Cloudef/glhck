@@ -346,7 +346,7 @@ GLHCKAPI void glhckRenderSetFlags(unsigned int flags)
 }
 
 /* \brief set projection matrix */
-GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat)
+GLHCKAPI void glhckRenderProjection(kmMat4 const* mat)
 {
    GLHCK_INITIALIZED();
    CALL(1, "%p", mat);

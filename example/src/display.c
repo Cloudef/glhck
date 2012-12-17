@@ -139,7 +139,7 @@ int main(int argc, char **argv)
    glhckObjectMaterialFlags(cube2, glhckObjectGetMaterialFlags(cube2)|
          GLHCK_MATERIAL_DRAW_OBB|GLHCK_MATERIAL_DRAW_AABB);
    glhckObjectScalef(cube2, 1.0f, 1.0f, 2.0f);
-   glhckObjectSetTexture(cube2, texture);
+   glhckObjectTexture(cube2, texture);
 
    // FIXME: copy is broken again \o/
    //sprite3 = glhckObjectCopy(sprite);
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 
 #define SKIP_MMD    1
 #define SKIP_OCTM   1
-#define SKIP_ASSIMP 0
+#define SKIP_ASSIMP 1
 
 #if SKIP_MMD
 #  define MMD_PATH ""
@@ -165,20 +165,20 @@ int main(int argc, char **argv)
 #if SKIP_ASSIMP
 #  define ASSIMP_PATH ""
 #else
-#  define ASSIMP_PATH "example/media/base/BaseV1.obj"
+#  define ASSIMP_PATH "example/media/cave_00.x"
 #endif
 
-   if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
-   } else if ((cube = glhckModelNewEx(OCTM_PATH, 5.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(OCTM_PATH, 0, 5.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
-   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 10.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0, 1.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {
-      glhckObjectSetTexture(cube, texture);
+      glhckObjectTexture(cube, texture);
       cameraPos.z = -20.0f;
       glhckObjectScalef(cube, 1.0f, 1.0f, 2.0f);
    } else return EXIT_FAILURE;
@@ -205,9 +205,9 @@ int main(int argc, char **argv)
       glhckTextRender(text);
       glhckRttFillData(rtt);
       glhckRttEnd(rtt);
-      rttText = glhckSpriteNew(glhckRttGetTexture(rtt), 6, 1);
+      rttText = glhckSpriteNew(glhckRttGetTexture(rtt), 12, 2);
       glhckObjectMaterialFlags(rttText, glhckObjectGetMaterialFlags(rttText)|GLHCK_MATERIAL_ALPHA);
-      glhckObjectPositionf(rttText, 2.0f, 2.5f, 0);
+      glhckObjectPositionf(rttText, 2, 2, 0);
       glhckRttFree(rtt);
       glhckObjectAddChildren(cube2, rttText);
    }
@@ -233,14 +233,14 @@ int main(int argc, char **argv)
       if (glfwGetKey(window, GLFW_KEY_O)) {
          kmMat4 identity;
          kmMat4Identity(&identity);
-         glhckRenderSetProjection(&identity);
+         glhckRenderProjection(&identity);
       } else if (glfwGetKey(window, GLFW_KEY_I)) {
          kmMat4 mat2d, pos;
          glhckCameraUpdate(camera);
          kmMat4Translation(&pos, -cameraPos.x, -cameraPos.y, -cameraPos.z);
          kmMat4Scaling(&mat2d, -2.0f/WIDTH, 2.0f/HEIGHT, 0.0f);
          kmMat4Multiply(&mat2d, &mat2d, &pos);
-         glhckRenderSetProjection(&mat2d);
+         glhckRenderProjection(&mat2d);
       } else {
          glhckCameraUpdate(camera);
       }

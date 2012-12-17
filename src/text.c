@@ -207,7 +207,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
 
             /* as last resort create new texture, if this was used */
             tex_object = _GLHCKlibrary.render.api.createTexture(NULL, size,
-                  text->tw, text->th, format, 0);
+                  text->tw, text->th, format, 0, GLHCK_TEXTURE_NEAREST);
             if (!tex_object)
                return NULL;
 
@@ -337,7 +337,7 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
 
    /* fill texture with emptiness */
    texture->object = _GLHCKlibrary.render.api.createTexture(NULL, texture->size,
-         cachew, cacheh, texture->format, 0);
+         cachew, cacheh, texture->format, 0, GLHCK_TEXTURE_NEAREST);
    if (!texture->object)
       goto fail;
 
@@ -607,8 +607,8 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
       goto fail;
 
    /* create texture */
-   if (!(texture = _GLHCKlibrary.render.api.createTexture(
-               data, temp->size, temp->width, temp->height, temp->format, 0)))
+   if (!(texture = _GLHCKlibrary.render.api.createTexture(data, temp->size,
+               temp->width, temp->height, temp->format, 0, GLHCK_TEXTURE_NEAREST)))
       goto fail;
 
    /* not needed anymore */

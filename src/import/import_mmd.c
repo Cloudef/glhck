@@ -11,6 +11,9 @@
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
+/* FIXME: add generic loading
+ * currently all MMD loading is GLHCK_MODEL_JOIN */
+
 /* \brief check if file is a MikuMikuDance PMD file */
 int _glhckFormatPMD(const char *file)
 {
@@ -36,7 +39,7 @@ fail:
 }
 
 /* \brief import MikuMikuDance PMD file */
-int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
+int _glhckImportPMD(_glhckObject *object, const char *file, unsigned int flags,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    FILE *f;
@@ -49,7 +52,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
    glhckImportVertexData *vertexData = NULL;
    glhckImportIndexData *indices = NULL, *stripIndices = NULL;
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
-   CALL(0, "%p, %s, %d", object, file, animated);
+   CALL(0, "%p, %s, %d", object, file, flags);
 
    if (!(f = fopen(file, "rb")))
       goto read_fail;
@@ -148,7 +151,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, int animated,
    }
 
    /* assign texture ot object */
-   glhckObjectSetTexture(object, glhckAtlasGetTexture(atlas));
+   glhckObjectTexture(object, glhckAtlasGetTexture(atlas));
 
    /* we don't need atlas packer anymore */
    NULLDO(glhckAtlasFree, atlas);

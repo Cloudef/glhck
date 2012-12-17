@@ -239,7 +239,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    if (!(rtt = glhckRttNew(width, height, GLHCK_RTT_RGBA)))
       goto fail;
 
-   if (!(plane = glhckPlaneNewEx(1, GLHCK_INDEX_NONE, GLHCK_VERTEX_V2F)))
+   if (!(plane = glhckPlaneNewEx(1, 1, GLHCK_INDEX_NONE, GLHCK_VERTEX_V2F)))
       goto fail;
 
    /* create projection for drawing */
@@ -274,7 +274,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
             0);
 
       /* draw texture */
-      glhckObjectSetTexture(plane, rect->texture);
+      glhckObjectTexture(plane, rect->texture);
       glhckObjectRender(plane);
    }
    glhckRttFillData(rtt);

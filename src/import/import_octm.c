@@ -65,7 +65,7 @@ fail:
 }
 
 /* \brief import OpenCTM file */
-int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
+int _glhckImportOpenCTM(_glhckObject *object, const char *file, unsigned int flags,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    FILE *f;
@@ -80,7 +80,7 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
    glhckImportVertexData *vertexData = NULL;
    _glhckTexture *texture;
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
-   CALL(0, "%p, %s, %d", object, file, animated);
+   CALL(0, "%p, %s, %d", object, file, flags);
 
    if (!(f = fopen(file, "rb")))
       goto read_fail;
@@ -119,7 +119,7 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, int animated,
       if ((texturePath = _glhckImportTexturePath(textureFilename, file))) {
          if ((texture = glhckTextureNew(texturePath, GLHCK_TEXTURE_DEFAULTS))) {
             coords = CTM_CALL(context, ctmGetFloatArray(context, CTM_UV_MAP_1));
-            glhckObjectSetTexture(object, texture);
+            glhckObjectTexture(object, texture);
             glhckTextureFree(texture);
          }
          free(texturePath);

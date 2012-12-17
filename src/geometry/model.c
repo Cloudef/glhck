@@ -5,16 +5,16 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
 
 /* \brief create new object from supported model files */
-GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size)
+GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, unsigned int flags)
 {
-   return glhckModelNewEx(file, size,
+   return glhckModelNewEx(file, size, flags,
          _GLHCKlibrary.render.globalIndexType,
          _GLHCKlibrary.render.globalVertexType);
 }
 
 /* \brief create new object from supported model files
  * you can specify the index and vertex precision here */
-GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size,
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned int flags,
    glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    _glhckObject *object;
@@ -25,7 +25,7 @@ GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size,
       goto fail;
 
    /* import model */
-   if (_glhckImportModel(object, file, 0, itype, vtype) != RETURN_OK)
+   if (_glhckImportModel(object, file, flags, itype, vtype) != RETURN_OK)
       goto fail;
 
    /* scale the cube */

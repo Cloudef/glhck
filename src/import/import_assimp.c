@@ -24,7 +24,7 @@ static const char* getExt(const char *file)
 static int buildModel(const char *file, _glhckObject *object,
       size_t numIndices, size_t numVertices,
       const glhckImportIndexData *indices, const glhckImportVertexData *vertexData,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype, int animated)
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype, unsigned int flags)
 {
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
    size_t numStrippedIndices = 0;
@@ -49,8 +49,8 @@ static int buildModel(const char *file, _glhckObject *object,
 }
 
 static void joinMesh(const char *file, const struct aiScene *sc,
-      const struct aiNode *nd, const struct aiMesh *mesh, int animated,
-      glhckImportIndexData *indices, glhckImportVertexData *vertexData,
+      const struct aiNode *nd, const struct aiMesh *mesh, unsigned int flags,
+      size_t indexOffset, glhckImportIndexData *indices, glhckImportVertexData *vertexData,
       glhckAtlas *atlas, glhckTexture *texture)
 {
    unsigned int f, i, skip;
@@ -79,13 +79,6 @@ static void joinMesh(const char *file, const struct aiScene *sc,
          if (mesh->mTextureCoords[0]) {
             vertexData[index].coord.x = mesh->mTextureCoords[0][index].x;
             vertexData[index].coord.y = mesh->mTextureCoords[0][index].y;
-
-            /* fix coords */
-            if (vertexData[index].coord.x < 0.0f)
-               vertexData[index].coord.x += 1;
-            if (vertexData[index].coord.y < 0.0f)
-               vertexData[index].coord.y += 1;
-
          }
 
          /* offset texture coords to fit atlas texture */
@@ -98,7 +91,7 @@ static void joinMesh(const char *file, const struct aiScene *sc,
             vertexData[index].coord.y = coord.y;
          }
 
-         indices[skip+i] = index;
+         indices[skip+i] = indexOffset + index;
       } skip += face->mNumIndices;
    }
 }
@@ -110,7 +103,7 @@ glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl
    enum aiTextureMapping textureMapping;
    enum aiTextureOp op;
    enum aiTextureMapMode textureMapMode[3];
-   unsigned int uvwIndex, flags;
+   unsigned int uvwIndex, flags, tflags = GLHCK_TEXTURE_DEFAULTS;
    float blend;
    char *texturePath;
 
@@ -122,18 +115,22 @@ glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl
             textureMapMode, &flags) != AI_SUCCESS)
       return NULL;
 
+   if (textureMapMode[0] == aiTextureMapMode_Wrap) {
+      tflags |= GLHCK_TEXTURE_REPEAT;
+   }
+
    if (!(texturePath = _glhckImportTexturePath(textureName.data, file)))
       return NULL;
 
    DEBUG(0, "%s", texturePath);
-   texture = glhckTextureNew(texturePath, 0);
+   texture = glhckTextureNew(texturePath, tflags);
    free(texturePath);
    return texture;
 }
 
 static int processModel(const char *file, _glhckObject *object,
       _glhckObject *current, const struct aiScene *sc, const struct aiNode *nd,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype, int animated)
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype, unsigned int flags)
 {
    unsigned int m, f;
    size_t numVertices = 0, numIndices = 0;
@@ -155,89 +152,142 @@ static int processModel(const char *file, _glhckObject *object,
    if (!(textureList = _glhckCalloc(nd->mNumMeshes, sizeof(_glhckTexture*))))
       goto assimp_no_memory;
 
-   /* gather statistics */
-   for (m = 0; m != nd->mNumMeshes; ++m) {
-      mesh = sc->mMeshes[nd->mMeshes[m]];
-      if (!mesh->mVertices) continue;
+   /* combine && atlas loading path */
+   if (flags & GLHCK_MODEL_JOIN) {
+      /* gather statistics */
+      for (m = 0; m != nd->mNumMeshes; ++m) {
+         mesh = sc->mMeshes[nd->mMeshes[m]];
+         if (!mesh->mVertices) continue;
 
-      for (f = 0; f != mesh->mNumFaces; ++f) {
-         face = &mesh->mFaces[f];
-         if (!face) goto fail;
-         numIndices += face->mNumIndices;
+         for (f = 0; f != mesh->mNumFaces; ++f) {
+            face = &mesh->mFaces[f];
+            if (!face) goto fail;
+            numIndices += face->mNumIndices;
+         }
+         numVertices += mesh->mNumVertices;
+
+         if ((texture = textureFromMaterial(file,
+                     sc->mMaterials[mesh->mMaterialIndex]))) {
+            glhckAtlasInsertTexture(atlas, texture);
+            glhckTextureFree(texture);
+            textureList[m] = texture;
+            hasTexture = 1;
+         }
       }
-      numVertices += mesh->mNumVertices;
 
-      if ((texture = textureFromMaterial(file,
-                  sc->mMaterials[mesh->mMaterialIndex]))) {
-         glhckAtlasInsertTexture(atlas, texture);
-         glhckTextureFree(texture);
-         textureList[m] = texture;
-         hasTexture = 1;
+      /* allocate vertices */
+      if (!(vertexData = _glhckCalloc(numVertices, sizeof(glhckImportVertexData))))
+         goto assimp_no_memory;
+
+      /* allocate indices */
+      if (!(indices = _glhckMalloc(numIndices * sizeof(glhckImportIndexData))))
+         goto assimp_no_memory;
+
+      /* pack combined textures */
+      if (hasTexture) {
+         if (glhckAtlasPack(atlas, 1, 0) != RETURN_OK)
+            goto fail;
+      } else {
+         NULLDO(glhckAtlasFree, atlas);
+         NULLDO(_glhckFree, textureList);
       }
-   }
 
-   DEBUG(GLHCK_DBG_CRAP, "I: %d", numIndices);
-   DEBUG(GLHCK_DBG_CRAP, "V: %d", numVertices);
+      /* join vertex data */
+      for (m = 0, ioffset = 0, voffset = 0; m != nd->mNumMeshes; ++m) {
+         mesh = sc->mMeshes[nd->mMeshes[m]];
+         if (!mesh->mVertices) continue;
 
-   /* allocate vertices */
-   if (!(vertexData = _glhckCalloc(numVertices, sizeof(glhckImportVertexData))))
-      goto assimp_no_memory;
+         joinMesh(file, sc, nd, mesh, flags, voffset,
+               indices+ioffset, vertexData+voffset, atlas, texture);
 
-   /* allocate indices */
-   if (!(indices = _glhckMalloc(numIndices * sizeof(glhckImportIndexData))))
-      goto assimp_no_memory;
+         for (f = 0; f != mesh->mNumFaces; ++f) {
+            face = &mesh->mFaces[f];
+            if (!face) goto fail;
+            ioffset += face->mNumIndices;
+         }
+         voffset += mesh->mNumVertices;
+      }
 
-   /* pack combined textures */
-   if (hasTexture) {
-      if (glhckAtlasPack(atlas, 1, 0) != RETURN_OK)
-         goto fail;
+      /* finally build the model */
+      if (buildModel(file, current, numIndices,  numVertices,
+               indices, vertexData, itype, vtype, flags) == RETURN_OK) {
+         if (hasTexture) glhckObjectTexture(current, glhckAtlasGetTexture(atlas));
+         if (!(current = glhckObjectNew())) goto fail;
+         glhckObjectAddChildren(object, current);
+         canFreeCurrent = 1;
+      }
+
+      /* free stuff */
+      IFDO(glhckAtlasFree, atlas);
+      IFDO(_glhckFree, textureList);
+      NULLDO(_glhckFree, vertexData);
+      NULLDO(_glhckFree, indices);
    } else {
-      NULLDO(glhckAtlasFree, atlas);
-      NULLDO(_glhckFree, textureList);
-   }
+      /* default loading path */
+      for (m = 0, ioffset = 0, voffset = 0; m != nd->mNumMeshes; ++m) {
+         mesh = sc->mMeshes[nd->mMeshes[m]];
+         if (!mesh->mVertices) continue;
 
-   /* join vertex data */
-   for (m = 0, ioffset = 0, voffset = 0; m != nd->mNumMeshes; ++m) {
-      mesh = sc->mMeshes[nd->mMeshes[m]];
-      if (!mesh->mVertices) continue;
+         /* gather statistics */
+         numIndices = 0;
+         for (f = 0; f != mesh->mNumFaces; ++f) {
+            face = &mesh->mFaces[f];
+            if (!face) goto fail;
+            numIndices += face->mNumIndices;
+         }
+         numVertices = mesh->mNumVertices;
 
-      joinMesh(file, sc, nd, mesh, animated,
-            indices+ioffset, vertexData+voffset, atlas, texture);
+         /* get texture */
+         hasTexture = 0;
+         if ((texture = textureFromMaterial(file,
+                     sc->mMaterials[mesh->mMaterialIndex]))) {
+            hasTexture = 1;
+         }
 
-      for (f = 0; f != mesh->mNumFaces; ++f) {
-         face = &mesh->mFaces[f];
-         if (!face) goto fail;
-         ioffset += face->mNumIndices;
+         /* allocate vertices */
+         if (!(vertexData = _glhckCalloc(numVertices, sizeof(glhckImportVertexData))))
+            goto assimp_no_memory;
+
+         /* allocate indices */
+         if (!(indices = _glhckMalloc(numIndices * sizeof(glhckImportIndexData))))
+            goto assimp_no_memory;
+
+         /* fill arrays */
+         joinMesh(file, sc, nd, mesh, flags, 0,
+               indices, vertexData, NULL, NULL);
+
+         /* build model */
+         if (buildModel(file, current, numIndices,  numVertices,
+                  indices, vertexData, itype, vtype, flags) == RETURN_OK) {
+            if (hasTexture) glhckObjectTexture(current, texture);
+            if (!(current = glhckObjectNew())) goto fail;
+            glhckObjectAddChildren(object, current);
+            canFreeCurrent = 1;
+         }
+
+         /* free stuff */
+         NULLDO(_glhckFree, vertexData);
+         NULLDO(_glhckFree, indices);
+         IFDO(glhckTextureFree, texture);
       }
-      voffset += mesh->mNumVertices;
    }
-
-   /* finally build the model */
-   if (buildModel(file, current, numIndices,  numVertices,
-            indices, vertexData, itype, vtype, animated) == RETURN_OK) {
-      if (hasTexture) glhckObjectSetTexture(current, glhckAtlasGetTexture(atlas));
-      if (!(current = glhckObjectNew())) goto fail;
-      glhckObjectAddChildren(object, current);
-      canFreeCurrent = 1;
-   }
-
-   /* free stuff */
-   IFDO(glhckAtlasFree, atlas);
-   IFDO(_glhckFree, textureList);
-   NULLDO(_glhckFree, vertexData);
-   NULLDO(_glhckFree, indices);
 
    /* process childrens */
    for (m = 0; m != nd->mNumChildren; ++m) {
       if (processModel(file, object, current, sc, nd->mChildren[m],
-               itype, vtype, animated) == RETURN_OK) {
+               itype, vtype, flags) == RETURN_OK) {
          if (!(current = glhckObjectNew())) goto fail;
          glhckObjectAddChildren(object, current);
          canFreeCurrent = 1;
       }
    }
 
-   if (canFreeCurrent) glhckObjectFree(current);
+   /* we din't do anything to the next
+    * allocated object, so free it */
+   if (canFreeCurrent) {
+      glhckObjectRemoveFromParent(current);
+      glhckObjectFree(current);
+   }
    return RETURN_OK;
 
 assimp_no_memory:
@@ -262,11 +312,12 @@ int _glhckFormatAssimp(const char *file)
 }
 
 /* \brief import Assimp file */
-int _glhckImportAssimp(_glhckObject *object, const char *file, int animated,
+int _glhckImportAssimp(_glhckObject *object, const char *file, unsigned int flags,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    const struct aiScene *scene;
-   CALL(0, "%p, %s, %d", object, file, animated);
+   glhckObject *first = NULL;
+   CALL(0, "%p, %s, %d", object, file, flags);
 
    /* import the model using assimp
     * TODO: make import hints tunable?
@@ -274,9 +325,18 @@ int _glhckImportAssimp(_glhckObject *object, const char *file, int animated,
    scene = aiImportFile(file, aiProcessPreset_TargetRealtime_Fast);
    if (!scene) goto assimp_fail;
 
+   /* mark ourself as special root object.
+    * this makes most functions called on root object echo to children */
+   object->flags |= GLHCK_OBJECT_ROOT;
+
+   /* this is going to be the first object in mesh,
+    * the object returned by this importer is just invisible root object. */
+   if (!(first = glhckObjectNew())) goto fail;
+   glhckObjectAddChildren(object, first);
+
    /* process the model */
-   if (processModel(file, object, object, scene, scene->mRootNode,
-            itype, vtype, animated) != RETURN_OK)
+   if (processModel(file, object, first, scene, scene->mRootNode,
+            itype, vtype, flags) != RETURN_OK)
       goto fail;
 
    /* close file */
@@ -288,6 +348,7 @@ assimp_fail:
    DEBUG(GLHCK_DBG_ERROR, aiGetErrorString());
 fail:
    IFDO(aiReleaseImport, scene);
+   IFDO(glhckObjectFree, first);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }

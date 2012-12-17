@@ -169,7 +169,7 @@ static void getPixels(int x, int y, int width, int height,
 /* \brief create texture from data and upload it */
 static unsigned int createTexture(const unsigned char *buffer, size_t size,
       int width, int height, unsigned int format,
-      unsigned int reuse_texture_ID)
+      unsigned int reuse_texture_ID, unsigned int flags)
 {
    unsigned int object;
    CALL(0, "%p, %zu, %d, %d, %d, %d", buffer, size,
@@ -185,10 +185,21 @@ static unsigned int createTexture(const unsigned char *buffer, size_t size,
       goto _return;
 
    glhckBindTexture(object);
-   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-   GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+   if (flags & GLHCK_TEXTURE_NEAREST) {
+      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+   } else {
+      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+   }
+
+   if (flags & GLHCK_TEXTURE_REPEAT) {
+      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+   } else {
+      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+   }
 
    if (_glhckIsCompressedFormat(format)) {
       GL_CALL(glCompressedTexImage2D(GL_TEXTURE_2D, 0,

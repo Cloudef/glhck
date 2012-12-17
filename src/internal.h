@@ -65,6 +65,13 @@ typedef enum _glhckReturnValue {
    RETURN_FALSE   =  !RETURN_TRUE
 } _glhckReturnValue;
 
+/* internal object flags */
+typedef enum _glhckObjectFlags
+{
+   GLHCK_OBJECT_NONE = 0,
+   GLHCK_OBJECT_ROOT = 1,
+} _glhckObjectFlags;
+
 /* texture container */
 typedef struct _glhckTexture {
    char *file;
@@ -140,6 +147,8 @@ typedef struct _glhckObject {
    __GLHCKobjectDraw drawFunc;
    size_t refCounter;
    size_t numChilds;
+   unsigned char affectionFlags;
+   unsigned char flags;
    struct _glhckObject *parent;
    struct _glhckObject **childs;
    struct _glhckObject *next;
@@ -228,7 +237,7 @@ typedef void (*__GLHCKrenderAPIfillTexture)      (unsigned int texture, const un
 
 typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *buffer, size_t size,
                                                        int width, int height, unsigned int format,
-                                                       unsigned int reuse_texture_ID);
+                                                       unsigned int reuse_texture_ID, unsigned int flags);
 
 /* framebuffer objects */
 typedef void (*__GLHCKrenderAPIgenerateFramebuffers) (size_t count, unsigned int *objects);

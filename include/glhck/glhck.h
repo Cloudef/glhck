@@ -193,12 +193,29 @@ typedef struct glhckFrustum {
    kmVec3 farCorners[GLHCK_FRUSTUM_CORNER_LAST];
 } glhckFrustum;
 
+/* parent affection flags */
+typedef enum glhckObjectAffectionFlags {
+   GLHCK_AFFECT_NONE          = 0,
+   GLHCK_AFFECT_TRANSLATION   = 1,
+   GLHCK_AFFECT_ROTATION      = 2,
+   GLHCK_AFFECT_SCALING       = 4,
+} glhckObjectAffectionFlags;
+
 /* texture flags */
 typedef enum glhckTextureFlags {
-   GLHCK_TEXTURE_NONE = 0,
-   GLHCK_TEXTURE_DEFAULTS = 1,
-   GLHCK_TEXTURE_DXT = 2,
+   GLHCK_TEXTURE_NONE      = 0,
+   GLHCK_TEXTURE_DEFAULTS  = 1,
+   GLHCK_TEXTURE_DXT       = 2,
+   GLHCK_TEXTURE_NEAREST   = 4,
+   GLHCK_TEXTURE_REPEAT    = 8,
 } glhckTextureFlags;
+
+/* model import flags */
+typedef enum glhckModelFlags {
+   GLHCK_MODEL_NONE     = 0,
+   GLHCK_MODEL_ANIMATED = 1,
+   GLHCK_MODEL_JOIN     = 2,
+} glhckModelFlags;
 
 /* material flags */
 typedef enum glhckMaterialFlags {
@@ -403,8 +420,8 @@ GLHCKAPI void glhckDisplayResize(int width, int height);
 GLHCKAPI glhckDriverType glhckRenderGetDriver(void);
 GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params);
-GLHCKAPI void glhckRenderSetFlags(unsigned int flags);
-GLHCKAPI void glhckRenderSetProjection(kmMat4 const* mat);
+GLHCKAPI void glhckSetRenderFlags(unsigned int flags);
+GLHCKAPI void glhckRenderProjection(kmMat4 const* mat);
 GLHCKAPI void glhckRender(void);
 GLHCKAPI void glhckClear(void);
 
@@ -438,13 +455,18 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src);
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
 GLHCKAPI size_t glhckObjectFree(glhckObject *object);
 
+GLHCKAPI int glhckObjectIsRoot(const glhckObject *object);
+GLHCKAPI void glhckObjectMakeRoot(glhckObject *object, int root);
+GLHCKAPI unsigned int glhckObjectGetParentAffection(const glhckObject *object);
+GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned int affectionFlags);
 GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object);
 GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, size_t *num_children);
 GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child);
 GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child);
 GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object);
+GLHCKAPI void glhckObjectRemoveFromParent(glhckObject *object);
 GLHCKAPI glhckTexture* glhckObjectGetTexture(const glhckObject *object);
-GLHCKAPI void glhckObjectSetTexture(glhckObject *object, glhckTexture *texture);
+GLHCKAPI void glhckObjectTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertices(
@@ -493,14 +515,14 @@ GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object);
 GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object);
 
 /* pre-defined geometry */
-GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size);
-GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size,
+GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, unsigned int flags);
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned int flags,
          glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
 GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size,
             glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
-GLHCKAPI glhckObject* glhckPlaneNew(kmScalar size);
-GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar size,
+GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height);
+GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height,
             glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, size_t x, size_t y);
 GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file,
@@ -564,7 +586,7 @@ GLHCKAPI void glhckRttBegin(const glhckRtt *rtt);
 GLHCKAPI void glhckRttEnd(const glhckRtt *rtt);
 
 /* trace && debug */
-GLHCKAPI void glhckSetDebugHook(glhckDebugHookFunc func);
+GLHCKAPI void glhckDebugHook(glhckDebugHookFunc func);
 GLHCKAPI void glhckMemoryGraph(void);
 GLHCKAPI void glhckPrintObjectQueue(void);
 GLHCKAPI void glhckPrintTextureQueue(void);
