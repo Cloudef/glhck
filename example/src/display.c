@@ -206,7 +206,6 @@ int main(int argc, char **argv)
       glhckRttFillData(rtt);
       glhckRttEnd(rtt);
       rttText = glhckSpriteNew(glhckRttGetTexture(rtt), 12, 2);
-      glhckObjectMaterialFlags(rttText, glhckObjectGetMaterialFlags(rttText)|GLHCK_MATERIAL_ALPHA);
       glhckObjectPositionf(rttText, 2, 2, 0);
       glhckRttFree(rtt);
       glhckObjectAddChildren(cube2, rttText);

@@ -106,6 +106,11 @@ GLHCKAPI int glhckRttFillData(glhckRtt *rtt)
    /* recreate the texture */
    glhckTextureRecreate(rtt->texture, data, rtt->texture->format);
 
+   /* apply internal flags for texture */
+   rtt->texture->importFlags = 0;
+   if (rtt->texture->format == GLHCK_RGBA)
+      rtt->texture->importFlags |= GLHCK_TEXTURE_IMPORT_ALPHA;
+
    /* free data */
    NULLDO(_glhckFree, data);
 

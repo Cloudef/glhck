@@ -525,6 +525,10 @@ GLHCKAPI void glhckObjectTexture(glhckObject *object, glhckTexture *texture)
    CALL(1, "%p, %p", object, texture);
    assert(object);
 
+   /* already applied */
+   if (object->material.texture == texture)
+      return;
+
    /* sanity warning */
    if (object->geometry && object->geometry->textureRange > 1) {
       if ((texture->width  > object->geometry->textureRange) ||
@@ -534,8 +538,18 @@ GLHCKAPI void glhckObjectTexture(glhckObject *object, glhckTexture *texture)
       }
    }
 
+   /* free old texture */
    IFDO(glhckTextureFree, object->material.texture);
-   if (texture) object->material.texture = glhckTextureRef(texture);
+
+   /* assign new texture */
+   if (texture) {
+      object->material.texture = glhckTextureRef(texture);
+      if (texture->importFlags & GLHCK_TEXTURE_IMPORT_ALPHA) {
+         object->material.flags |= GLHCK_MATERIAL_ALPHA;
+      } else {
+         object->material.flags &= ~GLHCK_MATERIAL_ALPHA;
+      }
+   }
 
    /* set texture on all the childs */
    if (object->flags & GLHCK_OBJECT_ROOT) {

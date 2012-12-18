@@ -72,10 +72,18 @@ typedef enum _glhckObjectFlags
    GLHCK_OBJECT_ROOT = 1,
 } _glhckObjectFlags;
 
+/* internal texture flags */
+typedef enum _glhckTextureFlags
+{
+   GLHCK_TEXTURE_IMPORT_NONE  = 0,
+   GLHCK_TEXTURE_IMPORT_ALPHA = 1,
+} _glhckTextureFlags;
+
 /* texture container */
 typedef struct _glhckTexture {
    char *file;
-   unsigned int object, flags, format, outFormat;
+   unsigned int object, format, outFormat;
+   unsigned int flags, importFlags;
    unsigned char *data;
    int width, height;
    size_t size;

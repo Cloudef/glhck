@@ -240,6 +240,9 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
       }
    }
 
+   /* set internal texture flags */
+   texture->importFlags |= (bpp==32?GLHCK_TEXTURE_IMPORT_ALPHA:0);
+
    /* do post processing to imported data, and assign to texture */
    _glhckImagePostProcessStruct importData;
    importData.width  = w;

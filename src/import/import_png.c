@@ -153,6 +153,9 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
    /* close file */
    NULLDO(fclose, f);
 
+   /* set internal texture flags */
+   texture->importFlags |= (hasa==1?GLHCK_TEXTURE_IMPORT_ALPHA:0);
+
    /* do post processing to imported data, and assign to texture */
    _glhckImagePostProcessStruct importData;
    importData.width  = w;

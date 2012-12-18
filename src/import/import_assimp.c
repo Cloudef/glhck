@@ -67,7 +67,7 @@ static void joinMesh(const char *file, const struct aiScene *sc,
          if (mesh->mVertices) {
             vertexData[index].vertex.x = mesh->mVertices[index].x;
             vertexData[index].vertex.y = mesh->mVertices[index].y;
-            vertexData[index].vertex.z = mesh->mVertices[index].z;
+            vertexData[index].vertex.z = mesh->mVertices[index].z*-1;
          }
 
          if (mesh->mNormals) {
@@ -96,7 +96,7 @@ static void joinMesh(const char *file, const struct aiScene *sc,
    }
 }
 
-glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl)
+glhckTexture* textureFromMaterial(const char *file, glhckObject *object, const struct aiMaterial *mtl)
 {
    glhckTexture *texture;
    struct aiString textureName;
@@ -166,7 +166,7 @@ static int processModel(const char *file, _glhckObject *object,
          }
          numVertices += mesh->mNumVertices;
 
-         if ((texture = textureFromMaterial(file,
+         if ((texture = textureFromMaterial(file, current,
                      sc->mMaterials[mesh->mMaterialIndex]))) {
             glhckAtlasInsertTexture(atlas, texture);
             glhckTextureFree(texture);
@@ -239,7 +239,7 @@ static int processModel(const char *file, _glhckObject *object,
 
          /* get texture */
          hasTexture = 0;
-         if ((texture = textureFromMaterial(file,
+         if ((texture = textureFromMaterial(file, current,
                      sc->mMaterials[mesh->mMaterialIndex]))) {
             hasTexture = 1;
          }
@@ -317,12 +317,14 @@ int _glhckImportAssimp(_glhckObject *object, const char *file, unsigned int flag
 {
    const struct aiScene *scene;
    glhckObject *first = NULL;
+   unsigned int aflags;
    CALL(0, "%p, %s, %d", object, file, flags);
 
    /* import the model using assimp
     * TODO: make import hints tunable?
     * Needs changes to import protocol! */
-   scene = aiImportFile(file, aiProcessPreset_TargetRealtime_Fast);
+   aflags = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_FlipUVs | aiProcess_OptimizeGraph;
+   scene = aiImportFile(file, aflags);
    if (!scene) goto assimp_fail;
 
    /* mark ourself as special root object.
