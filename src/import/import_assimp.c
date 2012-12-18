@@ -102,7 +102,7 @@ glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl
    struct aiString textureName;
    enum aiTextureMapping textureMapping;
    enum aiTextureOp op;
-   enum aiTextureMapMode textureMapMode[3];
+   enum aiTextureMapMode textureMapMode[3] = {0,0,0};
    unsigned int uvwIndex, flags, tflags = GLHCK_TEXTURE_DEFAULTS;
    float blend;
    char *texturePath;
