@@ -837,6 +837,11 @@ GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale)
 
    kmVec3Assign(&object->view.scaling, scale);
    object->view.update = 1;
+
+   /* perform scale on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectScale, scale);
+   }
 }
 
 /* \brief scale object (with kmScalar) */
