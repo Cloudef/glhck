@@ -109,7 +109,7 @@ int main(int argc, char **argv)
    puts("-!- window create");
 
    /* Turn on VSYNC if driver allows */
-   glfwSwapInterval(1);
+   glfwSwapInterval(0);
 
    if (!glhckInit(argc, argv))
       return EXIT_FAILURE;
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 
 #define SKIP_MMD    1
 #define SKIP_OCTM   1
-#define SKIP_ASSIMP 1
+#define SKIP_ASSIMP 0
 
 #if SKIP_MMD
 #  define MMD_PATH ""
@@ -171,10 +171,10 @@ int main(int argc, char **argv)
    if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
-   } else if ((cube = glhckModelNewEx(OCTM_PATH, 0, 5.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(OCTM_PATH, 5.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
-   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0, 1.0f, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {
