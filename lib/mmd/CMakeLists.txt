@@ -1,12 +1,5 @@
 PROJECT(MMD)
-
-SET(MMD_SRC
-   src/mmd.c)
-
-SET(MMD_INC
-   src/mmd.h)
-
+SET(MMD_SRC src/mmd.c)
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(MMD ${MMD_SRC})
 TARGET_LINK_LIBRARIES(MMD)
-

@@ -1,11 +1,5 @@
 PROJECT(actc)
-
-SET(ACTC_SRC
-   src/tc.c)
-
-SET(ACTC_INC
-   src/tc.h)
-
+SET(ACTC_SRC src/tc.c)
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(actc ${ACTC_SRC})
 TARGET_LINK_LIBRARIES(actc)

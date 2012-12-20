@@ -65,18 +65,32 @@ typedef struct _glhckImageImporter
 
 /* Model importers */
 static _glhckModelImporter modelImporters[] = {
+#if GLHCK_IMPORT_OPENCTM
    REGISTER_IMPORTER(FORMAT_OCTM, _glhckFormatOpenCTM, _glhckImportOpenCTM, "glhckImportOpenCTM"),
+#endif
+#if GLHCK_IMPORT_MMD
    REGISTER_IMPORTER(FORMAT_PMD, _glhckFormatPMD, _glhckImportPMD, "glhckImportPMD"),
+#endif
+#if GLHCK_IMPORT_ASSIMP
    REGISTER_IMPORTER(FORMAT_ASSIMP, _glhckFormatAssimp, _glhckImportAssimp, "glhckImportAssimp"),
+#endif
    END_IMPORTERS()
 };
 
 /* Image importers */
 static _glhckImageImporter imageImporters[] = {
+#if GLHCK_IMPORT_PNG
    REGISTER_IMPORTER(FORMAT_PNG, _glhckFormatPNG, _glhckImportPNG, "glhckImportPNG"),
+#endif
+#if GLHCK_IMPORT_JPEG
    REGISTER_IMPORTER(FORMAT_JPEG, _glhckFormatJPEG, _glhckImportJPEG, "glhckImportJPEG"),
+#endif
+#if GLHCK_IMPORT_TGA
    REGISTER_IMPORTER(FORMAT_TGA, _glhckFormatTGA, _glhckImportTGA, "glhckImportTGA"),
+#endif
+#if GLHCK_IMPORT_BMP
    REGISTER_IMPORTER(FORMAT_BMP, _glhckFormatBMP, _glhckImportBMP, "glhckImportBMP"),
+#endif
    END_IMPORTERS()
 };
 

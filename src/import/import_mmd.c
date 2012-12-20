@@ -1,7 +1,7 @@
 #include "../internal.h"
 #include "import.h"
 #include <stdio.h>
-#include "mmd.h"
+#include <mmd.h>
 
 #ifdef __APPLE__
 #   include <malloc/malloc.h>

@@ -1,5 +1,4 @@
 PROJECT(OpenCTM)
-
 SET(OPENCTM_SRC
    src/lib/openctm.c
    src/lib/stream.c
@@ -11,14 +10,7 @@ SET(OPENCTM_SRC
    src/lib/liblzma/LzmaDec.c
    src/lib/liblzma/LzmaEnc.c
    src/lib/liblzma/LzmaLib.c)
-
-SET(OPENCTM_INC
-   src/lib/openctm.h)
-
-INCLUDE_DIRECTORIES(
-   src/lib/liblzma
-)
-
+INCLUDE_DIRECTORIES(src/lib/liblzma)
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(openctm ${OPENCTM_SRC})
 TARGET_LINK_LIBRARIES(openctm)

@@ -1,5 +1,4 @@
 PROJECT(kazmath)
-
 SET(KAZMATH_SRC
    src/kazmath/aabb.c
    src/kazmath/mat3.c
@@ -11,20 +10,6 @@ SET(KAZMATH_SRC
    src/kazmath/vec2.c
    src/kazmath/vec3.c
    src/kazmath/vec4.c)
-
-SET(KAZMATH_INC
-   src/kazmath/kazmath.h
-   src/kazmath/aabb.h
-   src/kazmath/mat3.h
-   src/kazmath/mat4.h
-   src/kazmath/ray2.h
-   src/kazmath/plane.h
-   src/kazmath/quaternion.h
-   src/kazmath/utility.h
-   src/kazmath/vec2.h
-   src/kazmath/vec3.h
-   src/kazmath/vec4.h)
-
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(kazmath ${KAZMATH_SRC})
 TARGET_LINK_LIBRARIES(kazmath ${MATH_LIBRARY})

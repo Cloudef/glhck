@@ -1,11 +1,5 @@
 PROJECT(IMGHCK)
-
-SET(IMGHCK_SRC
-   src/imghck.c)
-
-SET(IMGHCK_INC
-   src/imghck.h)
-
+SET(IMGHCK_SRC src/imghck.c)
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(imghck ${IMGHCK_SRC})
 TARGET_LINK_LIBRARIES(imghck)

@@ -1,6 +1,6 @@
 #include "../internal.h"
 #include "import.h"
-#include "openctm.h"
+#include <openctm.h>
 #include <stdio.h>
 
 #ifdef __APPLE__

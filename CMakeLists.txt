@@ -4,9 +4,27 @@ SET(GLHCK_NAME "GLhck Rendering Engine")
 SET(GLHCK_DESCRIPTION "A dead simple OpenGL/GLES rendering engine")
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${glhck_SOURCE_DIR}/CMake/modules)
 
+# General build options
+OPTION(GLHCK_BUILD_EXAMPLES "Build examples" ON)
+OPTION(GLHCK_BUILD_TOOLS "Build tools" OFF)
 OPTION(GLHCK_USE_GLES1 "Build for OpenGL ES 1.x" OFF)
 OPTION(GLHCK_USE_GLES2 "Build for OpenGL ES 2.x" OFF)
-OPTION(GLHCK_KAZMATH_FLOAT "Defines kmScalar as float" ON)
+OPTION(GLHCK_KAZMATH_FLOAT "Define kmScalar as float" ON)
+
+# Build importers dynamically?
+# FIXME: Not implemented
+OPTION(GLHCK_IMPORT_DYNAMIC "Build importers dynamically" OFF)
+
+# Model importers
+OPTION(GLHCK_IMPORT_ASSIMP "Enable assimp importer" OFF)
+OPTION(GLHCK_IMPORT_OPENCTM "Enable OpenCTM importer" ON)
+OPTION(GLHCK_IMPORT_MMD "Enable MikuMikuDance importer" ON)
+
+# Image importers
+OPTION(GLHCK_IMPORT_BMP "Enable BMP importer" ON)
+OPTION(GLHCK_IMPORT_PNG "Enable PNG importer" ON)
+OPTION(GLHCK_IMPORT_TGA "Enable TGA importer" ON)
+OPTION(GLHCK_IMPORT_JPEG "Enable JPEG importer" ON)
 
 # Debug build
 SET(CMAKE_BUILD_TYPE Debug)
@@ -72,7 +90,7 @@ ENDIF (UNIX)
 # Pandora related build options
 IF (PANDORA)
     ADD_DEFINITIONS(-DPANDORA)
-    SET(GLHCK_USE_GLES1 1)
+    SET(GLHCK_USE_GLES1 1 CACHE BOOL)
 ENDIF (PANDORA)
 
 # Use floating point math on kazmath
@@ -92,7 +110,6 @@ IF (GLHCK_USE_GLES1)
    FIND_PACKAGE(GLESv1 REQUIRED)
    LIST(APPEND INCLUDE_DIR ${GLESv1_INCLUDE_DIR})
    LIST(APPEND GLHCK_TEST_LINK ${GLESv1_LIBRARY})
-
    MESSAGE("GLES 1.x support not working yet")
 ELSEIF (GLHCK_USE_GLES2)
    # GLES 2.x
@@ -104,7 +121,6 @@ ELSE ()
    LIST(APPEND GLHCK_TEST_LINK ${OPENGL_gl_LIBRARY} GLEW)
    MESSAGE("Building GLhck for OpenGL")
 ENDIF ()
-
 
 # Build checks
 # Abort git submodule init && git submodule update has not been ran.
@@ -120,7 +136,7 @@ IF (SUBMODULE_ERROR_THROW)
    MESSAGE(FATAL_ERROR ${SUBMODULE_ERROR})
 ENDIF ()
 
-# Do it (tm)
+# Build depencies
 ADD_SUBDIRECTORY(lib)
 
 # Warnings
@@ -135,13 +151,27 @@ ELSEIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long")
 ENDIF ()
 
-# Do glhck
+# Build glhck
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(3rdparty)
-ADD_SUBDIRECTORY(example)
+
+# Build tools
+IF (GLHCK_BUILD_TOOLS)
+   ADD_SUBDIRECTORY(3rdparty)
+ENDIF ()
+
+# Build examples
+IF (GLHCK_BUILD_EXAMPLES)
+   ADD_SUBDIRECTORY(example)
+ENDIF ()
+
+#
 # FIXME: add real tests
+#
 
 # Install
-INSTALL(FILES include/glhck/glhck.h DESTINATION include/glhck)
-INSTALL(DIRECTORY example/media DESTINATION ./example)
-FILE(COPY example/media DESTINATION ./example)
+FILE(COPY include/glhck/glhck.h DESTINATION include/glhck)
+
+# Copy media?
+IF (GLHCK_BUILD_EXAMPLES)
+   FILE(COPY example/media DESTINATION ./example)
+ENDIF ()
