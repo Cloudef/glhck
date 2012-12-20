@@ -90,7 +90,7 @@ ENDIF (UNIX)
 # Pandora related build options
 IF (PANDORA)
     ADD_DEFINITIONS(-DPANDORA)
-    SET(GLHCK_USE_GLES1 1 CACHE BOOL)
+    SET(GLHCK_USE_GLES1 ON CACHE BOOL)
 ENDIF (PANDORA)
 
 # Use floating point math on kazmath
