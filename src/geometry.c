@@ -819,6 +819,23 @@ GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type)
    return 1;
 }
 
+/* \brief retieve vertex index from index array */
+GLHCKAPI glhckIndexi glhckVertexIndexForIndex(glhckGeometry *geometry, glhckIndexi ix)
+{
+   assert(geometry && ix < geometry->indexCount);
+   switch (geometry->indexType) {
+      case GLHCK_INDEX_BYTE:
+         return geometry->indices.ivb[ix];
+      case GLHCK_INDEX_SHORT:
+         return geometry->indices.ivs[ix];
+      case GLHCK_INDEX_INTEGER:
+         return geometry->indices.ivi[ix];
+      default:
+         break;
+   }
+   return 0;
+}
+
 /* \brief retieve internal vertex data for index */
 GLHCKAPI void glhckGeometryVertexDataForIndex(
       glhckGeometry *geometry, glhckIndexi ix,
@@ -826,7 +843,7 @@ GLHCKAPI void glhckGeometryVertexDataForIndex(
       glhckVector2f *coord, glhckColorb *color,
       unsigned int *vmagic)
 {
-   assert(ix < geometry->vertexCount);
+   assert(geometry && ix < geometry->vertexCount);
    if (vertex) memset(vertex, 0, sizeof(glhckVector3f));
    if (normal) memset(normal, 0, sizeof(glhckVector3f));
    if (coord)  memset(coord,  0, sizeof(glhckVector2f));

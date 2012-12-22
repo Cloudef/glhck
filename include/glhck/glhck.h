@@ -488,6 +488,7 @@ GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags);
 /* object control */
 GLHCKAPI const kmAABB* glhckObjectGetOBB(const glhckObject *object);
 GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object);
+GLHCKAPI const kmMat4* glhckObjectGetMatrix(const glhckObject * object);
 GLHCKAPI const kmVec3* glhckObjectGetPosition(const glhckObject *object);
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
 GLHCKAPI void glhckObjectPositionf(glhckObject *object,
@@ -607,6 +608,7 @@ GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(size_t width, size_t hei
 GLHCKAPI int glhckVertexTypeHasNormal(glhckGeometryVertexType type);
 GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type);
 
+GLHCKAPI glhckIndexi glhckVertexIndexForIndex(glhckGeometry *geometry, glhckIndexi ix);
 GLHCKAPI void glhckGeometryVertexDataForIndex(
       glhckGeometry *geometry, glhckIndexi ix,
       glhckVector3f *vertex, glhckVector3f *normal,

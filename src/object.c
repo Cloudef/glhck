@@ -709,6 +709,15 @@ GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object)
    return aabb;
 }
 
+/* \brief get object's matrix */
+GLHCKAPI const kmMat4* glhckObjectGetMatrix(const glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+   RET(1, "%p", &object->view.matrix);
+   return &object->view.matrix;
+}
+
 /* \brief get object position */
 GLHCKAPI const kmVec3* glhckObjectGetPosition(const glhckObject *object)
 {
