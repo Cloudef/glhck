@@ -820,7 +820,7 @@ GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type)
 }
 
 /* \brief retieve vertex index from index array */
-GLHCKAPI glhckIndexi glhckVertexIndexForIndex(glhckGeometry *geometry, glhckIndexi ix)
+GLHCKAPI glhckIndexi glhckGeometryVertexIndexForIndex(glhckGeometry *geometry, glhckIndexi ix)
 {
    assert(geometry && ix < geometry->indexCount);
    switch (geometry->indexType) {

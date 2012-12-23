@@ -608,7 +608,7 @@ GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(size_t width, size_t hei
 GLHCKAPI int glhckVertexTypeHasNormal(glhckGeometryVertexType type);
 GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type);
 
-GLHCKAPI glhckIndexi glhckVertexIndexForIndex(glhckGeometry *geometry, glhckIndexi ix);
+GLHCKAPI glhckIndexi glhckGeometryVertexIndexForIndex(glhckGeometry *geometry, glhckIndexi ix);
 GLHCKAPI void glhckGeometryVertexDataForIndex(
       glhckGeometry *geometry, glhckIndexi ix,
       glhckVector3f *vertex, glhckVector3f *normal,
