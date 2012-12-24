@@ -410,7 +410,7 @@ GLHCKAPI unsigned int glhckObjectGetParentAffection(const glhckObject *object)
 }
 
 /* \brief set object's affection flags */
-GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned int affectionFlags)
+GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned char affectionFlags)
 {
    CALL(3, "%p", object);
    assert(object);

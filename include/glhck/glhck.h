@@ -458,7 +458,7 @@ GLHCKAPI size_t glhckObjectFree(glhckObject *object);
 GLHCKAPI int glhckObjectIsRoot(const glhckObject *object);
 GLHCKAPI void glhckObjectMakeRoot(glhckObject *object, int root);
 GLHCKAPI unsigned int glhckObjectGetParentAffection(const glhckObject *object);
-GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned int affectionFlags);
+GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned char affectionFlags);
 GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object);
 GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, size_t *num_children);
 GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child);
@@ -525,9 +525,9 @@ GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size,
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height);
 GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height,
             glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
-GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, size_t x, size_t y);
+GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, kmScalar width, kmScalar height);
 GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file,
-      size_t width, size_t height, unsigned int flags);
+      kmScalar width, kmScalar height, unsigned int flags);
 
 /* text */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
@@ -604,7 +604,7 @@ GLHCKAPI float glhckVertexTypeMaxPrecision(glhckGeometryVertexType type);
 GLHCKAPI const char* glhckVertexTypeString(glhckGeometryVertexType type);
 GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV2Counterpart(glhckGeometryVertexType type);
 GLHCKAPI int glhckVertexTypeWithinRange(float value, glhckGeometryVertexType type);
-GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(size_t width, size_t height);
+GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(kmScalar width, kmScalar height);
 GLHCKAPI int glhckVertexTypeHasNormal(glhckGeometryVertexType type);
 GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type);
 

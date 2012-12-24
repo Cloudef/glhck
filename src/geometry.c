@@ -143,8 +143,8 @@ static void _glhckConvertVertexData(
                   glhckMagic3b(&internal.v3b[i].normal, &import[i].normal, &vmax, &vmin);
                }
 
-               internal.v3b[i].coord.x = import[i].coord.x * GLHCK_BYTE_CMAGIC;
-               internal.v3b[i].coord.y = import[i].coord.y * GLHCK_BYTE_CMAGIC;
+               internal.v3b[i].coord.x = (char)(import[i].coord.x * GLHCK_BYTE_CMAGIC);
+               internal.v3b[i].coord.y = (char)(import[i].coord.y * GLHCK_BYTE_CMAGIC);
 
                biasMagic  = GLHCK_BYTE_VBIAS;
                scaleMagic = GLHCK_BYTE_VSCALE;
@@ -159,8 +159,8 @@ static void _glhckConvertVertexData(
                   glhckMagic2b(&internal.v2b[i].vertex, &import[i].vertex, &vmax, &vmin);
                }
 
-               internal.v2b[i].coord.x = import[i].coord.x * GLHCK_BYTE_CMAGIC;
-               internal.v2b[i].coord.y = import[i].coord.y * GLHCK_BYTE_CMAGIC;
+               internal.v2b[i].coord.x = (char)(import[i].coord.x * GLHCK_BYTE_CMAGIC);
+               internal.v2b[i].coord.y = (char)(import[i].coord.y * GLHCK_BYTE_CMAGIC);
 
                biasMagic  = GLHCK_BYTE_VBIAS;
                scaleMagic = GLHCK_BYTE_VSCALE;
@@ -177,8 +177,8 @@ static void _glhckConvertVertexData(
                   glhckMagic3s(&internal.v3s[i].normal, &import[i].normal, &vmax, &vmin);
                }
 
-               internal.v3s[i].coord.x = import[i].coord.x * GLHCK_SHORT_CMAGIC;
-               internal.v3s[i].coord.y = import[i].coord.y * GLHCK_SHORT_CMAGIC;
+               internal.v3s[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
+               internal.v3s[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
 
                biasMagic  = GLHCK_SHORT_VBIAS;
                scaleMagic = GLHCK_SHORT_VSCALE;
@@ -193,8 +193,8 @@ static void _glhckConvertVertexData(
                   glhckMagic2s(&internal.v2s[i].vertex, &import[i].vertex, &vmax, &vmin);
                }
 
-               internal.v2s[i].coord.x = import[i].coord.x * GLHCK_SHORT_CMAGIC;
-               internal.v2s[i].coord.y = import[i].coord.y * GLHCK_SHORT_CMAGIC;
+               internal.v2s[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
+               internal.v2s[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
 
                biasMagic  = GLHCK_SHORT_VBIAS;
                scaleMagic = GLHCK_SHORT_VSCALE;
@@ -256,11 +256,11 @@ static void _glhckConvertIndexData(
       for (i = 0; i != memb; ++i) {
          switch (type) {
             case GLHCK_INDEX_BYTE:
-               internal.ivb[i] = import[i];
+               internal.ivb[i] = (glhckIndexb)import[i];
                break;
 
             case GLHCK_INDEX_SHORT:
-               internal.ivs[i] = import[i];
+               internal.ivs[i] = (glhckIndexs)import[i];
                break;
 
             default:
@@ -795,7 +795,7 @@ GLHCKAPI int glhckVertexTypeWithinRange(float value, glhckGeometryVertexType typ
 }
 
 /* \brief get optimal vertex type for size */
-GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(size_t width, size_t height)
+GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(kmScalar width, kmScalar height)
 {
    glhckGeometryVertexType vtype = GLHCK_VERTEX_V3F;
    if (glhckVertexTypeWithinRange(width, GLHCK_VERTEX_V3B) &&
@@ -964,8 +964,8 @@ GLHCKAPI void glhckGeometryTransformCoordinates(
    for (i = 0; i != geometry->vertexCount; ++i) {
       glhckGeometryVertexDataForIndex(geometry, i,
             NULL, NULL, &coord, NULL, NULL);
-      out.x = (float)coord.x/geometry->textureRange;
-      out.y = (float)coord.y/geometry->textureRange;
+      out.x = coord.x/(float)geometry->textureRange;
+      out.y = coord.y/(float)geometry->textureRange;
 
       if (geometry->transformedCoordinates) {
          if (geometry->transformedCoordinates->degrees != 0)

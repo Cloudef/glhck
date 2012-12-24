@@ -427,19 +427,19 @@ void _glhckTrackTerminate(void);
 #endif
 
 /* util functions */
-void  _glhckRed(void);
-void  _glhckGreen(void);
-void  _glhckBlue(void);
-void  _glhckYellow(void);
-void  _glhckWhite(void);
-void  _glhckNormal(void);
-void  _glhckPuts(const char *buffer);
-void  _glhckPrintf(const char *fmt, ...);
-int   _glhckStrsplit(char ***dst, const char *str, const char *token);
-void  _glhckStrsplitClear(char ***dst);
-char* _glhckStrupstr(const char *hay, const char *needle);
-int   _glhckStrupcmp(const char *hay, const char *needle);
-int   _glhckStrnupcmp(const char *hay, const char *needle, size_t len);
+void   _glhckRed(void);
+void   _glhckGreen(void);
+void   _glhckBlue(void);
+void   _glhckYellow(void);
+void   _glhckWhite(void);
+void   _glhckNormal(void);
+void   _glhckPuts(const char *buffer);
+void   _glhckPrintf(const char *fmt, ...);
+size_t _glhckStrsplit(char ***dst, const char *str, const char *token);
+void   _glhckStrsplitClear(char ***dst);
+char*  _glhckStrupstr(const char *hay, const char *needle);
+int    _glhckStrupcmp(const char *hay, const char *needle);
+int    _glhckStrnupcmp(const char *hay, const char *needle, size_t len);
 
 /* texture packing functions */
 void  _glhckTexturePackerSetCount(_glhckTexturePacker *tp, short textureCount);

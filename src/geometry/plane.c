@@ -75,11 +75,11 @@ fail:
 
 /* \brief create new sprite */
 GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file,
-      size_t width, size_t height, unsigned int flags)
+      kmScalar width, kmScalar height, unsigned int flags)
 {
    _glhckObject *object;
    _glhckTexture *texture;
-   CALL(0, "%s, %zu, %zu, %u", file, width, height, flags);
+   CALL(0, "%s, %f, %f, %u", file, width, height, flags);
 
    /* load texture */
    if (!(texture = glhckTextureNew(file, flags))) {
@@ -98,13 +98,13 @@ GLHCKAPI _glhckObject* glhckSpriteNewFromFile(const char *file,
 
 /* \brief create new sprite */
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture,
-      size_t width, size_t height)
+      kmScalar width, kmScalar height)
 {
    float w, h;
    _glhckObject *object;
    glhckGeometryVertexType vtype;
 
-   CALL(0, "%p, %zu, %zu", texture, width, height);
+   CALL(0, "%p, %f, %f", texture, width, height);
    w = (float)(width?width:texture->width)/2.0f;
    h = (float)(height?height:texture->height)/2.0f;
    const glhckImportVertexData vertices[] = {

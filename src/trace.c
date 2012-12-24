@@ -57,13 +57,13 @@ static void _glhckTraceSet(const char *name, int active)
       if (!_glhckStrupcmp(name, _GLHCKlibrary.trace.channel[i].name)           ||
          (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL)                             &&
           _glhckStrupcmp(_GLHCKlibrary.trace.channel[i].name, GLHCK_CHANNEL_TRACE)))
-      _GLHCKlibrary.trace.channel[i].active = active;
+      _GLHCKlibrary.trace.channel[i].active = (char)active;
 }
 
 /* \brief init debug system */
 void _glhckTraceInit(int argc, const char **argv)
 {
-   int i, count;
+   size_t i, count;
    const char *match;
    char **split;
 

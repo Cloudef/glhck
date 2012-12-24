@@ -142,10 +142,10 @@ void _glhckPrintf(const char *fmt, ...)
 }
 
 /* \brief split string */
-int _glhckStrsplit(char ***dst, const char *str, const char *token)
+size_t _glhckStrsplit(char ***dst, const char *str, const char *token)
 {
    char *saveptr, *ptr, *start;
-   int t_len, i;
+   size_t t_len, i;
 
    if (!(saveptr=strdup(str)))
       return 0;

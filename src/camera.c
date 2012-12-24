@@ -35,7 +35,7 @@ static void _glhckCameraProjectionMatrix(_glhckCamera *camera)
          kmMat4PerspectiveProjection(
                &camera->view.projection,
                camera->view.fov,
-               camera->view.viewport.w/camera->view.viewport.h,
+               (float)camera->view.viewport.w/(float)camera->view.viewport.h,
                camera->view.near, camera->view.far);
          break;
    }
