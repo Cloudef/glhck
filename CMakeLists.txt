@@ -9,7 +9,7 @@ OPTION(GLHCK_BUILD_EXAMPLES "Build examples" ON)
 OPTION(GLHCK_BUILD_TOOLS "Build tools" OFF)
 OPTION(GLHCK_USE_GLES1 "Build for OpenGL ES 1.x" OFF)
 OPTION(GLHCK_USE_GLES2 "Build for OpenGL ES 2.x" OFF)
-OPTION(GLHCK_KAZMATH_FLOAT "Define kmScalar as float" ON)
+OPTION(GLHCK_KAZMATH_DOUBLE "Define kmScalar as double" ON)
 
 # Build importers dynamically?
 # FIXME: Not implemented
@@ -93,9 +93,9 @@ IF (PANDORA)
     SET(GLHCK_USE_GLES1 ON CACHE BOOL)
 ENDIF (PANDORA)
 
-# Use floating point math on kazmath
-IF (GLHCK_KAZMATH_FLOAT)
-   ADD_DEFINITIONS(-DGLHCK_KAZMATH_FLOAT -DUSE_SINGLE_PRECISION)
+# Use double-precision floating point math on kazmath and glhck
+IF (GLHCK_KAZMATH_DOUBLE)
+   ADD_DEFINITIONS(-DUSE_DOUBLE_PRECISION)
 ENDIF ()
 
 # These are propably temporary

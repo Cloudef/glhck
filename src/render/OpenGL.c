@@ -295,10 +295,10 @@ static void setProjection(const kmMat4 *m)
 {
    CALL(2, "%p", m);
    GL_CALL(glMatrixMode(GL_PROJECTION));
-#ifdef GLHCK_KAZMATH_FLOAT
-   GL_CALL(glLoadMatrixf((float*)m));
-#else
+#ifdef USE_DOUBLE_PRECISION
    GL_CALL(glLoadMatrixd((double*)m));
+#else
+   GL_CALL(glLoadMatrixf((float*)m));
 #endif
 
    if (m != &_OpenGL.projection)
@@ -647,10 +647,10 @@ static inline void drawAABB(const _glhckObject *object)
    GL_CALL(glColor3ub(255, 255, 255));
 
    /* go back */
-#ifdef GLHCK_KAZMATH_FLOAT
-   GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
-#else
+#ifdef USE_DOUBLE_PRECISION
    GL_CALL(glLoadMatrixd((double*)&object->view.matrix));
+#else
+   GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
 #endif
 
    /* re enable stuff we disabled */
@@ -672,10 +672,10 @@ static inline void objectStart(const _glhckObject *object) {
 
    /* load view matrix */
    GL_CALL(glMatrixMode(GL_MODELVIEW));
-#ifdef GLHCK_KAZMATH_FLOAT
-   GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
-#else
+#ifdef USE_DOUBLE_PRECISION
    GL_CALL(glLoadMatrixd((double*)&object->view.matrix));
+#else
+   GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
 #endif
 
    /* reset color */
@@ -776,10 +776,10 @@ static inline void textDraw(const _glhckText *text)
 
    /* set 2d projection */
    GL_CALL(glMatrixMode(GL_PROJECTION));
-#ifdef GLHCK_KAZMATH_FLOAT
-   GL_CALL(glLoadMatrixf((float*)&_OpenGL.orthographic));
-#else
+#ifdef USE_DOUBLE_PRECISION
    GL_CALL(glLoadMatrixd((double*)&_OpenGL.orthographic));
+#else
+   GL_CALL(glLoadMatrixf((float*)&_OpenGL.orthographic));
 #endif
 
    GL_CALL(glMatrixMode(GL_TEXTURE));
@@ -859,12 +859,12 @@ static inline void frustumDraw(glhckFrustum *frustum, const kmMat4 *model)
 
    setProjection(&_OpenGL.projection);
    GL_CALL(glMatrixMode(GL_MODELVIEW));
-#ifdef GLHCK_KAZMATH_FLOAT
+#ifdef USE_DOUBLE_PRECISION
+   GL_CALL(glLoadMatrixd((double*)model));
+   GL_CALL(glMultMatrixd((double*)&inv));
+#else
    GL_CALL(glLoadMatrixf((float*)model));
    GL_CALL(glMultMatrixf((float*)&inv));
-#else
-   GL_CALL(glLoadMatrixd((double*)model));
-   GL_CALL(glMultMatrixf((double*)&inv));
 #endif
 
    GL_CALL(glLineWidth(4));
