@@ -60,12 +60,6 @@ IF (GLHCK_IMPORT_BMP)
    LIST(APPEND GLHCK_SRC import/import_bmp.c)
 ENDIF ()
 
-# no GLEW on GLES build
-IF (NOT GLHCK_USE_GLES1 AND NOT GLHCK_USE_GLES_2)
-   SET(OPT_LIBS ${OPT_LIBS} GLEW)
-   SET(OPT_INCL ${OPT_INCL} ${GLEW_SOURCE_DIR}/src/include)
-ENDIF ()
-
 # include directories
 INCLUDE_DIRECTORIES(
    ${glhck_SOURCE_DIR}/include

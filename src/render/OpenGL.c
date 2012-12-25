@@ -982,7 +982,11 @@ void _glhckRenderOpenGL(void)
    setClearColor(0,0,0,1);
    GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
-#if !defined(GLHCK_USE_GLES1) && !defined(GLHCK_USE_GLES2)
+   /* NOTE: Currently we don't use GLEW for anything.
+    * GLEW used to be in libraries as submodule.
+    * But since GLEW is so simple, we could just compile it with,
+    * the OpenGL renderer within GLHCK in future when needed. */
+#if 0
    /* we use GLEW */
    if (glewInit() != GLEW_OK)
       goto fail;
