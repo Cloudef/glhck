@@ -22,13 +22,16 @@
 #  include <GLES2/gl2ext.h>
 #  error "GLES 2.x not implemented"
 #else
-#  include <GL/glew.h> /* for opengl */
+/* FIXME: include glew instead of gl.h and glext.h here in future */
+#define GL_GLEXT_PROTOTYPES
+#include <GL/gl.h>
+#include <GL/glext.h>
 #endif
 
 #if defined(GLHCK_USE_GLES1)
 #  ifdef GL_OES_element_index_uint
 #     ifndef GL_UNSIGNED_INT
-#        define GL_UNSIGNED_INT                   0x1405
+#        define GL_UNSIGNED_INT 0x1405
 #     endif
 #  else
 #     error "GLHCK needs GL_OES_element_index_uint for GLESv1 support!"
