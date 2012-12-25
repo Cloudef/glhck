@@ -228,7 +228,7 @@ typedef void (*__GLHCKrenderAPIsetClearColor)    (char r, char g, char b, char a
 typedef void (*__GLHCKrenderAPIclear)            (void);
 typedef void (*__GLHCKrenderAPIobjectDraw)       (const _glhckObject *object);
 typedef void (*__GLHCKrenderAPItextDraw)         (const _glhckText *text);
-typedef void (*__GLHCKrenderAPIfrustumDraw)      (glhckFrustum *frustum, const kmMat4 *model);
+typedef void (*__GLHCKrenderAPIfrustumDraw)      (glhckFrustum *frustum);
 
 /* screen control */
 typedef void (*__GLHCKrenderAPIgetPixels)        (int x, int y, int width, int height,

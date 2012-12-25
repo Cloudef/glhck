@@ -249,8 +249,8 @@ int main(int argc, char **argv)
       glhckObjectTargetf(camObj, cameraPos.x, cameraPos.y, cameraPos.z + 1);
       glhckObjectRotate(camObj, &cameraRot);
 
+      /* target */
       glhckObjectTarget(cube, glhckObjectGetPosition(sprite));
-      glhckObjectDraw(cube);
 
       /* do spinning effect */
       aabb = glhckObjectGetAABB(cube);
@@ -272,23 +272,32 @@ int main(int argc, char **argv)
       glhckObjectTarget(cube2, glhckObjectGetPosition(cube));
       glhckObjectTarget(sprite3, glhckObjectGetPosition(camObj));
 
+      /* example of frustum culling */
+      if (glhckFrustumContainsAABB(glhckCameraGetFrustum(camera), glhckObjectGetAABB(cube)))
+         glhckObjectDraw(cube);
+      if (glhckFrustumContainsAABB(glhckCameraGetFrustum(camera), glhckObjectGetAABB(cube2)))
+         glhckObjectDraw(cube2);
+      if (glhckFrustumContainsAABB(glhckCameraGetFrustum(camera), glhckObjectGetAABB(sprite3)))
+         glhckObjectDraw(sprite3);
+
+      /* doesn't get culled */
       glhckObjectDraw(sprite);
-      glhckObjectDraw(cube2);
-      glhckObjectDraw(sprite3);
       if (rttText) glhckObjectDraw(rttText);
 
+      /* debug */
       if (!queuePrinted) {
          glhckPrintTextureQueue();
          glhckPrintObjectQueue();
          queuePrinted = 1;
       }
 
+      /* render scene */
       glhckRender();
 
-      /* draw frustum */
-      glhckFrustumRender(glhckCameraGetFrustum(camera),
-                         glhckCameraGetViewMatrix(camera));
+      /* render frustum */
+      glhckFrustumRender(glhckCameraGetFrustum(camera));
 
+      /* draw some text */
       glhckTextColor(text, 255, 255, 255, 255);
       glhckTextDraw(text, font2, 18,         0,  HEIGHT-4, WIN_TITLE, NULL);
       glhckTextDraw(text, font,  42,        25, HEIGHT-80, "愛してるGLHCK", NULL);
@@ -300,10 +309,11 @@ int main(int argc, char **argv)
       glhckTextDraw(text, font2, 12, WIDTH-100,        18, "Wall of text", NULL);
       glhckTextRender(text);
 
-      /* Actual swap and clear */
+      /* actual swap and clear */
       glfwSwapBuffers(window);
       glhckClear();
 
+      /* fps calc */
       if (fpsDelay < now) {
          if (duration > 0.0f) {
             FPS = (float)frameCounter / duration;

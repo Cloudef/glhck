@@ -214,8 +214,7 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
    }
 
    /* assign camera to global state */
-   _GLHCKlibrary.render.api.setProjection(
-         &camera->view.mvp);
+   _GLHCKlibrary.render.api.setProjection(&camera->view.mvp);
    _GLHCKlibrary.render.draw.camera = camera;
 }
 

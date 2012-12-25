@@ -809,17 +809,16 @@ static inline void textDraw(const _glhckText *text)
       GL_CALL(glEnable(GL_DEPTH_TEST));
    }
 
+   /* restore back the original projection */
    setProjection(&_OpenGL.projection);
 }
 
 /* \brief draw frustum */
-static inline void frustumDraw(glhckFrustum *frustum, const kmMat4 *model)
+static inline void frustumDraw(glhckFrustum *frustum)
 {
-   kmMat4 inv;
    unsigned int i = 0;
    kmVec3 *near = frustum->nearCorners;
    kmVec3 *far  = frustum->farCorners;
-   kmMat4Inverse(&inv, model);
    const float points[] = {
                       near[0].x, near[0].y, near[0].z,
                       near[1].x, near[1].y, near[1].z,
@@ -857,15 +856,8 @@ static inline void frustumDraw(glhckFrustum *frustum, const kmMat4 *model)
          GL_CALL(glDisableClientState(_glhckAttribName[i]));
       }
 
-   setProjection(&_OpenGL.projection);
    GL_CALL(glMatrixMode(GL_MODELVIEW));
-#ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((double*)model));
-   GL_CALL(glMultMatrixd((double*)&inv));
-#else
-   GL_CALL(glLoadMatrixf((float*)model));
-   GL_CALL(glMultMatrixf((float*)&inv));
-#endif
+   GL_CALL(glLoadIdentity());
 
    GL_CALL(glLineWidth(4));
    GL_CALL(glColor3ub(255, 0, 0));

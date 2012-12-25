@@ -427,7 +427,10 @@ GLHCKAPI void glhckClear(void);
 
 /* frustum */
 GLHCKAPI void glhckFrustumBuild(glhckFrustum *frustum, const kmMat4 *mvp);
-GLHCKAPI void glhckFrustumRender(glhckFrustum *frustum, const kmMat4 *model);
+GLHCKAPI void glhckFrustumRender(glhckFrustum *frustum);
+GLHCKAPI int glhckFrustumContainsPoint(const glhckFrustum *frustum, const kmVec3 *point);
+GLHCKAPI kmScalar glhckFrustumContainsSphere(const glhckFrustum *frustum, const kmVec3 *point, kmScalar radius);
+GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *frustum, const kmAABB *aabb);
 
 /* cameras */
 GLHCKAPI glhckCamera* glhckCameraNew(void);
