@@ -1,0 +1,8 @@
+-Iinclude
+-Isrc
+-Ilib/imghck/src
+-Ilib/kazmath/src/kazmath
+-Ilib/glfw/src/include
+-Ilib/actc/src
+-Ilib/mmd/src
+-Ilib/openctm/src/lib
