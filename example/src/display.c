@@ -323,6 +323,7 @@ int main(int argc, char **argv)
    glhckObjectFree(sprite);
    glhckObjectFree(cube2);
    glhckObjectFree(sprite3);
+   glhckObjectFree(rttText);
    if (texture) glhckTextureFree(texture);
    glhckCameraFree(camera);
    glhckTextFree(text);
