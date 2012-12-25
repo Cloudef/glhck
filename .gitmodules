@@ -6,10 +6,6 @@
 	path = lib/kazmath/src
         url = https://github.com/Cloudef/kazmath.git
         ignore = dirty
-[submodule "lib/GLEW/src"]
-	path = lib/GLEW/src
-        url = https://github.com/LuaDist/glew.git
-        ignore = dirty
 [submodule "lib/openctm/src"]
 	path = lib/openctm/src
 	url = https://github.com/Danny02/OpenCTM.git
