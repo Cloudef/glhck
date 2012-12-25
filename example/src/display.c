@@ -211,9 +211,9 @@ int main(int argc, char **argv)
       glhckObjectAddChildren(cube2, rttText);
    }
 
-   glfwSetWindowCloseCallback(close_callback);
-   glfwSetWindowSizeCallback(resize_callback);
-   glfwSetCursorPosCallback(mousepos_callback);
+   glfwSetWindowCloseCallback(window, close_callback);
+   glfwSetWindowSizeCallback(window, resize_callback);
+   glfwSetCursorPosCallback(window, mousepos_callback);
    glfwSetInputMode(window, GLFW_CURSOR_MODE, GLFW_CURSOR_CAPTURED);
 
    glhckProjectionType projectionType = GLHCK_PROJECTION_PERSPECTIVE;
