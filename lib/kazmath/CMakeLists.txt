@@ -10,7 +10,7 @@ SET(KAZMATH_SRC
    src/kazmath/vec2.c
    src/kazmath/vec3.c
    src/kazmath/vec4.c)
-ADD_DEFINITIONS(-fPIC)
+ADD_DEFINITIONS(-std=c99 -fPIC)
 ADD_LIBRARY(kazmath ${KAZMATH_SRC})
 TARGET_LINK_LIBRARIES(kazmath ${MATH_LIBRARY})
 
