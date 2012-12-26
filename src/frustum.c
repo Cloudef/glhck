@@ -100,7 +100,7 @@ GLHCKAPI int glhckFrustumContainsPoint(const glhckFrustum *frustum, const kmVec3
       if (frustum->planes[i].a * point->x +
           frustum->planes[i].b * point->y +
           frustum->planes[i].c * point->z +
-          frustum->planes[i].d <= 0) return 0;
+          frustum->planes[i].d < 0) return 0;
       /* <= treat points that are right on the plane as outside.
        * <  for inverse behaviour */
    }
@@ -117,7 +117,7 @@ GLHCKAPI kmScalar glhckFrustumContainsSphere(const glhckFrustum *frustum, const 
           frustum->planes[i].b * point->y +
           frustum->planes[i].c * point->z +
           frustum->planes[i].d;
-      if (d <= -radius) return 0;
+      if (d < -radius) return 0;
    }
    return d + radius;
 }
@@ -125,11 +125,14 @@ GLHCKAPI kmScalar glhckFrustumContainsSphere(const glhckFrustum *frustum, const 
 /* \brief aabb inside frustum? */
 GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *frustum, const kmAABB *aabb)
 {
-   kmVec3 center;
-   /* accurate enough for most cases, but there is error for small planes */
-   return (glhckFrustumContainsPoint(frustum, kmAABBCentre(aabb, &center)) ||
-           glhckFrustumContainsPoint(frustum, &aabb->min) ||
-           glhckFrustumContainsPoint(frustum, &aabb->max));
+   unsigned int i;
+   for (i = 0; i != GLHCK_FRUSTUM_PLANE_LAST; ++i) {
+      if (max(frustum->planes[i].a * aabb->min.x, frustum->planes[i].a * aabb->max.x) +
+          max(frustum->planes[i].b * aabb->min.y, frustum->planes[i].b * aabb->max.y) +
+          max(frustum->planes[i].c * aabb->min.z, frustum->planes[i].c * aabb->max.z) +
+          frustum->planes[i].d < 0) return 0;
+   }
+   return 1;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

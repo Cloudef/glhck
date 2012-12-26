@@ -280,9 +280,9 @@ int main(int argc, char **argv)
       if (glhckFrustumContainsAABB(glhckCameraGetFrustum(camera), glhckObjectGetAABB(sprite3)))
          glhckObjectDraw(sprite3);
 
-      /* doesn't get culled */
-      glhckObjectDraw(sprite);
+      /* do not cull */
       if (rttText) glhckObjectDraw(rttText);
+      glhckObjectDraw(sprite);
 
       /* debug */
       if (!queuePrinted) {
