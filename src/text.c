@@ -798,7 +798,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
    float linew;
    CALL(2, "%p, %u, %f, %s", text, font_id, size, s);
 
-   glhckTextDraw(text, font_id, size, 0, size-4, s, &linew);
+   glhckTextDraw(text, font_id, size, 0, size*0.75f, s, &linew);
    if (!(rtt = glhckRttNew(linew, size, GLHCK_RTT_RGBA, textureFlags)))
       goto fail;
 
