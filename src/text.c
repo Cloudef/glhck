@@ -421,11 +421,10 @@ GLHCKAPI void glhckTextGetMetrics(glhckText *text, unsigned int font_id,
         font = font->next);
 
    /* not found */
-   if (!font)
+   if (!font || (font->type != GLHCK_FONT_BMP && !font->data))
       return;
 
    /* must not fail */
-   assert(font->type != GLHCK_FONT_BMP && !font->data);
    if (ascender)  *ascender  = font->ascender*size;
    if (descender) *descender = font->descender*size;
    if (lineh)     *lineh     = font->lineh*size;
@@ -788,6 +787,43 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
    }
 
    if (dx) *dx = x;
+}
+
+/* \brief create texture from text */
+GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
+      float size, const char *s)
+{
+   glhckRtt *rtt;
+   glhckTexture *texture;
+   float linew;
+   CALL(2, "%p, %u, %f, %s", text, font_id, size, s);
+
+   glhckTextDraw(text, font_id, size, 0, size-4, s, &linew);
+   if (!(rtt = glhckRttNew(linew, size, GLHCK_RTT_RGBA)))
+      goto fail;
+
+   glhckRttBegin(rtt);
+   glhckTextRender(text);
+   glhckRttFillData(rtt);
+   glhckRttEnd(rtt);
+
+   texture = glhckTextureRef(glhckRttGetTexture(rtt));
+   glhckRttFree(rtt);
+
+   RET(2, "%p", texture);
+   return texture;
+
+fail:
+   IFDO(glhckRttFree, rtt);
+   RET(2, "%p", NULL);
+   return NULL;
+}
+
+/* \brief create plane object from text */
+GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id,
+      float size, const char *s)
+{
+   return glhckSpriteNew(glhckTextRTT(text, font_id, size, s), 0, 0);
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

@@ -196,18 +196,11 @@ int main(int argc, char **argv)
    unsigned int font  = glhckTextNewFont(text, "example/media/sazanami-gothic.ttf");
    unsigned int font2 = glhckTextNewFont(text, "example/media/DejaVuSans.ttf");
 
-   glhckRtt *rtt = glhckRttNew(124, 24, GLHCK_RTT_RGBA);
    glhckObject *rttText = NULL;
    glhckTextColor(text, 255, 255, 255, 255);
-   glhckTextDraw(text, font, 24, 0, 20, "RTT Text", NULL);
-   if (rtt) {
-      glhckRttBegin(rtt);
-      glhckTextRender(text);
-      glhckRttFillData(rtt);
-      glhckRttEnd(rtt);
-      rttText = glhckSpriteNew(glhckRttGetTexture(rtt), 12, 2);
-      glhckObjectPositionf(rttText, 2, 2, 0);
-      glhckRttFree(rtt);
+   if ((rttText = glhckTextPlane(text, font, 24, "RTT Text"))) {
+      glhckObjectScalef(rttText, 0.1f, 0.1f, 1.0f); /* scale to fit our 3d world */
+      glhckObjectPositionf(rttText, 0, 2, 0);
       glhckObjectAddChildren(cube2, rttText);
    }
 

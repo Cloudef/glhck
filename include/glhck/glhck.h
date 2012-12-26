@@ -554,6 +554,10 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *text,
 GLHCKAPI void glhckTextRender(glhckText *text);
 GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
       float size, float x, float y, const char *s, float *dx);
+GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
+      float size, const char *s);
+GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id,
+      float size, const char *s);
 
 /* textures */
 GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
