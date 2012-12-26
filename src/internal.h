@@ -77,6 +77,7 @@ typedef enum _glhckTextureFlags
 {
    GLHCK_TEXTURE_IMPORT_NONE  = 0,
    GLHCK_TEXTURE_IMPORT_ALPHA = 1,
+   GLHCK_TEXTURE_IMPORT_TEXT  = 2,
 } _glhckTextureFlags;
 
 /* texture container */
@@ -141,6 +142,7 @@ typedef struct __GLHCKobjectView {
 /* material container */
 typedef struct __GLHCKobjectMaterial {
    unsigned int flags;
+   unsigned int blenda, blendb;
    struct glhckColorb color;
    struct _glhckTexture *texture;
 } __GLHCKobjectMaterial;

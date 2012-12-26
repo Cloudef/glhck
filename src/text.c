@@ -598,7 +598,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
    for (id = 1, f = text->fcache; f; f = f->next) ++id;
 
    /* load image */
-   if (!(temp = glhckTextureNew(file, GLHCK_TEXTURE_DEFAULTS)))
+   if (!(temp = glhckTextureNew(file, GLHCK_TEXTURE_NEAREST)))
       goto fail;
 
    /* get data from texture */
@@ -791,7 +791,7 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
 
 /* \brief create texture from text */
 GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
-      float size, const char *s)
+      float size, const char *s, unsigned int textureFlags)
 {
    glhckRtt *rtt;
    glhckTexture *texture;
@@ -799,7 +799,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
    CALL(2, "%p, %u, %f, %s", text, font_id, size, s);
 
    glhckTextDraw(text, font_id, size, 0, size-4, s, &linew);
-   if (!(rtt = glhckRttNew(linew, size, GLHCK_RTT_RGBA)))
+   if (!(rtt = glhckRttNew(linew, size, GLHCK_RTT_RGBA, textureFlags)))
       goto fail;
 
    glhckRttBegin(rtt);
@@ -808,6 +808,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
    glhckRttEnd(rtt);
 
    texture = glhckTextureRef(glhckRttGetTexture(rtt));
+   texture->importFlags |= GLHCK_TEXTURE_IMPORT_TEXT;
    glhckRttFree(rtt);
 
    RET(2, "%p", texture);
@@ -821,9 +822,24 @@ fail:
 
 /* \brief create plane object from text */
 GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id,
-      float size, const char *s)
+      float size, const char *s, unsigned int textureFlags)
 {
-   return glhckSpriteNew(glhckTextRTT(text, font_id, size, s), 0, 0);
+   glhckTexture *texture;
+   glhckObject *object = NULL;
+
+   if (!(texture = glhckTextRTT(text, font_id, size, s, textureFlags)))
+      goto fail;
+
+   if (!(object = glhckSpriteNew(texture, 0, 0)))
+      goto fail;
+
+   glhckTextureFree(texture);
+   return object;
+
+fail:
+   IFDO(glhckTextureFree, texture);
+   IFDO(glhckObjectFree, object);
+   return NULL;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

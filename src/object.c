@@ -544,10 +544,12 @@ GLHCKAPI void glhckObjectTexture(glhckObject *object, glhckTexture *texture)
    /* assign new texture */
    if (texture) {
       object->material.texture = glhckTextureRef(texture);
-      if (texture->importFlags & GLHCK_TEXTURE_IMPORT_ALPHA) {
-         object->material.flags |= GLHCK_MATERIAL_ALPHA;
+      if (texture->importFlags & GLHCK_TEXTURE_IMPORT_TEXT) {
+         glhckObjectMaterialBlend(object, GLHCK_ONE, GLHCK_ONE_MINUS_SRC_ALPHA);
+      } else if (texture->importFlags & GLHCK_TEXTURE_IMPORT_ALPHA) {
+         glhckObjectMaterialBlend(object, GLHCK_SRC_ALPHA, GLHCK_ONE_MINUS_SRC_ALPHA);
       } else {
-         object->material.flags &= ~GLHCK_MATERIAL_ALPHA;
+         glhckObjectMaterialBlend(object, 0, 0);
       }
    }
 
@@ -628,6 +630,19 @@ GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags)
    if (object->flags & GLHCK_OBJECT_ROOT) {
       PERFORM_ON_CHILDS(object, glhckObjectMaterialFlags, flags);
    }
+}
+
+/* \brief set object's material blending */
+GLHCKAPI void glhckObjectMaterialBlend(glhckObject *object, unsigned int blenda, unsigned int blendb)
+{
+   if (blenda == GLHCK_ZERO && blendb == GLHCK_ZERO) {
+      object->material.blenda = GLHCK_ZERO;
+      object->material.blendb = GLHCK_ZERO;
+      return;
+   }
+
+   object->material.blenda = blenda;
+   object->material.blendb = blendb;
 }
 
 /* \brief get object's color */

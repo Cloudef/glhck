@@ -196,12 +196,17 @@ int main(int argc, char **argv)
    unsigned int font  = glhckTextNewFont(text, "example/media/sazanami-gothic.ttf");
    unsigned int font2 = glhckTextNewFont(text, "example/media/DejaVuSans.ttf");
 
-   glhckObject *rttText = NULL;
+   glhckObject *rttText = NULL, *rttText2 = NULL;
    glhckTextColor(text, 255, 255, 255, 255);
-   if ((rttText = glhckTextPlane(text, font, 24, "RTT Text"))) {
-      glhckObjectScalef(rttText, 0.1f, 0.1f, 1.0f); /* scale to fit our 3d world */
+   if ((rttText = glhckTextPlane(text, font2, 42, "RTT Text", GLHCK_TEXTURE_DEFAULTS))) {
+      glhckObjectScalef(rttText, 0.05f, 0.05f, 1.0f); /* scale to fit our 3d world */
       glhckObjectPositionf(rttText, 0, 2, 0);
       glhckObjectAddChildren(cube2, rttText);
+   }
+
+   if ((rttText2 = glhckTextPlane(text, font, 42, "GLHCKあいしてる", GLHCK_TEXTURE_DEFAULTS))) {
+      glhckObjectRotatef(rttText2, 0, 210, 0);
+      glhckObjectPositionf(rttText2, 200, 0, 500);
    }
 
    glfwSetWindowCloseCallback(window, close_callback);
@@ -275,6 +280,7 @@ int main(int argc, char **argv)
 
       /* do not cull */
       if (rttText) glhckObjectDraw(rttText);
+      if (rttText2) glhckObjectDraw(rttText2);
       glhckObjectDraw(sprite);
 
       /* debug */
@@ -326,8 +332,9 @@ int main(int argc, char **argv)
    glhckObjectFree(sprite);
    glhckObjectFree(cube2);
    glhckObjectFree(sprite3);
-   glhckObjectFree(rttText);
-   if (texture) glhckTextureFree(texture);
+   if (rttText)  glhckObjectFree(rttText);
+   if (rttText2) glhckObjectFree(rttText2);
+   if (texture)  glhckTextureFree(texture);
    glhckCameraFree(camera);
    glhckTextFree(text);
 

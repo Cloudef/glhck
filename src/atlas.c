@@ -236,7 +236,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
       DEBUG(0, "Downscaling atlas texture to: %dx%d", width, height);
    }
 
-   if (!(rtt = glhckRttNew(width, height, GLHCK_RTT_RGBA)))
+   if (!(rtt = glhckRttNew(width, height, GLHCK_RTT_RGBA, GLHCK_TEXTURE_DEFAULTS)))
       goto fail;
 
    if (!(plane = glhckPlaneNewEx(1, 1, GLHCK_INDEX_NONE, GLHCK_VERTEX_V2F)))

@@ -105,6 +105,23 @@ extern "C" {
 #define GLHCK_RGB             0x1907
 #define GLHCK_RGBA            0x1908
 
+/* blending */
+#define GLHCK_ZERO                                 0x0
+#define GLHCK_ONE                                  0x1
+#define GLHCK_SRC_COLOR                            0x0300
+#define GLHCK_ONE_MINUS_SRC_COLOR                  0x0301
+#define GLHCK_SRC_ALPHA                            0x0302
+#define GLHCK_ONE_MINUS_SRC_ALPHA                  0x0303
+#define GLHCK_DST_ALPHA                            0x0304
+#define GLHCK_ONE_MINUS_DST_ALPHA                  0x0305
+#define GLHCK_DST_COLOR                            0x0306
+#define GLHCK_ONE_MINUS_DST_COLOR                  0x0307
+#define GLHCK_SRC_ALPHA_SATURATE                   0x0308
+#define GLHCK_CONSTANT_COLOR                       0x8001
+#define GLHCK_ONE_MINUS_CONSTANT_COLOR             0x8002
+#define GLHCK_CONSTANT_ALPHA                       0x8003
+#define GLHCK_ONE_MINUS_CONSTANT_ALPHA             0x8004
+
 /* compressed texture format */
 /* FIXME: check available formats and etc bleh stuff */
 #define GLHCK_COMPRESSED_RGB_DXT1  0x83F1
@@ -119,17 +136,17 @@ extern "C" {
 #define GLHCK_TRIANGLE_STRIP  0x0005
 
 /* renderer properties */
-#define GLHCK_MAX_TEXTURE_SIZE             0x0D33
-#define GLHCK_MAX_CUBE_MAP_TEXTURE_SIZE    0x8510
-#define GLHCK_MAX_VERTEX_ATTRIBS           0x8869
-#define GLHCK_MAX_VERTEX_UNIFORM_VECTORS   0x8859
-#define GLHCK_MAX_VARYING_VECTORS          0x8DFC
-#define GLHCK_MAX_COMBINED_TEXTURE_IMAGE_UNITS 0x8B4D
-#define GLHCK_MAX_VERTEX_TEXTURE_IMAGE_UNITS 0x8B4C
-#define GLHCK_MAX_TEXTURE_IMAGE_UNITS      0x8872
-#define GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS 0x8DFD
-#define GLHCK_MAX_RENDERBUFFER_SIZE        0x84E8
-#define GLHCK_MAX_VIEWPORT_DIMS            0x0D3A
+#define GLHCK_MAX_TEXTURE_SIZE                  0x0D33
+#define GLHCK_MAX_CUBE_MAP_TEXTURE_SIZE         0x8510
+#define GLHCK_MAX_VERTEX_ATTRIBS                0x8869
+#define GLHCK_MAX_VERTEX_UNIFORM_VECTORS        0x8859
+#define GLHCK_MAX_VARYING_VECTORS               0x8DFC
+#define GLHCK_MAX_COMBINED_TEXTURE_IMAGE_UNITS  0x8B4D
+#define GLHCK_MAX_VERTEX_TEXTURE_IMAGE_UNITS    0x8B4C
+#define GLHCK_MAX_TEXTURE_IMAGE_UNITS           0x8872
+#define GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS      0x8DFD
+#define GLHCK_MAX_RENDERBUFFER_SIZE             0x84E8
+#define GLHCK_MAX_VIEWPORT_DIMS                 0x0D3A
 
 /* debugging level */
 typedef enum glhckDebugLevel {
@@ -223,16 +240,15 @@ typedef enum glhckMaterialFlags {
    GLHCK_MATERIAL_DRAW_AABB = 1,
    GLHCK_MATERIAL_DRAW_OBB  = 2,
    GLHCK_MATERIAL_WIREFRAME = 4,
-   GLHCK_MATERIAL_ALPHA     = 8,
-   GLHCK_MATERIAL_COLOR     = 16,
-   GLHCK_MATERIAL_CULL      = 32,
-   GLHCK_MATERIAL_DEPTH     = 64
+   GLHCK_MATERIAL_COLOR     = 8,
+   GLHCK_MATERIAL_CULL      = 16,
+   GLHCK_MATERIAL_DEPTH     = 32
 } glhckMaterialFlags;
 
 /* rtt modes */
 typedef enum glhckRttMode {
    GLHCK_RTT_RGB,
-   GLHCK_RTT_RGBA
+   GLHCK_RTT_RGBA,
 } glhckRttMode;
 
 /* common datatypes */
@@ -487,6 +503,7 @@ GLHCKAPI void glhckObjectColorb(glhckObject *object,
       unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI unsigned int glhckObjectGetMaterialFlags(const glhckObject *object);
 GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags);
+GLHCKAPI void glhckObjectMaterialBlend(glhckObject *object, unsigned int blenda, unsigned int blendb);
 
 /* object control */
 GLHCKAPI const kmAABB* glhckObjectGetOBB(const glhckObject *object);
@@ -555,9 +572,9 @@ GLHCKAPI void glhckTextRender(glhckText *text);
 GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
       float size, float x, float y, const char *s, float *dx);
 GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
-      float size, const char *s);
+      float size, const char *s, unsigned int textureFlags);
 GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id,
-      float size, const char *s);
+      float size, const char *s, unsigned int textureFlags);
 
 /* textures */
 GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
@@ -586,7 +603,7 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTextur
       const kmVec2 *in, kmVec2 *out);
 
 /* render to texture */
-GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode);
+GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode, unsigned int textureFlags);
 GLHCKAPI size_t glhckRttFree(glhckRtt *rtt);
 GLHCKAPI int glhckRttFillData(glhckRtt *rtt);
 GLHCKAPI glhckTexture* glhckRttGetTexture(const glhckRtt *rtt);

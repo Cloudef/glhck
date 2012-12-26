@@ -4,7 +4,7 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RTT
 
 /* \brief create new rtt */
-GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
+GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode, unsigned int flags)
 {
    unsigned int format;
    _glhckRtt *rtt;
@@ -14,17 +14,16 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode)
    if (!(rtt = _glhckCalloc(1, sizeof(_glhckRtt))))
       goto fail;
 
-   if (!(texture = glhckTextureNew(NULL, GLHCK_TEXTURE_DEFAULTS)))
+   if (!(texture = glhckTextureNew(NULL, flags)))
       goto fail;
 
    /* init */
+   format = GLHCK_RGBA;
    if (mode == GLHCK_RTT_RGB)
       format = GLHCK_RGB;
-   else
-      format = GLHCK_RGBA;
 
    if (!(glhckTextureCreate(texture, NULL, width, height,
-               format, format, GLHCK_TEXTURE_DEFAULTS)))
+               format, format, flags)))
       goto fail;
 
    _GLHCKlibrary.render.api.generateFramebuffers(1, &rtt->object);

@@ -61,7 +61,7 @@ const GLenum _glhckAttribName[] = {
 enum {
    GL_STATE_DEPTH       = 1,
    GL_STATE_CULL        = 2,
-   GL_STATE_ALPHA       = 4,
+   GL_STATE_BLEND       = 4,
    GL_STATE_TEXTURE     = 8,
    GL_STATE_DRAW_AABB   = 16,
    GL_STATE_DRAW_OBB    = 32,
@@ -72,6 +72,7 @@ enum {
 typedef struct __OpenGLstate {
    char attrib[GLHCK_ATTRIB_COUNT];
    unsigned int flags;
+   unsigned int blenda, blendb;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
@@ -465,7 +466,7 @@ static inline void materialState(const _glhckObject *object)
 
    /* alpha? */
    _OpenGL.state.flags |=
-      (object->material.flags & GLHCK_MATERIAL_ALPHA)?GL_STATE_ALPHA:0;
+      (object->material.blenda != GLHCK_ZERO && object->material.blendb != GLHCK_ZERO)?GL_STATE_BLEND:0;
 
    /* depth? */
    _OpenGL.state.flags |=
@@ -474,6 +475,10 @@ static inline void materialState(const _glhckObject *object)
    /* cull? */
    _OpenGL.state.flags |=
       (object->material.flags & GLHCK_MATERIAL_CULL)?GL_STATE_CULL:0;
+
+   /* blending modes */
+   _OpenGL.state.blenda = object->material.blenda;
+   _OpenGL.state.blendb = object->material.blendb;
 
    /* depth? */
    if (GL_STATE_CHANGED(GL_STATE_DEPTH)) {
@@ -504,13 +509,17 @@ static inline void materialState(const _glhckObject *object)
    }
 
    /* check alpha */
-   if (GL_STATE_CHANGED(GL_STATE_ALPHA)) {
-      if (GL_HAS_STATE(GL_STATE_ALPHA)) {
+   if (GL_STATE_CHANGED(GL_STATE_BLEND)) {
+      if (GL_HAS_STATE(GL_STATE_BLEND)) {
          GL_CALL(glEnable(GL_BLEND));
-         GL_CALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+         GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
       } else {
          GL_CALL(glDisable(GL_BLEND));
       }
+   } else if (GL_HAS_STATE(GL_STATE_BLEND) &&
+         (_OpenGL.state.blenda != old.blenda ||
+          _OpenGL.state.blendb != old.blendb)) {
+      GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
    }
 
    /* check texture */
@@ -752,11 +761,17 @@ static inline void textDraw(const _glhckText *text)
       GL_CALL(glEnable(GL_CULL_FACE));
    }
 
-   if (!GL_HAS_STATE(GL_STATE_ALPHA)) {
-      _OpenGL.state.flags |= GL_STATE_ALPHA;
+   if (!GL_HAS_STATE(GL_STATE_BLEND)) {
+      _OpenGL.state.flags |= GL_STATE_BLEND;
+      _OpenGL.state.blenda = GLHCK_SRC_ALPHA;
+      _OpenGL.state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
       GL_CALL(glEnable(GL_BLEND));
-      GL_CALL(glBlendFunc(GL_SRC_ALPHA,
-               GL_ONE_MINUS_SRC_ALPHA));
+      GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+   } else if (_OpenGL.state.blenda != GLHCK_SRC_ALPHA ||
+              _OpenGL.state.blendb != GLHCK_ONE_MINUS_SRC_ALPHA) {
+      _OpenGL.state.blenda = GLHCK_SRC_ALPHA;
+      _OpenGL.state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
+      GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
    }
 
    if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {

@@ -424,7 +424,7 @@ GLHCKAPI void glhckRender(void)
          /* don't draw if not same texture or opaque,
           * opaque objects are drawn last */
          if (o->material.texture != t ||
-            (o->material.flags & GLHCK_MATERIAL_ALPHA)) {
+            (o->material.blenda != GLHCK_ZERO && o->material.blendb != GLHCK_ZERO)) {
             if (o->material.texture == t) kt = 1; /* don't remove texture from queue */
             if (os != oi) objects->queue[oi] = NULL;
             objects->queue[os++] = o;
