@@ -3,6 +3,12 @@
 #include <limits.h>
 #include <stdio.h>   /* for sscanf */
 
+#ifdef __APPLE__
+#   include <malloc/malloc.h>
+#else
+#   include <malloc.h>
+#endif
+
 #if GLHCK_USE_GLES1
 #  include <GLES/gl.h> /* for opengl ES 1.x */
 #  include <GLES/glext.h>
@@ -889,7 +895,7 @@ static void getIntegerv(unsigned int pname, int *params)
 static int renderInfo(void)
 {
    int maxTex;
-   char *version, *vendor, *extensions;
+   char *version, *vendor, *extensions, *extcpy, *s;
    unsigned int major = 0, minor = 0, patch = 0;
    TRACE(0);
 
@@ -913,11 +919,18 @@ static int renderInfo(void)
    else
       _GLHCKlibrary.render.driver = GLHCK_DRIVER_OTHER;
 
-   DEBUG(3, "%s [%u.%u.%u] [%s]\n", RENDER_NAME, major, minor, patch, vendor);
+   DEBUG(3, "%s [%u.%u.%u] [%s]", RENDER_NAME, major, minor, patch, vendor);
    extensions = (char*)GL_CALL(glGetString(GL_EXTENSIONS));
 
-   if (extensions)
-      DEBUG(3, extensions);
+   if (extensions) {
+      extcpy = strdup(extensions);
+      s = strtok(extcpy, " ");
+      while (s) {
+         DEBUG(3, "%s", s);
+         s = strtok(NULL, " ");
+      }
+      free(extcpy);
+   }
 
    getIntegerv(GLHCK_MAX_TEXTURE_SIZE, &maxTex);
    DEBUG(3, "GL_MAX_TEXTURE_SIZE: %d", maxTex);
