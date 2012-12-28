@@ -469,7 +469,7 @@ GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child)
 /* \brief remove children object */
 GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child)
 {
-   size_t i;
+   size_t i, newCount;
    glhckObject **newChilds = NULL;
    CALL(0, "%p, %p", object, child);
    assert(object && child && object != child);
@@ -484,14 +484,14 @@ GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child)
 
    child->parent = NULL;
    glhckObjectFree(child);
-   for (i = 0; i != object->numChilds && newChilds; ++i) {
+   for (i = 0, newCount = 0; i != object->numChilds && newChilds; ++i) {
       if (object->childs[i] == child) continue;
-      newChilds[i] = object->childs[i];
+      newChilds[newCount++] = object->childs[i];
    }
 
    IFDO(_glhckFree, object->childs);
    object->childs = newChilds;
-   object->numChilds--;
+   object->numChilds = newCount;
 }
 
 /* \brief remove all children objects */
