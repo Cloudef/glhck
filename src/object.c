@@ -355,9 +355,9 @@ GLHCKAPI size_t glhckObjectFree(glhckObject *object)
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
-   /* remove itself from parent */
+   /* remove itself from parent, reference self to avoid double free */
    if (object->parent)
-      glhckObjectRemoveChildren(object->parent, object);
+      glhckObjectRemoveFromParent(glhckObjectRef(object));
 
    /* remove all children objects */
    glhckObjectRemoveAllChildren(object);
@@ -478,12 +478,13 @@ GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child)
    if (child->parent != object) return;
 
    /* remove child */
-   if (!(newChilds = _glhckMalloc((object->numChilds-1) * sizeof(glhckObject*))))
+   if ((object->numChilds-1) != 0 &&
+      !(newChilds = _glhckMalloc((object->numChilds-1) * sizeof(glhckObject*))))
       return;
 
    child->parent = NULL;
    glhckObjectFree(child);
-   for (i = 0; i != object->numChilds; ++i) {
+   for (i = 0; i != object->numChilds && newChilds; ++i) {
       if (object->childs[i] == child) continue;
       newChilds[i] = object->childs[i];
    }
