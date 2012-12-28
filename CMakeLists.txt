@@ -70,7 +70,7 @@ IF (UNIX)
       IF (X11_Xkb_FOUND)
          LIST(APPEND GLHCK_TEST_INCL ${X11_Xkb_INCLUDE_PATH})
       ENDIF ()
-   ENDIF() # ^ LINUX
+   ENDIF () # ^ LINUX
 
    # Rt
    FIND_LIBRARY(RT_LIBRARY rt)
