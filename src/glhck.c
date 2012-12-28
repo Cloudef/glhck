@@ -515,32 +515,31 @@ GLHCKAPI void glhckRender(void)
 }
 
 /* kill a list from world */
-#define _massacre(list, c, n, func)             \
-for (c = _GLHCKlibrary.world.list; c; c = n) {  \
-   n = c->next;                                 \
-   while (func(c));                             \
+#define _massacre(list, c, func)                \
+   while ((c = _GLHCKlibrary.world.list))       \
+   { while (func(c)); }                         \
    DEBUG(GLHCK_DBG_CRAP, "Slaughter: %p");      \
-} _GLHCKlibrary.world.list = NULL;
+   _GLHCKlibrary.world.list = NULL;
 
 /* \brief frees all objects that are handled by glhck */
 GLHCKAPI void glhckMassacreWorld(void)
 {
-   _glhckObject *o, *on;
-   _glhckCamera *c, *cn;
-   _glhckTexture *t, *tn;
-   _glhckAtlas *a, *an;
-   _glhckRtt *r, *rn;
-   _glhckText *tf, *tfn;
+   _glhckObject *o;
+   _glhckCamera *c;
+   _glhckTexture *t;
+   _glhckAtlas *a;
+   _glhckRtt *r;
+   _glhckText *tf;
    GLHCK_INITIALIZED();
    TRACE(0);
 
    /* destroy the world */
-   _massacre(clist, c, cn, glhckCameraFree);
-   _massacre(alist, a, an, glhckAtlasFree);
-   _massacre(rlist, r, rn, glhckRttFree);
-   _massacre(tflist, tf, tfn, glhckTextFree);
-   _massacre(olist, o, on, glhckObjectFree);
-   _massacre(tlist, t, tn, glhckTextureFree);
+   _massacre(clist, c, glhckCameraFree);
+   _massacre(alist, a, glhckAtlasFree);
+   _massacre(rlist, r, glhckRttFree);
+   _massacre(tflist, tf, glhckTextFree);
+   _massacre(olist, o, glhckObjectFree);
+   _massacre(tlist, t, glhckTextureFree);
 }
 
 /* \brief frees virtual display and deinits glhck */
