@@ -352,11 +352,11 @@ fail:
  */
 
 /* \brief return tristripped indecies for triangle index data */
-unsigned int* _glhckTriStrip(const unsigned int *indices, size_t num_indices, size_t *out_num_indices)
+glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, size_t num_indices, size_t *out_num_indices)
 {
 #if GLHCK_TRISTRIP
-   unsigned int v1, v2, v3;
-   unsigned int *outIndices = NULL, test;
+   glhckImportIndexData v1, v2, v3;
+   glhckImportIndexData *outIndices = NULL, test;
    size_t i, primCount, tmp;
    ACTCData *tc = NULL;
    CALL(0, "%p, %zu, %p", indices, num_indices, out_num_indices);
@@ -364,15 +364,16 @@ unsigned int* _glhckTriStrip(const unsigned int *indices, size_t num_indices, si
    /* check if the triangles we got are valid */
    test = num_indices;
    while ((test-=3)>3);
-   if (test != 3 && test != 0) goto not_valid;
+   if (test != 3 && test != 0)
+      goto not_valid;
 
-   if (!(outIndices = _glhckMalloc(num_indices * sizeof(unsigned int))))
+   if (!(outIndices = _glhckMalloc(num_indices * sizeof(glhckImportIndexData))))
       goto out_of_memory;
 
    if (!(tc = actcNew()))
       goto actc_fail;
 
-   /* paramaters */
+   /* parameters */
    ACTC_CALL(actcParami(tc, ACTC_OUT_MIN_FAN_VERTS, 2147483647));
 
    /* input data */

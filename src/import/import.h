@@ -101,7 +101,7 @@ char* _glhckImportTexturePath(const char *texture_path, const char *asset_path);
 int _glhckIsValidImageDimension(unsigned long long w,  unsigned long long h);
 
 /* \brief returns tristripped indecies from triangle indecies */
-unsigned int* _glhckTriStrip(const unsigned int *indices, size_t num_indices, size_t *out_num_indices);
+glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, size_t num_indices, size_t *out_num_indices);
 
 #endif /* __glhck_import_h__ */
 
