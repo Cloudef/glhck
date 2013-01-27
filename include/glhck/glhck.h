@@ -179,6 +179,12 @@ typedef enum glhckRenderFlags {
    GLHCK_RENDER_FLAG_NONE = 0,
 } glhckRenderFlags;
 
+/* shader type */
+typedef enum glhckShaderType {
+   GLHCK_VERTEX_SHADER,
+   GLHCK_FRAGMENT_SHADER,
+} glhckShaderType;
+
 /* projection type */
 typedef enum glhckProjectionType {
    GLHCK_PROJECTION_PERSPECTIVE,
@@ -419,6 +425,7 @@ typedef struct _glhckRtt     glhckRtt;
 typedef struct _glhckObject  glhckObject;
 typedef struct _glhckText    glhckText;
 typedef struct _glhckCamera  glhckCamera;
+typedef struct _glhckShader  glhckShader;
 
 typedef void (*glhckDebugHookFunc)(const char *file, int line, const char *function, glhckDebugLevel level, const char *str);
 

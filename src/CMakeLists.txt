@@ -11,6 +11,7 @@ SET(GLHCK_SRC
    texture.c
    atlas.c
    rtt.c
+   shader.c
    texture_packer.c
    geometry/cube.c
    geometry/plane.c

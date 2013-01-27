@@ -9,6 +9,9 @@
 #   include <malloc.h>
 #endif
 
+/* GLSW */
+#include "glsw.h"
+
 #if GLHCK_USE_GLES1
 #  error "OpenGL renderer doesn't support GLES 1.x!"
 #elif GLHCK_USE_GLES2
@@ -25,14 +28,26 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #define RENDER_NAME "OpenGL Renderer"
 #define GL_DEBUG 1
-#define GLHCK_ATTRIB_COUNT 4
+#define GLHCK_ATTRIB_COUNT GLHCK_ATTRIB_LAST
 
-static const GLenum _glhckAttribName[] = {
-   GL_VERTEX_ARRAY,
-   GL_TEXTURE_COORD_ARRAY,
-   GL_NORMAL_ARRAY,
-   GL_COLOR_ARRAY,
-};
+/* This is the base shader for glhck */
+static const char *_glhckBaseShader =
+"-- Vertex\n"
+"#version 140\n"
+"in vec3 Vertex;"
+"in vec3 Normal;"
+"in vec2 Texture;"
+"in vec4 Color;"
+"void main() {"
+"  gl_Position = vec4(Vertex, 1.0);"
+"}\n"
+"-- Fragment\n"
+"#version 140\n"
+"out vec4 FragColor;"
+"uniform sampler2D texture0;"
+"void main() {"
+"  FragColor = vec4(1.0, 0.0, 0.0, 1.0);"
+"}\n";
 
 /* state flags */
 enum {
@@ -312,22 +327,22 @@ static void viewport(int x, int y, int width, int height)
 }
 
 /* helper macro for passing geometry */
-#define geometryV2ToOpenGL(vprec, tprec, type, tunion)                        \
-   GL_CALL(glVertexPointer(2, vprec,                                          \
-            sizeof(type), &geometry->vertices.tunion[0].vertex));             \
-   GL_CALL(glTexCoordPointer(2, tprec,                                        \
-            sizeof(type), &geometry->vertices.tunion[0].coord));              \
-   GL_CALL(glColorPointer(4, GL_UNSIGNED_BYTE,                                \
+#define geometryV2ToOpenGL(vprec, tprec, type, tunion)                              \
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, vprec, (vprec!=GL_FLOAT),  \
+            sizeof(type), &geometry->vertices.tunion[0].vertex));                   \
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
+            sizeof(type), &geometry->vertices.tunion[0].coord));                    \
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1,        \
             sizeof(type), &geometry->vertices.tunion[0].color));
 
-#define geometryV3ToOpenGL(vprec, tprec, type, tunion)                        \
-   GL_CALL(glVertexPointer(3, vprec,                                          \
-            sizeof(type), &geometry->vertices.tunion[0].vertex));             \
-   GL_CALL(glNormalPointer(vprec,                                             \
-            sizeof(type), &geometry->vertices.tunion[0].normal));             \
-   GL_CALL(glTexCoordPointer(2, tprec,                                        \
-            sizeof(type), &geometry->vertices.tunion[0].coord));              \
-   GL_CALL(glColorPointer(4, GL_UNSIGNED_BYTE,                                \
+#define geometryV3ToOpenGL(vprec, tprec, type, tunion)                              \
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, vprec, (vprec!=GL_FLOAT),  \
+            sizeof(type), &geometry->vertices.tunion[0].vertex));                   \
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, vprec, (vprec!=GL_FLOAT),  \
+            sizeof(type), &geometry->vertices.tunion[0].normal));                   \
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
+            sizeof(type), &geometry->vertices.tunion[0].coord));                    \
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1, \
             sizeof(type), &geometry->vertices.tunion[0].color));
 
 /* \brief pass interleaved vertex data to OpenGL nicely. */
@@ -512,9 +527,9 @@ static inline void materialState(const _glhckObject *object)
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i) {
       if (_OpenGL.state.attrib[i] != old.attrib[i]) {
          if (_OpenGL.state.attrib[i]) {
-            GL_CALL(glEnableClientState(_glhckAttribName[i]));
+            GL_CALL(glEnableVertexAttribArray(i));
          } else {
-            GL_CALL(glDisableClientState(_glhckAttribName[i]));
+            GL_CALL(glDisableVertexAttribArray(i));
          }
       }
    }
@@ -562,27 +577,17 @@ static inline void drawOBB(const _glhckObject *object)
                       min.x, min.y, max.z,
                       min.x, max.y, max.z  };
 
-   /* disable stuff if enabled */
-   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
-      GL_CALL(glDisable(GL_TEXTURE_2D));
-   }
-   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (_OpenGL.state.attrib[i]) {
-         GL_CALL(glDisableClientState(_glhckAttribName[i]));
+   for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+         GL_CALL(glDisableVertexAttribArray(i));
       }
 
-   GL_CALL(glColor3ub(0, 255, 0));
-   GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
-   GL_CALL(glColor3ub(255, 255, 255));
 
-   /* re enable stuff we disabled */
-   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
-      GL_CALL(glEnable(GL_TEXTURE_2D));
-   }
-   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (_OpenGL.state.attrib[i]) {
-         GL_CALL(glEnableClientState(_glhckAttribName[i]));
+   for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+         GL_CALL(glEnableVertexAttribArray(i));
       }
 }
 
@@ -622,21 +627,13 @@ static inline void drawAABB(const _glhckObject *object)
                       min.x, min.y, max.z,
                       min.x, max.y, max.z  };
 
-   /* disable stuff if enabled */
-   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
-      GL_CALL(glDisable(GL_TEXTURE_2D));
-   }
-   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (_OpenGL.state.attrib[i]) {
-         GL_CALL(glDisableClientState(_glhckAttribName[i]));
+   for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+         GL_CALL(glDisableVertexAttribArray(i));
       }
 
-   GL_CALL(glMatrixMode(GL_MODELVIEW));
-   GL_CALL(glLoadIdentity());
-   GL_CALL(glColor3ub(0, 0, 255));
-   GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
-   GL_CALL(glColor3ub(255, 255, 255));
 
    /* go back */
 #ifdef USE_DOUBLE_PRECISION
@@ -645,37 +642,14 @@ static inline void drawAABB(const _glhckObject *object)
    GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
 #endif
 
-   /* re enable stuff we disabled */
-   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
-      GL_CALL(glEnable(GL_TEXTURE_2D));
-   }
-   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (_OpenGL.state.attrib[i]) {
-         GL_CALL(glEnableClientState(_glhckAttribName[i]));
+   for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+         GL_CALL(glEnableVertexAttribArray(i));
       }
 }
 
 /* \brief begin object draw */
 static inline void objectStart(const _glhckObject *object) {
-   /* set texture coords according to how geometry wants them */
-   GL_CALL(glMatrixMode(GL_TEXTURE));
-   GL_CALL(glLoadIdentity());
-   GL_CALL(glScalef((float)1.0f/object->geometry->textureRange, (float)1.0f/object->geometry->textureRange, 1.0f));
-
-   /* load view matrix */
-   GL_CALL(glMatrixMode(GL_MODELVIEW));
-#ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((double*)&object->view.matrix));
-#else
-   GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
-#endif
-
-   /* reset color */
-   GL_CALL(glColor4ub(object->material.color.r,
-                      object->material.color.g,
-                      object->material.color.b,
-                      object->material.color.a));
-
    /* set states and draw */
    materialState(object);
 }
@@ -753,52 +727,37 @@ static inline void textDraw(const _glhckText *text)
 
    if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
       _OpenGL.state.flags |= GL_STATE_TEXTURE;
-      _OpenGL.state.attrib[1] = 1;
-      GL_CALL(glEnable(GL_TEXTURE_2D));
-      GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
+      _OpenGL.state.attrib[GLHCK_ATTRIB_TEXTURE] = 1;
+      GL_CALL(glEnableVertexAttribArray(GLHCK_ATTRIB_TEXTURE));
    }
 
-   if (!_OpenGL.state.attrib[0]) {
-      _OpenGL.state.attrib[0] = 1;
-      GL_CALL(glEnableClientState(GL_VERTEX_ARRAY));
+   if (!_OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX]) {
+      _OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
+      GL_CALL(glEnableVertexAttribArray(GLHCK_ATTRIB_VERTEX));
    }
 
-   if (_OpenGL.state.attrib[3]) {
-      _OpenGL.state.attrib[3] = 0;
-      GL_CALL(glDisableClientState(GL_COLOR_ARRAY));
+   if (_OpenGL.state.attrib[GLHCK_ATTRIB_COLOR]) {
+      _OpenGL.state.attrib[GLHCK_ATTRIB_COLOR] = 0;
+      GL_CALL(glDisableVertexAttribArray(GLHCK_ATTRIB_COLOR));
    }
 
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glDisable(GL_DEPTH_TEST));
    }
 
-   /* set 2d projection */
-   GL_CALL(glMatrixMode(GL_PROJECTION));
-#ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((double*)&_OpenGL.orthographic));
-#else
-   GL_CALL(glLoadMatrixf((float*)&_OpenGL.orthographic));
-#endif
-
-   GL_CALL(glMatrixMode(GL_TEXTURE));
-   GL_CALL(glLoadIdentity());
-   GL_CALL(glScalef((float)1.0f/text->textureRange, (float)1.0f/text->textureRange, 1.0f));
-
-   GL_CALL(glMatrixMode(GL_MODELVIEW));
-   GL_CALL(glLoadIdentity());
-
-   GL_CALL(glColor4ub(text->color.r, text->color.b, text->color.g, text->color.a));
    for (texture = text->tcache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
       glhckBindTexture(texture->object);
-      GL_CALL(glVertexPointer(2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
-            (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
-            &texture->geometry.vertexData[0].vertex));
-      GL_CALL(glTexCoordPointer(2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
-            (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
-            &texture->geometry.vertexData[0].coord));
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
+               (GLHCK_TEXT_FLOAT_PRECISION?0:1),
+               (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
+               &texture->geometry.vertexData[0].vertex));
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
+               (GLHCK_TEXT_FLOAT_PRECISION?0:1),
+               (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
+               &texture->geometry.vertexData[0].coord));
       GL_CALL(glDrawArrays(GLHCK_TRISTRIP?GL_TRIANGLE_STRIP:GL_TRIANGLES,
                0, texture->geometry.vertexCount));
    }
@@ -845,32 +804,22 @@ static inline void frustumDraw(glhckFrustum *frustum)
                       near[3].x, near[3].y, near[3].z,
                        far[3].x,  far[3].y,  far[3].z  };
 
-   /* disable stuff if enabled */
-   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
-      GL_CALL(glDisable(GL_TEXTURE_2D));
-   }
-   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (_OpenGL.state.attrib[i]) {
-         GL_CALL(glDisableClientState(_glhckAttribName[i]));
+   for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+         GL_CALL(glDisableVertexAttribArray(i));
       }
 
    GL_CALL(glMatrixMode(GL_MODELVIEW));
    GL_CALL(glLoadIdentity());
 
    GL_CALL(glLineWidth(4));
-   GL_CALL(glColor3ub(255, 0, 0));
-   GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
-   GL_CALL(glColor3ub(255, 255, 255));
    GL_CALL(glLineWidth(1));
 
-   /* re enable stuff we disabled */
-   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
-      GL_CALL(glEnable(GL_TEXTURE_2D));
-   }
-   for (i = 1; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (_OpenGL.state.attrib[i]) {
-         GL_CALL(glEnableClientState(_glhckAttribName[i]));
+   for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
+      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+         GL_CALL(glEnableVertexAttribArray(i));
       }
 }
 
@@ -937,9 +886,96 @@ fail:
    return RETURN_FAIL;
 }
 
+/* \brief link program from 2 compiled shader objects */
+static unsigned int linkProgram(unsigned int vertexShader, unsigned int fragmentShader)
+{
+   unsigned int obj = 0;
+   char *log = NULL;
+   int logSize;
+   CALL(0, "%u, %u", vertexShader, fragmentShader);
+
+   /* create program object */
+   if (!(obj = glCreateProgram()))
+      goto fail;
+
+   /* link the shaders to program */
+   GL_CALL(glAttachShader(obj, vertexShader));
+   GL_CALL(glAttachShader(obj, fragmentShader));
+   GL_CALL(glLinkProgram(obj));
+
+   /* dump the log incase of error */
+   GL_CALL(glGetProgramiv(obj, GL_INFO_LOG_LENGTH, &logSize));
+   if (logSize > 1) {
+      log = malloc(logSize);
+      GL_CALL(glGetProgramInfoLog(obj, logSize, NULL, log));
+      printf("-- %u,%u --\n%s^^ %u,%u ^^\n",
+            vertexShader, fragmentShader, log, vertexShader, fragmentShader);
+      if (_glhckStrupstr(log, "error")) goto fail;
+      free(log);
+   }
+
+   RET(0, "%u", obj);
+   return obj;
+
+fail:
+   IFDO(free, log);
+   if (obj) GL_CALL(glDeleteProgram(obj));
+   RET(0, "%d", 0);
+   return 0;
+}
+
+/* \brief compile shader object from effect key and optional contents */
+static unsigned int compileShader(glhckShaderType type, const char *effectKey, const char *contentsFromMemory)
+{
+   unsigned int obj = 0;
+   const char *contents;
+   char *log = NULL;
+   int logSize;
+   GLenum stype;
+   CALL(0, "%s, %s", effectKey, contentsFromMemory);
+   assert(effectKey);
+
+   /* wrangle effect key */
+   if (!(contents = glswGetShader(effectKey, contentsFromMemory)))
+      goto fail;
+
+   /* select type of shader to compile */
+   stype = GL_VERTEX_SHADER;
+   if (type == GLHCK_FRAGMENT_SHADER)
+      stype = GL_FRAGMENT_SHADER;
+
+   /* create shader object */
+   if (!(obj = glCreateShader(stype)))
+      goto fail;
+
+   /* feed the shader the contents */
+   GL_CALL(glShaderSource(obj, 1, &contents, NULL));
+   GL_CALL(glCompileShader(obj));
+
+   /* dump the log incase of error */
+   GL_CALL(glGetShaderiv(obj, GL_INFO_LOG_LENGTH, &logSize));
+   if (logSize > 1) {
+      log = malloc(logSize);
+      GL_CALL(glGetShaderInfoLog(obj, logSize, NULL, log));
+      printf("-- %s --\n%s^^ %s ^^\n", effectKey, log, effectKey);
+      if (_glhckStrupstr(log, "error")) goto fail;
+      free(log);
+   }
+
+   RET(0, "%u", obj);
+   return obj;
+
+fail:
+   IFDO(free, log);
+   if (obj) GL_CALL(glDeleteShader(obj));
+   RET(0, "%d", 0);
+   return 0;
+}
+
 /* \brief init renderers global state */
 static int renderInit(void)
 {
+   unsigned int vsobj, fsobj, probj;
    TRACE(0);
 
    /* init global data */
@@ -949,6 +985,21 @@ static int renderInit(void)
    /* save from some headache */
    GL_CALL(glPixelStorei(GL_UNPACK_ALIGNMENT,1));
 
+   /* compile base shaders */
+   vsobj = compileShader(GLHCK_VERTEX_SHADER, "Base.Vertex", _glhckBaseShader);
+   fsobj = compileShader(GLHCK_FRAGMENT_SHADER, "Base.Fragment", _glhckBaseShader);
+
+   /* fail loading shaders */
+   if (!vsobj || !fsobj)
+      return RETURN_FAIL;
+
+   /* link shaders to program */
+   if (!(probj = linkProgram(vsobj, fsobj)))
+      return RETURN_FAIL;
+
+   /* bind program */
+   glUseProgram(probj);
+
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 }
@@ -957,6 +1008,9 @@ static int renderInit(void)
 static void renderTerminate(void)
 {
    TRACE(0);
+
+   /* shutdown shader wrangler */
+   glswShutdown();
 
    /* this tells library that we are no longer alive. */
    GLHCK_RENDER_TERMINATE(RENDER_NAME);
@@ -996,6 +1050,10 @@ void _glhckRenderOpenGL(void)
    if (renderInfo() != RETURN_OK)
       goto fail;
 
+   /* init shader wrangler */
+   if (!glswInit())
+      goto fail;
+
    /* reset global data */
    if (renderInit() != RETURN_OK)
       goto fail;
@@ -1014,6 +1072,13 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(deleteFramebuffers, _glDeleteFramebuffers);
    GLHCK_RENDER_FUNC(bindFramebuffer, _glBindFramebuffer);
    GLHCK_RENDER_FUNC(linkFramebufferWithTexture, linkFramebufferWithTexture);
+
+   /* shader objects */
+   GLHCK_RENDER_FUNC(bindProgram, glUseProgram);
+   GLHCK_RENDER_FUNC(linkProgram, linkProgram);
+   GLHCK_RENDER_FUNC(deleteProgram, glDeleteProgram);
+   GLHCK_RENDER_FUNC(compileShader, compileShader);
+   GLHCK_RENDER_FUNC(deleteShader, glDeleteShader);
 
    /* drawing functions */
    GLHCK_RENDER_FUNC(setProjection, setProjection);

@@ -35,6 +35,7 @@
 #define GLHCK_CHANNEL_TEXTURE    "TEXTURE"
 #define GLHCK_CHANNEL_ATLAS      "ATLAS"
 #define GLHCK_CHANNEL_RTT        "RTT"
+#define GLHCK_CHANNEL_SHADER     "SHADER"
 #define GLHCK_CHANNEL_ALLOC      "ALLOC"
 #define GLHCK_CHANNEL_RENDER     "RENDER"
 #define GLHCK_CHANNEL_TRACE      "TRACE"
@@ -79,6 +80,15 @@ typedef enum _glhckTextureFlags
    GLHCK_TEXTURE_IMPORT_ALPHA = 1,
    GLHCK_TEXTURE_IMPORT_TEXT  = 2,
 } _glhckTextureFlags;
+
+/* shader attrib locations */
+typedef enum glhckShaderAttrib {
+   GLHCK_ATTRIB_VERTEX,
+   GLHCK_ATTRIB_NORMAL,
+   GLHCK_ATTRIB_TEXTURE,
+   GLHCK_ATTRIB_COLOR,
+   GLHCK_ATTRIB_LAST
+} glhckShaderAttrib;
 
 /* texture container */
 typedef struct _glhckTexture {
@@ -221,6 +231,14 @@ typedef struct _glhckCamera {
    struct _glhckCamera *next;
 } _glhckCamera;
 
+/* glhck shader type */
+typedef struct _glhckShader {
+   unsigned int attrib[GLHCK_ATTRIB_NORMAL];
+   unsigned int program;
+   size_t refCounter;
+   struct _glhckShader *next;
+} _glhckShader;
+
 /* render api */
 typedef void (*__GLHCKrenderAPIterminate)        (void);
 typedef void (*__GLHCKrenderAPIviewport)         (int x, int y, int width, int height);
@@ -256,6 +274,14 @@ typedef void (*__GLHCKrenderAPIbindFramebuffer)      (unsigned int object);
 typedef int (*__GLHCKrenderAPIlinkFramebufferWithTexture) (unsigned int object, unsigned int texture,
                                                            unsigned int attachment);
 
+/* shaders */
+typedef void (*__GLHCKrenderAPIbindProgram) (unsigned int program);
+typedef unsigned int (*__GLHCKrenderAPIlinkProgram) (unsigned int vertexShader, unsigned int fragmentShader);
+typedef void (*__GLHCKrenderAPIdeleteProgram) (unsigned int program);
+typedef unsigned int (*__GLHCKrenderAPIcompileShader) (glhckShaderType type, const char *effectKey,
+                                                      const char *contentsFromMemory);
+typedef void (*__GLHCKrenderAPIdeleteShader) (unsigned int shader);
+
 /* parameters */
 typedef void (*__GLHCKrenderAPIgetIntegerv) (unsigned int pname, int *params);
 
@@ -283,6 +309,12 @@ typedef struct __GLHCKrenderAPI {
    __GLHCKrenderAPIdeleteFramebuffers     deleteFramebuffers;
    __GLHCKrenderAPIbindFramebuffer        bindFramebuffer;
    __GLHCKrenderAPIlinkFramebufferWithTexture linkFramebufferWithTexture;
+
+   __GLHCKrenderAPIbindProgram   bindProgram;
+   __GLHCKrenderAPIlinkProgram   linkProgram;
+   __GLHCKrenderAPIdeleteProgram deleteProgram;
+   __GLHCKrenderAPIcompileShader compileShader;
+   __GLHCKrenderAPIdeleteShader  deleteShader;
 
    __GLHCKrenderAPIgetIntegerv getIntegerv;
 } __GLHCKrenderAPI;

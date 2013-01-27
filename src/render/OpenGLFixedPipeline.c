@@ -991,6 +991,25 @@ DECLARE_GL_GEN_FUNC(_glGenFramebuffers, glGenFramebuffers);
 DECLARE_GL_GEN_FUNC(_glDeleteFramebuffers, glDeleteFramebuffers);
 DECLARE_GL_BIND_FUNC(_glBindFramebuffer, glBindFramebuffer(GL_FRAMEBUFFER, object))
 
+/* stub shader functions */
+static void useProgram(unsigned int obj) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+}
+static unsigned int linkProgram(unsigned int vsobj, unsigned int fsobj) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+   return 0;
+}
+static void deleteProgram(unsigned int obj) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+}
+static unsigned int compileShader(glhckShaderType type, const char *effectKey, const char *memoryContents) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+   return 0;
+}
+static void deleteShader(unsigned int obj) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+}
+
 /* ---- Main ---- */
 
 /* \brief renderer main function */
@@ -1034,6 +1053,13 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(deleteFramebuffers, _glDeleteFramebuffers);
    GLHCK_RENDER_FUNC(bindFramebuffer, _glBindFramebuffer);
    GLHCK_RENDER_FUNC(linkFramebufferWithTexture, linkFramebufferWithTexture);
+
+   /* shader objects */
+   GLHCK_RENDER_FUNC(bindProgram, useProgram);
+   GLHCK_RENDER_FUNC(linkProgram, linkProgram);
+   GLHCK_RENDER_FUNC(deleteProgram, deleteProgram);
+   GLHCK_RENDER_FUNC(compileShader, compileShader);
+   GLHCK_RENDER_FUNC(deleteShader, deleteShader);
 
    /* drawing functions */
    GLHCK_RENDER_FUNC(setProjection, setProjection);

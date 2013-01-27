@@ -49,6 +49,10 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(deleteFramebuffers);
    GLHCK_API_CHECK(bindFramebuffer);
    GLHCK_API_CHECK(linkFramebufferWithTexture);
+   GLHCK_API_CHECK(linkProgram);
+   GLHCK_API_CHECK(deleteProgram);
+   GLHCK_API_CHECK(compileShader);
+   GLHCK_API_CHECK(deleteShader);
    GLHCK_API_CHECK(getIntegerv);
 }
 #undef GLHCK_API_CHECK
@@ -229,7 +233,7 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
 
    /* autodetect */
    if (renderType == GLHCK_RENDER_AUTO)
-      renderType = GLHCK_RENDER_OPENGL;
+      renderType = GLHCK_RENDER_OPENGL_FIXED_PIPELINE;
 
    /* close display if created already */
    if (_GLHCKlibrary.render.type == renderType) goto success;
