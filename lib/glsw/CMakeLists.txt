@@ -1,0 +1,7 @@
+PROJECT(GLSW)
+SET(GLSW_SRC
+   src/bstrlib.c
+   src/glsw.c)
+ADD_DEFINITIONS(-fPIC)
+ADD_LIBRARY(glsw ${GLSW_SRC})
+TARGET_LINK_LIBRARIES(glsw)

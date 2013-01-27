@@ -67,10 +67,11 @@ INCLUDE_DIRECTORIES(
    ${kazmath_SOURCE_DIR}/src
    ${actc_SOURCE_DIR}/src
    ${IMGHCK_SOURCE_DIR}/src
+   ${GLSW_SOURCE_DIR}/src
    ${OPT_INCL}
 )
 
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck kazmath imghck actc ${OPT_LIBS} ${MATH_LIBRARY})
+TARGET_LINK_LIBRARIES(glhck kazmath imghck actc glsw ${OPT_LIBS} ${MATH_LIBRARY})
 INSTALL(TARGETS glhck DESTINATION lib)
