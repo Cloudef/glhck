@@ -24,7 +24,7 @@ GLHCKAPI glhckShader* glhckShaderNew(
    return object;
 
 fail:
-   if (object->program) {
+   if (object && object->program) {
       _GLHCKlibrary.render.api.deleteProgram(object->program);
    }
    IFDO(_glhckFree, object);
