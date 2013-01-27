@@ -112,12 +112,11 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    TRACE(0);
 
    /* allocate acmera */
-   if (!(camera = _glhckMalloc(sizeof(_glhckCamera))))
+   if (!(camera = _glhckCalloc(1, sizeof(_glhckCamera))))
       goto fail;
 
-   /* init */
-   memset(camera, 0, sizeof(_glhckCamera));
-   memset(&camera->view, 0, sizeof(__GLHCKcameraView));
+   /* increase reference */
+   camera->refCounter++;
 
    /* initialize camera's object */
    if (!(camera->object = glhckObjectNew()))
@@ -131,9 +130,6 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
 
    /* reset */
    glhckCameraReset(camera);
-
-   /* increase reference */
-   camera->refCounter++;
 
    /* insert to world */
    _glhckWorldInsert(clist, camera, _glhckCamera*);

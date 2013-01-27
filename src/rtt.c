@@ -14,6 +14,9 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode, unsigne
    if (!(rtt = _glhckCalloc(1, sizeof(_glhckRtt))))
       goto fail;
 
+   /* increase reference */
+   rtt->refCounter++;
+
    if (!(texture = glhckTextureNew(NULL, flags)))
       goto fail;
 
@@ -37,9 +40,6 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode, unsigne
 
    /* assign the texture */
    rtt->texture = texture;
-
-   /* increase reference */
-   rtt->refCounter++;
 
    /* insert to world */
    _glhckWorldInsert(rlist, rtt, _glhckRtt*);

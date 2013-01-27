@@ -252,6 +252,9 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    if (!(object = _glhckCalloc(1, sizeof(_glhckObject))))
       goto fail;
 
+   /* increase reference */
+   object->refCounter++;
+
    /* default view matrix */
    glhckObjectScalef(object, 1.0f, 1.0f, 1.0f);
    _glhckObjectUpdateMatrix(object);
@@ -269,9 +272,6 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
 
    /* set stub draw function */
    object->drawFunc = _glhckObjectStubDraw;
-
-   /* increase reference */
-   object->refCounter++;
 
    /* insert to world */
    _glhckWorldInsert(olist, object, _glhckObject*);
