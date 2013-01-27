@@ -115,7 +115,7 @@ int glswSetPath(const char* pathPrefix, const char* pathSuffix)
     return 1;
 }
 
-const char* glswGetShader(const char* pEffectKey)
+const char* glswGetShader(const char* pEffectKey, const char* pContentsFromMemory)
 {
     glswContext* gc = __glsw__Context;
     bstring effectKey;
@@ -162,7 +162,7 @@ const char* glswGetShader(const char* pEffectKey)
         struct bstrList* lines;
         int lineNo;
 
-        {
+        if (!pContentsFromMemory) {
             FILE* fp;
             bstring effectFile;
 
@@ -195,6 +195,8 @@ const char* glswGetShader(const char* pEffectKey)
             effectContents = bread((bNread) fread, fp);
             fclose(fp);
             bdestroy(effectFile);
+        } else {
+            effectContents = bfromcstr(pContentsFromMemory);
         }
 
         lines = bsplit(effectContents, '\n');
