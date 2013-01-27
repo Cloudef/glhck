@@ -78,7 +78,7 @@ static void joinMesh(const char *file, const struct aiScene *sc,
 
          if (mesh->mTextureCoords[0]) {
             vertexData[index].coord.x = mesh->mTextureCoords[0][index].x;
-            vertexData[index].coord.y = mesh->mTextureCoords[0][index].y;
+            vertexData[index].coord.y = mesh->mTextureCoords[0][index].y*-1;
          }
 
          /* offset texture coords to fit atlas texture */

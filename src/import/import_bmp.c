@@ -93,6 +93,7 @@ int _glhckImportBMP(_glhckTexture *texture, const char *file, unsigned int flags
       i2+=4;
    }
 
+#if 0
    /* invert */
    for (i = 0; i*2 < h; ++i) {
       int index1 = i*w*4;
@@ -104,6 +105,7 @@ int _glhckImportBMP(_glhckTexture *texture, const char *file, unsigned int flags
          ++index1; ++index2;
       }
    }
+#endif
 
    /* close file */
    NULLDO(fclose, f);
