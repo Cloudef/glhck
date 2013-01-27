@@ -7,6 +7,7 @@
 #define GLHCK_RENDER_FUNC(x,y)      _GLHCKlibrary.render.api.x = y
 
 /* renderers */
+void _glhckRenderOpenGLFixedPipeline(void);
 void _glhckRenderOpenGL(void);
 
 #endif /* __glhck_render_h__ */

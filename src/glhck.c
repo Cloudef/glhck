@@ -236,8 +236,16 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    else glhckDisplayClose();
 
    /* init renderer */
-   if (renderType == GLHCK_RENDER_OPENGL)
-      _glhckRenderOpenGL();
+   switch (renderType) {
+      case GLHCK_RENDER_OPENGL:
+      case GLHCK_RENDER_GLES2:
+         _glhckRenderOpenGL();
+         break;
+      case GLHCK_RENDER_OPENGL_FIXED_PIPELINE:
+      case GLHCK_RENDER_GLES1:
+         _glhckRenderOpenGLFixedPipeline();
+         break;
+   }
 
    /* check that initialization was success */
    if (!_GLHCKlibrary.render.name)

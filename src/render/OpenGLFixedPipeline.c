@@ -997,7 +997,7 @@ DECLARE_GL_BIND_FUNC(_glBindFramebuffer, glBindFramebuffer(GL_FRAMEBUFFER, objec
 /* ---- Main ---- */
 
 /* \brief renderer main function */
-void _glhckRenderOpenGL(void)
+void _glhckRenderOpenGLFixedPipeline(void)
 {
    TRACE(0);
 
