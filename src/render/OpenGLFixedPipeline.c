@@ -24,17 +24,15 @@
 #  define GL_FRAMEBUFFER                                 GL_FRAMEBUFFER_OES
 #  warning "GLES 1.x not working yet"
 #elif GLHCK_USE_GLES2
-#  include <GLES2/gl2.h> /* for opengl ES 2.x */
-#  include <GLES2/gl2ext.h>
-#  error "GLES 2.x not implemented"
+#  error "OpenGL Fixed Pipeline renderer doesn't support GLES 2.x!"
 #else
 /* FIXME: include glew instead of gl.h and glext.h here in future */
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glext.h>
+#  define GL_GLEXT_PROTOTYPES
+#  include <GL/gl.h>
+#  include <GL/glext.h>
 #endif
 
-#if defined(GLHCK_USE_GLES1)
+#if GLHCK_USE_GLES1
 #  ifdef GL_OES_element_index_uint
 #     ifndef GL_UNSIGNED_INT
 #        define GL_UNSIGNED_INT 0x1405
@@ -45,9 +43,8 @@
 #endif /* GLESv1 SUPPORT */
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
-#define RENDER_NAME "OpenGL Renderer"
+#define RENDER_NAME "OpenGL(FixPipe) Renderer"
 #define GL_DEBUG 1
-
 #define GLHCK_ATTRIB_COUNT 4
 
 static const GLenum _glhckAttribName[] = {

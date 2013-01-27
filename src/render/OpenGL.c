@@ -10,44 +10,21 @@
 #endif
 
 #if GLHCK_USE_GLES1
-#  include <GLES/gl.h> /* for opengl ES 1.x */
-#  include <GLES/glext.h>
-#  define GL_FRAMEBUFFER_COMPLETE                        GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_UNDEFINED                       GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT           GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER          GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER          GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT   GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE          GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS        GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_UNSUPPORTED                     GL_FRAMEBUFFER_UNSUPPORTED_OES
-#  define GL_FRAMEBUFFER                                 GL_FRAMEBUFFER_OES
-#  warning "GLES 1.x not working yet"
+#  error "OpenGL renderer doesn't support GLES 1.x!"
 #elif GLHCK_USE_GLES2
 #  include <GLES2/gl2.h> /* for opengl ES 2.x */
 #  include <GLES2/gl2ext.h>
-#  error "GLES 2.x not implemented"
+#  warning "GLES 2.x not working yet"
 #else
 /* FIXME: include glew instead of gl.h and glext.h here in future */
-#define GL_GLEXT_PROTOTYPES
-#include <GL/gl.h>
-#include <GL/glext.h>
+#  define GL_GLEXT_PROTOTYPES
+#  include <GL/gl.h>
+#  include <GL/glext.h>
 #endif
-
-#if defined(GLHCK_USE_GLES1)
-#  ifdef GL_OES_element_index_uint
-#     ifndef GL_UNSIGNED_INT
-#        define GL_UNSIGNED_INT 0x1405
-#     endif
-#  else
-#     error "GLHCK needs GL_OES_element_index_uint for GLESv1 support!"
-#  endif
-#endif /* GLESv1 SUPPORT */
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #define RENDER_NAME "OpenGL Renderer"
 #define GL_DEBUG 1
-
 #define GLHCK_ATTRIB_COUNT 4
 
 static const GLenum _glhckAttribName[] = {
