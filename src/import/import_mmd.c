@@ -126,7 +126,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, unsigned int flags,
 
          /* texture coords */
          vertexData[ix].coord.x = mmd->coords[ix * 2 + 0];
-         vertexData[ix].coord.y = mmd->coords[ix * 2 + 1];
+         vertexData[ix].coord.y = mmd->coords[ix * 2 + 1]*-1;
 
          /* fix coords */
          if (vertexData[ix].coord.x < 0.0f)
