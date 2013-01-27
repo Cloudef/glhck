@@ -7,6 +7,7 @@ Move on.
 
 ![Screenshot](http://cloudef.eu/armpit/glhck-new-utf8-text.png)
 ![Screenshot2](http://cloudef.eu/armpit/glhck-openctm.png)
+![Screenshot3](http://cloudef.eu/armpit/glhck-assimp.png)
 
 ## Building
 
