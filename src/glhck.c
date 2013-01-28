@@ -542,6 +542,7 @@ GLHCKAPI void glhckMassacreWorld(void)
    _glhckAtlas *a;
    _glhckRtt *r;
    _glhckText *tf;
+   _glhckShader *s;
    GLHCK_INITIALIZED();
    TRACE(0);
 
@@ -552,6 +553,7 @@ GLHCKAPI void glhckMassacreWorld(void)
    _massacre(tflist, tf, glhckTextFree);
    _massacre(olist, o, glhckObjectFree);
    _massacre(tlist, t, glhckTextureFree);
+   _massacre(slist, s, glhckShaderFree);
 }
 
 /* \brief frees virtual display and deinits glhck */

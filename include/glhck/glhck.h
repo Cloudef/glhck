@@ -619,6 +619,18 @@ GLHCKAPI glhckTexture* glhckRttGetTexture(const glhckRtt *rtt);
 GLHCKAPI void glhckRttBegin(const glhckRtt *rtt);
 GLHCKAPI void glhckRttEnd(const glhckRtt *rtt);
 
+/* shaders */
+GLHCKAPI unsigned int glhckCompileShaderObject(glhckShaderType type,
+      const char *effectKey, const char *contentsFromMemory);
+GLHCKAPI void glhckDeleteShaderObject(unsigned int shaderObject);
+GLHCKAPI glhckShader* glhckShaderNew(
+      const char *vertexEffect, const char *fragmentEffect, const char *contentsFromMemory);
+GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(
+      unsigned int vertexShader, unsigned int fragmentShader);
+GLHCKAPI glhckShader* glhckShaderRef(glhckShader *object);
+GLHCKAPI size_t glhckShaderFree(glhckShader *object);
+GLHCKAPI void glhckShaderBind(glhckShader *object);
+
 /* trace && debug */
 GLHCKAPI void glhckDebugHook(glhckDebugHookFunc func);
 GLHCKAPI void glhckMemoryGraph(void);

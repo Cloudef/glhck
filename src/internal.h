@@ -373,6 +373,7 @@ typedef struct __GLHCKworld {
    struct _glhckRtt     *rlist;
    struct _glhckTexture *tlist;
    struct _glhckText    *tflist;
+   struct _glhckShader  *slist;
 } __GLHCKworld;
 
 /* glhck trace channel */

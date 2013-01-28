@@ -38,8 +38,10 @@ static const char *_glhckBaseShader =
 "in vec3 Normal;"
 "in vec2 Texture;"
 "in vec4 Color;"
+"uniform mat4 Projection;"
+"uniform mat4 Model;"
 "void main() {"
-"  gl_Position = vec4(Vertex, 1.0);"
+"  gl_Position = Projection * Model * vec4(Vertex, 1.0);"
 "}\n"
 "-- Fragment\n"
 "#version 140\n"
@@ -72,6 +74,7 @@ typedef struct __OpenGLrender {
    size_t indexCount;
    kmMat4 projection;
    kmMat4 orthographic;
+   glhckShader *baseShader;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
 
@@ -293,11 +296,11 @@ static void clear(void)
 static void setProjection(const kmMat4 *m)
 {
    CALL(2, "%p", m);
-   GL_CALL(glMatrixMode(GL_PROJECTION));
+
 #ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((double*)m));
+#  error "Not supported."
 #else
-   GL_CALL(glLoadMatrixf((float*)m));
+   GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Projection"), 1, 0, (float*)&m[0]));
 #endif
 
    if (m != &_OpenGL.projection)
@@ -328,7 +331,7 @@ static void viewport(int x, int y, int width, int height)
 
 /* helper macro for passing geometry */
 #define geometryV2ToOpenGL(vprec, tprec, type, tunion)                              \
-   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, vprec, (vprec!=GL_FLOAT),  \
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, vprec, 0,                  \
             sizeof(type), &geometry->vertices.tunion[0].vertex));                   \
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
             sizeof(type), &geometry->vertices.tunion[0].coord));                    \
@@ -336,7 +339,7 @@ static void viewport(int x, int y, int width, int height)
             sizeof(type), &geometry->vertices.tunion[0].color));
 
 #define geometryV3ToOpenGL(vprec, tprec, type, tunion)                              \
-   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, vprec, (vprec!=GL_FLOAT),  \
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, vprec, 0,                  \
             sizeof(type), &geometry->vertices.tunion[0].vertex));                   \
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, vprec, (vprec!=GL_FLOAT),  \
             sizeof(type), &geometry->vertices.tunion[0].normal));                   \
@@ -431,17 +434,17 @@ static inline void materialState(const _glhckObject *object)
    _OpenGL.state.flags = 0; /* reset this state */
 
    /* always draw vertices */
-   _OpenGL.state.attrib[0] = 1;
+   _OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
 
    /* enable normals always for now */
-   _OpenGL.state.attrib[2] = glhckVertexTypeHasNormal(object->geometry->vertexType);
+   _OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL] = glhckVertexTypeHasNormal(object->geometry->vertexType);
 
    /* need color? */
-   _OpenGL.state.attrib[3] = (glhckVertexTypeHasColor(object->geometry->vertexType) &&
+   _OpenGL.state.attrib[GLHCK_ATTRIB_COLOR] = (glhckVertexTypeHasColor(object->geometry->vertexType) &&
          object->material.flags & GLHCK_MATERIAL_COLOR);
 
    /* need texture? */
-   _OpenGL.state.attrib[1] = object->material.texture?1:0;
+   _OpenGL.state.attrib[GLHCK_ATTRIB_TEXTURE] = object->material.texture?1:0;
    _OpenGL.state.flags |= object->material.texture?GL_STATE_TEXTURE:0;
 
    /* aabb? */
@@ -512,15 +515,6 @@ static inline void materialState(const _glhckObject *object)
          (_OpenGL.state.blenda != old.blenda ||
           _OpenGL.state.blendb != old.blendb)) {
       GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
-   }
-
-   /* check texture */
-   if (GL_STATE_CHANGED(GL_STATE_TEXTURE)) {
-      if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
-         GL_CALL(glEnable(GL_TEXTURE_2D));
-      } else {
-         GL_CALL(glDisable(GL_TEXTURE_2D));
-      }
    }
 
    /* check attribs */
@@ -632,15 +626,16 @@ static inline void drawAABB(const _glhckObject *object)
          GL_CALL(glDisableVertexAttribArray(i));
       }
 
+   kmMat4 identity;
+   kmMat4Identity(&identity);
+   GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Model"),
+            1, 0, (float*)&identity));
+
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
 
-   /* go back */
-#ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((double*)&object->view.matrix));
-#else
-   GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
-#endif
+   GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Model"),
+            1, 0, (float*)&object->view.matrix));
 
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
       if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
@@ -650,6 +645,9 @@ static inline void drawAABB(const _glhckObject *object)
 
 /* \brief begin object draw */
 static inline void objectStart(const _glhckObject *object) {
+   GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Model"),
+            1, 0, (float*)&object->view.matrix));
+
    /* set states and draw */
    materialState(object);
 }
@@ -736,6 +734,11 @@ static inline void textDraw(const _glhckText *text)
       GL_CALL(glEnableVertexAttribArray(GLHCK_ATTRIB_VERTEX));
    }
 
+   if (!_OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL]) {
+      _OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL] = 0;
+      GL_CALL(glDisableVertexAttribArray(GLHCK_ATTRIB_NORMAL));
+   }
+
    if (_OpenGL.state.attrib[GLHCK_ATTRIB_COLOR]) {
       _OpenGL.state.attrib[GLHCK_ATTRIB_COLOR] = 0;
       GL_CALL(glDisableVertexAttribArray(GLHCK_ATTRIB_COLOR));
@@ -745,13 +748,20 @@ static inline void textDraw(const _glhckText *text)
       GL_CALL(glDisable(GL_DEPTH_TEST));
    }
 
+   GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Projection"),
+            1, 0, (float*)&_OpenGL.orthographic));
+
+   kmMat4 identity;
+   kmMat4Identity(&identity);
+   GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Model"),
+            1, 0, (float*)&identity));
+
    for (texture = text->tcache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
       glhckBindTexture(texture->object);
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
-               (GLHCK_TEXT_FLOAT_PRECISION?0:1),
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT), 0,
                (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
                &texture->geometry.vertexData[0].vertex));
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
@@ -809,8 +819,10 @@ static inline void frustumDraw(glhckFrustum *frustum)
          GL_CALL(glDisableVertexAttribArray(i));
       }
 
-   GL_CALL(glMatrixMode(GL_MODELVIEW));
-   GL_CALL(glLoadIdentity());
+   kmMat4 identity;
+   kmMat4Identity(&identity);
+   GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Model"),
+            1, 0, (float*)&identity));
 
    GL_CALL(glLineWidth(4));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
@@ -898,6 +910,12 @@ static unsigned int linkProgram(unsigned int vertexShader, unsigned int fragment
    if (!(obj = glCreateProgram()))
       goto fail;
 
+   /* bind locations */
+   GL_CALL(glBindAttribLocation(obj, GLHCK_ATTRIB_VERTEX, "Vertex"));
+   GL_CALL(glBindAttribLocation(obj, GLHCK_ATTRIB_NORMAL, "Normal"));
+   GL_CALL(glBindAttribLocation(obj, GLHCK_ATTRIB_TEXTURE, "Texture"));
+   GL_CALL(glBindAttribLocation(obj, GLHCK_ATTRIB_COLOR, "Color"));
+
    /* link the shaders to program */
    GL_CALL(glAttachShader(obj, vertexShader));
    GL_CALL(glAttachShader(obj, fragmentShader));
@@ -975,7 +993,6 @@ fail:
 /* \brief init renderers global state */
 static int renderInit(void)
 {
-   unsigned int vsobj, fsobj, probj;
    TRACE(0);
 
    /* init global data */
@@ -984,21 +1001,6 @@ static int renderInit(void)
 
    /* save from some headache */
    GL_CALL(glPixelStorei(GL_UNPACK_ALIGNMENT,1));
-
-   /* compile base shaders */
-   vsobj = compileShader(GLHCK_VERTEX_SHADER, "Base.Vertex", _glhckBaseShader);
-   fsobj = compileShader(GLHCK_FRAGMENT_SHADER, "Base.Fragment", _glhckBaseShader);
-
-   /* fail loading shaders */
-   if (!vsobj || !fsobj)
-      return RETURN_FAIL;
-
-   /* link shaders to program */
-   if (!(probj = linkProgram(vsobj, fsobj)))
-      return RETURN_FAIL;
-
-   /* bind program */
-   glUseProgram(probj);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -1098,6 +1100,14 @@ void _glhckRenderOpenGL(void)
 
    /* parameters */
    GLHCK_RENDER_FUNC(getIntegerv, getIntegerv);
+
+   /* compile base shader */
+   _OpenGL.baseShader = glhckShaderNew("Base.Vertex", "Base.Fragment", _glhckBaseShader);
+   if (!_OpenGL.baseShader)
+      goto fail;
+
+   /* bind the shader */
+   glhckShaderBind(_OpenGL.baseShader);
 
    /* this also tells library that everything went OK,
     * so do it last */
