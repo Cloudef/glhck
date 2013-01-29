@@ -8,8 +8,7 @@
 GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, unsigned int flags)
 {
    return glhckModelNewEx(file, size, flags,
-         _GLHCKlibrary.render.globalIndexType,
-         _GLHCKlibrary.render.globalVertexType);
+         GLHCKR()->globalIndexType, GLHCKR()->globalVertexType);
 }
 
 /* \brief create new object from supported model files

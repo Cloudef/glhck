@@ -54,9 +54,6 @@
 #define GLHCK_TEXT_FLOAT_PRECISION 1
 
 /* opengl mapped constants */
-#define GLHCK_COLOR_ATTACHMENT   0x8CE0
-#define GLHCK_DEPTH_ATTACHMENT   0x8D00
-#define GLHCK_STENCIL_ATTACHMENT 0x8D20
 
 /* return variables used throughout library */
 typedef enum _glhckReturnValue {
@@ -81,6 +78,29 @@ typedef enum _glhckTextureFlags
    GLHCK_TEXTURE_IMPORT_TEXT  = 2,
 } _glhckTextureFlags;
 
+/* rtt attachment types */
+typedef enum _glhckRttAttachmentType
+{
+   GLHCK_COLOR_ATTACHMENT0,
+   GLHCK_COLOR_ATTACHMENT1,
+   GLHCK_COLOR_ATTACHMENT2,
+   GLHCK_COLOR_ATTACHMENT3,
+   GLHCK_COLOR_ATTACHMENT4,
+   GLHCK_COLOR_ATTACHMENT5,
+   GLHCK_COLOR_ATTACHMENT6,
+   GLHCK_COLOR_ATTACHMENT7,
+   GLHCK_COLOR_ATTACHMENT8,
+   GLHCK_COLOR_ATTACHMENT9,
+   GLHCK_COLOR_ATTACHMENT10,
+   GLHCK_COLOR_ATTACHMENT11,
+   GLHCK_COLOR_ATTACHMENT12,
+   GLHCK_COLOR_ATTACHMENT13,
+   GLHCK_COLOR_ATTACHMENT14,
+   GLHCK_COLOR_ATTACHMENT15,
+   GLHCK_DEPTH_ATTACHMENT,
+   GLHCK_STENCIL_ATTACHMENT,
+} _glhckRttAttachmentType;
+
 /* shader attrib locations */
 typedef enum glhckShaderAttrib {
    GLHCK_ATTRIB_VERTEX,
@@ -89,6 +109,116 @@ typedef enum glhckShaderAttrib {
    GLHCK_ATTRIB_COLOR,
    GLHCK_ATTRIB_LAST
 } glhckShaderAttrib;
+
+/* glhck mappings for all shader uniforms (since 4.2 GL) */
+typedef enum glhckShaderVariableType
+{
+   GLHCK_SHADER_FLOAT,
+   GLHCK_SHADER_VEC2,
+   GLHCK_SHADER_VEC3,
+   GLHCK_SHADER_VEC4,
+   GLHCK_SHADER_DOUBLE,
+   GLHCK_SHADER_DVEC2,
+   GLHCK_SHADER_DVEC3,
+   GLHCK_SHADER_DVEC4,
+   GLHCK_SHADER_INT,
+   GLHCK_SHADER_INT_VEC2,
+   GLHCK_SHADER_INT_VEC3,
+   GLHCK_SHADER_INT_VEC4,
+   GLHCK_SHADER_UNSIGNED_INT,
+   GLHCK_SHADER_UNSIGNED_INT_VEC2,
+   GLHCK_SHADER_UNSIGNED_INT_VEC3,
+   GLHCK_SHADER_UNSIGNED_INT_VEC4,
+   GLHCK_SHADER_BOOL,
+   GLHCK_SHADER_BOOL_VEC2,
+   GLHCK_SHADER_BOOL_VEC3,
+   GLHCK_SHADER_BOOL_VEC4,
+   GLHCK_SHADER_FLOAT_MAT2,
+   GLHCK_SHADER_FLOAT_MAT3,
+   GLHCK_SHADER_FLOAT_MAT4,
+   GLHCK_SHADER_FLOAT_MAT2x3,
+   GLHCK_SHADER_FLOAT_MAT2x4,
+   GLHCK_SHADER_FLOAT_MAT3x2,
+   GLHCK_SHADER_FLOAT_MAT3x4,
+   GLHCK_SHADER_FLOAT_MAT4x2,
+   GLHCK_SHADER_FLOAT_MAT4x3,
+   GLHCK_SHADER_DOUBLE_MAT2,
+   GLHCK_SHADER_DOUBLE_MAT3,
+   GLHCK_SHADER_DOUBLE_MAT4,
+   GLHCK_SHADER_DOUBLE_MAT2x3,
+   GLHCK_SHADER_DOUBLE_MAT2x4,
+   GLHCK_SHADER_DOUBLE_MAT3x2,
+   GLHCK_SHADER_DOUBLE_MAT3x4,
+   GLHCK_SHADER_DOUBLE_MAT4x2,
+   GLHCK_SHADER_DOUBLE_MAT4x3,
+   GLHCK_SHADER_SAMPLER_1D,
+   GLHCK_SHADER_SAMPLER_2D,
+   GLHCK_SHADER_SAMPLER_3D,
+   GLHCK_SHADER_SAMPLER_CUBE,
+   GLHCK_SHADER_SAMPLER_1D_SHADOW,
+   GLHCK_SHADER_SAMPLER_2D_SHADOW,
+   GLHCK_SHADER_SAMPLER_1D_ARRAY,
+   GLHCK_SHADER_SAMPLER_2D_ARRAY,
+   GLHCK_SHADER_SAMPLER_1D_ARRAY_SHADOW,
+   GLHCK_SHADER_SAMPLER_2D_ARRAY_SHADOW,
+   GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE,
+   GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE_ARRAY,
+   GLHCK_SHADER_SAMPLER_CUBE_SHADOW,
+   GLHCK_SHADER_SAMPLER_BUFFER,
+   GLHCK_SHADER_SAMPLER_2D_RECT,
+   GLHCK_SHADER_SAMPLER_2D_RECT_SHADOW,
+   GLHCK_SHADER_INT_SAMPLER_1D,
+   GLHCK_SHADER_INT_SAMPLER_2D,
+   GLHCK_SHADER_INT_SAMPLER_3D,
+   GLHCK_SHADER_INT_SAMPLER_CUBE,
+   GLHCK_SHADER_INT_SAMPLER_1D_ARRAY,
+   GLHCK_SHADER_INT_SAMPLER_2D_ARRAY,
+   GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE,
+   GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE_ARRAY,
+   GLHCK_SHADER_INT_SAMPLER_BUFFER,
+   GLHCK_SHADER_INT_SAMPLER_2D_RECT,
+   GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D,
+   GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D,
+   GLHCK_SHADER_UNSIGNED_INT_SAMPLER_3D,
+   GLHCK_SHADER_UNSIGNED_INT_SAMPLER_CUBE,
+   GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D_ARRAY,
+   GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_ARRAY,
+   GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE,
+   GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY,
+   GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER,
+   GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT,
+   GLHCK_SHADER_IMAGE_1D,
+   GLHCK_SHADER_IMAGE_2D,
+   GLHCK_SHADER_IMAGE_3D,
+   GLHCK_SHADER_IMAGE_2D_RECT,
+   GLHCK_SHADER_IMAGE_CUBE,
+   GLHCK_SHADER_IMAGE_BUFFER,
+   GLHCK_SHADER_IMAGE_1D_ARRAY,
+   GLHCK_SHADER_IMAGE_2D_ARRAY,
+   GLHCK_SHADER_IMAGE_2D_MULTISAMPLE,
+   GLHCK_SHADER_IMAGE_2D_MULTISAMPLE_ARRAY,
+   GLHCK_SHADER_INT_IMAGE_1D,
+   GLHCK_SHADER_INT_IMAGE_2D,
+   GLHCK_SHADER_INT_IMAGE_3D,
+   GLHCK_SHADER_INT_IMAGE_2D_RECT,
+   GLHCK_SHADER_INT_IMAGE_CUBE,
+   GLHCK_SHADER_INT_IMAGE_BUFFER,
+   GLHCK_SHADER_INT_IMAGE_1D_ARRAY,
+   GLHCK_SHADER_INT_IMAGE_2D_ARRAY,
+   GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE,
+   GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY,
+   GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D,
+   GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D,
+   GLHCK_SHADER_UNSIGNED_INT_IMAGE_3D,
+   GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_RECT,
+   GLHCK_SHADER_UNSIGNED_INT_IMAGE_CUBE,
+   GLHCK_SHADER_UNSIGNED_INT_IMAGE_BUFFER,
+   GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D_ARRAY,
+   GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_ARRAY,
+   GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE,
+   GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY,
+   GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER,
+} glhckShaderVariableType;
 
 /* texture container */
 typedef struct _glhckTexture {
@@ -231,93 +361,124 @@ typedef struct _glhckCamera {
    struct _glhckCamera *next;
 } _glhckCamera;
 
+/* glhck shader attribute type */
+typedef struct _glhckShaderAttribute {
+   char *name;
+   unsigned int location;
+   glhckShaderVariableType type;
+   size_t size;
+   struct _glhckShaderAttribute *next;
+} _glhckShaderAttribute;
+
+/* glhck shader uniform type */
+typedef struct _glhckShaderUniform {
+   char *name;
+   unsigned int location;
+   glhckShaderVariableType type;
+   size_t size;
+   struct _glhckShaderUniform *next;
+} _glhckShaderUniform;
+
 /* glhck shader type */
 typedef struct _glhckShader {
    unsigned int attrib[GLHCK_ATTRIB_NORMAL];
    unsigned int program;
    size_t refCounter;
+   struct _glhckShaderAttribute *attributes;
+   struct _glhckShaderUniform *uniforms;
    struct _glhckShader *next;
 } _glhckShader;
 
 /* render api */
-typedef void (*__GLHCKrenderAPIterminate)        (void);
-typedef void (*__GLHCKrenderAPIviewport)         (int x, int y, int width, int height);
-typedef void (*__GLHCKrenderAPIsetProjection)    (const kmMat4 *m);
-typedef const kmMat4* (*__GLHCKrenderAPIgetProjection)  (void);
-typedef void (*__GLHCKrenderAPIsetClearColor)    (char r, char g, char b, char a);
-typedef void (*__GLHCKrenderAPIclear)            (void);
-typedef void (*__GLHCKrenderAPIobjectDraw)       (const _glhckObject *object);
-typedef void (*__GLHCKrenderAPItextDraw)         (const _glhckText *text);
-typedef void (*__GLHCKrenderAPIfrustumDraw)      (glhckFrustum *frustum);
+typedef void (*__GLHCKrenderAPIterminate) (void);
+typedef void (*__GLHCKrenderAPIviewport) (int x, int y, int width, int height);
+typedef void (*__GLHCKrenderAPIsetProjection) (const kmMat4 *m);
+typedef const kmMat4* (*__GLHCKrenderAPIgetProjection) (void);
+typedef void (*__GLHCKrenderAPIsetClearColor) (char r, char g, char b, char a);
+typedef void (*__GLHCKrenderAPIclear) (void);
+
+/* render */
+typedef void (*__GLHCKrenderAPIobjectRender) (const _glhckObject *object);
+typedef void (*__GLHCKrenderAPItextRender) (const _glhckText *text);
+typedef void (*__GLHCKrenderAPIfrustumRender) (glhckFrustum *frustum);
 
 /* screen control */
-typedef void (*__GLHCKrenderAPIgetPixels)        (int x, int y, int width, int height,
-                                                  unsigned int format, unsigned char *data);
-
-/* object generation */
-typedef void (*__GLHCKrenderAPIgenerateTextures) (size_t count, unsigned int *objects);
-typedef void (*__GLHCKrenderAPIdeleteTextures)   (size_t count, unsigned int *objects);
+typedef void (*__GLHCKrenderAPIbufferGetPixels)
+   (int x, int y, int width, int height, unsigned int format, unsigned char *data);
 
 /* textures */
-typedef void (*__GLHCKrenderAPIbindTexture)      (unsigned int object);
-typedef void (*__GLHCKrenderAPIfillTexture)      (unsigned int texture, const unsigned char *data, size_t size,
-                                                  int x, int y, int width, int height, unsigned int format);
+typedef void (*__GLHCKrenderAPItextureGenerate) (size_t count, unsigned int *objects);
+typedef void (*__GLHCKrenderAPItextureDelete) (size_t count, unsigned int *objects);
+typedef void (*__GLHCKrenderAPItextureBind) (unsigned int object);
+typedef void (*__GLHCKrenderAPItextureFill)
+   (unsigned int texture, const unsigned char *data, size_t size, int x, int y, int width,
+    int height, unsigned int format);
+typedef unsigned int (*__GLHCKrenderAPItextureCreate)
+   (const unsigned char *buffer, size_t size, int width, int height, unsigned int format,
+    unsigned int reuse_texture_ID, unsigned int flags);
 
-typedef unsigned int (*__GLHCKrenderAPIcreateTexture) (const unsigned char *buffer, size_t size,
-                                                       int width, int height, unsigned int format,
-                                                       unsigned int reuse_texture_ID, unsigned int flags);
-
-/* framebuffer objects */
-typedef void (*__GLHCKrenderAPIgenerateFramebuffers) (size_t count, unsigned int *objects);
-typedef void (*__GLHCKrenderAPIdeleteFramebuffers)   (size_t count, unsigned int *objects);
-typedef void (*__GLHCKrenderAPIbindFramebuffer)      (unsigned int object);
-typedef int (*__GLHCKrenderAPIlinkFramebufferWithTexture) (unsigned int object, unsigned int texture,
-                                                           unsigned int attachment);
+/* framebuffers */
+typedef void (*__GLHCKrenderAPIframebufferGenerate) (size_t count, unsigned int *objects);
+typedef void (*__GLHCKrenderAPIframebufferDelete) (size_t count, unsigned int *objects);
+typedef void (*__GLHCKrenderAPIframebufferBind) (unsigned int object);
+typedef int (*__GLHCKrenderAPIframebufferLinkWithTexture)
+   (unsigned int object, unsigned int texture, _glhckRttAttachmentType type);
 
 /* shaders */
-typedef void (*__GLHCKrenderAPIbindProgram) (unsigned int program);
-typedef unsigned int (*__GLHCKrenderAPIlinkProgram) (unsigned int vertexShader, unsigned int fragmentShader);
-typedef void (*__GLHCKrenderAPIdeleteProgram) (unsigned int program);
-typedef unsigned int (*__GLHCKrenderAPIcompileShader) (glhckShaderType type, const char *effectKey,
-                                                      const char *contentsFromMemory);
-typedef void (*__GLHCKrenderAPIdeleteShader) (unsigned int shader);
+typedef void (*__GLHCKrenderAPIprogramBind) (unsigned int program);
+typedef unsigned int (*__GLHCKrenderAPIprogramLink) (unsigned int vertexShader, unsigned int fragmentShader);
+typedef void (*__GLHCKrenderAPIprogramDelete) (unsigned int program);
+typedef unsigned int (*__GLHCKrenderAPIshaderCompile)
+   (glhckShaderType type, const char *effectKey, const char *contentsFromMemory);
+typedef void (*__GLHCKrenderAPIshaderDelete) (unsigned int shader);
+typedef _glhckShaderAttribute* (*__GLHCKrenderAPIprogramAttributeList) (unsigned int program);
+typedef _glhckShaderUniform* (*__GLHCKrenderAPIprogramUniformList) (unsigned int program);
 
 /* parameters */
 typedef void (*__GLHCKrenderAPIgetIntegerv) (unsigned int pname, int *params);
 
+/* helper for filling the below struct */
+#define GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(func) \
+   __GLHCKrenderAPI##func func;
+
 /* glhck render api */
 typedef struct __GLHCKrenderAPI {
-   __GLHCKrenderAPIterminate        terminate;
-   __GLHCKrenderAPIviewport         viewport;
-   __GLHCKrenderAPIsetProjection    setProjection;
-   __GLHCKrenderAPIgetProjection    getProjection;
-   __GLHCKrenderAPIsetClearColor    setClearColor;
-   __GLHCKrenderAPIclear            clear;
-   __GLHCKrenderAPIobjectDraw       objectDraw;
-   __GLHCKrenderAPItextDraw         textDraw;
-   __GLHCKrenderAPIfrustumDraw      frustumDraw;
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(terminate);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(viewport);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(setProjection);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(getProjection);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(setClearColor);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(clear);
 
-   __GLHCKrenderAPIgetPixels        getPixels;
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(objectRender);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(textRender);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(frustumRender);
 
-   __GLHCKrenderAPIgenerateTextures generateTextures;
-   __GLHCKrenderAPIdeleteTextures   deleteTextures;
-   __GLHCKrenderAPIbindTexture      bindTexture;
-   __GLHCKrenderAPIcreateTexture    createTexture;
-   __GLHCKrenderAPIfillTexture      fillTexture;
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(bufferGetPixels);
 
-   __GLHCKrenderAPIgenerateFramebuffers   generateFramebuffers;
-   __GLHCKrenderAPIdeleteFramebuffers     deleteFramebuffers;
-   __GLHCKrenderAPIbindFramebuffer        bindFramebuffer;
-   __GLHCKrenderAPIlinkFramebufferWithTexture linkFramebufferWithTexture;
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(textureGenerate);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(textureDelete);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(textureBind);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(textureCreate);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(textureFill);
 
-   __GLHCKrenderAPIbindProgram   bindProgram;
-   __GLHCKrenderAPIlinkProgram   linkProgram;
-   __GLHCKrenderAPIdeleteProgram deleteProgram;
-   __GLHCKrenderAPIcompileShader compileShader;
-   __GLHCKrenderAPIdeleteShader  deleteShader;
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferGenerate);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferDelete);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferBind);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferLinkWithTexture);
 
-   __GLHCKrenderAPIgetIntegerv getIntegerv;
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programBind);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programLink);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programDelete);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programAttributeList);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniformList);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderCompile);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderDelete);
+
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(getIntegerv);
 } __GLHCKrenderAPI;
+
+#undef GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION
 
 /* glhck texture state */
 typedef struct __GLHCKtexture {
@@ -425,6 +586,11 @@ typedef struct __GLHCKlibrary {
  * don't use with internal api
  * should be first call in GLHCKAPI public functions that access _GLHCKlibrary */
 #define GLHCK_INITIALIZED() assert(_glhckInitialized && "call glhckInit() first");
+
+/* macros for faster typing */
+#define GLHCKR() (&_GLHCKlibrary.render)
+#define GLHCKRA() (&_GLHCKlibrary.render.api)
+#define GLHCKRD() (&_GLHCKlibrary.render.draw)
 
 /* tracking allocation macros */
 #define _glhckMalloc(x)    __glhckMalloc(GLHCK_CHANNEL, x)

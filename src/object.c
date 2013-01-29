@@ -15,7 +15,7 @@ inline void _glhckObjectInsertToQueue(_glhckObject *object)
    __GLHCKobjectQueue *objects;
    unsigned int i;
 
-   objects = &_GLHCKlibrary.render.draw.objects;
+   objects = &GLHCKRD()->objects;
 
    /* check duplicate */
    for (i = 0; i != objects->count; ++i)
@@ -979,7 +979,7 @@ GLHCKAPI void glhckObjectUpdate(glhckObject *object)
 
    glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
    _glhckObjectUpdateMatrix(object);
-   object->drawFunc = _GLHCKlibrary.render.api.objectDraw;
+   object->drawFunc = GLHCKRA()->objectRender;
 
    /* perform update on all the childs */
    if (object->flags & GLHCK_OBJECT_ROOT) {

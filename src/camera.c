@@ -78,8 +78,8 @@ void _glhckCameraWorldUpdate(int width, int height)
    CALL(2, "%d, %d", width, height);
 
    /* get difference of old dimensions and now */
-   diffw = width  - _GLHCKlibrary.render.width;
-   diffh = height - _GLHCKlibrary.render.height;
+   diffw = width  - GLHCKR()->width;
+   diffh = height - GLHCKR()->height;
 
    for (camera = _GLHCKlibrary.world.clist;
         camera; camera = camera->next) {
@@ -91,11 +91,11 @@ void _glhckCameraWorldUpdate(int width, int height)
    }
 
    /* no camera binded, upload default projection */
-   if (!(camera = _GLHCKlibrary.render.draw.camera))
+   if (!(camera = GLHCKRD()->camera))
       _glhckDefaultProjection(width, height);
    else {
       /* update camera */
-      _GLHCKlibrary.render.draw.camera = NULL;
+      GLHCKRD()->camera = NULL;
       camera->view.update = 1;
       glhckCameraUpdate(camera);
    }
@@ -169,8 +169,8 @@ GLHCKAPI size_t glhckCameraFree(glhckCamera *camera)
    if (--camera->refCounter != 0) goto success;
 
    /* remove camera from global state */
-   if (_GLHCKlibrary.render.draw.camera == camera)
-      _GLHCKlibrary.render.draw.camera = NULL;
+   if (GLHCKRD()->camera == camera)
+      GLHCKRD()->camera = NULL;
 
    /* free cemera's object */
    NULLDO(glhckObjectFree, camera->object);
@@ -193,12 +193,12 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
 
    /* bind none */
    if (!camera) {
-      _GLHCKlibrary.render.draw.camera = NULL;
+      GLHCKRD()->camera = NULL;
       return;
    }
 
-   if (_GLHCKlibrary.render.draw.camera != camera)
-      _GLHCKlibrary.render.api.viewport(
+   if (GLHCKRD()->camera != camera)
+      GLHCKRA()->viewport(
             camera->view.viewport.x,
             camera->view.viewport.y,
             camera->view.viewport.w,
@@ -210,8 +210,8 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
    }
 
    /* assign camera to global state */
-   _GLHCKlibrary.render.api.setProjection(&camera->view.mvp);
-   _GLHCKlibrary.render.draw.camera = camera;
+   GLHCKRA()->setProjection(&camera->view.mvp);
+   GLHCKRD()->camera = camera;
 }
 
 /* \brief reset camera to default state */
@@ -226,8 +226,8 @@ GLHCKAPI void glhckCameraReset(glhckCamera *camera)
    kmVec3Fill(&camera->object->view.target, 0, 0, 0);
    kmVec3Fill(&camera->object->view.translation, 0, 0, 0);
    memset(&camera->view.viewport, 0, sizeof(glhckRect));
-   camera->view.viewport.w = _GLHCKlibrary.render.width;
-   camera->view.viewport.h = _GLHCKlibrary.render.height;
+   camera->view.viewport.w = GLHCKR()->width;
+   camera->view.viewport.h = GLHCKR()->height;
 
    _glhckCameraProjectionMatrix(camera);
 }

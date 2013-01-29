@@ -29,13 +29,12 @@ GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode, unsigne
                format, format, flags)))
       goto fail;
 
-   _GLHCKlibrary.render.api.generateFramebuffers(1, &rtt->object);
+   GLHCKRA()->framebufferGenerate(1, &rtt->object);
    if (!rtt->object)
       goto fail;
 
-   if (_GLHCKlibrary.render.api.linkFramebufferWithTexture(rtt->object,
-            texture->object, GLHCK_COLOR_ATTACHMENT)
-         != RETURN_OK)
+   if (GLHCKRA()->framebufferLinkWithTexture(rtt->object, texture->object,
+            GLHCK_COLOR_ATTACHMENT0) != RETURN_OK)
       goto fail;
 
    /* assign the texture */
@@ -67,7 +66,7 @@ GLHCKAPI size_t glhckRttFree(glhckRtt *rtt)
    if (--rtt->refCounter != 0) goto success;
 
    /* free fbo object */
-   _GLHCKlibrary.render.api.deleteFramebuffers(1, &rtt->object);
+   GLHCKRA()->framebufferDelete(1, &rtt->object);
    IFDO(glhckTextureFree, rtt->texture);
 
    /* remove from world */
@@ -98,7 +97,7 @@ GLHCKAPI int glhckRttFillData(glhckRtt *rtt)
       goto fail;
 
    /* get framebuffer */
-   _GLHCKlibrary.render.api.getPixels(0, 0,
+   GLHCKRA()->bufferGetPixels(0, 0,
          rtt->texture->width, rtt->texture->height,
          rtt->texture->format, data);
 
@@ -137,8 +136,8 @@ GLHCKAPI void glhckRttBegin(const glhckRtt *rtt)
 {
    CALL(2, "%p", rtt);
    assert(rtt);
-   _GLHCKlibrary.render.api.bindFramebuffer(rtt->object);
-   _GLHCKlibrary.render.api.viewport(0, 0, rtt->texture->width, rtt->texture->height);
+   GLHCKRA()->framebufferBind(rtt->object);
+   GLHCKRA()->viewport(0, 0, rtt->texture->width, rtt->texture->height);
 }
 
 /* \brief end rendering to rtt */
@@ -146,8 +145,8 @@ GLHCKAPI void glhckRttEnd(const glhckRtt *rtt)
 {
    CALL(2, "%p", rtt);
    assert(rtt);
-   _GLHCKlibrary.render.api.viewport(0, 0, _GLHCKlibrary.render.width, _GLHCKlibrary.render.height);
-   _GLHCKlibrary.render.api.bindFramebuffer(0);
+   GLHCKRA()->viewport(0, 0, GLHCKR()->width, GLHCKR()->height);
+   GLHCKRA()->framebufferBind(0);
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

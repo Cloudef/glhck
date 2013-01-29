@@ -321,7 +321,7 @@ static void _glhckGeometrySetVertices(glhckGeometry *geometry,
 
    /* fglrx on linux at least seems to fail with byte vertices.
     * workaround for now until I stumble upon why it's wrong. */
-   if (_GLHCKlibrary.render.driver == GLHCK_DRIVER_ATI) {
+   if (GLHCKR()->driver == GLHCK_DRIVER_ATI) {
       if (type == GLHCK_VERTEX_V2B || type == GLHCK_VERTEX_V3B) {
          DEBUG(GLHCK_DBG_WARNING, "ATi has problems with BYTE precision vertexdata.");
          DEBUG(GLHCK_DBG_WARNING, "Will use SHORT precision instead, just a friendly warning.");

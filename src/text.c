@@ -206,8 +206,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
             size_t size         = text->tw * text->th;
 
             /* as last resort create new texture, if this was used */
-            tex_object = _GLHCKlibrary.render.api.createTexture(NULL, size,
-                  text->tw, text->th, format, 0, GLHCK_TEXTURE_NEAREST);
+            tex_object = GLHCKRA()->textureCreate(NULL, size, text->tw, text->th, format, 0, GLHCK_TEXTURE_NEAREST);
             if (!tex_object)
                return NULL;
 
@@ -261,7 +260,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
    /* rasterize */
    if ((data = _glhckMalloc(gw*gh))) {
       stbtt_MakeGlyphBitmap(&font->font, data, gw, gh, gw, scale, scale, gid);
-      _GLHCKlibrary.render.api.fillTexture(texture->object, data, 0, glyph->x1, glyph->y1, gw, gh, texture->format);
+      GLHCKRA()->textureFill(texture->object, data, 0, glyph->x1, glyph->y1, gw, gh, texture->format);
       _glhckFree(data);
    }
 
@@ -336,8 +335,8 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    texture->size   = cachew * cacheh;
 
    /* fill texture with emptiness */
-   texture->object = _GLHCKlibrary.render.api.createTexture(NULL, texture->size,
-         cachew, cacheh, texture->format, 0, GLHCK_TEXTURE_NEAREST);
+   texture->object = GLHCKRA()->textureCreate(NULL, texture->size, cachew, cacheh,
+         texture->format, 0, GLHCK_TEXTURE_NEAREST);
    if (!texture->object)
       goto fail;
 
@@ -384,8 +383,7 @@ GLHCKAPI size_t glhckTextFree(glhckText *text)
    for (t = text->tcache; t; t = tn) {
       tn = t->next;
       if (t->object)
-         _GLHCKlibrary.render.api.deleteTextures(1,
-               &t->object);
+         GLHCKRA()->textureDelete(1, &t->object);
       _glhckFree(t);
    }
 
@@ -606,7 +604,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
       goto fail;
 
    /* create texture */
-   if (!(texture = _GLHCKlibrary.render.api.createTexture(data, temp->size,
+   if (!(texture = GLHCKRA()->textureCreate(data, temp->size,
                temp->width, temp->height, temp->format, 0, GLHCK_TEXTURE_NEAREST)))
       goto fail;
 
@@ -691,7 +689,7 @@ GLHCKAPI void glhckTextRender(glhckText *text)
 {
    __GLHCKtextTexture *texture;
    CALL(2, "%p", text); assert(text);
-   _GLHCKlibrary.render.api.textDraw(text);
+   GLHCKRA()->textRender(text);
 
    /* reset vertex counts */
    for (texture = text->tcache; texture;

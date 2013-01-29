@@ -12,7 +12,7 @@ GLHCKAPI glhckObject* glhckCubeNew(kmScalar size)
    glhckGeometryVertexType vtype;
 
    /* choose internal vertexdata precision */
-   vtype = _GLHCKlibrary.render.globalVertexType;
+   vtype = GLHCKR()->globalVertexType;
    if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V3B;
    return glhckCubeNewEx(size, GLHCK_INDEX_NONE, vtype);
 }

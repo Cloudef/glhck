@@ -116,7 +116,7 @@ int main(int argc, char **argv)
 
    puts("-!- glhck init");
 
-   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_AUTO))
+   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_OPENGL))
       return EXIT_FAILURE;
 
    puts("-!- glhck display create");
@@ -146,8 +146,8 @@ int main(int argc, char **argv)
    glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
-#define SKIP_MMD    0
-#define SKIP_OCTM   0
+#define SKIP_MMD    1
+#define SKIP_OCTM   1
 #define SKIP_ASSIMP 0
 
 #if SKIP_MMD
@@ -258,7 +258,7 @@ int main(int argc, char **argv)
          aabb->max.z>aabb->max.y?aabb->max.z:aabb->max.y;
       spinRadius += 5.0f;
 
-      xspin += 30.0f * delta;
+      if (!glfwGetKey(window, GLFW_KEY_SPACE)) xspin += 30.0f * delta;
       glhckObjectPositionf(sprite,
             spinRadius*sin(xspin/8),
             spinRadius*cos(xspin/12),

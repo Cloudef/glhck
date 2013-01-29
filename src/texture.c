@@ -34,7 +34,7 @@ inline void _glhckTextureInsertToQueue(_glhckTexture *texture)
    __GLHCKtextureQueue *textures;
    unsigned int i;
 
-   textures = &_GLHCKlibrary.render.draw.textures;
+   textures = &GLHCKRD()->textures;
 
    /* check duplicate */
    for (i = 0; i != textures->count; ++i)
@@ -212,7 +212,7 @@ GLHCKAPI _glhckTexture* glhckTextureCopy(_glhckTexture *src)
       goto fail;
 
    /* copy */
-   _GLHCKlibrary.render.api.generateTextures(1, &texture->object);
+   GLHCKRA()->textureGenerate(1, &texture->object);
 
    if (src->file)
       texture->file = _glhckStrdup(src->file);
@@ -267,7 +267,7 @@ GLHCKAPI size_t glhckTextureFree(_glhckTexture *texture)
 
    /* delete texture if there is one */
    if (texture->object)
-      _GLHCKlibrary.render.api.deleteTextures(1, &texture->object);
+      GLHCKRA()->textureDelete(1, &texture->object);
 
    /* free */
    IFDO(_glhckFree, texture->file);
@@ -314,7 +314,7 @@ GLHCKAPI int glhckTextureCreate(_glhckTexture *texture, unsigned char *data,
       size = width * height * _glhckNumChannels(format);
 
    /* create texture */
-   object = _GLHCKlibrary.render.api.createTexture(
+   object = GLHCKRA()->textureCreate(
          data, size, width, height, outFormat,
          texture->object?texture->object:0, flags);
 
@@ -407,17 +407,17 @@ GLHCKAPI void glhckTextureBind(_glhckTexture *texture)
 {
    CALL(2, "%p", texture);
 
-   if (!texture && _GLHCKlibrary.render.draw.texture) {
-      _GLHCKlibrary.render.api.bindTexture(0);
-      _GLHCKlibrary.render.draw.texture = 0;
+   if (!texture && GLHCKRD()->texture) {
+      GLHCKRA()->textureBind(0);
+      GLHCKRD()->texture = 0;
       return;
    }
 
-   if (_GLHCKlibrary.render.draw.texture == texture->object)
+   if (GLHCKRD()->texture == texture->object)
       return;
 
-   _GLHCKlibrary.render.api.bindTexture(texture->object);
-   _GLHCKlibrary.render.draw.texture = texture->object;
+   GLHCKRA()->textureBind(texture->object);
+   GLHCKRD()->texture = texture->object;
 }
 
 /* \brief bind using ID */
@@ -425,11 +425,11 @@ GLHCKAPI void glhckBindTexture(unsigned int texture)
 {
    CALL(2, "%d", texture);
 
-   if (_GLHCKlibrary.render.draw.texture == texture)
+   if (GLHCKRD()->texture == texture)
       return;
 
-   _GLHCKlibrary.render.api.bindTexture(texture);
-   _GLHCKlibrary.render.draw.texture = texture;
+   GLHCKRA()->textureBind(texture);
+   GLHCKRD()->texture = texture;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

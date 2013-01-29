@@ -2,6 +2,36 @@
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_SHADER
 
+/* \brief free current list of shader attributes */
+static void _glhckShaderFreeAttributes(_glhckShader *object)
+{
+   _glhckShaderAttribute *a, *an;
+   assert(object);
+   for (a = object->attributes; a; a = an) {
+      an = a->next;
+      _glhckFree(a->name);
+      _glhckFree(a);
+   }
+   object->attributes = NULL;
+}
+
+/* \brief free current list of shader uniforms */
+static void _glhckShaderFreeUniforms(_glhckShader *object)
+{
+   _glhckShaderUniform *u, *un;
+   assert(object);
+   for (u = object->uniforms; u; u = un) {
+      un = u->next;
+      _glhckFree(u->name);
+      _glhckFree(u);
+   }
+   object->uniforms = NULL;
+}
+
+/*
+ * public api
+ */
+
 /* \brief compile new shader object
  * contentsFromMemory may be null
  *
@@ -12,7 +42,7 @@ GLHCKAPI unsigned int glhckCompileShaderObject(glhckShaderType type,
    unsigned int obj = 0;
    CALL(0, "%u, %s, %s", type, effectKey, contentsFromMemory);
    assert(effectKey);
-   obj = _GLHCKlibrary.render.api.compileShader(type, effectKey, contentsFromMemory);
+   obj = GLHCKRA()->shaderCompile(type, effectKey, contentsFromMemory);
    RET(0, "%u", obj);
    return obj;
 }
@@ -21,7 +51,7 @@ GLHCKAPI unsigned int glhckCompileShaderObject(glhckShaderType type,
 GLHCKAPI void glhckDeleteShaderObject(unsigned int shaderObject)
 {
    CALL(0, "%u", shaderObject);
-   _GLHCKlibrary.render.api.deleteShader(shaderObject);
+   GLHCKRA()->shaderDelete(shaderObject);
 }
 
 /* \brief allocate new shader object
@@ -67,8 +97,19 @@ GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(
    object->refCounter++;
 
    /* link shader program */
-   if (!(object->program = _GLHCKlibrary.render.api.linkProgram(vertexShader, fragmentShader)))
+   if (!(object->program = GLHCKRA()->programLink(vertexShader, fragmentShader)))
       goto fail;
+
+   /* get uniform and attribute lists */
+   object->attributes = GLHCKRA()->programAttributeList(object->program);
+   object->uniforms   = GLHCKRA()->programUniformList(object->program);
+
+   _glhckShaderAttribute *a;
+   _glhckShaderUniform *u;
+   for (a = object->attributes; a; a = a->next)
+      printf("(%s:%u) %d : %zu\n", a->name, a->location, a->type, a->size);
+   for (u = object->uniforms; u; u = u->next)
+      printf("(%s:%u) %d : %zu\n", u->name, u->location, u->type, u->size);
 
    /* insert to world */
    _glhckWorldInsert(slist, object, _glhckShader*);
@@ -78,7 +119,7 @@ GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(
 
 fail:
    if (object && object->program) {
-      _GLHCKlibrary.render.api.deleteProgram(object->program);
+      GLHCKRA()->programDelete(object->program);
    }
    IFDO(_glhckFree, object);
    RET(0, "%p", NULL);
@@ -108,7 +149,11 @@ GLHCKAPI size_t glhckShaderFree(glhckShader *object)
    if (--object->refCounter != 0) goto success;
 
    if (object->program)
-      _GLHCKlibrary.render.api.deleteProgram(object->program);
+      GLHCKRA()->programDelete(object->program);
+
+   /* free attib && uniform lists */
+   _glhckShaderFreeAttributes(object);
+   _glhckShaderFreeUniforms(object);
 
    /* remove from world */
    _glhckWorldRemove(slist, object, _glhckShader*);
@@ -122,7 +167,7 @@ success:
 GLHCKAPI void glhckShaderBind(glhckShader *object)
 {
    assert(object);
-   _GLHCKlibrary.render.api.bindProgram(object->program);
+   GLHCKRA()->programBind(object->program);
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

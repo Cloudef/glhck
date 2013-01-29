@@ -246,15 +246,15 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    kmMat4OrthographicProjection(&ortho, 0, width, 0, height, -1.0f, 1.0f);
    kmMat4Translation(&ortho, -1, -1, 0);
 
-   memcpy(&old_projection, _GLHCKlibrary.render.api.getProjection(), sizeof(kmMat4));
-   _GLHCKlibrary.render.api.setProjection(&ortho);
+   memcpy(&old_projection, GLHCKRA()->getProjection(), sizeof(kmMat4));
+   GLHCKRA()->setProjection(&ortho);
 
    /* set clear color */
-   memcpy(&old_clear, &_GLHCKlibrary.render.draw.clearColor, sizeof(glhckColorb));
-   _GLHCKlibrary.render.api.setClearColor(0,0,0,0);
+   memcpy(&old_clear, &GLHCKRD()->clearColor, sizeof(glhckColorb));
+   GLHCKRA()->setClearColor(0,0,0,0);
 
    glhckRttBegin(rtt);
-   _GLHCKlibrary.render.api.clear();
+   GLHCKRA()->clear();
    for (rect = atlas->rect; rect; rect = rect->next) {
       rect->packed.rotated = _glhckTexturePackerGetLocation(tp,
             rect->index, &rect->packed.x1, &rect->packed.y1,
@@ -281,9 +281,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    glhckRttEnd(rtt);
 
    /* restore old state */
-   _GLHCKlibrary.render.api.setProjection(&old_projection);
-   _GLHCKlibrary.render.api.setClearColor(
-         old_clear.r, old_clear.g, old_clear.b, old_clear.a);
+   GLHCKRA()->setProjection(&old_projection);
+   GLHCKRA()->setClearColor(old_clear.r, old_clear.g, old_clear.b, old_clear.a);
 
    /* free plane */
    glhckObjectFree(plane);

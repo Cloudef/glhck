@@ -89,7 +89,7 @@ GLHCKAPI void glhckFrustumRender(glhckFrustum *frustum)
 {
    CALL(2, "%p", frustum);
    assert(frustum);
-   _GLHCKlibrary.render.api.frustumDraw(frustum);
+   GLHCKRA()->frustumRender(frustum);
 }
 
 /* \brief point inside frustum? */

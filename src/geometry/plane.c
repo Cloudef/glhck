@@ -12,7 +12,7 @@ GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height)
    glhckGeometryVertexType vtype;
 
    /* choose internal vertexdata precision */
-   vtype = _GLHCKlibrary.render.globalVertexType;
+   vtype = GLHCKR()->globalVertexType;
    if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V2B;
    return glhckPlaneNewEx(width, height, GLHCK_INDEX_NONE, vtype);
 }
@@ -136,7 +136,7 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture,
       goto fail;
 
    /* choose internal vertexdata precision */
-   vtype = _GLHCKlibrary.render.globalVertexType;
+   vtype = GLHCKR()->globalVertexType;
    if (vtype == GLHCK_VERTEX_NONE)
       vtype = glhckVertexTypeGetV2Counterpart(glhckVertexTypeForSize(w, h));
 

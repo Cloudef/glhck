@@ -36,23 +36,25 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(getProjection);
    GLHCK_API_CHECK(setClearColor);
    GLHCK_API_CHECK(clear);
-   GLHCK_API_CHECK(objectDraw);
-   GLHCK_API_CHECK(textDraw);
-   GLHCK_API_CHECK(frustumDraw);
-   GLHCK_API_CHECK(getPixels);
-   GLHCK_API_CHECK(generateTextures);
-   GLHCK_API_CHECK(deleteTextures);
-   GLHCK_API_CHECK(bindTexture);
-   GLHCK_API_CHECK(createTexture);
-   GLHCK_API_CHECK(fillTexture);
-   GLHCK_API_CHECK(generateFramebuffers);
-   GLHCK_API_CHECK(deleteFramebuffers);
-   GLHCK_API_CHECK(bindFramebuffer);
-   GLHCK_API_CHECK(linkFramebufferWithTexture);
-   GLHCK_API_CHECK(linkProgram);
-   GLHCK_API_CHECK(deleteProgram);
-   GLHCK_API_CHECK(compileShader);
-   GLHCK_API_CHECK(deleteShader);
+   GLHCK_API_CHECK(objectRender);
+   GLHCK_API_CHECK(textRender);
+   GLHCK_API_CHECK(frustumRender);
+   GLHCK_API_CHECK(bufferGetPixels);
+   GLHCK_API_CHECK(textureGenerate);
+   GLHCK_API_CHECK(textureDelete);
+   GLHCK_API_CHECK(textureBind);
+   GLHCK_API_CHECK(textureCreate);
+   GLHCK_API_CHECK(textureFill);
+   GLHCK_API_CHECK(framebufferGenerate);
+   GLHCK_API_CHECK(framebufferDelete);
+   GLHCK_API_CHECK(framebufferBind);
+   GLHCK_API_CHECK(framebufferLinkWithTexture);
+   GLHCK_API_CHECK(programLink);
+   GLHCK_API_CHECK(programDelete);
+   GLHCK_API_CHECK(programAttributeList);
+   GLHCK_API_CHECK(programUniformList);
+   GLHCK_API_CHECK(shaderCompile);
+   GLHCK_API_CHECK(shaderDelete);
    GLHCK_API_CHECK(getIntegerv);
 }
 #undef GLHCK_API_CHECK
@@ -64,10 +66,10 @@ void _glhckDefaultProjection(int width, int height)
    CALL(1, "%d, %d", width, height);
    assert(width > 0 && height > 0);
 
-   _GLHCKlibrary.render.api.viewport(0, 0, width, height);
+   GLHCKRA()->viewport(0, 0, width, height);
    kmMat4PerspectiveProjection(&projection, 35,
          (float)width/(float)height, 0.1f, 100.0f);
-   _GLHCKlibrary.render.api.setProjection(&projection);
+   GLHCKRA()->setProjection(&projection);
 }
 
 /* dirty debug build stuff */
@@ -158,20 +160,13 @@ GLHCKAPI int glhckInit(int argc, char **argv)
       return RETURN_OK;
 
    /* reset global state */
-   memset(&_GLHCKlibrary,                 0, sizeof(__GLHCKlibrary));
-   memset(&_GLHCKlibrary.trace,           0, sizeof(__GLHCKtrace));
-   memset(&_GLHCKlibrary.render,          0, sizeof(__GLHCKrender));
-   memset(&_GLHCKlibrary.render.api,      0, sizeof(__GLHCKrenderAPI));
-   memset(&_GLHCKlibrary.render.draw,     0, sizeof(__GLHCKrenderDraw));
-   memset(&_GLHCKlibrary.world,           0, sizeof(__GLHCKworld));
+   memset(&_GLHCKlibrary, 0, sizeof(__GLHCKlibrary));
 
-   _GLHCKlibrary.render.draw.objects.queue =
-      _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckObject*));
-   _GLHCKlibrary.render.draw.objects.allocated += GLHCK_QUEUE_ALLOC_STEP;
-
-   _GLHCKlibrary.render.draw.textures.queue =
-      _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckTexture*));
-   _GLHCKlibrary.render.draw.textures.allocated += GLHCK_QUEUE_ALLOC_STEP;
+   /* pre-allocate render queues */
+   GLHCKRD()->objects.queue = _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckObject*));
+   GLHCKRD()->objects.allocated += GLHCK_QUEUE_ALLOC_STEP;
+   GLHCKRD()->textures.queue = _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckTexture*));
+   GLHCKRD()->textures.allocated += GLHCK_QUEUE_ALLOC_STEP;
 
    /* our data structure are intialized now */
 
@@ -236,7 +231,7 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
       renderType = GLHCK_RENDER_OPENGL_FIXED_PIPELINE;
 
    /* close display if created already */
-   if (_GLHCKlibrary.render.type == renderType) goto success;
+   if (GLHCKR()->type == renderType) goto success;
    else glhckDisplayClose();
 
    /* init renderer */
@@ -252,13 +247,13 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    }
 
    /* check that initialization was success */
-   if (!_GLHCKlibrary.render.name)
+   if (!GLHCKR()->name)
       goto fail;
 
    /* check render api and output warnings,
     * if any function is missing */
    _glhckCheckRenderApi(&_GLHCKlibrary.render);
-   _GLHCKlibrary.render.type = renderType;
+   GLHCKR()->type = renderType;
 
    /* resize display */
    glhckDisplayResize(width, height);
@@ -279,11 +274,11 @@ GLHCKAPI void glhckDisplayClose(void)
    TRACE(0);
 
    /* nothing to terminate */
-   if (!_GLHCKlibrary.render.name)
+   if (!GLHCKR()->name)
       return;
 
-   _GLHCKlibrary.render.api.terminate();
-   _GLHCKlibrary.render.type = GLHCK_RENDER_AUTO;
+   GLHCKRA()->terminate();
+   GLHCKR()->type = GLHCK_RENDER_AUTO;
 }
 
 /* \brief resize virtual display */
@@ -293,20 +288,20 @@ GLHCKAPI void glhckDisplayResize(int width, int height)
    CALL(1, "%d, %d", width, height);
    assert(width > 0 && height > 0);
 
-   /* nothing to resize */
-   if (!_GLHCKlibrary.render.name)
+   /* no renderer */
+   if (!GLHCKR()->name)
       return;
 
-   if (_GLHCKlibrary.render.width  == width &&
-       _GLHCKlibrary.render.height == height)
+   /* nothing to resize */
+   if (GLHCKR()->width == width && GLHCKR()->height == height)
       return;
 
    /* update all cameras */
    _glhckCameraWorldUpdate(width, height);
 
    /* update on library last, so functions know the old values */
-   _GLHCKlibrary.render.width  = width;
-   _GLHCKlibrary.render.height = height;
+   GLHCKR()->width  = width;
+   GLHCKR()->height = height;
 }
 
 /* \brief clear scene */
@@ -316,10 +311,10 @@ GLHCKAPI void glhckClear(void)
    TRACE(2);
 
    /* can't clear */
-   if (!_GLHCKlibrary.render.name)
+   if (!GLHCKR()->name)
       return;
 
-   _GLHCKlibrary.render.api.clear();
+   GLHCKRA()->clear();
 }
 
 /* \brief return detected driver type */
@@ -327,7 +322,7 @@ GLHCKAPI glhckDriverType glhckRenderGetDriver(void)
 {
    GLHCK_INITIALIZED();
    TRACE(0);
-   return _GLHCKlibrary.render.driver;
+   return GLHCKR()->driver;
 }
 
 /* \brief set global geometry vertexdata precision to glhck */
@@ -337,16 +332,16 @@ GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype,
    GLHCK_INITIALIZED();
    CALL(0, "%u, %u", itype, vtype);
    if (itype != GLHCK_INDEX_NONE)
-      _GLHCKlibrary.render.globalIndexType  = itype;
+      GLHCKR()->globalIndexType  = itype;
    if (vtype != GLHCK_VERTEX_NONE)
-      _GLHCKlibrary.render.globalVertexType = vtype;
+      GLHCKR()->globalVertexType = vtype;
 }
 
 /* \brief get parameter from renderer */
 GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params) {
    GLHCK_INITIALIZED();
    CALL(1, "%u, %p", pname, params);
-   _GLHCKlibrary.render.api.getIntegerv(pname, params);
+   GLHCKRA()->getIntegerv(pname, params);
 }
 
 /* \brief set render flags */
@@ -354,7 +349,7 @@ GLHCKAPI void glhckRenderSetFlags(unsigned int flags)
 {
    GLHCK_INITIALIZED();
    CALL(1, "%u", flags);
-   _GLHCKlibrary.render.flags = flags;
+   GLHCKR()->flags = flags;
 }
 
 /* \brief set projection matrix */
@@ -362,7 +357,7 @@ GLHCKAPI void glhckRenderProjection(kmMat4 const* mat)
 {
    GLHCK_INITIALIZED();
    CALL(1, "%p", mat);
-   _GLHCKlibrary.render.api.setProjection(mat);
+   GLHCKRA()->setProjection(mat);
 }
 
 /* \brief output queued objects */
@@ -372,7 +367,7 @@ GLHCKAPI void glhckPrintObjectQueue(void)
    __GLHCKobjectQueue *objects;
    GLHCK_INITIALIZED();
 
-   objects = &_GLHCKlibrary.render.draw.objects;
+   objects = &GLHCKRD()->objects;
    _glhckPuts("\n--- Object Queue ---");
    for (i = 0; i != objects->count; ++i)
       _glhckPrintf("%u. %p", i, objects->queue[i]);
@@ -388,7 +383,7 @@ GLHCKAPI void glhckPrintTextureQueue(void)
    __GLHCKtextureQueue *textures;
    GLHCK_INITIALIZED();
 
-   textures = &_GLHCKlibrary.render.draw.textures;
+   textures = &GLHCKRD()->textures;
    _glhckPuts("\n--- Texture Queue ---");
    for (i = 0; i != textures->count; ++i)
       _glhckPrintf("%u. %p", i, textures->queue[i]);
@@ -410,11 +405,11 @@ GLHCKAPI void glhckRender(void)
    TRACE(2);
 
    /* can't render */
-   if (!_glhckInitialized || !_GLHCKlibrary.render.name)
+   if (!_glhckInitialized || !GLHCKR()->name)
       return;
 
-   objects  = &_GLHCKlibrary.render.draw.objects;
-   textures = &_GLHCKlibrary.render.draw.textures;
+   objects  = &GLHCKRD()->objects;
+   textures = &GLHCKRD()->textures;
 
    /* store counts for enumeration, +1 for untexture objects */
    tc = textures->count+1;
@@ -568,8 +563,8 @@ GLHCKAPI void glhckTerminate(void)
    glhckMassacreWorld();
 
    /* destroy queues */
-   _glhckFree(_GLHCKlibrary.render.draw.objects.queue);
-   _glhckFree(_GLHCKlibrary.render.draw.textures.queue);
+   _glhckFree(GLHCKRD()->objects.queue);
+   _glhckFree(GLHCKRD()->textures.queue);
 
 #ifndef NDEBUG
    _glhckTrackTerminate();
