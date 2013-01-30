@@ -70,14 +70,14 @@ enum {
 
 /* global data */
 typedef struct __OpenGLstate {
-   char attrib[GLHCK_ATTRIB_COUNT];
-   unsigned int flags;
-   unsigned int blenda, blendb;
+   GLchar attrib[GLHCK_ATTRIB_COUNT];
+   GLuint flags;
+   GLuint blenda, blendb;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
    struct __OpenGLstate state;
-   size_t indexCount;
+   GLsizei indexCount;
    kmMat4 projection;
    kmMat4 orthographic;
    glhckShader *baseShader;
@@ -97,7 +97,7 @@ static void rSetProjection(const kmMat4 *m)
 #ifdef USE_DOUBLE_PRECISION
    // GL_CALL(glUniformMatrix4dv(glGetUniformLocation(_OpenGL.baseShader->program, "Projection"), 1, 0, (double*)&m[0]));
 #else
-   GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Projection"), 1, 0, (float*)&m[0]));
+   GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Projection"), 1, 0, (GLfloat*)&m[0]));
 #endif
 
    if (m != &_OpenGL.projection)
@@ -113,7 +113,7 @@ static const kmMat4* rGetProjection(void)
 }
 
 /* \brief resize viewport */
-static void rViewport(int x, int y, int width, int height)
+static void rViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
    CALL(2, "%d, %d, %d, %d", x, y, width, height);
    assert(width > 0 && height > 0);
@@ -122,16 +122,16 @@ static void rViewport(int x, int y, int width, int height)
    GL_CALL(glViewport(x, y, width, height));
 
    /* create orthographic projection matrix */
-   kmMat4OrthographicProjection(&_OpenGL.orthographic,
-         0, width, height, 0, -1, 1);
+   kmMat4OrthographicProjection(&_OpenGL.orthographic, 0, width, height, 0, -1, 1);
 }
 
 /* \brief get attribute list from program */
-static _glhckShaderAttribute* rProgramAttributeList(unsigned int obj)
+static _glhckShaderAttribute* rProgramAttributeList(GLuint obj)
 {
    GLenum type;
-   char name[255];
-   int count, i, length, size;
+   GLchar name[255];
+   GLint count, i;
+   GLsizei size, length;
    _glhckShaderAttribute *attributes = NULL, *a, *an;
    CALL(0, "%u", obj);
 
@@ -174,11 +174,12 @@ no_attributes:
 }
 
 /* \brief get uniform list from program */
-static _glhckShaderUniform* rProgramUniformList(unsigned int obj)
+static _glhckShaderUniform* rProgramUniformList(GLuint obj)
 {
    GLenum type;
-   char name[255];
-   int count, i, length, size;
+   GLchar name[255];
+   GLint count, i;
+   GLsizei length, size;
    _glhckShaderUniform *uniforms = NULL, *u, *un;
    CALL(0, "%u", obj);
 
@@ -220,11 +221,11 @@ no_uniforms:
 }
 
 /* \brief link program from 2 compiled shader objects */
-static unsigned int rProgramLink(unsigned int vertexShader, unsigned int fragmentShader)
+static unsigned int rProgramLink(GLuint vertexShader, GLuint fragmentShader)
 {
-   unsigned int obj = 0;
-   char *log = NULL;
-   int logSize;
+   GLuint obj = 0;
+   GLchar *log = NULL;
+   GLsizei logSize;
    CALL(0, "%u, %u", vertexShader, fragmentShader);
 
    /* create program object */
@@ -264,13 +265,12 @@ fail:
 }
 
 /* \brief compile shader object from effect key and optional contents */
-static unsigned int rShaderCompile(glhckShaderType type, const char *effectKey, const char *contentsFromMemory)
+static GLuint rShaderCompile(glhckShaderType type, const GLchar *effectKey, const GLchar *contentsFromMemory)
 {
-   unsigned int obj = 0;
-   const char *contents;
-   char *log = NULL;
-   int logSize;
-   GLenum stype;
+   GLuint obj = 0;
+   const GLchar *contents;
+   GLchar *log = NULL;
+   GLsizei logSize;
    CALL(0, "%s, %s", effectKey, contentsFromMemory);
    assert(effectKey);
 
@@ -278,13 +278,8 @@ static unsigned int rShaderCompile(glhckShaderType type, const char *effectKey, 
    if (!(contents = glswGetShader(effectKey, contentsFromMemory)))
       goto fail;
 
-   /* select type of shader to compile */
-   stype = GL_VERTEX_SHADER;
-   if (type == GLHCK_FRAGMENT_SHADER)
-      stype = GL_FRAGMENT_SHADER;
-
    /* create shader object */
-   if (!(obj = glCreateShader(stype)))
+   if (!(obj = glCreateShader(glhShaderTypeForGlhckType(type))))
       goto fail;
 
    /* feed the shader the contents */
@@ -317,7 +312,7 @@ fail:
 /* \brief set needed state from object data */
 static inline void rMaterialState(const _glhckObject *object)
 {
-   unsigned int i;
+   GLuint i;
    __OpenGLstate old   = _OpenGL.state;
    _OpenGL.state.flags = 0; /* reset this state */
 
@@ -395,14 +390,14 @@ static inline void rMaterialState(const _glhckObject *object)
    if (GL_STATE_CHANGED(GL_STATE_BLEND)) {
       if (GL_HAS_STATE(GL_STATE_BLEND)) {
          GL_CALL(glEnable(GL_BLEND));
-         GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+         GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
       } else {
          GL_CALL(glDisable(GL_BLEND));
       }
    } else if (GL_HAS_STATE(GL_STATE_BLEND) &&
          (_OpenGL.state.blenda != old.blenda ||
           _OpenGL.state.blendb != old.blendb)) {
-      GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+      GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
    }
 
    /* check attribs */
@@ -445,7 +440,7 @@ static inline void rMaterialState(const _glhckObject *object)
 /* \brief pass interleaved vertex data to OpenGL nicely. */
 static inline void rGeometryPointer(const glhckGeometry *geometry)
 {
-   // printf("%s (%zu) : %u\n", glhckVertexTypeString(geometry->vertexType), geometry->vertexCount, geometry->textureRange);
+   // printf("%s dd) : %u\n", glhckVertexTypeString(geometry->vertexType), geometry->vertexCount, geometry->textureRange);
 
    /* vertex data */
    switch (geometry->vertexType) {
@@ -485,10 +480,10 @@ static inline void rGeometryPointer(const glhckGeometry *geometry)
 /* \brief render frustum */
 static inline void rFrustumRender(glhckFrustum *frustum)
 {
-   unsigned int i = 0;
+   GLuint i = 0;
    kmVec3 *near = frustum->nearCorners;
    kmVec3 *far  = frustum->farCorners;
-   const float points[] = {
+   const GLfloat points[] = {
                       near[0].x, near[0].y, near[0].z,
                       near[1].x, near[1].y, near[1].z,
                       near[1].x, near[1].y, near[1].z,
@@ -524,7 +519,7 @@ static inline void rFrustumRender(glhckFrustum *frustum)
    kmMat4 identity;
    kmMat4Identity(&identity);
    GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Model"),
-            1, 0, (float*)&identity));
+            1, 0, (GLfloat*)&identity));
 
    GL_CALL(glLineWidth(4));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
@@ -541,10 +536,10 @@ static inline void rFrustumRender(glhckFrustum *frustum)
 /* \brief render object's oriented bounding box */
 static inline void rOBBRender(const _glhckObject *object)
 {
-   unsigned int i = 0;
+   GLuint i = 0;
    kmVec3 min = object->view.bounding.min;
    kmVec3 max = object->view.bounding.max;
-   const float points[] = {
+   const GLfloat points[] = {
                       min.x, min.y, min.z,
                       max.x, min.y, min.z,
                       min.x, min.y, min.z,
@@ -591,10 +586,10 @@ static inline void rOBBRender(const _glhckObject *object)
 /* \brief render object's axis-aligned bounding box */
 static inline void rAABBRender(const _glhckObject *object)
 {
-   unsigned int i = 0;
+   GLuint i = 0;
    kmVec3 min = object->view.aabb.min;
    kmVec3 max = object->view.aabb.max;
-   const float points[] = {
+   const GLfloat points[] = {
                       min.x, min.y, min.z,
                       max.x, min.y, min.z,
                       min.x, min.y, min.z,
@@ -632,13 +627,13 @@ static inline void rAABBRender(const _glhckObject *object)
    kmMat4 identity;
    kmMat4Identity(&identity);
    GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Model"),
-            1, 0, (float*)&identity));
+            1, 0, (GLfloat*)&identity));
 
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
 
    GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Model"),
-            1, 0, (float*)&object->view.matrix));
+            1, 0, (GLfloat*)&object->view.matrix));
 
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
       if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
@@ -649,7 +644,7 @@ static inline void rAABBRender(const _glhckObject *object)
 /* \brief begin object render */
 static inline void rObjectStart(const _glhckObject *object) {
    GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Model"),
-            1, 0, (float*)&object->view.matrix));
+            1, 0, (GLfloat*)&object->view.matrix));
 
    /* set states and draw */
    rMaterialState(object);
@@ -657,12 +652,11 @@ static inline void rObjectStart(const _glhckObject *object) {
 
 /* \brief end object render */
 static inline void rObjectEnd(const _glhckObject *object) {
-   unsigned int type = object->geometry->type;
+   glhckGeometryType type = object->geometry->type;
 
    /* switch to wireframe if requested */
    if (GL_HAS_STATE(GL_STATE_WIREFRAME)) {
-      type = object->geometry->type == GLHCK_TRIANGLES
-         ? GLHCK_LINES : GLHCK_LINE_STRIP;
+      type = (object->geometry->type==GLHCK_TRIANGLES ? GLHCK_LINES:GLHCK_LINE_STRIP);
    }
 
    /* draw geometry */
@@ -718,12 +712,12 @@ static inline void rTextRender(const _glhckText *text)
       _OpenGL.state.blenda = GLHCK_SRC_ALPHA;
       _OpenGL.state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
       GL_CALL(glEnable(GL_BLEND));
-      GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+      GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
    } else if (_OpenGL.state.blenda != GLHCK_SRC_ALPHA ||
               _OpenGL.state.blendb != GLHCK_ONE_MINUS_SRC_ALPHA) {
       _OpenGL.state.blenda = GLHCK_SRC_ALPHA;
       _OpenGL.state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
-      GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+      GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
    }
 
    if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
@@ -752,18 +746,18 @@ static inline void rTextRender(const _glhckText *text)
    }
 
    GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Projection"),
-            1, 0, (float*)&_OpenGL.orthographic));
+            1, 0, (GLfloat*)&_OpenGL.orthographic));
 
    kmMat4 identity;
    kmMat4Identity(&identity);
    GL_CALL(glUniformMatrix4fv(glGetUniformLocation(_OpenGL.baseShader->program, "Model"),
-            1, 0, (float*)&identity));
+            1, 0, (GLfloat*)&identity));
 
    for (texture = text->tcache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
-      glhckBindTexture(texture->object);
+      glhTextureBind(GL_TEXTURE_2D, texture->object);
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT), 0,
                (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
                &texture->geometry.vertexData[0].vertex));
@@ -774,6 +768,9 @@ static inline void rTextRender(const _glhckText *text)
       GL_CALL(glDrawArrays(GLHCK_TRISTRIP?GL_TRIANGLE_STRIP:GL_TRIANGLES,
                0, texture->geometry.vertexCount));
    }
+
+   /* restore glhck texture state */
+   glhTextureBindRestore();
 
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glEnable(GL_DEPTH_TEST));
@@ -788,13 +785,13 @@ static inline void rTextRender(const _glhckText *text)
 /* \brief get render information */
 static int renderInfo(void)
 {
-   int maxTex;
-   char *version, *vendor, *extensions, *extcpy, *s;
-   unsigned int major = 0, minor = 0, patch = 0;
+   GLint maxTex;
+   GLchar *version, *vendor, *extensions, *extcpy, *s;
+   GLuint major = 0, minor = 0, patch = 0;
    TRACE(0);
 
-   version = (char*)GL_CALL(glGetString(GL_VERSION));
-   vendor  = (char*)GL_CALL(glGetString(GL_VENDOR));
+   version = (GLchar*)GL_CALL(glGetString(GL_VERSION));
+   vendor  = (GLchar*)GL_CALL(glGetString(GL_VENDOR));
 
    if (!version || !vendor)
       goto fail;
@@ -960,7 +957,7 @@ void _glhckRenderOpenGL(void)
    /* bind the shader */
    glhckShaderBind(_OpenGL.baseShader);
    GL_CALL(glUniform1i(glGetUniformLocation(_OpenGL.baseShader->program, "Texture0"), 0));
-   GL_CALL(glUniform4fv(glGetUniformLocation(_OpenGL.baseShader->program, "MaterialColor"), 1, (float*)&((float[]){1,1,1,1})));
+   GL_CALL(glUniform4fv(glGetUniformLocation(_OpenGL.baseShader->program, "MaterialColor"), 1, (GLfloat*)&((GLfloat[]){1,1,1,1})));
 
    /* this also tells library that everything went OK,
     * so do it last */

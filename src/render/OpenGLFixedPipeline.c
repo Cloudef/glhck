@@ -41,14 +41,14 @@ enum {
 
 /* global data */
 typedef struct __OpenGLstate {
-   char attrib[GLHCK_ATTRIB_COUNT];
-   unsigned int flags;
-   unsigned int blenda, blendb;
+   GLchar attrib[GLHCK_ATTRIB_COUNT];
+   GLuint flags;
+   GLuint blenda, blendb;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
    struct __OpenGLstate state;
-   size_t indexCount;
+   GLsizei indexCount;
    kmMat4 projection;
    kmMat4 orthographic;
 } __OpenGLrender;
@@ -65,9 +65,9 @@ static void rSetProjection(const kmMat4 *m)
    CALL(2, "%p", m);
    GL_CALL(glMatrixMode(GL_PROJECTION));
 #ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((double*)m));
+   GL_CALL(glLoadMatrixd((GLdouble*)m));
 #else
-   GL_CALL(glLoadMatrixf((float*)m));
+   GL_CALL(glLoadMatrixf((GLfloat*)m));
 #endif
 
    if (m != &_OpenGL.projection)
@@ -102,7 +102,7 @@ static void rViewport(int x, int y, int width, int height)
 /* \brief set needed state from object data */
 static inline void materialState(const _glhckObject *object)
 {
-   unsigned int i;
+   GLuint i;
    __OpenGLstate old   = _OpenGL.state;
    _OpenGL.state.flags = 0; /* reset this state */
 
@@ -180,14 +180,14 @@ static inline void materialState(const _glhckObject *object)
    if (GL_STATE_CHANGED(GL_STATE_BLEND)) {
       if (GL_HAS_STATE(GL_STATE_BLEND)) {
          GL_CALL(glEnable(GL_BLEND));
-         GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+         GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
       } else {
          GL_CALL(glDisable(GL_BLEND));
       }
    } else if (GL_HAS_STATE(GL_STATE_BLEND) &&
          (_OpenGL.state.blenda != old.blenda ||
           _OpenGL.state.blendb != old.blendb)) {
-      GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+      GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
    }
 
    /* check texture */
@@ -239,7 +239,7 @@ static inline void materialState(const _glhckObject *object)
 /* \brief pass interleaved vertex data to OpenGL nicely. */
 static inline void rGeometryPointer(const glhckGeometry *geometry)
 {
-   // printf("%s (%zu) : %u\n", glhckVertexTypeString(geometry->vertexType), geometry->vertexCount, geometry->textureRange);
+   // printf("%s (%d) : %u\n", glhckVertexTypeString(geometry->vertexType), geometry->vertexCount, geometry->textureRange);
 
    /* vertex data */
    switch (geometry->vertexType) {
@@ -279,10 +279,10 @@ static inline void rGeometryPointer(const glhckGeometry *geometry)
 /* \brief render frustum */
 static inline void rFrustumRender(glhckFrustum *frustum)
 {
-   unsigned int i = 0;
+   GLuint i = 0;
    kmVec3 *near = frustum->nearCorners;
    kmVec3 *far  = frustum->farCorners;
-   const float points[] = {
+   const GLfloat points[] = {
                       near[0].x, near[0].y, near[0].z,
                       near[1].x, near[1].y, near[1].z,
                       near[1].x, near[1].y, near[1].z,
@@ -342,10 +342,10 @@ static inline void rFrustumRender(glhckFrustum *frustum)
 /* \brief render object's oriented bounding box */
 static inline void rOBBRender(const _glhckObject *object)
 {
-   unsigned int i = 0;
+   GLuint i = 0;
    kmVec3 min = object->view.bounding.min;
    kmVec3 max = object->view.bounding.max;
-   const float points[] = {
+   const GLfloat points[] = {
                       min.x, min.y, min.z,
                       max.x, min.y, min.z,
                       min.x, min.y, min.z,
@@ -402,10 +402,10 @@ static inline void rOBBRender(const _glhckObject *object)
 /* \brief render object's axis-aligned bounding box */
 static inline void rAABBRender(const _glhckObject *object)
 {
-   unsigned int i = 0;
+   GLuint i = 0;
    kmVec3 min = object->view.aabb.min;
    kmVec3 max = object->view.aabb.max;
-   const float points[] = {
+   const GLfloat points[] = {
                       min.x, min.y, min.z,
                       max.x, min.y, min.z,
                       min.x, min.y, min.z,
@@ -453,9 +453,9 @@ static inline void rAABBRender(const _glhckObject *object)
 
    /* go back */
 #ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((double*)&object->view.matrix));
+   GL_CALL(glLoadMatrixd((GLdouble*)&object->view.matrix));
 #else
-   GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
+   GL_CALL(glLoadMatrixf((GLfloat*)&object->view.matrix));
 #endif
 
    /* re enable stuff we disabled */
@@ -473,14 +473,14 @@ static inline void rObjectStart(const _glhckObject *object) {
    /* set texture coords according to how geometry wants them */
    GL_CALL(glMatrixMode(GL_TEXTURE));
    GL_CALL(glLoadIdentity());
-   GL_CALL(glScalef((float)1.0f/object->geometry->textureRange, (float)1.0f/object->geometry->textureRange, 1.0f));
+   GL_CALL(glScalef((GLfloat)1.0f/object->geometry->textureRange, (GLfloat)1.0f/object->geometry->textureRange, 1.0f));
 
    /* load view matrix */
    GL_CALL(glMatrixMode(GL_MODELVIEW));
 #ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((double*)&object->view.matrix));
+   GL_CALL(glLoadMatrixd((GLdouble*)&object->view.matrix));
 #else
-   GL_CALL(glLoadMatrixf((float*)&object->view.matrix));
+   GL_CALL(glLoadMatrixf((GLfloat*)&object->view.matrix));
 #endif
 
    /* reset color */
@@ -495,12 +495,11 @@ static inline void rObjectStart(const _glhckObject *object) {
 
 /* \brief end object render */
 static inline void rObjectEnd(const _glhckObject *object) {
-   unsigned int type = object->geometry->type;
+   glhckGeometryType type = object->geometry->type;
 
    /* switch to wireframe if requested */
    if (GL_HAS_STATE(GL_STATE_WIREFRAME)) {
-      type = object->geometry->type == GLHCK_TRIANGLES
-         ? GLHCK_LINES : GLHCK_LINE_STRIP;
+      type = (object->geometry->type==GLHCK_TRIANGLES ? GLHCK_LINES:GLHCK_LINE_STRIP);
    }
 
    /* render geometry */
@@ -556,12 +555,12 @@ static inline void rTextRender(const _glhckText *text)
       _OpenGL.state.blenda = GLHCK_SRC_ALPHA;
       _OpenGL.state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
       GL_CALL(glEnable(GL_BLEND));
-      GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+      GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
    } else if (_OpenGL.state.blenda != GLHCK_SRC_ALPHA ||
               _OpenGL.state.blendb != GLHCK_ONE_MINUS_SRC_ALPHA) {
       _OpenGL.state.blenda = GLHCK_SRC_ALPHA;
       _OpenGL.state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
-      GL_CALL(glBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+      GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
    }
 
    if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
@@ -588,14 +587,14 @@ static inline void rTextRender(const _glhckText *text)
    /* set 2d projection */
    GL_CALL(glMatrixMode(GL_PROJECTION));
 #ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((double*)&_OpenGL.orthographic));
+   GL_CALL(glLoadMatrixd((GLdouble*)&_OpenGL.orthographic));
 #else
-   GL_CALL(glLoadMatrixf((float*)&_OpenGL.orthographic));
+   GL_CALL(glLoadMatrixf((GLfloat*)&_OpenGL.orthographic));
 #endif
 
    GL_CALL(glMatrixMode(GL_TEXTURE));
    GL_CALL(glLoadIdentity());
-   GL_CALL(glScalef((float)1.0f/text->textureRange, (float)1.0f/text->textureRange, 1.0f));
+   GL_CALL(glScalef((GLfloat)1.0f/text->textureRange, (GLfloat)1.0f/text->textureRange, 1.0f));
 
    GL_CALL(glMatrixMode(GL_MODELVIEW));
    GL_CALL(glLoadIdentity());
@@ -605,7 +604,7 @@ static inline void rTextRender(const _glhckText *text)
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
-      glhckBindTexture(texture->object);
+      glhTextureBind(GL_TEXTURE_2D, texture->object);
       GL_CALL(glVertexPointer(2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
             (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
             &texture->geometry.vertexData[0].vertex));
@@ -615,6 +614,9 @@ static inline void rTextRender(const _glhckText *text)
       GL_CALL(glDrawArrays(GLHCK_TRISTRIP?GL_TRIANGLE_STRIP:GL_TRIANGLES,
                0, texture->geometry.vertexCount));
    }
+
+   /* restore glhck texture state */
+   glhTextureBindRestore();
 
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glEnable(GL_DEPTH_TEST));
@@ -629,13 +631,13 @@ static inline void rTextRender(const _glhckText *text)
 /* \brief get render information */
 static int renderInfo(void)
 {
-   int maxTex;
-   char *version, *vendor, *extensions, *extcpy, *s;
-   unsigned int major = 0, minor = 0, patch = 0;
+   GLint maxTex;
+   GLchar *version, *vendor, *extensions, *extcpy, *s;
+   GLuint major = 0, minor = 0, patch = 0;
    TRACE(0);
 
-   version = (char*)GL_CALL(glGetString(GL_VERSION));
-   vendor  = (char*)GL_CALL(glGetString(GL_VENDOR));
+   version = (GLchar*)GL_CALL(glGetString(GL_VERSION));
+   vendor  = (GLchar*)GL_CALL(glGetString(GL_VENDOR));
 
    if (!version || !vendor)
       goto fail;
@@ -715,27 +717,27 @@ DECLARE_GL_GEN_FUNC(rGlDeleteFramebuffers, glDeleteFramebuffers);
 DECLARE_GL_BIND_FUNC(rGlBindFramebuffer, glBindFramebuffer(GL_FRAMEBUFFER, object))
 
 /* stub shader functions */
-static void rProgramUse(unsigned int obj) {
+static void rProgramUse(GLuint obj) {
    DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
 }
-static unsigned int rProgramLink(unsigned int vsobj, unsigned int fsobj) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-   return 0;
-}
-static void rProgramDelete(unsigned int obj) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-}
-static _glhckShaderAttribute* rProgramAttributeList(unsigned int obj) {
-   return NULL;
-}
-static _glhckShaderUniform* rProgramUniformList(unsigned int obj) {
-   return NULL;
-}
-static unsigned int rShaderCompile(glhckShaderType type, const char *effectKey, const char *memoryContents) {
+static GLuint rProgramLink(GLuint vsobj, GLuint fsobj) {
    DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
    return 0;
 }
-static void rShaderDelete(unsigned int obj) {
+static void rProgramDelete(GLuint obj) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+}
+static _glhckShaderAttribute* rProgramAttributeList(GLuint obj) {
+   return NULL;
+}
+static _glhckShaderUniform* rProgramUniformList(GLuint obj) {
+   return NULL;
+}
+static GLuint rShaderCompile(glhckShaderType type, const GLchar *effectKey, const GLchar *memoryContents) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+   return 0;
+}
+static void rShaderDelete(GLuint obj) {
    DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
 }
 
@@ -790,7 +792,7 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(programAttributeList, rProgramAttributeList);
    GLHCK_RENDER_FUNC(programUniformList, rProgramUniformList);
    GLHCK_RENDER_FUNC(shaderCompile, rShaderCompile);
-GLHCK_RENDER_FUNC(shaderDelete, rShaderDelete);
+   GLHCK_RENDER_FUNC(shaderDelete, rShaderDelete);
 
    /* drawing functions */
    GLHCK_RENDER_FUNC(setProjection, rSetProjection);

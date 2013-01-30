@@ -42,12 +42,12 @@ typedef struct __GLHCKtextGlyph
 /* \brief font object */
 typedef struct __GLHCKtextFont
 {
+   void *data;
    int lut[GLHCK_TEXT_HASH_SIZE];
    unsigned int id, type, numGlyph;
-   struct stbtt_fontinfo font;
-   unsigned char *data;
-   struct __GLHCKtextGlyph *gcache;
    float ascender, descender, lineh;
+   struct stbtt_fontinfo font;
+   struct __GLHCKtextGlyph *gcache;
    struct __GLHCKtextFont *next;
 } __GLHCKtextFont;
 
@@ -492,7 +492,7 @@ GLHCKAPI const glhckColorb* glhckTextGetColor(glhckText *text)
 }
 
 /* \brief new font from memory */
-GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text, unsigned char *data)
+GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text, const void *data, size_t size)
 {
    unsigned int id;
    int ascent, descent, fh, line_gap;
@@ -507,7 +507,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text, unsigned char 
    /* init */
    memset(font->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
    for (id = 1, f = text->fcache; f; f = f->next) ++id;
-   font->data = data;
+   font->data = _glhckCopy(data, size);
 
    /* create truetype font */
    if (!stbtt_InitFont(&font->font, font->data, 0))
@@ -559,7 +559,7 @@ GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file)
    NULLDO(fclose, f);
 
    /* read and add the new font to stash */
-   if (!(id = glhckTextNewFontFromMemory(text, data)))
+   if (!(id = glhckTextNewFontFromMemory(text, data, size)))
       goto fail;
 
    RET(0, "%d", id);

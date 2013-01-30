@@ -244,6 +244,8 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
       case GLHCK_RENDER_GLES1:
          _glhckRenderOpenGLFixedPipeline();
          break;
+      default:
+         break;
    }
 
    /* check that initialization was success */

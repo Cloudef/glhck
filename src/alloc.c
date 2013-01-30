@@ -168,7 +168,7 @@ fail:
 }
 
 /* \brief internal memcpy function. */
-void* __glhckCopy(const char *channel, void *ptr, size_t nmemb)
+void* __glhckCopy(const char *channel, const void *ptr, size_t nmemb)
 {
    void *ptr2;
    CALL(3, "%p, %zu", ptr, nmemb);

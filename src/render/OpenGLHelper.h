@@ -69,8 +69,7 @@ static inline void GL_ERROR(unsigned int line, const char *func, const char *glf
 #  define GL_CHECK(x) x
 #else
 #  define GL_CHECK(x) GL_CHECK_ERROR(__func__, __STRING(x), x)
-static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc,
-      GLenum error)
+static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum error)
 {
    if (error != GL_NO_ERROR &&
        error != GL_FRAMEBUFFER_COMPLETE)
@@ -99,9 +98,9 @@ static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc,
 
 /* declare gl generation function */
 #define DECLARE_GL_GEN_FUNC(x,y)                                     \
-static void x(size_t count, unsigned int *objects)                   \
+static void x(int count, unsigned int *objects)                      \
 {                                                                    \
-   CALL(0, "%zu, %p", count, objects);                               \
+   CALL(0, "%d, %p", count, objects);                                \
    GL_CALL(y(count, objects));                                       \
 }
 
@@ -114,20 +113,28 @@ static void x(unsigned int object)                                   \
 }
 
 /*** glhck mapping functions ***/
-unsigned int glhAttachmentTypeForGlhckType(_glhckRttAttachmentType type);
+GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property);
+GLenum glhGeometryTypeForGlhckType(glhckGeometryType type);
+GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format);
+GLenum glhBlendingModeForGlhckMode(glhckBlendingMode mode);
+GLenum glhAttachmentTypeForGlhckType(_glhckRttAttachmentType type);
+GLenum glhShaderTypeForGlhckType(glhckShaderType type);
 
 /*** shared opengl functions ***/
-void glhGetIntegerv(unsigned int pname, int *params);
+void glhGetIntegerv(GLenum pname, GLint *params);
 void glhClear(void);
-void glhClearColor(char r, char g, char b, char a);
-void glhBufferGetPixels(int x, int y, int width, int height,
-      unsigned int format, unsigned char *data);
-unsigned int glhTextureCreate(const unsigned char *buffer, size_t size,
-      int width, int height, unsigned int format, unsigned int reuse_texture_ID, unsigned int flags);
-void glhTextureFill(unsigned int texture, const unsigned char *data, size_t size,
-      int x, int y, int width, int height, unsigned int format);
-int glhFramebufferLinkWithTexture(unsigned int object,
-      unsigned int texture, _glhckRttAttachmentType type);
-void glhGeometryRender(const glhckGeometry *geometry, unsigned int type);
+void glhClearColor(GLchar r, GLchar g, GLchar b, GLchar a);
+void glhBufferGetPixels(GLint x, GLint y, GLsizei width, GLsizei height,
+      glhckTextureFormat format, GLvoid *data);
+void glhBlendFunc(GLenum blenda, GLenum blendb);
+void glhTextureBind(GLenum type, GLuint texture);
+void glhTextureBindRestore(void);
+GLuint glhTextureCreate(const GLvoid *buffer, GLsizei size,
+      GLsizei width, GLsizei height, glhckTextureFormat format,
+      GLuint reuseTextureObject, unsigned int flags);
+void glhTextureFill(GLuint texture, const GLvoid *data, GLsizei size,
+      GLint x, GLint y, GLsizei width, GLsizei height, glhckTextureFormat format);
+int glhFramebufferLinkWithTexture(GLuint object, GLuint texture, _glhckRttAttachmentType type);
+void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type);
 
 #endif /* __glhck_opengl_helper_h__ */

@@ -401,7 +401,7 @@ GLHCKAPI void glhckObjectMakeRoot(glhckObject *object, int root)
 }
 
 /* \brief get object's affection flags */
-GLHCKAPI unsigned int glhckObjectGetParentAffection(const glhckObject *object)
+GLHCKAPI unsigned char glhckObjectGetParentAffection(const glhckObject *object)
 {
    CALL(3, "%p", object);
    assert(object);
@@ -917,9 +917,9 @@ GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object)
 /* \brief insert indices to object */
 GLHCKAPI int glhckObjectInsertIndices(
       glhckObject *object, glhckGeometryIndexType type,
-      const glhckImportIndexData *indices, size_t memb)
+      const glhckImportIndexData *indices, int memb)
 {
-   CALL(0, "%p, %zu, %d, %p", object, memb, type, indices);
+   CALL(0, "%p, %d, %d, %p", object, memb, type, indices);
    assert(object);
 
    /* create new geometry for object, if not one already */
@@ -943,9 +943,9 @@ fail:
 /* \brief insert vertices to object */
 GLHCKAPI int glhckObjectInsertVertices(
       glhckObject *object, glhckGeometryVertexType type,
-      const glhckImportVertexData *vertices, size_t memb)
+      const glhckImportVertexData *vertices, int memb)
 {
-   CALL(0, "%p, %zu, %d, %p", object, memb, type, vertices);
+   CALL(0, "%p, %d, %d, %p", object, memb, type, vertices);
    assert(object);
 
    /* create new geometry for object, if not one already */

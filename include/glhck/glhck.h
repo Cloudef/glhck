@@ -95,59 +95,6 @@ extern "C" {
  * public api
  ***/
 
-/* texture format */
-#define GLHCK_RED             0x1903
-#define GLHCK_GREEN           0x1904
-#define GLHCK_BLUE            0x1905
-#define GLHCK_ALPHA           0x1906
-#define GLHCK_LUMINANCE       0x1909
-#define GLHCK_LUMINANCE_ALPHA 0x190A
-#define GLHCK_RGB             0x1907
-#define GLHCK_RGBA            0x1908
-
-/* blending */
-#define GLHCK_ZERO                                 0x0
-#define GLHCK_ONE                                  0x1
-#define GLHCK_SRC_COLOR                            0x0300
-#define GLHCK_ONE_MINUS_SRC_COLOR                  0x0301
-#define GLHCK_SRC_ALPHA                            0x0302
-#define GLHCK_ONE_MINUS_SRC_ALPHA                  0x0303
-#define GLHCK_DST_ALPHA                            0x0304
-#define GLHCK_ONE_MINUS_DST_ALPHA                  0x0305
-#define GLHCK_DST_COLOR                            0x0306
-#define GLHCK_ONE_MINUS_DST_COLOR                  0x0307
-#define GLHCK_SRC_ALPHA_SATURATE                   0x0308
-#define GLHCK_CONSTANT_COLOR                       0x8001
-#define GLHCK_ONE_MINUS_CONSTANT_COLOR             0x8002
-#define GLHCK_CONSTANT_ALPHA                       0x8003
-#define GLHCK_ONE_MINUS_CONSTANT_ALPHA             0x8004
-
-/* compressed texture format */
-/* FIXME: check available formats and etc bleh stuff */
-#define GLHCK_COMPRESSED_RGB_DXT1  0x83F1
-#define GLHCK_COMPRESSED_RGBA_DXT5 0x83F3
-
-/* geometry type */
-#define GLHCK_POINTS          0x0000
-#define GLHCK_LINES           0x0001
-#define GLHCK_LINE_LOOP       0x0002
-#define GLHCK_LINE_STRIP      0x0003
-#define GLHCK_TRIANGLES       0x0004
-#define GLHCK_TRIANGLE_STRIP  0x0005
-
-/* renderer properties */
-#define GLHCK_MAX_TEXTURE_SIZE                  0x0D33
-#define GLHCK_MAX_CUBE_MAP_TEXTURE_SIZE         0x8510
-#define GLHCK_MAX_VERTEX_ATTRIBS                0x8869
-#define GLHCK_MAX_VERTEX_UNIFORM_VECTORS        0x8859
-#define GLHCK_MAX_VARYING_VECTORS               0x8DFC
-#define GLHCK_MAX_COMBINED_TEXTURE_IMAGE_UNITS  0x8B4D
-#define GLHCK_MAX_VERTEX_TEXTURE_IMAGE_UNITS    0x8B4C
-#define GLHCK_MAX_TEXTURE_IMAGE_UNITS           0x8872
-#define GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS      0x8DFD
-#define GLHCK_MAX_RENDERBUFFER_SIZE             0x84E8
-#define GLHCK_MAX_VIEWPORT_DIMS                 0x0D3A
-
 /* debugging level */
 typedef enum glhckDebugLevel {
    GLHCK_DBG_ERROR,
@@ -179,6 +126,33 @@ typedef enum glhckRenderFlags {
    GLHCK_RENDER_FLAG_NONE = 0,
 } glhckRenderFlags;
 
+/* renderer properties */
+typedef enum glhckRenderProperty
+{
+   GLHCK_MAX_TEXTURE_SIZE,
+   GLHCK_MAX_CUBE_MAP_TEXTURE_SIZE,
+   GLHCK_MAX_VERTEX_ATTRIBS,
+   GLHCK_MAX_VERTEX_UNIFORM_VECTORS,
+   GLHCK_MAX_VARYING_VECTORS,
+   GLHCK_MAX_COMBINED_TEXTURE_IMAGE_UNITS,
+   GLHCK_MAX_VERTEX_TEXTURE_IMAGE_UNITS,
+   GLHCK_MAX_TEXTURE_IMAGE_UNITS,
+   GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS,
+   GLHCK_MAX_RENDERBUFFER_SIZE,
+   GLHCK_MAX_VIEWPORT_DIMS,
+} glhckRenderProperty;
+
+/* geometry type */
+typedef enum glhckGeometryType
+{
+   GLHCK_POINTS,
+   GLHCK_LINES,
+   GLHCK_LINE_LOOP,
+   GLHCK_LINE_STRIP,
+   GLHCK_TRIANGLES,
+   GLHCK_TRIANGLE_STRIP,
+} glhckGeometryType;
+
 /* shader type */
 typedef enum glhckShaderType {
    GLHCK_VERTEX_SHADER,
@@ -192,7 +166,7 @@ typedef enum glhckProjectionType {
 } glhckProjectionType;
 
 /* frustum planes */
-typedef enum glhckFrustumPlanes {
+typedef enum glhckFrustumPlane {
    GLHCK_FRUSTUM_PLANE_LEFT,
    GLHCK_FRUSTUM_PLANE_RIGHT,
    GLHCK_FRUSTUM_PLANE_BOTTOM,
@@ -200,16 +174,16 @@ typedef enum glhckFrustumPlanes {
    GLHCK_FRUSTUM_PLANE_NEAR,
    GLHCK_FRUSTUM_PLANE_FAR,
    GLHCK_FRUSTUM_PLANE_LAST
-} glhckFrustumPlanes;
+} glhckFrustumPlane;
 
 /* frustum corners */
-typedef enum glhckFrustumCorners {
+typedef enum glhckFrustumCorner {
    GLHCK_FRUSTUM_CORNER_BOTTOM_LEFT,
    GLHCK_FRUSTUM_CORNER_BOTTOM_RIGHT,
    GLHCK_FRUSTUM_CORNER_TOP_RIGHT,
    GLHCK_FRUSTUM_CORNER_TOP_LEFT,
    GLHCK_FRUSTUM_CORNER_LAST
-} glhckFrustumCorners;
+} glhckFrustumCorner;
 
 /* frustum struct */
 typedef struct glhckFrustum {
@@ -235,12 +209,21 @@ typedef enum glhckTextureFlags {
    GLHCK_TEXTURE_REPEAT    = 8,
 } glhckTextureFlags;
 
-/* model import flags */
-typedef enum glhckModelFlags {
-   GLHCK_MODEL_NONE     = 0,
-   GLHCK_MODEL_ANIMATED = 1,
-   GLHCK_MODEL_JOIN     = 2,
-} glhckModelFlags;
+/* texture formats */
+typedef enum glhckTextureFormat
+{
+   GLHCK_RED,
+   GLHCK_GREEN,
+   GLHCK_BLUE,
+   GLHCK_ALPHA,
+   GLHCK_LUMINANCE,
+   GLHCK_LUMINANCE_ALPHA,
+   GLHCK_RGB,
+   GLHCK_RGBA,
+
+   GLHCK_COMPRESSED_RGB_DXT1,
+   GLHCK_COMPRESSED_RGBA_DXT5,
+} glhckTextureFormat;
 
 /* material flags */
 typedef enum glhckMaterialFlags {
@@ -252,6 +235,32 @@ typedef enum glhckMaterialFlags {
    GLHCK_MATERIAL_CULL      = 16,
    GLHCK_MATERIAL_DEPTH     = 32
 } glhckMaterialFlags;
+
+/* blending modes */
+typedef enum glhckBlendingMode
+{
+   GLHCK_ZERO,
+   GLHCK_ONE,
+   GLHCK_SRC_COLOR,
+   GLHCK_ONE_MINUS_SRC_COLOR,
+   GLHCK_SRC_ALPHA,
+   GLHCK_ONE_MINUS_SRC_ALPHA,
+   GLHCK_DST_ALPHA,
+   GLHCK_ONE_MINUS_DST_ALPHA,
+   GLHCK_DST_COLOR,
+   GLHCK_ONE_MINUS_DST_COLOR,
+   GLHCK_SRC_ALPHA_SATURATE,
+   GLHCK_CONSTANT_COLOR,
+   GLHCK_CONSTANT_ALPHA,
+   GLHCK_ONE_MINUS_CONSTANT_ALPHA,
+} glhckBlendingMode;
+
+/* model import flags */
+typedef enum glhckModelFlags {
+   GLHCK_MODEL_NONE     = 0,
+   GLHCK_MODEL_ANIMATED = 1,
+   GLHCK_MODEL_JOIN     = 2,
+} glhckModelFlags;
 
 /* rtt modes */
 typedef enum glhckRttMode {
@@ -387,15 +396,14 @@ typedef struct glhckCoordTransform {
 /* datatype that presents object's geometry */
 typedef struct glhckGeometry {
    /* geometry type (triangles, triangle strip, etc..) */
-   unsigned int type;
+   glhckGeometryType type;
 
    /* vertex && indices types */
    glhckGeometryVertexType vertexType;
    glhckGeometryIndexType indexType;
 
    /* counts for vertices && indices */
-   size_t vertexCount;
-   size_t indexCount;
+   int vertexCount, indexCount;
 
    /* vertices */
    glhckVertexData vertices;
@@ -444,7 +452,7 @@ GLHCKAPI void glhckDisplayResize(int width, int height);
 /* rendering */
 GLHCKAPI glhckDriverType glhckRenderGetDriver(void);
 GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
-GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params);
+GLHCKAPI void glhckRenderGetIntegerv(glhckRenderProperty pname, int *params);
 GLHCKAPI void glhckSetRenderFlags(unsigned int flags);
 GLHCKAPI void glhckRenderProjection(kmMat4 const* mat);
 GLHCKAPI void glhckRender(void);
@@ -485,7 +493,7 @@ GLHCKAPI size_t glhckObjectFree(glhckObject *object);
 
 GLHCKAPI int glhckObjectIsRoot(const glhckObject *object);
 GLHCKAPI void glhckObjectMakeRoot(glhckObject *object, int root);
-GLHCKAPI unsigned int glhckObjectGetParentAffection(const glhckObject *object);
+GLHCKAPI unsigned char glhckObjectGetParentAffection(const glhckObject *object);
 GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned char affectionFlags);
 GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object);
 GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, size_t *num_children);
@@ -499,10 +507,10 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertices(
       glhckObject *object, glhckGeometryVertexType type,
-      const glhckImportVertexData *vertices, size_t memb);
+      const glhckImportVertexData *vertices, int memb);
 GLHCKAPI int glhckObjectInsertIndices(
       glhckObject *object, glhckGeometryIndexType type,
-      const glhckImportIndexData *indices, size_t memb);
+      const glhckImportIndexData *indices, int memb);
 GLHCKAPI void glhckObjectUpdate(glhckObject *object);
 
 /* material */
@@ -512,7 +520,7 @@ GLHCKAPI void glhckObjectColorb(glhckObject *object,
       unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI unsigned int glhckObjectGetMaterialFlags(const glhckObject *object);
 GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags);
-GLHCKAPI void glhckObjectMaterialBlend(glhckObject *object, unsigned int blenda, unsigned int blendb);
+GLHCKAPI void glhckObjectMaterialBlend(glhckObject *object, glhckBlendingMode blenda, glhckBlendingMode blendb);
 
 /* object control */
 GLHCKAPI const kmAABB* glhckObjectGetOBB(const glhckObject *object);
@@ -568,8 +576,7 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
 GLHCKAPI void glhckTextColor(glhckText *text,
       unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI const glhckColorb* glhckGetTextColor(glhckText *text);
-GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text,
-      unsigned char *data);
+GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text, const void *data, size_t size);
 GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file);
 GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
       const char *file, int ascent, int descent, int line_gap);
@@ -590,9 +597,9 @@ GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
 GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
 GLHCKAPI size_t glhckTextureFree(glhckTexture *texture);
-GLHCKAPI int glhckTextureCreate(glhckTexture *texture, unsigned char *data,
-      int width, int height, unsigned int format, unsigned int outFormat, unsigned int flags);
-GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, unsigned char *data, unsigned int format);
+GLHCKAPI int glhckTextureCreate(glhckTexture *texture, const void *data,
+      int width, int height, glhckTextureFormat format, glhckTextureFormat outFormat, unsigned int flags);
+GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, const void *data, glhckTextureFormat format);
 GLHCKAPI int glhckTextureSave(glhckTexture *texture, const char *path);
 GLHCKAPI void glhckTextureBind(glhckTexture *texture);
 GLHCKAPI void glhckBindTexture(unsigned int texture);
@@ -667,9 +674,9 @@ GLHCKAPI void glhckGeometryTransformCoordinates(
       glhckGeometry *geometry, const glhckRect *transformed, short degrees);
 GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb);
 GLHCKAPI int glhckGeometrySetVertices(glhckGeometry *geometry,
-      glhckGeometryVertexType type, void *data, size_t memb);
+      glhckGeometryVertexType type, void *data, int memb);
 GLHCKAPI int glhckGeometrySetIndices(glhckGeometry *geometry,
-      glhckGeometryIndexType type, void *data, size_t memb);
+      glhckGeometryIndexType type, void *data, int memb);
 
 /* define cleanup */
 #ifdef GLHCK_WINGDIAPI_DEFINED

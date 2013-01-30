@@ -53,10 +53,10 @@ glhckMagicDefine(glhckMagic2s, glhckMagic3s,
       glhckVector2s, glhckVector3s, short, GLHCK_SHORT_VMAGIC);
 
 /* \brief get min/max from import data */
-static void _glhckMaxMinImportData(const glhckImportVertexData *import, size_t memb,
+static void _glhckMaxMinImportData(const glhckImportVertexData *import, int memb,
       glhckVector3f *vmin, glhckVector3f *vmax, glhckVector3f *nmin, glhckVector3f *nmax)
 {
-   size_t i;
+   int i;
    glhckSetV3(vmax, &import[0].vertex);
    glhckSetV3(vmin, &import[0].vertex);
    glhckSetV3(nmax, &import[0].normal);
@@ -72,11 +72,10 @@ static void _glhckMaxMinImportData(const glhckImportVertexData *import, size_t m
 }
 
 /* \brief get /min/max from index data */
-static void _glhckMaxMinIndexData(const glhckImportIndexData *import, size_t memb,
+static void _glhckMaxMinIndexData(const glhckImportIndexData *import, int memb,
       unsigned int *mini, unsigned int *maxi)
 {
-   size_t i;
-
+   int i;
    *mini = *maxi = import[0];
    for (i = 1; i != memb; ++i) {
       if (*mini > import[i]) *mini = import[i];
@@ -87,15 +86,15 @@ static void _glhckMaxMinIndexData(const glhckImportIndexData *import, size_t mem
 /* \brief convert vertex data to internal format */
 static void _glhckConvertVertexData(
       glhckGeometryVertexType type, glhckVertexData internal,
-      const glhckImportVertexData *import, size_t memb,
+      const glhckImportVertexData *import, int memb,
       glhckVector3f *bias, glhckVector3f *scale)
 {
-   size_t i;
+   int i;
    char no_convert = 0;
    float biasMagic = 0.0f, scaleMagic = 0.0f;
    glhckVector3f vmin, vmax,
                  nmin, nmax;
-   CALL(0, "%d, %p, %zu, %p, %p", type, import, memb, bias, scale);
+   CALL(0, "%d, %p,dd, %p, %p", type, import, memb, bias, scale);
 
    /* default bias scale */
    bias->x  = bias->y  = bias->z  = 0.0f;
@@ -246,10 +245,10 @@ static void _glhckConvertVertexData(
 /* \brief convert index data to internal format */
 static void _glhckConvertIndexData(
       glhckGeometryIndexType type, glhckIndexData internal,
-      const glhckImportIndexData *import, size_t memb)
+      const glhckImportIndexData *import, int memb)
 {
-   size_t i;
-   CALL(0, "%d, %p, %zu", type, import, memb);
+   int i;
+   CALL(0, "%d, %p, %d", type, import, memb);
    if (type == GLHCK_INDEX_INTEGER) {
       memcpy(internal.ivi, import, memb *sizeof(glhckImportIndexData));
    } else {
@@ -312,7 +311,7 @@ static void _glhckGeometryFreeVertices(glhckGeometry *geometry)
 
 /* \brief assign vertices to object internally */
 static void _glhckGeometrySetVertices(glhckGeometry *geometry,
-      glhckGeometryVertexType type, void *data, size_t memb)
+      glhckGeometryVertexType type, void *data, int memb)
 {
    unsigned short textureRange = 1;
 
@@ -399,7 +398,7 @@ static void _glhckGeometryFreeIndices(glhckGeometry *geometry)
 
 /* \brief assign indices to object internally */
 static void _glhckGeometrySetIndices(glhckGeometry *geometry,
-      glhckGeometryIndexType type, void *data, size_t memb)
+      glhckGeometryIndexType type, void *data, int memb)
 {
    /* free old indices */
    _glhckGeometryFreeIndices(geometry);
@@ -430,13 +429,13 @@ static void _glhckGeometrySetIndices(glhckGeometry *geometry,
 
 /* \brief insert vertices into object */
 int _glhckGeometryInsertVertices(
-      glhckGeometry *geometry, size_t memb,
+      glhckGeometry *geometry, int memb,
       glhckGeometryVertexType type,
       const glhckImportVertexData *vertices)
 {
    void *data = NULL;
    glhckVertexData vd;
-   CALL(0, "%p, %zu, %d, %p", geometry, memb, type, vertices);
+   CALL(0, "%p, %d, %d, %p", geometry, memb, type, vertices);
    assert(geometry);
 
    /* default to V3F on NONE type */
@@ -498,14 +497,14 @@ fail:
 
 /* \brief insert index data into object */
 int _glhckGeometryInsertIndices(
-      glhckGeometry *geometry, size_t memb,
+      glhckGeometry *geometry, int memb,
       glhckGeometryIndexType type,
       const glhckImportIndexData *indices)
 {
    void *data = NULL;
    glhckIndexData id;
    unsigned int mini, maxi;
-   CALL(0, "%p, %zu, %d, %p", geometry, memb, type, indices);
+   CALL(0, "%p, %d, %d, %p", geometry, memb, type, indices);
    assert(geometry);
 
    /* autodetect */
@@ -947,7 +946,7 @@ GLHCKAPI void glhckGeometrySetVertexDataForIndex(
 GLHCKAPI void glhckGeometryTransformCoordinates(
       glhckGeometry *geometry, const glhckRect *transformed, short degrees)
 {
-   size_t i;
+   int i;
    kmVec2 out, center = { 0.5f, 0.5f };
    glhckVector2f coord;
    glhckCoordTransform *newCoords;
@@ -999,7 +998,7 @@ GLHCKAPI void glhckGeometryTransformCoordinates(
 /* \brief calculate object's bounding box */
 GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb)
 {
-   size_t i;
+   int i;
    glhckVector3f vertex;
    glhckVector3f min, max;
    CALL(2, "%p, %p", geometry, bb);
@@ -1024,11 +1023,11 @@ GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb)
 
 /* \brief assign indices to object */
 GLHCKAPI int glhckGeometrySetIndices(glhckGeometry *geometry,
-      glhckGeometryIndexType type, void *data, size_t memb)
+      glhckGeometryIndexType type, void *data, int memb)
 {
    void *idata;
-   size_t size;
-   CALL(0, "%p, %d, %p, %zu", geometry, type, data, memb);
+   int size;
+   CALL(0, "%p, %d, %p, %d", geometry, type, data, memb);
    assert(geometry);
 
    size = memb * glhckIndexTypeElementSize(type);
@@ -1048,11 +1047,11 @@ fail:
 
 /* \brief assign vertices to object */
 GLHCKAPI int glhckGeometrySetVertices(glhckGeometry *geometry,
-      glhckGeometryVertexType type, void *data, size_t memb)
+      glhckGeometryVertexType type, void *data, int memb)
 {
    void *vdata;
-   size_t size;
-   CALL(0, "%p, %d, %p, %zu", geometry, type, data, memb);
+   int size;
+   CALL(0, "%p, %d, %p, %d", geometry, type, data, memb);
    assert(geometry);
 
    size = memb * glhckVertexTypeElementSize(type);
