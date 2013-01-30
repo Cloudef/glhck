@@ -801,6 +801,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
       goto fail;
 
    glhckRttBegin(rtt);
+   glhckClear();
    glhckTextRender(text);
    glhckRttFillData(rtt);
    glhckRttEnd(rtt);
