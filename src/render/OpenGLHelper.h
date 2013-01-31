@@ -119,6 +119,10 @@ GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format);
 GLenum glhBlendingModeForGlhckMode(glhckBlendingMode mode);
 GLenum glhAttachmentTypeForGlhckType(_glhckRttAttachmentType type);
 GLenum glhShaderTypeForGlhckType(glhckShaderType type);
+GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type);
+_glhckShaderVariableType glhGlhckShaderVariableTypeForGLType(GLenum type);
+const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type);
+const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type);
 
 /*** shared opengl functions ***/
 void glhGetIntegerv(GLenum pname, GLint *params);

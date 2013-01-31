@@ -637,6 +637,7 @@ GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(
 GLHCKAPI glhckShader* glhckShaderRef(glhckShader *object);
 GLHCKAPI size_t glhckShaderFree(glhckShader *object);
 GLHCKAPI void glhckShaderBind(glhckShader *object);
+GLHCKAPI void glhckShaderSetUniform(glhckShader *object, const char *uniform, int count, void *value);
 
 /* trace && debug */
 GLHCKAPI void glhckDebugHook(glhckDebugHookFunc func);

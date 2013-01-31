@@ -53,6 +53,7 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(programDelete);
    GLHCK_API_CHECK(programAttributeList);
    GLHCK_API_CHECK(programUniformList);
+   GLHCK_API_CHECK(programSetUniform);
    GLHCK_API_CHECK(shaderCompile);
    GLHCK_API_CHECK(shaderDelete);
    GLHCK_API_CHECK(getIntegerv);

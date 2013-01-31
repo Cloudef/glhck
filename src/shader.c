@@ -107,9 +107,9 @@ GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(
    _glhckShaderAttribute *a;
    _glhckShaderUniform *u;
    for (a = object->attributes; a; a = a->next)
-      printf("(%s:%u) %d : %d\n", a->name, a->location, a->type, a->size);
+      printf("(%s:%u) %d : %d [%s]\n", a->name, a->location, a->type, a->size, a->typeName);
    for (u = object->uniforms; u; u = u->next)
-      printf("(%s:%u) %d : %d\n", u->name, u->location, u->type, u->size);
+      printf("(%s:%u) %d : %d [%s]\n", u->name, u->location, u->type, u->size, u->typeName);
 
    /* insert to world */
    _glhckWorldInsert(slist, object, _glhckShader*);
@@ -175,6 +175,9 @@ GLHCKAPI void glhckShaderBind(glhckShader *object)
 GLHCKAPI void glhckShaderSetUniform(glhckShader *object, const char *uniform, int count, void *value)
 {
    _glhckShaderUniform *u;
+   assert(object);
+
+   /* store old shader */
    glhckShader *old = GLHCKRD()->shader;
 
    /* search uniform */
@@ -188,120 +191,13 @@ GLHCKAPI void glhckShaderSetUniform(glhckShader *object, const char *uniform, in
    if (GLHCKRD()->shader != object)
       glhckShaderBind(object);
 
-   /* automatically figure out the data type */
-   switch (u->type) {
-      case GLHCK_SHADER_FLOAT:
-      case GLHCK_SHADER_FLOAT_VEC2:
-      case GLHCK_SHADER_FLOAT_VEC3:
-      case GLHCK_SHADER_FLOAT_VEC4:
-      case GLHCK_SHADER_DOUBLE:
-      case GLHCK_SHADER_DOUBLE_VEC2:
-      case GLHCK_SHADER_DOUBLE_VEC3:
-      case GLHCK_SHADER_DOUBLE_VEC4:
-      case GLHCK_SHADER_INT:
-      case GLHCK_SHADER_INT_VEC2:
-      case GLHCK_SHADER_INT_VEC3:
-      case GLHCK_SHADER_INT_VEC4:
-      case GLHCK_SHADER_UNSIGNED_INT:
-      case GLHCK_SHADER_UNSIGNED_INT_VEC2:
-      case GLHCK_SHADER_UNSIGNED_INT_VEC3:
-      case GLHCK_SHADER_UNSIGNED_INT_VEC4:
-      case GLHCK_SHADER_BOOL:
-      case GLHCK_SHADER_BOOL_VEC2:
-      case GLHCK_SHADER_BOOL_VEC3:
-      case GLHCK_SHADER_BOOL_VEC4:
-      case GLHCK_SHADER_FLOAT_MAT2:
-      case GLHCK_SHADER_FLOAT_MAT3:
-      case GLHCK_SHADER_FLOAT_MAT4:
-      case GLHCK_SHADER_FLOAT_MAT2x3:
-      case GLHCK_SHADER_FLOAT_MAT2x4:
-      case GLHCK_SHADER_FLOAT_MAT3x2:
-      case GLHCK_SHADER_FLOAT_MAT3x4:
-      case GLHCK_SHADER_FLOAT_MAT4x2:
-      case GLHCK_SHADER_FLOAT_MAT4x3:
-      case GLHCK_SHADER_DOUBLE_MAT2:
-      case GLHCK_SHADER_DOUBLE_MAT3:
-      case GLHCK_SHADER_DOUBLE_MAT4:
-      case GLHCK_SHADER_DOUBLE_MAT2x3:
-      case GLHCK_SHADER_DOUBLE_MAT2x4:
-      case GLHCK_SHADER_DOUBLE_MAT3x2:
-      case GLHCK_SHADER_DOUBLE_MAT3x4:
-      case GLHCK_SHADER_DOUBLE_MAT4x2:
-      case GLHCK_SHADER_DOUBLE_MAT4x3:
-      case GLHCK_SHADER_SAMPLER_1D:
-      case GLHCK_SHADER_SAMPLER_2D:
-      case GLHCK_SHADER_SAMPLER_3D:
-      case GLHCK_SHADER_SAMPLER_CUBE:
-      case GLHCK_SHADER_SAMPLER_1D_SHADOW:
-      case GLHCK_SHADER_SAMPLER_2D_SHADOW:
-      case GLHCK_SHADER_SAMPLER_1D_ARRAY:
-      case GLHCK_SHADER_SAMPLER_2D_ARRAY:
-      case GLHCK_SHADER_SAMPLER_1D_ARRAY_SHADOW:
-      case GLHCK_SHADER_SAMPLER_2D_ARRAY_SHADOW:
-      case GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE:
-      case GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE_ARRAY:
-      case GLHCK_SHADER_SAMPLER_CUBE_SHADOW:
-      case GLHCK_SHADER_SAMPLER_BUFFER:
-      case GLHCK_SHADER_SAMPLER_2D_RECT:
-      case GLHCK_SHADER_SAMPLER_2D_RECT_SHADOW:
-      case GLHCK_SHADER_INT_SAMPLER_1D:
-      case GLHCK_SHADER_INT_SAMPLER_2D:
-      case GLHCK_SHADER_INT_SAMPLER_3D:
-      case GLHCK_SHADER_INT_SAMPLER_CUBE:
-      case GLHCK_SHADER_INT_SAMPLER_1D_ARRAY:
-      case GLHCK_SHADER_INT_SAMPLER_2D_ARRAY:
-      case GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE:
-      case GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
-      case GLHCK_SHADER_INT_SAMPLER_BUFFER:
-      case GLHCK_SHADER_INT_SAMPLER_2D_RECT:
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D:
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D:
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_3D:
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_CUBE:
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D_ARRAY:
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_ARRAY:
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER:
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT:
-      case GLHCK_SHADER_IMAGE_1D:
-      case GLHCK_SHADER_IMAGE_2D:
-      case GLHCK_SHADER_IMAGE_3D:
-      case GLHCK_SHADER_IMAGE_2D_RECT:
-      case GLHCK_SHADER_IMAGE_CUBE:
-      case GLHCK_SHADER_IMAGE_BUFFER:
-      case GLHCK_SHADER_IMAGE_1D_ARRAY:
-      case GLHCK_SHADER_IMAGE_2D_ARRAY:
-      case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE:
-      case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE_ARRAY:
-      case GLHCK_SHADER_INT_IMAGE_1D:
-      case GLHCK_SHADER_INT_IMAGE_2D:
-      case GLHCK_SHADER_INT_IMAGE_3D:
-      case GLHCK_SHADER_INT_IMAGE_2D_RECT:
-      case GLHCK_SHADER_INT_IMAGE_CUBE:
-      case GLHCK_SHADER_INT_IMAGE_BUFFER:
-      case GLHCK_SHADER_INT_IMAGE_1D_ARRAY:
-      case GLHCK_SHADER_INT_IMAGE_2D_ARRAY:
-      case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE:
-      case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D:
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D:
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_3D:
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_RECT:
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_CUBE:
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_BUFFER:
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D_ARRAY:
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_ARRAY:
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
-      case GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER:
-      default:
-         DEBUG(GLHCK_DBG_ERROR, "uniform type not implemented.");
-         break;
-   }
+   // printf("SET UNIFORM %s(%s), %d, %p\n", u->name, u->typeName, count, value);
+
+   /* set the uniform to program */
+   GLHCKRA()->programSetUniform(object->program, u, count, value);
 
    /* restore old bind */
-   glhckShaderBind(old);
+   if (old) glhckShaderBind(old);
 }
 
 /* vm: set ts=8 sw=3 tw=0 :*/

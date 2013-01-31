@@ -146,8 +146,8 @@ int main(int argc, char **argv)
    glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
-#define SKIP_MMD    1
-#define SKIP_OCTM   1
+#define SKIP_MMD    0
+#define SKIP_OCTM   0
 #define SKIP_ASSIMP 0
 
 #if SKIP_MMD

@@ -365,6 +365,7 @@ typedef struct _glhckCamera {
 /* glhck shader attribute type */
 typedef struct _glhckShaderAttribute {
    char *name;
+   const char *typeName;
    unsigned int location;
    _glhckShaderVariableType type;
    int size;
@@ -374,6 +375,7 @@ typedef struct _glhckShaderAttribute {
 /* glhck shader uniform type */
 typedef struct _glhckShaderUniform {
    char *name;
+   const char *typeName;
    unsigned int location;
    _glhckShaderVariableType type;
    int size;
@@ -434,6 +436,7 @@ typedef unsigned int (*__GLHCKrenderAPIshaderCompile)
 typedef void (*__GLHCKrenderAPIshaderDelete) (unsigned int shader);
 typedef _glhckShaderAttribute* (*__GLHCKrenderAPIprogramAttributeList) (unsigned int program);
 typedef _glhckShaderUniform* (*__GLHCKrenderAPIprogramUniformList) (unsigned int program);
+typedef void (*__GLHCKrenderAPIprogramSetUniform) (unsigned int program, _glhckShaderUniform *uniform, int count, void *value);
 
 /* parameters */
 typedef void (*__GLHCKrenderAPIgetIntegerv) (unsigned int pname, int *params);
@@ -473,6 +476,7 @@ typedef struct __GLHCKrenderAPI {
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programDelete);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programAttributeList);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniformList);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programSetUniform);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderCompile);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderDelete);
 
