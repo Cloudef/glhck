@@ -33,7 +33,9 @@ static const char *_glhckBaseShader =
 "in vec2 UV0;"
 "in vec4 Color;"
 "uniform float Time;"
-"uniform mat4 Projection;"
+"uniform SharedUniforms {"
+"  mat4 Projection;"
+"};"
 "uniform mat4 Model;"
 "out vec3 fNormal;"
 "out vec2 fUV0;"
@@ -82,7 +84,9 @@ static const char *_glhckColorShader =
 "-- Vertex\n"
 "#version 140\n"
 "in vec3 Vertex;"
-"uniform mat4 Projection;"
+"uniform SharedUniforms {"
+"  mat4 Projection;"
+"};"
 "uniform mat4 Model;"
 "void main() {"
 "  gl_Position = Projection * Model * vec4(Vertex, 1.0);"
@@ -121,6 +125,7 @@ typedef struct __OpenGLrender {
    glhckShader *baseShader;
    glhckShader *textShader;
    glhckShader *colorShader;
+   GLuint sharedUBO;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
 
@@ -133,7 +138,12 @@ static __OpenGLrender _OpenGL;
 static void rSetProjection(const kmMat4 *m)
 {
    CALL(2, "%p", m);
-   glhckShaderSetUniform(GLHCKRD()->shader, "Projection", 1, (GLfloat*)&m[0]);
+
+   if (_OpenGL.sharedUBO) {
+      GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, _OpenGL.sharedUBO));
+      GL_CALL(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(kmMat4), &m[0]));
+      GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+   }
 
    if (m != &_OpenGL.projection)
       memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
@@ -158,6 +168,7 @@ static void rViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 
    /* create orthographic projection matrix */
    kmMat4OrthographicProjection(&_OpenGL.orthographic, 0, width, height, 0, -1, 1);
+   glhckShaderSetUniform(_OpenGL.textShader, "Projection", 1, (GLfloat*)&_OpenGL.orthographic);
 }
 
 /* \brief get attribute list from program */
@@ -446,7 +457,7 @@ static void rProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei
 /* \brief link program from 2 compiled shader objects */
 static unsigned int rProgramLink(GLuint vertexShader, GLuint fragmentShader)
 {
-   GLuint obj = 0;
+   GLuint obj = 0, sharedUniforms;
    GLchar *log = NULL;
    GLsizei logSize;
    CALL(0, "%u, %u", vertexShader, fragmentShader);
@@ -465,6 +476,10 @@ static unsigned int rProgramLink(GLuint vertexShader, GLuint fragmentShader)
    GL_CALL(glAttachShader(obj, vertexShader));
    GL_CALL(glAttachShader(obj, fragmentShader));
    GL_CALL(glLinkProgram(obj));
+
+   /* get location for shared uniforms */
+   sharedUniforms = glGetUniformBlockIndex(obj, "SharedUniforms");
+   glUniformBlockBinding(obj, sharedUniforms, 0);
 
    /* dump the log incase of error */
    GL_CALL(glGetProgramiv(obj, GL_INFO_LOG_LENGTH, &logSize));
@@ -742,7 +757,6 @@ static inline void rFrustumRender(glhckFrustum *frustum)
    kmMat4 identity;
    kmMat4Identity(&identity);
    glhckShaderBind(_OpenGL.colorShader);
-   glhckShaderSetUniform(GLHCKRD()->shader, "Projection", 1, (GLfloat*)&_OpenGL.projection);
    glhckShaderSetUniform(GLHCKRD()->shader, "Model", 1, (GLfloat*)&identity);
    glhckShaderSetUniform(GLHCKRD()->shader, "MaterialColor", 1, &((GLfloat[]){255,0,0,255}));
 
@@ -800,7 +814,6 @@ static inline void rOBBRender(const _glhckObject *object)
       }
 
    glhckShaderBind(_OpenGL.colorShader);
-   glhckShaderSetUniform(GLHCKRD()->shader, "Projection", 1, (GLfloat*)&_OpenGL.projection);
    glhckShaderSetUniform(GLHCKRD()->shader, "Model", 1, (GLfloat*)&object->view.matrix);
    glhckShaderSetUniform(GLHCKRD()->shader, "MaterialColor", 1, &((GLfloat[]){0,255,0,255}));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
@@ -856,7 +869,6 @@ static inline void rAABBRender(const _glhckObject *object)
    kmMat4 identity;
    kmMat4Identity(&identity);
    glhckShaderBind(_OpenGL.colorShader);
-   glhckShaderSetUniform(GLHCKRD()->shader, "Projection", 1, (GLfloat*)&_OpenGL.projection);
    glhckShaderSetUniform(GLHCKRD()->shader, "Model", 1, (GLfloat*)&identity);
    glhckShaderSetUniform(GLHCKRD()->shader, "MaterialColor", 1, &((GLfloat[]){0,0,255,255}));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
@@ -872,7 +884,6 @@ static inline void rAABBRender(const _glhckObject *object)
 static inline void rObjectStart(const _glhckObject *object) {
    /* set object's model */
    glhckShaderBind(_OpenGL.baseShader);
-   glhckShaderSetUniform(GLHCKRD()->shader, "Projection", 1, (GLfloat*)&_OpenGL.projection);
    glhckShaderSetUniform(GLHCKRD()->shader, "Model", 1, (GLfloat*)&object->view.matrix);
    glhckShaderSetUniform(GLHCKRD()->shader, "MaterialColor", 1,
          &((GLfloat[]){
@@ -981,7 +992,6 @@ static inline void rTextRender(const _glhckText *text)
    }
 
    glhckShaderBind(_OpenGL.textShader);
-   glhckShaderSetUniform(GLHCKRD()->shader, "Projection", 1, (GLfloat*)&_OpenGL.orthographic);
    glhckShaderSetUniform(GLHCKRD()->shader, "MaterialColor", 1,
          &((GLfloat[]){text->color.r, text->color.g, text->color.b, text->color.a}));
 
@@ -1187,6 +1197,11 @@ void _glhckRenderOpenGL(void)
    /* parameters */
    GLHCK_RENDER_FUNC(getIntegerv, glhGetIntegerv);
 
+   GL_CALL(glGenBuffers(1, &_OpenGL.sharedUBO));
+   GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, _OpenGL.sharedUBO));
+   GL_CALL(glBufferData(GL_UNIFORM_BUFFER, sizeof(kmMat4), NULL, GL_STREAM_DRAW));
+   GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+
    /* compile base shader */
    _OpenGL.baseShader = glhckShaderNew("Base.Vertex", "Base.Fragment", _glhckBaseShader);
    if (!_OpenGL.baseShader)
@@ -1206,8 +1221,11 @@ void _glhckRenderOpenGL(void)
    glhckShaderSetUniform(_OpenGL.baseShader, "Texture0", 1, &((GLint[]){0}));
    glhckShaderSetUniform(_OpenGL.baseShader, "MaterialColor", 1, &((GLfloat[]){255,255,255,255}));
    glhckShaderSetUniform(_OpenGL.textShader, "Texture0", 1, &((GLint[]){0}));
+   glhckShaderSetUniform(_OpenGL.textShader, "Projection", 1, (GLfloat*)&_OpenGL.orthographic);
    glhckShaderSetUniform(_OpenGL.textShader, "MaterialColor", 1, &((GLfloat[]){255,255,255,255}));
    glhckShaderSetUniform(_OpenGL.colorShader, "MaterialColor", 1, &((GLfloat[]){255,255,255,255}));
+
+   GL_CALL(glBindBufferRange(GL_UNIFORM_BUFFER, 0, _OpenGL.sharedUBO, 0, sizeof(kmMat4)));
 
    /* this also tells library that everything went OK,
     * so do it last */
