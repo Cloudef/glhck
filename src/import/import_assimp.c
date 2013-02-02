@@ -79,6 +79,12 @@ static void joinMesh(const char *file, const struct aiScene *sc,
          if (mesh->mTextureCoords[0]) {
             vertexData[index].coord.x = mesh->mTextureCoords[0][index].x;
             vertexData[index].coord.y = mesh->mTextureCoords[0][index].y*-1;
+
+            /* fix coords */
+            if (vertexData[index].coord.x < 0.0f)
+               vertexData[index].coord.x += 1;
+            if (vertexData[index].coord.y < 0.0f)
+               vertexData[index].coord.y += 1;
          }
 
          /* offset texture coords to fit atlas texture */
@@ -196,9 +202,11 @@ static int processModel(const char *file, _glhckObject *object,
       for (m = 0, ioffset = 0, voffset = 0; m != nd->mNumMeshes; ++m) {
          mesh = sc->mMeshes[nd->mMeshes[m]];
          if (!mesh->mVertices) continue;
+         if (textureList) texture = textureList[m];
+         else texture = NULL;
 
-         joinMesh(file, sc, nd, mesh, flags, voffset,
-               indices+ioffset, vertexData+voffset, atlas, texture);
+         joinMesh(file, sc, nd, mesh, flags, voffset, indices+ioffset,
+               vertexData+voffset, atlas, texture);
 
          for (f = 0; f != mesh->mNumFaces; ++f) {
             face = &mesh->mFaces[f];
