@@ -355,7 +355,6 @@ GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *textu
 
    atlasWidth  = atlas->texture->width;
    atlasHeight = atlas->texture->height;
-
    out->w = packed->x2 / atlasWidth;
    out->h = packed->y2 / atlasHeight;
    out->x = packed->x1 / atlasWidth;
@@ -407,6 +406,7 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTextur
    return RETURN_OK;
 
 fail:
+   kmVec2Assign(out, in);
    RET(2, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }

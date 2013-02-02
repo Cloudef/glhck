@@ -139,8 +139,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, unsigned int flags,
             kmVec2 coord;
             coord.x = vertexData[ix].coord.x;
             coord.y = vertexData[ix].coord.y;
-            glhckAtlasTransformCoordinates(atlas, textureList[i],
-                  &coord, &coord);
+            glhckAtlasTransformCoordinates(atlas, textureList[i], &coord, &coord);
             vertexData[ix].coord.x = coord.x;
             vertexData[ix].coord.y = coord.y;
          }
