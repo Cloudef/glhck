@@ -397,6 +397,9 @@ GLHCKAPI size_t glhckTextFree(glhckText *text)
       _glhckFree(f);
    }
 
+   /* free shader */
+   glhckTextShader(text, NULL);
+
    /* remove text */
    _glhckWorldRemove(tflist, text, _glhckText*);
 
@@ -790,6 +793,27 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
    }
 
    if (dx) *dx = x;
+}
+
+/* \brief set shader to text */
+GLHCKAPI void glhckTextShader(glhckText *text, glhckShader *shader)
+{
+   CALL(1, "%p, %p", text, shader);
+   assert(text);
+
+   if (text->shader == shader) return;
+   if (text->shader) glhckShaderFree(text->shader);
+   text->shader = glhckShaderRef(shader);
+}
+
+/* \brief get text's shader */
+GLHCKAPI glhckShader* glhckTextGetShader(const glhckText *text)
+{
+   CALL(1, "%p", text);
+   assert(text);
+
+   RET(1, "%p", text->shader);
+   return text->shader;
 }
 
 /* \brief create texture from text */

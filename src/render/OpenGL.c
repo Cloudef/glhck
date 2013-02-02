@@ -26,8 +26,7 @@
 
 /* This is the base shader for glhck */
 static const char *_glhckBaseShader =
-"-- Vertex\n"
-"#version 140\n"
+"-- GLhck.Vertex.Base\n"
 "in vec3 Vertex;"
 "in vec3 Normal;"
 "in vec2 UV0;"
@@ -46,8 +45,8 @@ static const char *_glhckBaseShader =
 "  fColor = Color;"
 "  gl_Position = Projection * Model * vec4(Vertex, 1.0);"
 "}\n"
-"-- Fragment\n"
-"#version 140\n"
+
+"-- GLhck.Fragment.Base\n"
 "in vec3 fNormal;"
 "in vec2 fUV0;"
 "in vec4 fColor;"
@@ -57,11 +56,16 @@ static const char *_glhckBaseShader =
 "out vec4 FragColor;"
 "void main() {"
 "  FragColor = texture2D(Texture0, fUV0) * MaterialColor/255.0;"
-"}\n";
+"}\n"
 
-static const char *_glhckTextShader =
-"-- Vertex\n"
-"#version 140\n"
+"-- GLhck.Fragment.Color\n"
+"uniform vec4 MaterialColor;"
+"out vec4 FragColor;"
+"void main() {"
+"  FragColor = MaterialColor/255.0;"
+"}\n"
+
+"-- GLhck.Vertex.Text\n"
 "in vec3 Vertex;"
 "in vec2 UV0;"
 "uniform mat4 Projection;"
@@ -70,33 +74,14 @@ static const char *_glhckTextShader =
 "  fUV0 = UV0;"
 "  gl_Position = Projection * vec4(Vertex, 1.0);"
 "}\n"
-"-- Fragment\n"
-"#version 140\n"
+
+"-- GLhck.Fragment.Text\n"
 "in vec2 fUV0;"
 "uniform sampler2D Texture0;"
 "uniform vec4 MaterialColor;"
 "out vec4 FragColor;"
 "void main() {"
 "  FragColor = MaterialColor/255.0 * texture2D(Texture0, fUV0).a;"
-"}\n";
-
-static const char *_glhckColorShader =
-"-- Vertex\n"
-"#version 140\n"
-"in vec3 Vertex;"
-"uniform SharedUniforms {"
-"  mat4 Projection;"
-"};"
-"uniform mat4 Model;"
-"void main() {"
-"  gl_Position = Projection * Model * vec4(Vertex, 1.0);"
-"}\n"
-"-- Fragment\n"
-"#version 140\n"
-"uniform vec4 MaterialColor;"
-"out vec4 FragColor;"
-"void main() {"
-"  FragColor = MaterialColor/255.0;"
 "}\n";
 
 /* state flags */
@@ -511,8 +496,10 @@ static GLuint rShaderCompile(glhckShaderType type, const GLchar *effectKey, cons
    assert(effectKey);
 
    /* wrangle effect key */
-   if (!(contents = glswGetShader(effectKey, contentsFromMemory)))
+   if (!(contents = glswGetShader(effectKey, contentsFromMemory))) {
+      DEBUG(GLHCK_DBG_ERROR, "%s", glswGetError());
       goto fail;
+   }
 
    /* create shader object */
    if (!(obj = glCreateShader(glhShaderTypeForGlhckType(type))))
@@ -650,6 +637,7 @@ static inline void rMaterialState(const _glhckObject *object)
    /* bind texture if used */
    if (GL_HAS_STATE(GL_STATE_TEXTURE))
       glhckTextureBind(object->material.texture);
+   else glhckTextureUnbind(GLHCK_TEXTURE_2D);
 }
 
 #undef GL_STATE_CHANGED
@@ -881,7 +869,8 @@ static inline void rAABBRender(const _glhckObject *object)
 /* \brief begin object render */
 static inline void rObjectStart(const _glhckObject *object) {
    /* set object's model */
-   glhckShaderBind(_OpenGL.baseShader);
+   if (object->material.shader) glhckShaderBind(object->material.shader);
+   else glhckShaderBind(_OpenGL.baseShader);
    glhckShaderSetUniform(GLHCKRD()->shader, "Model", 1, (GLfloat*)&object->view.matrix);
    glhckShaderSetUniform(GLHCKRD()->shader, "MaterialColor", 1,
          &((GLfloat[]){
@@ -990,7 +979,8 @@ static inline void rTextRender(const _glhckText *text)
       GL_CALL(glDisable(GL_DEPTH_TEST));
    }
 
-   glhckShaderBind(_OpenGL.textShader);
+   if (text->shader) glhckShaderBind(text->shader);
+   else glhckShaderBind(_OpenGL.textShader);
    glhckShaderSetUniform(GLHCKRD()->shader, "MaterialColor", 1,
          &((GLfloat[]){text->color.r, text->color.g, text->color.b, text->color.a}));
 
@@ -1144,6 +1134,10 @@ void _glhckRenderOpenGL(void)
    if (!glswInit())
       goto fail;
 
+   /* default path &&  extension */
+   glswSetPath("shaders", ".glsl");
+   glswAddDirectiveToken("GLhck", "#version 140");
+
    /* reset global data */
    if (renderInit() != RETURN_OK)
       goto fail;
@@ -1183,6 +1177,8 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(programUniformList, rProgramUniformList);
    GLHCK_RENDER_FUNC(shaderCompile, rShaderCompile);
    GLHCK_RENDER_FUNC(shaderDelete, glDeleteShader);
+   GLHCK_RENDER_FUNC(shadersPath, glswSetPath);
+   GLHCK_RENDER_FUNC(shadersDirectiveToken, glswAddDirectiveToken);
 
    /* drawing functions */
    GLHCK_RENDER_FUNC(setProjection, rSetProjection);
@@ -1210,17 +1206,17 @@ void _glhckRenderOpenGL(void)
    glhckHwBufferBindRange(_OpenGL.sharedUBO, 0, 0, sizeof(kmMat4));
 
    /* compile base shader */
-   _OpenGL.baseShader = glhckShaderNew("Base.Vertex", "Base.Fragment", _glhckBaseShader);
+   _OpenGL.baseShader = glhckShaderNew("Base.GLhck.Vertex.Base", "Base.GLhck.Fragment.Base", _glhckBaseShader);
    if (!_OpenGL.baseShader)
       goto fail;
 
    /* compile text shader */
-   _OpenGL.textShader = glhckShaderNew("Text.Vertex", "Text.Fragment", _glhckTextShader);
+   _OpenGL.textShader = glhckShaderNew("Text.GLhck.Vertex.Text", "Text.GLhck.Fragment.Text", _glhckBaseShader);
    if (!_OpenGL.textShader)
       goto fail;
 
    /* compile color shader */
-   _OpenGL.colorShader = glhckShaderNew("Color.Vertex", "Color.Fragment", _glhckColorShader);
+   _OpenGL.colorShader = glhckShaderNew("Color.GLhck.Vertex.Base", "Color.GLhck.Fragment.Color", _glhckBaseShader);
    if (!_OpenGL.colorShader)
       goto fail;
 

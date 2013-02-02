@@ -255,6 +255,7 @@ typedef struct __GLHCKobjectMaterial {
    unsigned int blenda, blendb;
    struct glhckColorb color;
    struct _glhckTexture *texture;
+   struct _glhckShader *shader;
 } __GLHCKobjectMaterial;
 
 /* object container */
@@ -310,6 +311,7 @@ typedef struct _glhckText {
    unsigned int textureRange;
    struct __GLHCKtextFont *fcache;
    struct __GLHCKtextTexture *tcache;
+   struct _glhckShader *shader;
    struct _glhckText *next;
 } _glhckText;
 
@@ -437,6 +439,8 @@ typedef void (*__GLHCKrenderAPIshaderDelete) (unsigned int shader);
 typedef _glhckShaderAttribute* (*__GLHCKrenderAPIprogramAttributeList) (unsigned int program);
 typedef _glhckShaderUniform* (*__GLHCKrenderAPIprogramUniformList) (unsigned int program);
 typedef void (*__GLHCKrenderAPIprogramSetUniform) (unsigned int program, _glhckShaderUniform *uniform, int count, void *value);
+typedef int (*__GLHCKrenderAPIshadersPath) (const char *pathPrefix, const char *pathSuffix);
+typedef int (*__GLHCKrenderAPIshadersDirectiveToken) (const char* token, const char *directive);
 
 /* parameters */
 typedef void (*__GLHCKrenderAPIgetIntegerv) (unsigned int pname, int *params);
@@ -489,6 +493,8 @@ typedef struct __GLHCKrenderAPI {
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programSetUniform);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderCompile);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderDelete);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shadersPath);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shadersDirectiveToken);
 
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(getIntegerv);
 } __GLHCKrenderAPI;

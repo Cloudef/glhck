@@ -568,8 +568,10 @@ GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child);
 GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child);
 GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object);
 GLHCKAPI void glhckObjectRemoveFromParent(glhckObject *object);
-GLHCKAPI glhckTexture* glhckObjectGetTexture(const glhckObject *object);
 GLHCKAPI void glhckObjectTexture(glhckObject *object, glhckTexture *texture);
+GLHCKAPI glhckTexture* glhckObjectGetTexture(const glhckObject *object);
+GLHCKAPI void glhckObjectShader(glhckObject *object, glhckShader *shader);
+GLHCKAPI glhckShader* glhckObjectGetShader(const glhckObject *object);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertices(glhckObject *object, glhckGeometryVertexType type, const glhckImportVertexData *vertices, int memb);
@@ -635,6 +637,8 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *text, unsigned int font_id, const cha
       float xoff, float yoff, float xadvance);
 GLHCKAPI void glhckTextRender(glhckText *text);
 GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id, float size, float x, float y, const char *s, float *dx);
+GLHCKAPI void glhckTextShader(glhckText *text, glhckShader *shader);
+GLHCKAPI glhckShader* glhckTextGetShader(const glhckText *text);
 GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id, float size, const char *s, unsigned int textureFlags);
 GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id, float size, const char *s, unsigned int textureFlags);
 

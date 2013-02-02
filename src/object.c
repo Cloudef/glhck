@@ -370,6 +370,7 @@ GLHCKAPI size_t glhckObjectFree(glhckObject *object)
 
    /* free material */
    glhckObjectTexture(object, NULL);
+   glhckObjectShader(object, NULL);
 
    /* remove from world */
    _glhckWorldRemove(olist, object, _glhckObject*);
@@ -568,6 +569,27 @@ GLHCKAPI glhckTexture* glhckObjectGetTexture(const glhckObject *object)
 
    RET(1, "%p", object->material.texture);
    return object->material.texture;
+}
+
+/* \brief set shader to object */
+GLHCKAPI void glhckObjectShader(glhckObject *object, glhckShader *shader)
+{
+   CALL(1, "%p, %p", object, shader);
+   assert(object);
+
+   if (object->material.shader == shader) return;
+   if (object->material.shader) glhckShaderFree(object->material.shader);
+   object->material.shader = glhckShaderRef(shader);
+}
+
+/* \brief get object's shader */
+GLHCKAPI glhckShader* glhckObjectGetShader(const glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   RET(1, "%p", object->material.shader);
+   return object->material.shader;
 }
 
 /* \brief add object to draw queue */
