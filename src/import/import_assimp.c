@@ -262,8 +262,7 @@ static int processModel(const char *file, _glhckObject *object,
             goto assimp_no_memory;
 
          /* fill arrays */
-         joinMesh(file, sc, nd, mesh, flags, 0,
-               indices, vertexData, NULL, NULL);
+         joinMesh(file, sc, nd, mesh, flags, 0, indices, vertexData, NULL, NULL);
 
          /* build model */
          if (buildModel(file, current, numIndices,  numVertices,
