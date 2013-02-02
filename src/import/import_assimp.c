@@ -222,6 +222,7 @@ static int processModel(const char *file, _glhckObject *object,
          if (hasTexture) glhckObjectTexture(current, glhckAtlasGetTexture(atlas));
          if (!(current = glhckObjectNew())) goto fail;
          glhckObjectAddChildren(object, current);
+         glhckObjectFree(current);
          canFreeCurrent = 1;
       }
 
@@ -270,6 +271,7 @@ static int processModel(const char *file, _glhckObject *object,
             if (hasTexture) glhckObjectTexture(current, texture);
             if (!(current = glhckObjectNew())) goto fail;
             glhckObjectAddChildren(object, current);
+            glhckObjectFree(current);
             canFreeCurrent = 1;
          }
 
@@ -286,16 +288,14 @@ static int processModel(const char *file, _glhckObject *object,
                itype, vtype, flags) == RETURN_OK) {
          if (!(current = glhckObjectNew())) goto fail;
          glhckObjectAddChildren(object, current);
+         glhckObjectFree(current);
          canFreeCurrent = 1;
       }
    }
 
    /* we din't do anything to the next
     * allocated object, so free it */
-   if (canFreeCurrent) {
-      glhckObjectRemoveFromParent(current);
-      glhckObjectFree(current);
-   }
+   if (canFreeCurrent) glhckObjectRemoveFromParent(current);
    return RETURN_OK;
 
 assimp_no_memory:
@@ -305,7 +305,7 @@ fail:
    IFDO(_glhckFree, indices);
    IFDO(_glhckFree, textureList);
    IFDO(glhckAtlasFree, atlas);
-   if (canFreeCurrent) glhckObjectFree(current);
+   if (canFreeCurrent) glhckObjectRemoveFromParent(current);
    return RETURN_FAIL;
 }
 
@@ -343,6 +343,7 @@ int _glhckImportAssimp(_glhckObject *object, const char *file, unsigned int flag
     * the object returned by this importer is just invisible root object. */
    if (!(first = glhckObjectNew())) goto fail;
    glhckObjectAddChildren(object, first);
+   glhckObjectFree(first);
 
    /* process the model */
    if (processModel(file, object, first, scene, scene->mRootNode,
