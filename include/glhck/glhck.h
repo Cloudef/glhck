@@ -376,13 +376,13 @@ typedef struct glhckVector2f {
 typedef struct glhckVertexData3b {
    glhckVector3b vertex;
    glhckVector3b normal;
-   glhckVector2b coord;
+   glhckVector2s coord;
    glhckColorb color;
 } glhckVertexData3b;
 
 typedef struct glhckVertexData2b {
    glhckVector2b vertex;
-   glhckVector2b coord;
+   glhckVector2s coord;
    glhckColorb color;
 } glhckVertexData2b;
 
@@ -398,6 +398,19 @@ typedef struct glhckVertexData2s {
    glhckVector2s coord;
    glhckColorb color;
 } glhckVertexData2s;
+
+typedef struct glhckVertexData3fs {
+   glhckVector3f vertex;
+   glhckVector3f normal;
+   glhckVector2s coord;
+   glhckColorb color;
+} glhckVertexData3fs;
+
+typedef struct glhckVertexData2fs {
+   glhckVector2f vertex;
+   glhckVector2s coord;
+   glhckColorb color;
+} glhckVertexData2fs;
 
 typedef struct glhckVertexData3f {
    glhckVector3f vertex;
@@ -420,6 +433,8 @@ typedef union glhckVertexData {
       glhckVertexData2b * v2b;
       glhckVertexData3s * v3s;
       glhckVertexData2s * v2s;
+      glhckVertexData3fs * v3fs;
+      glhckVertexData2fs * v2fs;
       glhckVertexData3f * v3f;
       glhckVertexData2f * v2f;
 } glhckVertexData;
@@ -444,6 +459,8 @@ typedef enum glhckGeometryVertexType {
    GLHCK_VERTEX_V2B,
    GLHCK_VERTEX_V3S,
    GLHCK_VERTEX_V2S,
+   GLHCK_VERTEX_V3FS,
+   GLHCK_VERTEX_V2FS,
    GLHCK_VERTEX_V3F,
    GLHCK_VERTEX_V2F
 } glhckGeometryVertexType;
