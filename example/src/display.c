@@ -14,19 +14,19 @@ static int RUNNING = 0;
 static int WIDTH = 800, HEIGHT = 480;
 static int MOUSEX = 0, MOUSEY = 0;
 static int LASTMOUSEX = 0, LASTMOUSEY = 0;
-static int close_callback(GLFWwindow window)
+static int close_callback(GLFWwindow* window)
 {
    RUNNING = 0;
    return 1;
 }
 
-static void resize_callback(GLFWwindow window, int width, int height)
+static void resize_callback(GLFWwindow* window, int width, int height)
 {
    WIDTH = width; HEIGHT = height;
    glhckDisplayResize(width, height);
 }
 
-static void mousepos_callback(GLFWwindow window, int mousex, int mousey)
+static void mousepos_callback(GLFWwindow* window, int mousex, int mousey)
 {
    MOUSEX = mousex;
    MOUSEY = mousey;
@@ -36,7 +36,7 @@ static void mousepos_callback(GLFWwindow window, int mousex, int mousey)
    }
 }
 
-static void handleCamera(GLFWwindow window, float delta, kmVec3 *cameraPos, kmVec3 *cameraRot,
+static void handleCamera(GLFWwindow* window, float delta, kmVec3 *cameraPos, kmVec3 *cameraRot,
                          glhckProjectionType *projectionType) {
    *projectionType = glfwGetKey(window, GLFW_KEY_P) ?
          GLHCK_PROJECTION_ORTHOGRAPHIC : GLHCK_PROJECTION_PERSPECTIVE;
@@ -69,7 +69,7 @@ static void handleCamera(GLFWwindow window, float delta, kmVec3 *cameraPos, kmVe
 
 int main(int argc, char **argv)
 {
-   GLFWwindow window;
+   GLFWwindow* window;
    glhckTexture *texture = NULL;
    glhckObject *cube, *sprite, *cube2, *sprite3, *camObj;
    glhckCamera *camera;
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
 #else
    glfwWindowHint(GLFW_DEPTH_BITS, 24);
 #endif
-   if (!(window = glfwCreateWindow(WIDTH, HEIGHT, GLFW_WINDOWED, "display test", NULL)))
+   if (!(window = glfwCreateWindow(WIDTH, HEIGHT, "display test", NULL, NULL)))
       return EXIT_FAILURE;
 
    glfwMakeContextCurrent(window);
