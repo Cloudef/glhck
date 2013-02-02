@@ -261,7 +261,7 @@ typedef struct __GLHCKobjectMaterial {
 /* object container */
 typedef void (*__GLHCKobjectDraw) (const struct _glhckObject *object);
 typedef struct _glhckObject {
-   char *file;
+   char *file, *name;
    struct glhckGeometry *geometry;
    struct __GLHCKobjectView view;
    struct __GLHCKobjectMaterial material;
