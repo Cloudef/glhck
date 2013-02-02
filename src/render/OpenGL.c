@@ -1106,11 +1106,17 @@ static void renderTerminate(void)
    TRACE(0);
 
    /* free shaders */
-   NULLDO(glhckShaderFree, _OpenGL.baseShader);
-   NULLDO(glhckShaderFree, _OpenGL.textShader);
-   NULLDO(glhckShaderFree, _OpenGL.colorShader);
-   NULLDO(glhckHwBufferFree, _OpenGL.sharedProjectionUBO);
-   NULLDO(glhckHwBufferFree, _OpenGL.sharedTimeUBO);
+   if (_GLHCKlibrary.world.slist) {
+      NULLDO(glhckShaderFree, _OpenGL.baseShader);
+      NULLDO(glhckShaderFree, _OpenGL.textShader);
+      NULLDO(glhckShaderFree, _OpenGL.colorShader)
+   }
+
+   /* free hw buffers */
+   if (_GLHCKlibrary.world.hlist) {
+      NULLDO(glhckHwBufferFree, _OpenGL.sharedProjectionUBO);
+      NULLDO(glhckHwBufferFree, _OpenGL.sharedTimeUBO);
+   }
 
    /* shutdown shader wrangler */
    glswShutdown();
