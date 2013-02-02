@@ -138,7 +138,8 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture,
    /* choose internal vertexdata precision */
    vtype = GLHCKR()->globalVertexType;
    if (vtype == GLHCK_VERTEX_NONE)
-      vtype = glhckVertexTypeGetV2Counterpart(glhckVertexTypeForSize(w, h));
+      vtype = glhckVertexTypeGetV2Counterpart(
+            glhckVertexTypeForSize(texture->width, texture->height));
 
    /* insert vertices to object's geometry */
    if (glhckObjectInsertVertices(object, vtype,
