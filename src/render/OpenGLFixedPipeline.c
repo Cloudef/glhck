@@ -541,6 +541,7 @@ static inline void rObjectRender(const _glhckObject *object)
 /* \brief draw text */
 static inline void rTextRender(const _glhckText *text)
 {
+   glhckTexture *old;
    __GLHCKtextTexture *texture;
    CALL(2, "%p", text);
 
@@ -600,11 +601,15 @@ static inline void rTextRender(const _glhckText *text)
    GL_CALL(glLoadIdentity());
 
    GL_CALL(glColor4ub(text->color.r, text->color.b, text->color.g, text->color.a));
+
+   /* store old texture */
+   old = GLHCKRD()->texture[GLHCK_TEXTURE_2D];
+
    for (texture = text->tcache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
-      glhTextureBind(GL_TEXTURE_2D, texture->object);
+      GL_CALL(glBindTexture(GL_TEXTURE_2D, texture->object));
       GL_CALL(glVertexPointer(2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
             (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
             &texture->geometry.vertexData[0].vertex));
@@ -615,8 +620,9 @@ static inline void rTextRender(const _glhckText *text)
                0, texture->geometry.vertexCount));
    }
 
-   /* restore glhck texture state */
-   glhTextureBindRestore();
+   /* restore old */
+   if (old) glhckTextureBind(old);
+   else glhckTextureUnbind(GLHCK_TEXTURE_2D);
 
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glEnable(GL_DEPTH_TEST));
@@ -707,15 +713,6 @@ static void renderTerminate(void)
    GLHCK_RENDER_TERMINATE(RENDER_NAME);
 }
 
-/* OpenGL bindings */
-DECLARE_GL_GEN_FUNC(rGlGenTextures, glGenTextures)
-DECLARE_GL_GEN_FUNC(rGlDeleteTextures, glDeleteTextures)
-DECLARE_GL_BIND_FUNC(rGlBindTexture, glBindTexture(GL_TEXTURE_2D, object))
-
-DECLARE_GL_GEN_FUNC(rGlGenFramebuffers, glGenFramebuffers);
-DECLARE_GL_GEN_FUNC(rGlDeleteFramebuffers, glDeleteFramebuffers);
-DECLARE_GL_BIND_FUNC(rGlBindFramebuffer, glBindFramebuffer(GL_FRAMEBUFFER, object))
-
 /* stub shader functions */
 static void rProgramUse(GLuint obj) {
    DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
@@ -773,17 +770,28 @@ void _glhckRenderOpenGLFixedPipeline(void)
    /* register api functions */
 
    /* textures */
-   GLHCK_RENDER_FUNC(textureGenerate, rGlGenTextures);
-   GLHCK_RENDER_FUNC(textureDelete, rGlDeleteTextures);
-   GLHCK_RENDER_FUNC(textureBind, rGlBindTexture);
+   GLHCK_RENDER_FUNC(textureGenerate, glGenTextures);
+   GLHCK_RENDER_FUNC(textureDelete, glDeleteTextures);
+   GLHCK_RENDER_FUNC(textureBind, glhTextureBind);
    GLHCK_RENDER_FUNC(textureCreate, glhTextureCreate);
    GLHCK_RENDER_FUNC(textureFill, glhTextureFill);
 
    /* framebuffer objects */
-   GLHCK_RENDER_FUNC(framebufferGenerate, rGlGenFramebuffers);
-   GLHCK_RENDER_FUNC(framebufferDelete, rGlDeleteFramebuffers);
-   GLHCK_RENDER_FUNC(framebufferBind, rGlBindFramebuffer);
-   GLHCK_RENDER_FUNC(framebufferLinkWithTexture, glhFramebufferLinkWithTexture);
+   GLHCK_RENDER_FUNC(framebufferGenerate, glGenFramebuffers);
+   GLHCK_RENDER_FUNC(framebufferDelete, glDeleteFramebuffers);
+   GLHCK_RENDER_FUNC(framebufferBind, glhFramebufferBind);
+   GLHCK_RENDER_FUNC(framebufferTexture, glhFramebufferTexture);
+
+   /* hardware buffer objects */
+   GLHCK_RENDER_FUNC(hwBufferGenerate, glGenBuffers);
+   GLHCK_RENDER_FUNC(hwBufferDelete, glDeleteBuffers);
+   GLHCK_RENDER_FUNC(hwBufferBind, glhHwBufferBind);
+   GLHCK_RENDER_FUNC(hwBufferBindBase, glhHwBufferBindBase);
+   GLHCK_RENDER_FUNC(hwBufferBindRange, glhHwBufferBindRange);
+   GLHCK_RENDER_FUNC(hwBufferCreate, glhHwBufferCreate);
+   GLHCK_RENDER_FUNC(hwBufferFill, glhHwBufferFill);
+   GLHCK_RENDER_FUNC(hwBufferMap, glhHwBufferMap);
+   GLHCK_RENDER_FUNC(hwBufferUnmap, glhHwBufferUnmap);
 
    /* shader objects */
    GLHCK_RENDER_FUNC(programBind, rProgramUse);

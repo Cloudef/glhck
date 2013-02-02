@@ -48,7 +48,16 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(framebufferGenerate);
    GLHCK_API_CHECK(framebufferDelete);
    GLHCK_API_CHECK(framebufferBind);
-   GLHCK_API_CHECK(framebufferLinkWithTexture);
+   GLHCK_API_CHECK(framebufferTexture);
+   GLHCK_API_CHECK(hwBufferGenerate);
+   GLHCK_API_CHECK(hwBufferDelete);
+   GLHCK_API_CHECK(hwBufferBind);
+   GLHCK_API_CHECK(hwBufferCreate);
+   GLHCK_API_CHECK(hwBufferFill);
+   GLHCK_API_CHECK(hwBufferBindBase);
+   GLHCK_API_CHECK(hwBufferBindRange);
+   GLHCK_API_CHECK(hwBufferMap);
+   GLHCK_API_CHECK(hwBufferUnmap);
    GLHCK_API_CHECK(programLink);
    GLHCK_API_CHECK(programDelete);
    GLHCK_API_CHECK(programAttributeList);
@@ -538,8 +547,9 @@ GLHCKAPI void glhckMassacreWorld(void)
    _glhckCamera *c;
    _glhckTexture *t;
    _glhckAtlas *a;
-   _glhckRtt *r;
+   _glhckFramebuffer *f;
    _glhckText *tf;
+   _glhckHwBuffer *h;
    _glhckShader *s;
    GLHCK_INITIALIZED();
    TRACE(0);
@@ -547,11 +557,12 @@ GLHCKAPI void glhckMassacreWorld(void)
    /* destroy the world */
    _massacre(clist, c, glhckCameraFree);
    _massacre(alist, a, glhckAtlasFree);
-   _massacre(rlist, r, glhckRttFree);
    _massacre(tflist, tf, glhckTextFree);
    _massacre(olist, o, glhckObjectFree);
    _massacre(tlist, t, glhckTextureFree);
    _massacre(slist, s, glhckShaderFree);
+   _massacre(flist, f, glhckFramebufferFree);
+   _massacre(hlist, h, glhckHwBufferFree);
 }
 
 /* \brief frees virtual display and deinits glhck */

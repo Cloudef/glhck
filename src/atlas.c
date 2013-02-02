@@ -190,7 +190,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    kmMat4 old_projection;
    _glhckTexturePacker *tp;
    _glhckAtlasRect *rect;
-   _glhckRtt *rtt = NULL;
+   _glhckFramebuffer *fbo = NULL;
+   _glhckTexture *texture = NULL;
    _glhckObject *plane = NULL;
    kmMat4 ortho;
    CALL(0, "%p, %d, %d", atlas, power_of_two, border);
@@ -236,9 +237,15 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
       DEBUG(0, "Downscaling atlas texture to: %dx%d", width, height);
    }
 
-   if (!(rtt = glhckRttNew(width, height, GLHCK_RTT_RGBA, GLHCK_TEXTURE_DEFAULTS)))
+   /* create stuff needed for rendering */
+   if (!(texture = glhckTextureNew(NULL, GLHCK_TEXTURE_DEFAULTS)))
       goto fail;
-
+   if (!(glhckTextureCreate(texture, GLHCK_TEXTURE_2D, NULL, width, height, 0, GLHCK_RGBA, GLHCK_RGBA, GLHCK_TEXTURE_DEFAULTS)))
+      goto fail;
+   if (!(fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER)))
+      goto fail;
+   if (!glhckFramebufferAttachTexture(fbo, texture, GLHCK_COLOR_ATTACHMENT0))
+      goto fail;
    if (!(plane = glhckPlaneNewEx(1, 1, GLHCK_INDEX_NONE, GLHCK_VERTEX_V2F)))
       goto fail;
 
@@ -253,7 +260,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    memcpy(&old_clear, &GLHCKRD()->clearColor, sizeof(glhckColorb));
    GLHCKRA()->setClearColor(0,0,0,0);
 
-   glhckRttBegin(rtt);
+   glhckFramebufferBind(fbo);
+   glhckFramebufferRecti(fbo, 0, 0, width, height);
    GLHCKRA()->clear();
    for (rect = atlas->rect; rect; rect = rect->next) {
       rect->packed.rotated = _glhckTexturePackerGetLocation(tp,
@@ -277,25 +285,20 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
       glhckObjectTexture(plane, rect->texture);
       glhckObjectRender(plane);
    }
-   glhckRttFillData(rtt);
-   glhckRttEnd(rtt);
+   glhckFramebufferFillTexture(fbo, texture);
 
    /* restore old state */
+   GLHCKRA()->viewport(0,0,GLHCKR()->width, GLHCKR()->height);
    GLHCKRA()->setProjection(&old_projection);
    GLHCKRA()->setClearColor(old_clear.r, old_clear.g, old_clear.b, old_clear.a);
 
-   /* free plane */
-   glhckObjectFree(plane);
-
    /* reference rtt's texture */
    IFDO(glhckTextureFree, atlas->texture);
-   atlas->texture = glhckTextureRef(glhckRttGetTexture(rtt));
-   glhckTextureSave(atlas->texture, "test.tga");
+   atlas->texture = texture;
 
-   /* free rtt */
-   glhckRttFree(rtt);
-
-   /* free the texture packer */
+   /* cleanup */
+   glhckObjectFree(plane);
+   glhckFramebufferFree(fbo);
    _glhckTexturePackerFree(tp);
 
    RET(0, "%d", RETURN_OK);
@@ -303,7 +306,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
 
 fail:
    IFDO(glhckObjectFree, plane);
-   IFDO(glhckRttFree, rtt);
+   IFDO(glhckFramebufferFree, fbo);
+   IFDO(glhckTextureFree, texture);
    IFDO(_glhckTexturePackerFree, tp);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;

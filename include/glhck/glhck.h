@@ -127,8 +127,7 @@ typedef enum glhckRenderFlags {
 } glhckRenderFlags;
 
 /* renderer properties */
-typedef enum glhckRenderProperty
-{
+typedef enum glhckRenderProperty {
    GLHCK_MAX_TEXTURE_SIZE,
    GLHCK_MAX_CUBE_MAP_TEXTURE_SIZE,
    GLHCK_MAX_VERTEX_ATTRIBS,
@@ -143,8 +142,7 @@ typedef enum glhckRenderProperty
 } glhckRenderProperty;
 
 /* geometry type */
-typedef enum glhckGeometryType
-{
+typedef enum glhckGeometryType {
    GLHCK_POINTS,
    GLHCK_LINES,
    GLHCK_LINE_LOOP,
@@ -152,6 +150,72 @@ typedef enum glhckGeometryType
    GLHCK_TRIANGLES,
    GLHCK_TRIANGLE_STRIP,
 } glhckGeometryType;
+
+/* framebuffer types */
+typedef enum glhckFramebufferType {
+   GLHCK_FRAMEBUFFER,
+   GLHCK_FRAMEBUFFER_READ,
+   GLHCK_FRAMEBUFFER_DRAW,
+   GLHCK_FRAMEBUFFER_TYPE_LAST,
+} glhckFramebufferType;
+
+/* framebuffer attachment types */
+typedef enum glhckFramebufferAttachmentType {
+   GLHCK_COLOR_ATTACHMENT0,
+   GLHCK_COLOR_ATTACHMENT1,
+   GLHCK_COLOR_ATTACHMENT2,
+   GLHCK_COLOR_ATTACHMENT3,
+   GLHCK_COLOR_ATTACHMENT4,
+   GLHCK_COLOR_ATTACHMENT5,
+   GLHCK_COLOR_ATTACHMENT6,
+   GLHCK_COLOR_ATTACHMENT7,
+   GLHCK_COLOR_ATTACHMENT8,
+   GLHCK_COLOR_ATTACHMENT9,
+   GLHCK_COLOR_ATTACHMENT10,
+   GLHCK_COLOR_ATTACHMENT11,
+   GLHCK_COLOR_ATTACHMENT12,
+   GLHCK_COLOR_ATTACHMENT13,
+   GLHCK_COLOR_ATTACHMENT14,
+   GLHCK_COLOR_ATTACHMENT15,
+   GLHCK_DEPTH_ATTACHMENT,
+   GLHCK_STENCIL_ATTACHMENT,
+} glhckFramebufferAttachmentType;
+
+/* hardware buffer type */
+typedef enum glhckHwBufferType {
+   GLHCK_ARRAY_BUFFER,
+   GLHCK_COPY_READ_BUFFER,
+   GLHCK_COPY_WRITE_BUFFER,
+   GLHCK_ELEMENT_ARRAY_BUFFER,
+   GLHCK_PIXEL_PACK_BUFFER,
+   GLHCK_PIXEL_UNPACK_BUFFER,
+   GLHCK_TEXTURE_BUFFER,
+   GLHCK_TRANSFORM_FEEDBACK_BUFFER,
+   GLHCK_UNIFORM_BUFFER,
+   GLHCK_SHADER_STORAGE_BUFFER,
+   GLHCK_ATOMIC_COUNTER_BUFFER,
+   GLHCK_HWBUFFER_TYPE_LAST,
+} glhckHwBufferType;
+
+/* hardware buffer storage type */
+typedef enum glhckHwBufferStoreType {
+   GLHCK_BUFFER_STREAM_DRAW,
+   GLHCK_BUFFER_STREAM_READ,
+   GLHCK_BUFFER_STREAM_COPY,
+   GLHCK_BUFFER_STATIC_DRAW,
+   GLHCK_BUFFER_STATIC_READ,
+   GLHCK_BUFFER_STATIC_COPY,
+   GLHCK_BUFFER_DYNAMIC_DRAW,
+   GLHCK_BUFFER_DYNAMIC_READ,
+   GLHCK_BUFFER_DYNAMIC_COPY,
+} glhckHwBufferStoreType;
+
+/* hardware buffer access type */
+typedef enum glhckHwBufferAccessType {
+   GLHCK_BUFFER_READ_ONLY,
+   GLHCK_BUFFER_WRITE_ONLY,
+   GLHCK_BUFFER_READ_WRITE,
+} glhckHwBufferAccessType;
 
 /* shader type */
 typedef enum glhckShaderType {
@@ -209,6 +273,16 @@ typedef enum glhckTextureFlags {
    GLHCK_TEXTURE_REPEAT    = 8,
 } glhckTextureFlags;
 
+/* texture types */
+typedef enum glhckTextureType
+{
+   GLHCK_TEXTURE_1D,
+   GLHCK_TEXTURE_2D,
+   GLHCK_TEXTURE_3D,
+   GLHCK_TEXTURE_CUBE_MAP,
+   GLHCK_TEXTURE_TYPE_LAST,
+} glhckTextureType;
+
 /* texture formats */
 typedef enum glhckTextureFormat
 {
@@ -261,12 +335,6 @@ typedef enum glhckModelFlags {
    GLHCK_MODEL_ANIMATED = 1,
    GLHCK_MODEL_JOIN     = 2,
 } glhckModelFlags;
-
-/* rtt modes */
-typedef enum glhckRttMode {
-   GLHCK_RTT_RGB,
-   GLHCK_RTT_RGBA,
-} glhckRttMode;
 
 /* common datatypes */
 typedef struct glhckRect {
@@ -427,13 +495,14 @@ typedef struct glhckGeometry {
 } glhckGeometry;
 
 /* typedefs for better typing */
-typedef struct _glhckTexture glhckTexture;
-typedef struct _glhckAtlas   glhckAtlas;
-typedef struct _glhckRtt     glhckRtt;
-typedef struct _glhckObject  glhckObject;
-typedef struct _glhckText    glhckText;
-typedef struct _glhckCamera  glhckCamera;
-typedef struct _glhckShader  glhckShader;
+typedef struct _glhckTexture     glhckTexture;
+typedef struct _glhckAtlas       glhckAtlas;
+typedef struct _glhckFramebuffer glhckFramebuffer;
+typedef struct _glhckObject      glhckObject;
+typedef struct _glhckText        glhckText;
+typedef struct _glhckCamera      glhckCamera;
+typedef struct _glhckHwBuffer    glhckHwBuffer;
+typedef struct _glhckShader      glhckShader;
 
 typedef void (*glhckDebugHookFunc)(const char *file, int line, const char *function, glhckDebugLevel level, const char *str);
 
@@ -478,11 +547,9 @@ GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(const glhckCamera *camera)
 GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(const glhckCamera *camera);
 GLHCKAPI void glhckCameraUpVector(glhckCamera *camera, const kmVec3 *upVector);
 GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov);
-GLHCKAPI void glhckCameraRange(glhckCamera *camera,
-      const kmScalar near, const kmScalar far);
+GLHCKAPI void glhckCameraRange(glhckCamera *camera, const kmScalar near, const kmScalar far);
 GLHCKAPI void glhckCameraViewport(glhckCamera *camera, const glhckRect *viewport);
-GLHCKAPI void glhckCameraViewportf(glhckCamera *camera,
-      int x, int y, int w, int h);
+GLHCKAPI void glhckCameraViewportf(glhckCamera *camera, int x, int y, int w, int h);
 GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *camera);
 
 /* objects */
@@ -505,19 +572,14 @@ GLHCKAPI glhckTexture* glhckObjectGetTexture(const glhckObject *object);
 GLHCKAPI void glhckObjectTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
-GLHCKAPI int glhckObjectInsertVertices(
-      glhckObject *object, glhckGeometryVertexType type,
-      const glhckImportVertexData *vertices, int memb);
-GLHCKAPI int glhckObjectInsertIndices(
-      glhckObject *object, glhckGeometryIndexType type,
-      const glhckImportIndexData *indices, int memb);
+GLHCKAPI int glhckObjectInsertVertices(glhckObject *object, glhckGeometryVertexType type, const glhckImportVertexData *vertices, int memb);
+GLHCKAPI int glhckObjectInsertIndices(glhckObject *object, glhckGeometryIndexType type, const glhckImportIndexData *indices, int memb);
 GLHCKAPI void glhckObjectUpdate(glhckObject *object);
 
 /* material */
 GLHCKAPI const glhckColorb* glhckObjectGetColor(const glhckObject *object);
 GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColorb *color);
-GLHCKAPI void glhckObjectColorb(glhckObject *object,
-      unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+GLHCKAPI void glhckObjectColorb(glhckObject *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI unsigned int glhckObjectGetMaterialFlags(const glhckObject *object);
 GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags);
 GLHCKAPI void glhckObjectMaterialBlend(glhckObject *object, glhckBlendingMode blenda, glhckBlendingMode blendb);
@@ -528,112 +590,109 @@ GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object);
 GLHCKAPI const kmMat4* glhckObjectGetMatrix(const glhckObject * object);
 GLHCKAPI const kmVec3* glhckObjectGetPosition(const glhckObject *object);
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
-GLHCKAPI void glhckObjectPositionf(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckObjectPositionf(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI void glhckObjectMove(glhckObject *object, const kmVec3 *move);
-GLHCKAPI void glhckObjectMovef(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckObjectMovef(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI const kmVec3* glhckObjectGetRotation(const glhckObject *object);
 GLHCKAPI void glhckObjectRotation(glhckObject *object, const kmVec3 *rotate);
-GLHCKAPI void glhckObjectRotationf(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckObjectRotationf(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate);
-GLHCKAPI void glhckObjectRotatef(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckObjectRotatef(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI const kmVec3* glhckObjectGetTarget(const glhckObject *object);
 GLHCKAPI void glhckObjectTarget(glhckObject *object, const kmVec3 *target);
-GLHCKAPI void glhckObjectTargetf(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckObjectTargetf(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z);
 GLHCKAPI const kmVec3* glhckObjectGetScale(const glhckObject *object);
 GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale);
-GLHCKAPI void glhckObjectScalef(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z);
+GLHCKAPI void glhckObjectScalef(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z);
 
+/* object geometry */
 GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object);
 GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object);
 
 /* pre-defined geometry */
 GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, unsigned int flags);
 GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned int flags,
-         glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
-GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size,
-            glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height);
-GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height,
-            glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, kmScalar width, kmScalar height);
-GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file,
-      kmScalar width, kmScalar height, unsigned int flags);
+GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, kmScalar height, unsigned int flags);
 
 /* text */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
 GLHCKAPI size_t glhckTextFree(glhckText *text);
-GLHCKAPI void glhckTextGetMetrics(glhckText *text, unsigned int font_id,
-      float size, float *ascender, float *descender, float *lineh);
-GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
-      const char *s, kmVec2 *min, kmVec2 *max);
-GLHCKAPI void glhckTextColor(glhckText *text,
-      unsigned char r, unsigned char g, unsigned char b, unsigned char a);
+GLHCKAPI void glhckTextGetMetrics(glhckText *text, unsigned int font_id, float size, float *ascender, float *descender, float *lineh);
+GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size, const char *s, kmVec2 *min, kmVec2 *max);
+GLHCKAPI void glhckTextColor(glhckText *text, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI const glhckColorb* glhckGetTextColor(glhckText *text);
 GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text, const void *data, size_t size);
 GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file);
-GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
-      const char *file, int ascent, int descent, int line_gap);
-GLHCKAPI void glhckTextNewGlyph(glhckText *text,
-      unsigned int font_id, const char *s,
+GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text, const char *file, int ascent, int descent, int line_gap);
+GLHCKAPI void glhckTextNewGlyph(glhckText *text, unsigned int font_id, const char *s,
       short size, short base, int x, int y, int w, int h,
       float xoff, float yoff, float xadvance);
 GLHCKAPI void glhckTextRender(glhckText *text);
-GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
-      float size, float x, float y, const char *s, float *dx);
-GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
-      float size, const char *s, unsigned int textureFlags);
-GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id,
-      float size, const char *s, unsigned int textureFlags);
+GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id, float size, float x, float y, const char *s, float *dx);
+GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id, float size, const char *s, unsigned int textureFlags);
+GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id, float size, const char *s, unsigned int textureFlags);
 
 /* textures */
 GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
 GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
 GLHCKAPI size_t glhckTextureFree(glhckTexture *texture);
-GLHCKAPI int glhckTextureCreate(glhckTexture *texture, const void *data,
-      int width, int height, glhckTextureFormat format, glhckTextureFormat outFormat, unsigned int flags);
+GLHCKAPI int glhckTextureCreate(glhckTexture *texture, glhckTextureType type, const void *data,
+      int width, int height, int depth, glhckTextureFormat format, glhckTextureFormat outFormat, unsigned int flags);
 GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, const void *data, glhckTextureFormat format);
+GLHCKAPI void glhckTextureFill(glhckTexture *texture, const void *data, int size, int x, int y, int z,
+      int width, int height, int depth, glhckTextureFormat format);
 GLHCKAPI int glhckTextureSave(glhckTexture *texture, const char *path);
 GLHCKAPI void glhckTextureBind(glhckTexture *texture);
-GLHCKAPI void glhckBindTexture(unsigned int texture);
+GLHCKAPI void glhckTextureUnbind(glhckTextureType type);
 
 /* texture atlases */
 GLHCKAPI glhckAtlas* glhckAtlasNew(void);
 GLHCKAPI size_t glhckAtlasFree(glhckAtlas *atlas);
 GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture);
 GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *atlas);
-GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two,
-      const int border);
-GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(const glhckAtlas *atlas,
-      unsigned short index);
-GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *texture,
-      glhckRect *transformed, short *degrees);
-GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTexture *texture,
-      const kmVec2 *in, kmVec2 *out);
+GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int border);
+GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(const glhckAtlas *atlas, unsigned short index);
+GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *texture, glhckRect *transformed, short *degrees);
+GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTexture *texture, const kmVec2 *in, kmVec2 *out);
 
-/* render to texture */
-GLHCKAPI glhckRtt* glhckRttNew(int width, int height, glhckRttMode mode, unsigned int textureFlags);
-GLHCKAPI size_t glhckRttFree(glhckRtt *rtt);
-GLHCKAPI int glhckRttFillData(glhckRtt *rtt);
-GLHCKAPI glhckTexture* glhckRttGetTexture(const glhckRtt *rtt);
-GLHCKAPI void glhckRttBegin(const glhckRtt *rtt);
-GLHCKAPI void glhckRttEnd(const glhckRtt *rtt);
+/* framebuffer objects */
+GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferType type);
+GLHCKAPI glhckFramebuffer* glhckFramebufferRef(glhckFramebuffer *object);
+GLHCKAPI size_t glhckFramebufferFree(glhckFramebuffer *object);
+GLHCKAPI void glhckFramebufferBind(glhckFramebuffer *object);
+GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferType type);
+GLHCKAPI void glhckFramebufferRect(glhckFramebuffer *object, glhckRect *rect);
+GLHCKAPI void glhckFramebufferRecti(glhckFramebuffer *object, int x, int y, int w, int h);
+GLHCKAPI int glhckFramebufferAttachTexture(glhckFramebuffer *object, glhckTexture *texture, glhckFramebufferAttachmentType attachment);
+GLHCKAPI int glhckFramebufferFillTexture(glhckFramebuffer *object, glhckTexture *texture);
+
+/* hardware buffer objects */
+GLHCKAPI glhckHwBuffer* glhckHwBufferNew(void);
+GLHCKAPI glhckHwBuffer* glhckHwBufferRef(glhckHwBuffer *object);
+GLHCKAPI size_t glhckHwBufferFree(glhckHwBuffer *object);
+GLHCKAPI void glhckHwBufferBind(glhckHwBuffer *object);
+GLHCKAPI void glhckHwBufferUnbind(glhckHwBufferType type);
+GLHCKAPI glhckHwBufferType glhckHwBufferGetType(glhckHwBuffer *object);
+GLHCKAPI glhckHwBufferStoreType glhckHwBufferGetStoreType(glhckHwBuffer *object);
+GLHCKAPI void glhckHwBufferCreate(glhckHwBuffer *object, glhckHwBufferType type, int size, const void *data, glhckHwBufferStoreType usage);
+GLHCKAPI void glhckHwBufferBindBase(glhckHwBuffer *object, unsigned int index);
+GLHCKAPI void glhckHwBufferBindRange(glhckHwBuffer *object, unsigned int index, int offset, int size);
+GLHCKAPI void glhckHwBufferFill(glhckHwBuffer *object, int offset, int size, const void *data);
+GLHCKAPI void* glhckHwBufferMap(glhckHwBuffer *object, glhckHwBufferAccessType access);
+GLHCKAPI void glhckHwBufferUnmap(glhckHwBuffer *object);
 
 /* shaders */
-GLHCKAPI unsigned int glhckCompileShaderObject(glhckShaderType type,
-      const char *effectKey, const char *contentsFromMemory);
+GLHCKAPI unsigned int glhckCompileShaderObject(glhckShaderType type, const char *effectKey, const char *contentsFromMemory);
 GLHCKAPI void glhckDeleteShaderObject(unsigned int shaderObject);
-GLHCKAPI glhckShader* glhckShaderNew(
-      const char *vertexEffect, const char *fragmentEffect, const char *contentsFromMemory);
-GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(
-      unsigned int vertexShader, unsigned int fragmentShader);
+GLHCKAPI glhckShader* glhckShaderNew(const char *vertexEffect, const char *fragmentEffect, const char *contentsFromMemory);
+GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(unsigned int vertexShader, unsigned int fragmentShader);
 GLHCKAPI glhckShader* glhckShaderRef(glhckShader *object);
 GLHCKAPI size_t glhckShaderFree(glhckShader *object);
 GLHCKAPI void glhckShaderBind(glhckShader *object);
@@ -671,13 +730,10 @@ GLHCKAPI void glhckGeometrySetVertexDataForIndex(
       glhckGeometry *geometry, glhckIndexi ix,
       glhckVector3f *vertex, glhckVector3f *normal,
       glhckVector2f *coord, glhckColorb *color);
-GLHCKAPI void glhckGeometryTransformCoordinates(
-      glhckGeometry *geometry, const glhckRect *transformed, short degrees);
+GLHCKAPI void glhckGeometryTransformCoordinates(glhckGeometry *geometry, const glhckRect *transformed, short degrees);
 GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb);
-GLHCKAPI int glhckGeometrySetVertices(glhckGeometry *geometry,
-      glhckGeometryVertexType type, void *data, int memb);
-GLHCKAPI int glhckGeometrySetIndices(glhckGeometry *geometry,
-      glhckGeometryIndexType type, void *data, int memb);
+GLHCKAPI int glhckGeometrySetVertices(glhckGeometry *geometry, glhckGeometryVertexType type, void *data, int memb);
+GLHCKAPI int glhckGeometrySetIndices(glhckGeometry *geometry, glhckGeometryIndexType type, void *data, int memb);
 
 /* define cleanup */
 #ifdef GLHCK_WINGDIAPI_DEFINED

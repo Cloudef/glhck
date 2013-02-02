@@ -10,7 +10,8 @@ SET(GLHCK_SRC
    camera.c
    texture.c
    atlas.c
-   rtt.c
+   framebuffer.c
+   hwbuffer.c
    shader.c
    texture_packer.c
    geometry/cube.c

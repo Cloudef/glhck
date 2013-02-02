@@ -19,19 +19,20 @@ static glhckDebugHookFunc _glhckDebugHook = NULL;
 __GLHCKtraceChannel _traceChannels[] =
 {
    /* glhck's channels */
-   { GLHCK_CHANNEL_GLHCK,    0 },
-   { GLHCK_CHANNEL_IMPORT,   0 },
-   { GLHCK_CHANNEL_OBJECT,   0 },
-   { GLHCK_CHANNEL_TEXT,     0 },
-   { GLHCK_CHANNEL_CAMERA,   0 },
-   { GLHCK_CHANNEL_GEOMETRY, 0 },
-   { GLHCK_CHANNEL_VDATA,    0 },
-   { GLHCK_CHANNEL_TEXTURE,  0 },
-   { GLHCK_CHANNEL_ATLAS,    0 },
-   { GLHCK_CHANNEL_RTT,      0 },
-   { GLHCK_CHANNEL_ALLOC,    0 },
-   { GLHCK_CHANNEL_RENDER,   0 },
-   { GLHCK_CHANNEL_SHADER,   0 },
+   { GLHCK_CHANNEL_GLHCK,        0 },
+   { GLHCK_CHANNEL_IMPORT,       0 },
+   { GLHCK_CHANNEL_OBJECT,       0 },
+   { GLHCK_CHANNEL_TEXT,         0 },
+   { GLHCK_CHANNEL_CAMERA,       0 },
+   { GLHCK_CHANNEL_GEOMETRY,     0 },
+   { GLHCK_CHANNEL_VDATA,        0 },
+   { GLHCK_CHANNEL_TEXTURE,      0 },
+   { GLHCK_CHANNEL_ATLAS,        0 },
+   { GLHCK_CHANNEL_ALLOC,        0 },
+   { GLHCK_CHANNEL_RENDER,       0 },
+   { GLHCK_CHANNEL_FRAMEBUFFER,  0 },
+   { GLHCK_CHANNEL_HWBUFFER,     0 },
+   { GLHCK_CHANNEL_SHADER,       0 },
 
    /* trace channel */
    { GLHCK_CHANNEL_TRACE,  0 },

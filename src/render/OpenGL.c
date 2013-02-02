@@ -125,7 +125,7 @@ typedef struct __OpenGLrender {
    glhckShader *baseShader;
    glhckShader *textShader;
    glhckShader *colorShader;
-   GLuint sharedUBO;
+   glhckHwBuffer *sharedUBO;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
 
@@ -139,11 +139,8 @@ static void rSetProjection(const kmMat4 *m)
 {
    CALL(2, "%p", m);
 
-   if (_OpenGL.sharedUBO) {
-      GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, _OpenGL.sharedUBO));
-      GL_CALL(glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(kmMat4), &m[0]));
-      GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
-   }
+   /* update projection on shared UBO */
+   if (_OpenGL.sharedUBO) glhckHwBufferFill(_OpenGL.sharedUBO, 0, sizeof(kmMat4), &m[0]);
 
    if (m != &_OpenGL.projection)
       memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
@@ -478,8 +475,9 @@ static unsigned int rProgramLink(GLuint vertexShader, GLuint fragmentShader)
    GL_CALL(glLinkProgram(obj));
 
    /* get location for shared uniforms */
-   sharedUniforms = glGetUniformBlockIndex(obj, "SharedUniforms");
-   glUniformBlockBinding(obj, sharedUniforms, 0);
+   if ((sharedUniforms = glGetUniformBlockIndex(obj, "SharedUniforms"))) {
+      GL_CALL(glUniformBlockBinding(obj, sharedUniforms, 0));
+   }
 
    /* dump the log incase of error */
    GL_CALL(glGetProgramiv(obj, GL_INFO_LOG_LENGTH, &logSize));
@@ -944,6 +942,7 @@ static inline void rObjectRender(const _glhckObject *object)
 /* \brief render text */
 static inline void rTextRender(const _glhckText *text)
 {
+   glhckTexture *old;
    __GLHCKtextTexture *texture;
    CALL(2, "%p", text);
 
@@ -995,11 +994,14 @@ static inline void rTextRender(const _glhckText *text)
    glhckShaderSetUniform(GLHCKRD()->shader, "MaterialColor", 1,
          &((GLfloat[]){text->color.r, text->color.g, text->color.b, text->color.a}));
 
+   /* store old texture */
+   old = GLHCKRD()->texture[GLHCK_TEXTURE_2D];
+
    for (texture = text->tcache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
-      glhTextureBind(GL_TEXTURE_2D, texture->object);
+      GL_CALL(glBindTexture(GL_TEXTURE_2D, texture->object));
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT), 0,
                (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
                &texture->geometry.vertexData[0].vertex));
@@ -1011,8 +1013,9 @@ static inline void rTextRender(const _glhckText *text)
                0, texture->geometry.vertexCount));
    }
 
-   /* restore glhck texture state */
-   glhTextureBindRestore();
+   /* restore old */
+   if (old) glhckTextureBind(old);
+   else glhckTextureUnbind(GLHCK_TEXTURE_2D);
 
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glEnable(GL_DEPTH_TEST));
@@ -1103,6 +1106,7 @@ static void renderTerminate(void)
    NULLDO(glhckShaderFree, _OpenGL.baseShader);
    NULLDO(glhckShaderFree, _OpenGL.textShader);
    NULLDO(glhckShaderFree, _OpenGL.colorShader);
+   NULLDO(glhckHwBufferFree, _OpenGL.sharedUBO);
 
    /* shutdown shader wrangler */
    glswShutdown();
@@ -1110,15 +1114,6 @@ static void renderTerminate(void)
    /* this tells library that we are no longer alive. */
    GLHCK_RENDER_TERMINATE(RENDER_NAME);
 }
-
-/* OpenGL bindings */
-DECLARE_GL_GEN_FUNC(rGlGenTextures, glGenTextures)
-DECLARE_GL_GEN_FUNC(rGlDeleteTextures, glDeleteTextures)
-DECLARE_GL_BIND_FUNC(rGlBindTexture, glBindTexture(GL_TEXTURE_2D, object))
-
-DECLARE_GL_GEN_FUNC(rGlGenFramebuffers, glGenFramebuffers);
-DECLARE_GL_GEN_FUNC(rGlDeleteFramebuffers, glDeleteFramebuffers);
-DECLARE_GL_BIND_FUNC(rGlBindFramebuffer, glBindFramebuffer(GL_FRAMEBUFFER, object))
 
 /* ---- Main ---- */
 
@@ -1156,17 +1151,28 @@ void _glhckRenderOpenGL(void)
    /* register api functions */
 
    /* textures */
-   GLHCK_RENDER_FUNC(textureGenerate, rGlGenTextures);
-   GLHCK_RENDER_FUNC(textureDelete, rGlDeleteTextures);
-   GLHCK_RENDER_FUNC(textureBind, rGlBindTexture);
+   GLHCK_RENDER_FUNC(textureGenerate, glGenTextures);
+   GLHCK_RENDER_FUNC(textureDelete, glDeleteTextures);
+   GLHCK_RENDER_FUNC(textureBind, glhTextureBind);
    GLHCK_RENDER_FUNC(textureCreate, glhTextureCreate);
    GLHCK_RENDER_FUNC(textureFill, glhTextureFill);
 
    /* framebuffer objects */
-   GLHCK_RENDER_FUNC(framebufferGenerate, rGlGenFramebuffers);
-   GLHCK_RENDER_FUNC(framebufferDelete, rGlDeleteFramebuffers);
-   GLHCK_RENDER_FUNC(framebufferBind, rGlBindFramebuffer);
-   GLHCK_RENDER_FUNC(framebufferLinkWithTexture, glhFramebufferLinkWithTexture);
+   GLHCK_RENDER_FUNC(framebufferGenerate, glGenFramebuffers);
+   GLHCK_RENDER_FUNC(framebufferDelete, glDeleteFramebuffers);
+   GLHCK_RENDER_FUNC(framebufferBind, glhFramebufferBind);
+   GLHCK_RENDER_FUNC(framebufferTexture, glhFramebufferTexture);
+
+   /* hardware buffer objects */
+   GLHCK_RENDER_FUNC(hwBufferGenerate, glGenBuffers);
+   GLHCK_RENDER_FUNC(hwBufferDelete, glDeleteBuffers);
+   GLHCK_RENDER_FUNC(hwBufferBind, glhHwBufferBind);
+   GLHCK_RENDER_FUNC(hwBufferBindBase, glhHwBufferBindBase);
+   GLHCK_RENDER_FUNC(hwBufferBindRange, glhHwBufferBindRange);
+   GLHCK_RENDER_FUNC(hwBufferCreate, glhHwBufferCreate);
+   GLHCK_RENDER_FUNC(hwBufferFill, glhHwBufferFill);
+   GLHCK_RENDER_FUNC(hwBufferMap, glhHwBufferMap);
+   GLHCK_RENDER_FUNC(hwBufferUnmap, glhHwBufferUnmap);
 
    /* shader objects */
    GLHCK_RENDER_FUNC(programBind, glUseProgram);
@@ -1197,10 +1203,11 @@ void _glhckRenderOpenGL(void)
    /* parameters */
    GLHCK_RENDER_FUNC(getIntegerv, glhGetIntegerv);
 
-   GL_CALL(glGenBuffers(1, &_OpenGL.sharedUBO));
-   GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, _OpenGL.sharedUBO));
-   GL_CALL(glBufferData(GL_UNIFORM_BUFFER, sizeof(kmMat4), NULL, GL_STREAM_DRAW));
-   GL_CALL(glBindBuffer(GL_UNIFORM_BUFFER, 0));
+   /* create shared uniform buffer */
+   if (!(_OpenGL.sharedUBO = glhckHwBufferNew()))
+      goto fail;
+   glhckHwBufferCreate(_OpenGL.sharedUBO, GLHCK_UNIFORM_BUFFER, sizeof(kmMat4), NULL, GLHCK_BUFFER_STREAM_DRAW);
+   glhckHwBufferBindRange(_OpenGL.sharedUBO, 0, 0, sizeof(kmMat4));
 
    /* compile base shader */
    _OpenGL.baseShader = glhckShaderNew("Base.Vertex", "Base.Fragment", _glhckBaseShader);
@@ -1224,8 +1231,6 @@ void _glhckRenderOpenGL(void)
    glhckShaderSetUniform(_OpenGL.textShader, "Projection", 1, (GLfloat*)&_OpenGL.orthographic);
    glhckShaderSetUniform(_OpenGL.textShader, "MaterialColor", 1, &((GLfloat[]){255,255,255,255}));
    glhckShaderSetUniform(_OpenGL.colorShader, "MaterialColor", 1, &((GLfloat[]){255,255,255,255}));
-
-   GL_CALL(glBindBufferRange(GL_UNIFORM_BUFFER, 0, _OpenGL.sharedUBO, 0, sizeof(kmMat4)));
 
    /* this also tells library that everything went OK,
     * so do it last */

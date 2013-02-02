@@ -308,7 +308,8 @@ int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct 
    /* format manipulations here */
 
    /* upload texture */
-   glhckTextureCreate(texture, outData?outData:data->data, data->width, data->height,
+   glhckTextureCreate(texture, GLHCK_TEXTURE_2D,
+         outData?outData:data->data, data->width, data->height, 0,
          inFormat, outFormat, flags);
 
    IFDO(_glhckFree, outData);

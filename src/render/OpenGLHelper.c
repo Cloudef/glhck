@@ -62,6 +62,24 @@ GLenum glhGeometryTypeForGlhckType(glhckGeometryType type)
 }
 
 /* \brief map glhck texture format to OpenGL texture format */
+GLenum glhTextureTypeForGlhckType(glhckTextureType type)
+{
+   switch (type) {
+      case GLHCK_TEXTURE_1D:
+         return GL_TEXTURE_1D;
+      case GLHCK_TEXTURE_2D:
+         return GL_TEXTURE_2D;
+      case GLHCK_TEXTURE_3D:
+         return GL_TEXTURE_3D;
+      case GLHCK_TEXTURE_CUBE_MAP:
+         return GL_TEXTURE_CUBE_MAP;
+      default:break;
+   }
+   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
+   return 0;
+}
+
+/* \brief map glhck texture format to OpenGL texture format */
 GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format)
 {
    switch (format) {
@@ -129,8 +147,24 @@ GLenum glhBlendingModeForGlhckMode(glhckBlendingMode mode)
    return 0;
 }
 
+/* \brief map glhck fbo type to OpenGL fbo type */
+GLenum glhFramebufferTypeForGlhckType(glhckFramebufferType type)
+{
+   switch (type) {
+      case GLHCK_FRAMEBUFFER:
+         return GL_FRAMEBUFFER;
+      case GLHCK_FRAMEBUFFER_READ:
+         return GL_READ_FRAMEBUFFER;
+      case GLHCK_FRAMEBUFFER_DRAW:
+         return GL_DRAW_FRAMEBUFFER;
+      default:break;
+   }
+   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
+   return 0;
+}
+
 /* \brief map glhck fbo attachment constants to OpenGL attachment constants */
-GLenum glhAttachmentTypeForGlhckType(_glhckRttAttachmentType type)
+GLenum glhAttachmentTypeForGlhckType(glhckFramebufferAttachmentType type)
 {
    switch (type) {
       case GLHCK_COLOR_ATTACHMENT0:
@@ -169,6 +203,82 @@ GLenum glhAttachmentTypeForGlhckType(_glhckRttAttachmentType type)
          return GL_DEPTH_ATTACHMENT;
       case GLHCK_STENCIL_ATTACHMENT:
          return GL_STENCIL_ATTACHMENT;
+      default:break;
+   }
+   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
+   return 0;
+}
+
+/* \brief map glhck hardware buffer type to OpenGL hw buffer type */
+GLenum glhHwBufferTypeForGlhckType(glhckHwBufferType type)
+{
+   switch (type) {
+      case GLHCK_ARRAY_BUFFER:
+         return GL_ARRAY_BUFFER;
+      case GLHCK_COPY_READ_BUFFER:
+         return GL_COPY_READ_BUFFER;
+      case GLHCK_COPY_WRITE_BUFFER:
+         return GL_COPY_WRITE_BUFFER;
+      case GLHCK_ELEMENT_ARRAY_BUFFER:
+         return GL_ELEMENT_ARRAY_BUFFER;
+      case GLHCK_PIXEL_PACK_BUFFER:
+         return GL_PIXEL_PACK_BUFFER;
+      case GLHCK_PIXEL_UNPACK_BUFFER:
+         return GL_PIXEL_UNPACK_BUFFER;
+      case GLHCK_TEXTURE_BUFFER:
+         return GL_TEXTURE_BUFFER;
+      case GLHCK_TRANSFORM_FEEDBACK_BUFFER:
+         return GL_TRANSFORM_FEEDBACK_BUFFER;
+      case GLHCK_UNIFORM_BUFFER:
+         return GL_UNIFORM_BUFFER;
+      case GLHCK_SHADER_STORAGE_BUFFER:
+         return GL_SHADER_STORAGE_BUFFER;
+      case GLHCK_ATOMIC_COUNTER_BUFFER:
+         return GL_ATOMIC_COUNTER_BUFFER;
+      default:break;
+   }
+   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
+   return 0;
+}
+
+/* \brief map glhck hardware buffer store type for OpenGL hw buffer store type */
+GLenum glhHwBufferStoreTypeForGlhckType(glhckHwBufferStoreType type)
+{
+   switch (type) {
+      case GLHCK_BUFFER_STREAM_DRAW:
+         return GL_STREAM_DRAW;
+      case GLHCK_BUFFER_STREAM_READ:
+         return GL_STREAM_READ;
+      case GLHCK_BUFFER_STREAM_COPY:
+         return GL_STREAM_COPY;
+      case GLHCK_BUFFER_STATIC_DRAW:
+         return GL_STATIC_DRAW;
+      case GLHCK_BUFFER_STATIC_READ:
+         return GL_STATIC_READ;
+      case GLHCK_BUFFER_STATIC_COPY:
+         return GL_STATIC_COPY;
+      case GLHCK_BUFFER_DYNAMIC_DRAW:
+         return GL_DYNAMIC_DRAW;
+      case GLHCK_BUFFER_DYNAMIC_READ:
+         return GL_DYNAMIC_READ;
+      case GLHCK_BUFFER_DYNAMIC_COPY:
+         return GL_DYNAMIC_COPY;
+      default:break;
+   }
+   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
+   return 0;
+}
+
+/* \brief map glhck hardware buffer access type for OpenGL access type */
+GLenum glhHwBufferAccessTypeForGlhckType(glhckHwBufferAccessType type)
+{
+   switch (type) {
+      case GLHCK_BUFFER_READ_ONLY:
+         return GL_READ_ONLY;
+      case GLHCK_BUFFER_WRITE_ONLY:
+         return GL_WRITE_ONLY;
+      case GLHCK_BUFFER_READ_WRITE:
+         return GL_READ_WRITE;
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -750,6 +860,39 @@ const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type)
 }
 
 /*
+ * binding mappings
+ */
+
+void glhTextureBind(glhckTextureType type, GLuint object) {
+   GL_CALL(glBindTexture(glhTextureTypeForGlhckType(type), object));
+}
+void glhFramebufferBind(glhckFramebufferType type, GLuint object) {
+   GL_CALL(glBindFramebuffer(glhFramebufferTypeForGlhckType(type), object));
+}
+
+void glhHwBufferBind(glhckHwBufferType type, GLuint object) {
+   GL_CALL(glBindBuffer(glhHwBufferTypeForGlhckType(type), object));
+}
+void glhHwBufferBindBase(glhckHwBufferType type, GLuint index, GLuint object) {
+   GL_CALL(glBindBufferBase(glhHwBufferTypeForGlhckType(type), index, object));
+}
+void glhHwBufferBindRange(glhckHwBufferType type, GLuint index, GLuint object, GLintptr offset, GLsizeiptr size) {
+   GL_CALL(glBindBufferRange(glhHwBufferTypeForGlhckType(type), index, object, offset, size));
+}
+void glhHwBufferCreate(glhckHwBufferType type, GLsizeiptr size, const GLvoid *data, glhckHwBufferStoreType usage) {
+   GL_CALL(glBufferData(glhHwBufferTypeForGlhckType(type), size, data, glhHwBufferStoreTypeForGlhckType(usage)));
+}
+void glhHwBufferFill(glhckHwBufferType type, GLintptr offset, GLsizeiptr size, const GLvoid *data) {
+   GL_CALL(glBufferSubData(glhHwBufferTypeForGlhckType(type), offset, size, data));
+}
+void* glhHwBufferMap(glhckHwBufferType type, glhckHwBufferAccessType access) {
+   return glMapBuffer(glhHwBufferTypeForGlhckType(type), glhHwBufferAccessTypeForGlhckType(access));
+}
+void glhHwBufferUnmap(glhckHwBufferType type) {
+   GL_CALL(glUnmapBuffer(glhHwBufferTypeForGlhckType(type)));
+}
+
+/*
  * shared OpenGL renderer functions
  */
 
@@ -800,28 +943,14 @@ void glhBlendFunc(GLenum blenda, GLenum blendb)
             glhBlendingModeForGlhckMode(blendb)));
 }
 
-/* \brief texture bind wrapper */
-void glhTextureBind(GLenum type, GLuint texture)
-{
-   if (GLHCKRD()->texture && GLHCKRD()->texture->object == texture)
-      return;
-
-   GL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
-}
-
-/* \brief restore glhck texture state */
-void glhTextureBindRestore(void)
-{
-   glhckTextureBind(GLHCKRD()->texture);
-}
-
 /* \brief create texture from data and upload it to OpenGL */
-GLuint glhTextureCreate(const GLvoid *buffer, GLsizei size,
-      GLsizei width, GLsizei height, glhckTextureFormat format,
-      GLuint reuseTextureObject, unsigned int flags)
+GLuint glhTextureCreate(glhckTextureType type,
+      const GLvoid *buffer, GLsizei size, GLsizei width, GLsizei height, GLsizei depth,
+      glhckTextureFormat format, GLuint reuseTextureObject, GLuint flags)
 {
    GLuint object;
-   GLenum glFormat;
+   glhckTexture *old;
+   GLenum glTarget, glFormat;
    CALL(0, "%p, %d, %d, %d, %d, %u, %u", buffer, size,
          width, height, format, reuseTextureObject, flags);
 
@@ -834,35 +963,60 @@ GLuint glhTextureCreate(const GLvoid *buffer, GLsizei size,
    if (!object)
       goto _return;
 
-   glhTextureBind(GL_TEXTURE_2D, object);
+   glTarget = glhTextureTypeForGlhckType(type);
+   glFormat = glhTextureFormatForGlhckFormat(format);
+
+   /* store old texture */
+   old = GLHCKRD()->texture[type];
+   GL_CALL(glhTextureBind(type, object));
 
    if (flags & GLHCK_TEXTURE_NEAREST) {
-      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
    } else {
-      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
    }
 
    if (flags & GLHCK_TEXTURE_REPEAT) {
-      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_WRAP_S, GL_REPEAT));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_WRAP_T, GL_REPEAT));
    } else {
-      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-      GL_CALL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
    }
 
-   glFormat = glhTextureFormatForGlhckFormat(format);
    if (_glhckIsCompressedFormat(format)) {
-      GL_CALL(glCompressedTexImage2D(GL_TEXTURE_2D, 0,
-               glFormat, width, height, 0, size, buffer));
+      switch (type) {
+         case GLHCK_TEXTURE_1D:
+            GL_CALL(glCompressedTexImage1D(glTarget, 0, glFormat, width, 0, size, buffer));
+            break;
+         case GLHCK_TEXTURE_2D:
+            GL_CALL(glCompressedTexImage2D(glTarget, 0, glFormat, width, height, 0, size, buffer));
+            break;
+         case GLHCK_TEXTURE_3D:
+            GL_CALL(glCompressedTexImage3D(glTarget, 0, glFormat, width, height, depth, 0, size, buffer));
+            break;
+         default:assert(0 && "texture type not supported");break;
+      }
    } else {
-      GL_CALL(glTexImage2D(GL_TEXTURE_2D, 0,
-               glFormat, width, height, 0, glFormat,
-               GL_UNSIGNED_BYTE, buffer));
+      switch (type) {
+         case GLHCK_TEXTURE_1D:
+            GL_CALL(glTexImage1D(glTarget, 0, glFormat, width, 0, glFormat, GL_UNSIGNED_BYTE, buffer));
+            break;
+         case GLHCK_TEXTURE_2D:
+            GL_CALL(glTexImage2D(glTarget, 0, glFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, buffer));
+            break;
+         case GLHCK_TEXTURE_3D:
+            GL_CALL(glTexImage3D(glTarget, 0, glFormat, width, height, depth, 0, glFormat, GL_UNSIGNED_BYTE, buffer));
+            break;
+         default:assert(0 && "texture type not supported");break;
+      }
    }
 
-   glhTextureBindRestore();
+   /* restore old texture */
+   if (old) glhckTextureBind(old);
+   else glhckTextureUnbind(type);
 
 _return:
    RET(0, "%u", object);
@@ -870,47 +1024,86 @@ _return:
 }
 
 /* \brief fill texture with data */
-void glhTextureFill(GLuint texture, const GLvoid *data, GLsizei size,
-      GLint x, GLint y, GLsizei width, GLsizei height, glhckTextureFormat format)
+void glhTextureFill(glhckTextureType type, GLuint texture, const GLvoid *data, GLsizei size,
+      GLint x, GLint y, GLint z, GLsizei width, GLsizei height, GLsizei depth, glhckTextureFormat format)
 {
-   GLenum glFormat;
+   glhckTexture *old;
+   GLenum glTarget, glFormat;
    CALL(1, "%u, %p, %d, %d, %d, %d, %d, %d", texture,
          data, size, x, y, width, height, format);
 
-   glhTextureBind(GL_TEXTURE_2D, texture);
-
+   glTarget = glhTextureTypeForGlhckType(type);
    glFormat = glhTextureFormatForGlhckFormat(format);
+
+   /* store old texture */
+   old = GLHCKRD()->texture[type];
+   GL_CALL(glhTextureBind(type, texture));
+
    if (_glhckIsCompressedFormat(format)) {
-      GL_CALL(glCompressedTexSubImage2D(GL_TEXTURE_2D, 0, x, y,
-               width, height, glFormat, size, data));
+      switch (type) {
+         case GLHCK_TEXTURE_1D:
+            GL_CALL(glCompressedTexSubImage1D(glTarget, 0, x, width, glFormat, size, data));
+            break;
+         case GLHCK_TEXTURE_2D:
+            GL_CALL(glCompressedTexSubImage2D(glTarget, 0, x, y, width, height, glFormat, size, data));
+            break;
+         case GLHCK_TEXTURE_3D:
+            GL_CALL(glCompressedTexSubImage3D(glTarget, 0, x, y, z, width, height, depth, glFormat, size, data));
+            break;
+         default:assert(0 && "texture type not supported");break;
+      }
    } else{
-      GL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, x, y,
-               width, height, glFormat, GL_UNSIGNED_BYTE, data));
+      switch (type) {
+         case GLHCK_TEXTURE_1D:
+            GL_CALL(glTexSubImage1D(glTarget, 0, x, width, glFormat, GL_UNSIGNED_BYTE, data));
+            break;
+         case GLHCK_TEXTURE_2D:
+            GL_CALL(glTexSubImage2D(glTarget, 0, x, y, width, height, glFormat, GL_UNSIGNED_BYTE, data));
+            break;
+         case GLHCK_TEXTURE_3D:
+            GL_CALL(glTexSubImage3D(glTarget, 0, x, y, z, width, height, depth, glFormat, GL_UNSIGNED_BYTE, data));
+            break;
+         default:assert(0 && "texture type not supported");break;
+      }
    }
 
-   glhTextureBindRestore();
+   /* restore old texture */
+   if (old) glhckTextureBind(old);
+   else glhckTextureUnbind(type);
 }
 
-/* \brief link FBO with texture attachmetn */
-int glhFramebufferLinkWithTexture(GLuint object, GLuint texture, _glhckRttAttachmentType type)
+/* \brief glFramebufferTexture wrapper with error checking */
+GLint glhFramebufferTexture(glhckFramebufferType framebufferType, glhckTextureType textureType, GLuint texture,
+      glhckFramebufferAttachmentType attachment)
 {
-   GLenum glAttachment;
-   CALL(0, "%d, %d, %d", object, texture, type);
+   GLenum glTarget, glTexTarget, glAttachment;
+   CALL(0, "%d, %d, %d, %d", framebufferType, textureType, texture, attachment);
 
-   glAttachment = glhAttachmentTypeForGlhckType(type);
-   GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, object));
-   GL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, glAttachment, GL_TEXTURE_2D, texture, 0));
+   glTarget     = glhFramebufferTypeForGlhckType(framebufferType);
+   glTexTarget  = glhTextureTypeForGlhckType(textureType);
+   glAttachment = glhAttachmentTypeForGlhckType(attachment);
 
-   if (GL_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER)) != GL_FRAMEBUFFER_COMPLETE)
+   switch (textureType) {
+      case GLHCK_TEXTURE_1D:
+         GL_CALL(glFramebufferTexture1D(glTarget, glAttachment, glTexTarget, texture, 0));
+         break;
+      case GLHCK_TEXTURE_2D:
+         GL_CALL(glFramebufferTexture2D(glTarget, glAttachment, glTexTarget, texture, 0));
+         break;
+      case GLHCK_TEXTURE_3D:
+         GL_CALL(glFramebufferTexture3D(glTarget, glAttachment, glTexTarget, texture, 0, 0));
+         break;
+      default:assert(0 && "texture type not supported");break;
+   }
+
+   if (GL_CHECK(glCheckFramebufferStatus(glTarget)) != GL_FRAMEBUFFER_COMPLETE)
       goto fbo_fail;
 
-   GL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, 0));
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fbo_fail:
    DEBUG(GLHCK_DBG_ERROR, "Framebuffer is not complete");
-   glBindFramebuffer(GL_FRAMEBUFFER, 0);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }

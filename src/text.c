@@ -130,7 +130,7 @@ fail:
 __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
       unsigned int code, short isize)
 {
-   unsigned int h, tex_object;
+   unsigned int h, texObject;
    unsigned char *data;
    int i, x1, y1, x2, y2, gw, rh, gh, gid, advance, lsb;
    float scale;
@@ -206,11 +206,12 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
             size_t size         = text->tw * text->th;
 
             /* as last resort create new texture, if this was used */
-            tex_object = GLHCKRA()->textureCreate(NULL, size, text->tw, text->th, format, 0, GLHCK_TEXTURE_NEAREST);
-            if (!tex_object)
+            texObject = GLHCKRA()->textureCreate(GLHCK_TEXTURE_2D, NULL, size,
+                  text->tw, text->th, 0, format, 0, GLHCK_TEXTURE_NEAREST);
+            if (!texObject)
                return NULL;
 
-            if (_glhckTextNewTexture(text, tex_object, size, format) != RETURN_OK)
+            if (_glhckTextNewTexture(text, texObject, size, format) != RETURN_OK)
                return NULL;
 
             /* cycle and hope for best */
@@ -260,7 +261,8 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(_glhckText *text, __GLHCKtextFont *font,
    /* rasterize */
    if ((data = _glhckMalloc(gw*gh))) {
       stbtt_MakeGlyphBitmap(&font->font, data, gw, gh, gw, scale, scale, gid);
-      GLHCKRA()->textureFill(texture->object, data, 0, glyph->x1, glyph->y1, gw, gh, texture->format);
+      GLHCKRA()->textureFill(GLHCK_TEXTURE_2D, texture->object,
+            data, 0, glyph->x1, glyph->y1, 0, gw, gh, 0, texture->format);
       _glhckFree(data);
    }
 
@@ -335,8 +337,8 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    texture->size   = cachew * cacheh;
 
    /* fill texture with emptiness */
-   texture->object = GLHCKRA()->textureCreate(NULL, texture->size, cachew, cacheh,
-         texture->format, 0, GLHCK_TEXTURE_NEAREST);
+   texture->object = GLHCKRA()->textureCreate(GLHCK_TEXTURE_2D, NULL,
+         texture->size, cachew, cacheh, 0, texture->format, 0, GLHCK_TEXTURE_NEAREST);
    if (!texture->object)
       goto fail;
 
@@ -562,6 +564,9 @@ GLHCKAPI unsigned int glhckTextNewFont(glhckText *text, const char *file)
    if (!(id = glhckTextNewFontFromMemory(text, data, size)))
       goto fail;
 
+   /* data not needed anymore */
+   _glhckFree(data);
+
    RET(0, "%d", id);
    return id;
 
@@ -604,8 +609,8 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text,
       goto fail;
 
    /* create texture */
-   if (!(texture = GLHCKRA()->textureCreate(data, temp->size,
-               temp->width, temp->height, temp->format, 0, GLHCK_TEXTURE_NEAREST)))
+   if (!(texture = GLHCKRA()->textureCreate(GLHCK_TEXTURE_2D, data, temp->size,
+               temp->width, temp->height, 0, temp->format, 0, GLHCK_TEXTURE_NEAREST)))
       goto fail;
 
    /* not needed anymore */
@@ -791,30 +796,36 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
 GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
       float size, const char *s, unsigned int textureFlags)
 {
-   glhckRtt *rtt;
-   glhckTexture *texture;
+   glhckTexture *texture = NULL;
+   glhckFramebuffer *fbo = NULL;
    float linew;
    CALL(2, "%p, %u, %f, %s", text, font_id, size, s);
 
+   if (!(texture = glhckTextureNew(NULL, GLHCK_TEXTURE_DEFAULTS)))
+      goto fail;
    glhckTextDraw(text, font_id, size, 0, size*0.75f, s, &linew);
-   if (!(rtt = glhckRttNew(linew, size, GLHCK_RTT_RGBA, textureFlags)))
+   if (!(glhckTextureCreate(texture, GLHCK_TEXTURE_2D, NULL, linew, size, 0, GLHCK_RGBA, GLHCK_RGBA, textureFlags)))
+      goto fail;
+   if (!(fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER)))
+      goto fail;
+   if (!(glhckFramebufferAttachTexture(fbo, texture, GLHCK_COLOR_ATTACHMENT0)))
       goto fail;
 
-   glhckRttBegin(rtt);
+   glhckFramebufferBind(fbo);
+   glhckFramebufferRecti(fbo, 0, 0, linew, size);
    glhckClear();
    glhckTextRender(text);
-   glhckRttFillData(rtt);
-   glhckRttEnd(rtt);
+   glhckFramebufferFillTexture(fbo, texture);
 
-   texture = glhckTextureRef(glhckRttGetTexture(rtt));
    texture->importFlags |= GLHCK_TEXTURE_IMPORT_TEXT;
-   glhckRttFree(rtt);
+   glhckFramebufferFree(fbo);
 
    RET(2, "%p", texture);
    return texture;
 
 fail:
-   IFDO(glhckRttFree, rtt);
+   IFDO(glhckFramebufferFree, fbo);
+   IFDO(glhckTextureFree, texture);
    RET(2, "%p", NULL);
    return NULL;
 }

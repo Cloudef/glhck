@@ -112,7 +112,7 @@ GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(
       printf("(%s:%u) %d : %d [%s]\n", u->name, u->location, u->type, u->size, u->typeName);
 
    /* insert to world */
-   _glhckWorldInsert(slist, object, _glhckShader*);
+   _glhckWorldInsert(slist, object, glhckShader*);
 
    RET(0, "%p", object);
    return object;
@@ -148,6 +148,11 @@ GLHCKAPI size_t glhckShaderFree(glhckShader *object)
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
+   /* unbind from active slot */
+   if (GLHCKRD()->shader == object)
+      glhckShaderBind(NULL);
+
+   /* delete object */
    if (object->program)
       GLHCKRA()->programDelete(object->program);
 
@@ -156,7 +161,10 @@ GLHCKAPI size_t glhckShaderFree(glhckShader *object)
    _glhckShaderFreeUniforms(object);
 
    /* remove from world */
-   _glhckWorldRemove(slist, object, _glhckShader*);
+   _glhckWorldRemove(slist, object, glhckShader*);
+
+   /* free */
+   NULLDO(_glhckFree, object);
 
 success:
    RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
@@ -174,11 +182,12 @@ GLHCKAPI void glhckShaderBind(glhckShader *object)
 /* \brief set uniform to shader */
 GLHCKAPI void glhckShaderSetUniform(glhckShader *object, const char *uniform, int count, void *value)
 {
+   glhckShader *old;
    _glhckShaderUniform *u;
    assert(object);
 
    /* store old shader */
-   glhckShader *old = GLHCKRD()->shader;
+   old = GLHCKRD()->shader;
 
    /* search uniform */
    for (u = object->uniforms; u; u = u->next)
