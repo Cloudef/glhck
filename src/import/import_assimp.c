@@ -144,16 +144,16 @@ static int processModel(const char *file, _glhckObject *object,
    int canFreeCurrent = 0;
    int hasTexture = 0;
 
-   /* prepare atlas for texture combining */
-   if (!(atlas = glhckAtlasNew()))
-      goto assimp_no_memory;
-
-   /* texturelist for offseting coordinates */
-   if (!(textureList = _glhckCalloc(nd->mNumMeshes, sizeof(_glhckTexture*))))
-      goto assimp_no_memory;
-
    /* combine && atlas loading path */
    if (flags & GLHCK_MODEL_JOIN) {
+      /* prepare atlas for texture combining */
+      if (!(atlas = glhckAtlasNew()))
+         goto assimp_no_memory;
+
+      /* texturelist for offseting coordinates */
+      if (!(textureList = _glhckCalloc(nd->mNumMeshes, sizeof(_glhckTexture*))))
+         goto assimp_no_memory;
+
       /* gather statistics */
       for (m = 0; m != nd->mNumMeshes; ++m) {
          mesh = sc->mMeshes[nd->mMeshes[m]];
