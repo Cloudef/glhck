@@ -249,11 +249,11 @@ static inline void rGeometryPointer(const glhckGeometry *geometry)
    /* vertex data */
    switch (geometry->vertexType) {
       case GLHCK_VERTEX_V3B:
-         geometryV3ToOpenGL(GL_BYTE, GL_BYTE, glhckVertexData3b, v3b);
+         geometryV3ToOpenGL(GL_BYTE, GL_SHORT, glhckVertexData3b, v3b);
          break;
 
       case GLHCK_VERTEX_V2B:
-         geometryV2ToOpenGL(GL_BYTE, GL_BYTE, glhckVertexData2b, v2b);
+         geometryV2ToOpenGL(GL_BYTE, GL_SHORT, glhckVertexData2b, v2b);
          break;
 
       case GLHCK_VERTEX_V3S:
@@ -262,6 +262,14 @@ static inline void rGeometryPointer(const glhckGeometry *geometry)
 
       case GLHCK_VERTEX_V2S:
          geometryV2ToOpenGL(GL_SHORT, GL_SHORT, glhckVertexData2s, v2s);
+         break;
+
+      case GLHCK_VERTEX_V3FS:
+         geometryV3ToOpenGL(GL_FLOAT, GL_SHORT, glhckVertexData3fs, v3fs);
+         break;
+
+      case GLHCK_VERTEX_V2FS:
+         geometryV2ToOpenGL(GL_FLOAT, GL_SHORT, glhckVertexData2fs, v2fs);
          break;
 
       case GLHCK_VERTEX_V3F:
