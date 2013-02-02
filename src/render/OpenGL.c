@@ -31,8 +31,7 @@ static const char *_glhckBaseShader =
 "in vec3 Normal;"
 "in vec2 UV0;"
 "in vec4 Color;"
-"uniform float Time;"
-"uniform SharedUniforms {"
+"uniform SharedProjection {"
 "  mat4 Projection;"
 "};"
 "uniform mat4 Model;"
@@ -50,7 +49,6 @@ static const char *_glhckBaseShader =
 "in vec3 fNormal;"
 "in vec2 fUV0;"
 "in vec4 fColor;"
-"uniform float Time;"
 "uniform sampler2D Texture0;"
 "uniform vec4 MaterialColor;"
 "out vec4 FragColor;"
@@ -110,7 +108,8 @@ typedef struct __OpenGLrender {
    glhckShader *baseShader;
    glhckShader *textShader;
    glhckShader *colorShader;
-   glhckHwBuffer *sharedUBO;
+   glhckHwBuffer *sharedProjectionUBO;
+   glhckHwBuffer *sharedTimeUBO;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
 
@@ -119,13 +118,24 @@ static __OpenGLrender _OpenGL;
 
 /* ---- Render API ---- */
 
+/* \brief set time to renderer */
+static void rTime(float time)
+{
+   CALL(2, "%f", time);
+
+   /* update time on shared UBO */
+   if (_OpenGL.sharedTimeUBO)
+      glhckHwBufferFill(_OpenGL.sharedTimeUBO, 0, sizeof(float), &time);
+}
+
 /* \brief set projection matrix */
 static void rSetProjection(const kmMat4 *m)
 {
    CALL(2, "%p", m);
 
    /* update projection on shared UBO */
-   if (_OpenGL.sharedUBO) glhckHwBufferFill(_OpenGL.sharedUBO, 0, sizeof(kmMat4), &m[0]);
+   if (_OpenGL.sharedProjectionUBO)
+      glhckHwBufferFill(_OpenGL.sharedProjectionUBO, 0, sizeof(kmMat4), &m[0]);
 
    if (m != &_OpenGL.projection)
       memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
@@ -439,7 +449,7 @@ static void rProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei
 /* \brief link program from 2 compiled shader objects */
 static unsigned int rProgramLink(GLuint vertexShader, GLuint fragmentShader)
 {
-   GLuint obj = 0, sharedUniforms;
+   GLuint obj = 0, sharedProjection, sharedTime;
    GLchar *log = NULL;
    GLsizei logSize;
    CALL(0, "%u, %u", vertexShader, fragmentShader);
@@ -459,9 +469,12 @@ static unsigned int rProgramLink(GLuint vertexShader, GLuint fragmentShader)
    GL_CALL(glAttachShader(obj, fragmentShader));
    GL_CALL(glLinkProgram(obj));
 
-   /* get location for shared uniforms */
-   if ((sharedUniforms = glGetUniformBlockIndex(obj, "SharedUniforms"))) {
-      GL_CALL(glUniformBlockBinding(obj, sharedUniforms, 0));
+   /* get locations for shared uniforms objects */
+   if ((sharedProjection = glGetUniformBlockIndex(obj, "SharedProjection"))) {
+      GL_CALL(glUniformBlockBinding(obj, sharedProjection, 0));
+   }
+   if ((sharedTime = glGetUniformBlockIndex(obj, "SharedTime"))) {
+      GL_CALL(glUniformBlockBinding(obj, sharedTime, 1));
    }
 
    /* dump the log incase of error */
@@ -1096,7 +1109,8 @@ static void renderTerminate(void)
    NULLDO(glhckShaderFree, _OpenGL.baseShader);
    NULLDO(glhckShaderFree, _OpenGL.textShader);
    NULLDO(glhckShaderFree, _OpenGL.colorShader);
-   NULLDO(glhckHwBufferFree, _OpenGL.sharedUBO);
+   NULLDO(glhckHwBufferFree, _OpenGL.sharedProjectionUBO);
+   NULLDO(glhckHwBufferFree, _OpenGL.sharedTimeUBO);
 
    /* shutdown shader wrangler */
    glswShutdown();
@@ -1135,7 +1149,7 @@ void _glhckRenderOpenGL(void)
       goto fail;
 
    /* default path &&  extension */
-   glswSetPath("shaders", ".glsl");
+   glswSetPath("shaders/", ".glsl");
    glswAddDirectiveToken("GLhck", "#version 140");
 
    /* reset global data */
@@ -1193,30 +1207,37 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(bufferGetPixels, glhBufferGetPixels);
 
    /* common */
+   GLHCK_RENDER_FUNC(time, rTime);
    GLHCK_RENDER_FUNC(viewport, rViewport);
    GLHCK_RENDER_FUNC(terminate, renderTerminate);
 
    /* parameters */
    GLHCK_RENDER_FUNC(getIntegerv, glhGetIntegerv);
 
-   /* create shared uniform buffer */
-   if (!(_OpenGL.sharedUBO = glhckHwBufferNew()))
+   /* create shared uniform buffer objects */
+   if (!(_OpenGL.sharedProjectionUBO = glhckHwBufferNew()))
       goto fail;
-   glhckHwBufferCreate(_OpenGL.sharedUBO, GLHCK_UNIFORM_BUFFER, sizeof(kmMat4), NULL, GLHCK_BUFFER_STREAM_DRAW);
-   glhckHwBufferBindRange(_OpenGL.sharedUBO, 0, 0, sizeof(kmMat4));
+   if (!(_OpenGL.sharedTimeUBO = glhckHwBufferNew()))
+      goto fail;
+
+   /* initialize uniform buffer objects */
+   glhckHwBufferCreate(_OpenGL.sharedProjectionUBO, GLHCK_UNIFORM_BUFFER, sizeof(kmMat4), NULL, GLHCK_BUFFER_STREAM_DRAW);
+   glhckHwBufferBindRange(_OpenGL.sharedProjectionUBO, 0, 0, sizeof(kmMat4));
+   glhckHwBufferCreate(_OpenGL.sharedTimeUBO, GLHCK_UNIFORM_BUFFER, sizeof(float), NULL, GLHCK_BUFFER_STREAM_DRAW);
+   glhckHwBufferBindRange(_OpenGL.sharedTimeUBO, 1, 0, sizeof(float));
 
    /* compile base shader */
-   _OpenGL.baseShader = glhckShaderNew("Base.GLhck.Vertex.Base", "Base.GLhck.Fragment.Base", _glhckBaseShader);
+   _OpenGL.baseShader = glhckShaderNew(".GLhck.Vertex.Base", ".GLhck.Fragment.Base", _glhckBaseShader);
    if (!_OpenGL.baseShader)
       goto fail;
 
    /* compile text shader */
-   _OpenGL.textShader = glhckShaderNew("Text.GLhck.Vertex.Text", "Text.GLhck.Fragment.Text", _glhckBaseShader);
+   _OpenGL.textShader = glhckShaderNew(".GLhck.Vertex.Text", ".GLhck.Fragment.Text", _glhckBaseShader);
    if (!_OpenGL.textShader)
       goto fail;
 
    /* compile color shader */
-   _OpenGL.colorShader = glhckShaderNew("Color.GLhck.Vertex.Base", "Color.GLhck.Fragment.Color", _glhckBaseShader);
+   _OpenGL.colorShader = glhckShaderNew(".GLhck.Vertex.Base", ".GLhck.Fragment.Color", _glhckBaseShader);
    if (!_OpenGL.colorShader)
       goto fail;
 

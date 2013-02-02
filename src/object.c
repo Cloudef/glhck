@@ -579,7 +579,12 @@ GLHCKAPI void glhckObjectShader(glhckObject *object, glhckShader *shader)
 
    if (object->material.shader == shader) return;
    if (object->material.shader) glhckShaderFree(object->material.shader);
-   object->material.shader = glhckShaderRef(shader);
+   object->material.shader = (shader?glhckShaderRef(shader):NULL);
+
+   /* set shader on all the childs */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectShader, shader);
+   }
 }
 
 /* \brief get object's shader */

@@ -526,6 +526,7 @@ GLHCKAPI void glhckSetRenderFlags(unsigned int flags);
 GLHCKAPI void glhckRenderProjection(kmMat4 const* mat);
 GLHCKAPI void glhckRender(void);
 GLHCKAPI void glhckClear(void);
+GLHCKAPI void glhckTime(float time);
 
 /* frustum */
 GLHCKAPI void glhckFrustumBuild(glhckFrustum *frustum, const kmMat4 *mvp);

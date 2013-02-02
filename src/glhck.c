@@ -30,6 +30,7 @@ int feenableexcept(int excepts);
 if (!render->api.x) DEBUG(GLHCK_DBG_ERROR, "[%s] \1missing render API function: %s", render->name, __STRING(x))
 static void _glhckCheckRenderApi(__GLHCKrender *render)
 {
+   GLHCK_API_CHECK(time);
    GLHCK_API_CHECK(terminate);
    GLHCK_API_CHECK(viewport);
    GLHCK_API_CHECK(setProjection);
@@ -261,8 +262,7 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    }
 
    /* check that initialization was success */
-   if (!GLHCKR()->name)
-      goto fail;
+   if (!GLHCKR()->name) goto fail;
 
    /* check render api and output warnings,
     * if any function is missing */
@@ -286,11 +286,7 @@ GLHCKAPI void glhckDisplayClose(void)
 {
    GLHCK_INITIALIZED();
    TRACE(0);
-
-   /* nothing to terminate */
-   if (!GLHCKR()->name)
-      return;
-
+   if (!GLHCKR()->name) return;
    GLHCKRA()->terminate();
    GLHCKR()->type = GLHCK_RENDER_AUTO;
 }
@@ -301,10 +297,7 @@ GLHCKAPI void glhckDisplayResize(int width, int height)
    GLHCK_INITIALIZED();
    CALL(1, "%d, %d", width, height);
    assert(width > 0 && height > 0);
-
-   /* no renderer */
-   if (!GLHCKR()->name)
-      return;
+   if (!GLHCKR()->name) return;
 
    /* nothing to resize */
    if (GLHCKR()->width == width && GLHCKR()->height == height)
@@ -318,16 +311,21 @@ GLHCKAPI void glhckDisplayResize(int width, int height)
    GLHCKR()->height = height;
 }
 
+/* \brief give current program time to glhck */
+GLHCKAPI void glhckTime(float time)
+{
+   GLHCK_INITIALIZED();
+   CALL(2, "%f", time);
+   if (!GLHCKR()->name) return;
+   GLHCKRA()->time(time);
+}
+
 /* \brief clear scene */
 GLHCKAPI void glhckClear(void)
 {
    GLHCK_INITIALIZED();
    TRACE(2);
-
-   /* can't clear */
-   if (!GLHCKR()->name)
-      return;
-
+   if (!GLHCKR()->name) return;
    GLHCKRA()->clear();
 }
 

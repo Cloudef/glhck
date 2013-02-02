@@ -184,6 +184,12 @@ int main(int argc, char **argv)
       glhckObjectScalef(cube, 1.0f, 1.0f, 2.0f);
    } else return EXIT_FAILURE;
 
+   glhckShader *shader = glhckShaderNew("Glow.GLhck.Vertex", "Glow.GLhck.Fragment", NULL);
+   if (shader) {
+      glhckObjectShader(cube, shader);
+      glhckShaderFree(shader);
+   }
+
    unsigned int flags = glhckObjectGetMaterialFlags(cube);
    flags |= GLHCK_MATERIAL_DRAW_AABB;
    flags |= GLHCK_MATERIAL_DRAW_OBB;
@@ -222,6 +228,7 @@ int main(int argc, char **argv)
       last  =  now;
       now   =  glfwGetTime();
       delta =  now - last;
+      glhckTime(now);
 
       glfwPollEvents();
       handleCamera(window, delta, &cameraPos, &cameraRot, &projectionType);

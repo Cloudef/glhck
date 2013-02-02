@@ -803,7 +803,7 @@ GLHCKAPI void glhckTextShader(glhckText *text, glhckShader *shader)
 
    if (text->shader == shader) return;
    if (text->shader) glhckShaderFree(text->shader);
-   text->shader = glhckShaderRef(shader);
+   text->shader = (shader?glhckShaderRef(shader):NULL);
 }
 
 /* \brief get text's shader */

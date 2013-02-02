@@ -59,6 +59,11 @@ static __OpenGLrender _OpenGL;
 
 /* ---- Render API ---- */
 
+/* \brief set time */
+static void rTime(float time)
+{
+}
+
 /* \brief set projection matrix */
 static void rSetProjection(const kmMat4 *m)
 {
@@ -815,6 +820,7 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(bufferGetPixels, glhBufferGetPixels);
 
    /* common */
+   GLHCK_RENDER_FUNC(time, rTime);
    GLHCK_RENDER_FUNC(viewport, rViewport);
    GLHCK_RENDER_FUNC(terminate, renderTerminate);
 

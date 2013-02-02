@@ -383,6 +383,7 @@ typedef struct _glhckShader {
 } _glhckShader;
 
 /* render api */
+typedef void (*__GLHCKrenderAPItime) (float time);
 typedef void (*__GLHCKrenderAPIterminate) (void);
 typedef void (*__GLHCKrenderAPIviewport) (int x, int y, int width, int height);
 typedef void (*__GLHCKrenderAPIsetProjection) (const kmMat4 *m);
@@ -451,6 +452,7 @@ typedef void (*__GLHCKrenderAPIgetIntegerv) (unsigned int pname, int *params);
 
 /* glhck render api */
 typedef struct __GLHCKrenderAPI {
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(time);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(terminate);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(viewport);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(setProjection);
