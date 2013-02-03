@@ -839,7 +839,6 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
    glhckFramebufferRecti(fbo, 0, 0, linew, size);
    glhckClear();
    glhckTextRender(text);
-   glhckFramebufferFillTexture(fbo, texture);
 
    texture->importFlags |= GLHCK_TEXTURE_IMPORT_TEXT;
    glhckFramebufferFree(fbo);

@@ -285,7 +285,6 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
       glhckObjectTexture(plane, rect->texture);
       glhckObjectRender(plane);
    }
-   glhckFramebufferFillTexture(fbo, texture);
 
    /* restore old state */
    GLHCKRA()->viewport(0,0,GLHCKR()->width, GLHCKR()->height);
