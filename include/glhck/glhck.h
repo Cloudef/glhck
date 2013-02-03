@@ -295,6 +295,8 @@ typedef enum glhckTextureFormat
    GLHCK_RGB,
    GLHCK_RGBA,
 
+   GLHCK_DEPTH_COMPONENT,
+
    GLHCK_COMPRESSED_RGB_DXT1,
    GLHCK_COMPRESSED_RGBA_DXT5,
 } glhckTextureFormat;

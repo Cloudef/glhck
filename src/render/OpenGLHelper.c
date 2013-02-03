@@ -99,6 +99,8 @@ GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format)
          return GL_RGB;
       case GLHCK_RGBA:
          return GL_RGBA;
+      case GLHCK_DEPTH_COMPONENT:
+         return GL_DEPTH_COMPONENT;
       case GLHCK_COMPRESSED_RGBA_DXT5:
          return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
       case GLHCK_COMPRESSED_RGB_DXT1:
