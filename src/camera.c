@@ -197,12 +197,14 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
       return;
    }
 
-   if (GLHCKRD()->camera != camera)
+   if (GLHCKRD()->camera != camera || camera->view.updateViewport) {
       GLHCKRA()->viewport(
             camera->view.viewport.x,
             camera->view.viewport.y,
             camera->view.viewport.w,
             camera->view.viewport.h);
+      camera->view.updateViewport = 0;
+   }
 
    if (camera->view.update || camera->object->view.update) {
       _glhckCameraViewMatrix(camera);
@@ -324,6 +326,7 @@ GLHCKAPI void glhckCameraViewport(glhckCamera *camera, const glhckRect *viewport
    memcpy(&camera->view.viewport, viewport, sizeof(glhckRect));
    _glhckCameraProjectionMatrix(camera);
    camera->view.update = 1;
+   camera->view.updateViewport = 1;
 }
 
 /* \brief set camera's viewport (kmScalar) */
