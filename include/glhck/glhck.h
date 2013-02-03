@@ -692,6 +692,8 @@ GLHCKAPI glhckFramebuffer* glhckFramebufferRef(glhckFramebuffer *object);
 GLHCKAPI size_t glhckFramebufferFree(glhckFramebuffer *object);
 GLHCKAPI void glhckFramebufferBind(glhckFramebuffer *object);
 GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferType type);
+GLHCKAPI void glhckFramebufferBegin(glhckFramebuffer *object);
+GLHCKAPI void glhckFramebufferEnd(glhckFramebuffer *object);
 GLHCKAPI void glhckFramebufferRect(glhckFramebuffer *object, glhckRect *rect);
 GLHCKAPI void glhckFramebufferRecti(glhckFramebuffer *object, int x, int y, int w, int h);
 GLHCKAPI int glhckFramebufferAttachTexture(glhckFramebuffer *object, glhckTexture *texture, glhckFramebufferAttachmentType attachment);

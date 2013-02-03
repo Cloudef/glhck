@@ -322,7 +322,7 @@ typedef struct __GLHCKcameraView {
    kmVec3 upVector;
    kmMat4 view, projection, mvp;
    glhckRect viewport;
-   char update;
+   char update, updateViewport;
 } __GLHCKcameraView;
 
 /* camera container */
@@ -338,6 +338,7 @@ typedef struct _glhckCamera {
 typedef struct _glhckFramebuffer {
    unsigned int object;
    glhckFramebufferType targetType;
+   glhckRect rect;
    size_t refCounter;
    struct _glhckFramebuffer *next;
 } _glhckFramebuffer;

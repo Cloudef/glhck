@@ -260,8 +260,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    memcpy(&old_clear, &GLHCKRD()->clearColor, sizeof(glhckColorb));
    GLHCKRA()->setClearColor(0,0,0,0);
 
-   glhckFramebufferBind(fbo);
    glhckFramebufferRecti(fbo, 0, 0, width, height);
+   glhckFramebufferBegin(fbo);
    GLHCKRA()->clear();
    for (rect = atlas->rect; rect; rect = rect->next) {
       rect->packed.rotated = _glhckTexturePackerGetLocation(tp,
@@ -285,9 +285,9 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
       glhckObjectTexture(plane, rect->texture);
       glhckObjectRender(plane);
    }
+   glhckFramebufferEnd(fbo);
 
    /* restore old state */
-   GLHCKRA()->viewport(0,0,GLHCKR()->width, GLHCKR()->height);
    GLHCKRA()->setProjection(&old_projection);
    GLHCKRA()->setClearColor(old_clear.r, old_clear.g, old_clear.b, old_clear.a);
 

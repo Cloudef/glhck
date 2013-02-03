@@ -97,17 +97,33 @@ GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferType type)
    GLHCKRD()->framebuffer[type] = NULL;
 }
 
+/* \brief begin render with the fbo */
+GLHCKAPI void glhckFramebufferBegin(glhckFramebuffer *object)
+{
+   CALL(3, "%p", object);
+   assert(object);
+   glhckFramebufferBind(object);
+   GLHCKRA()->viewport(object->rect.x, object->rect.y, object->rect.w, object->rect.h);
+}
+
+/* \brief end rendering with the fbo */
+GLHCKAPI void glhckFramebufferEnd(glhckFramebuffer *object)
+{
+   CALL(3, "%p", object);
+   assert(object);
+   glhckFramebufferUnbind(object->targetType);
+   if (GLHCKRD()->camera) {
+      GLHCKRD()->camera->view.updateViewport = 1;
+      glhckCameraUpdate(GLHCKRD()->camera);
+   } else GLHCKRA()->viewport(0, 0, GLHCKR()->width, GLHCKR()->height);
+}
+
 /* \brief set framebuffer's visible area */
 GLHCKAPI void glhckFramebufferRect(glhckFramebuffer *object, glhckRect *rect)
 {
-   glhckFramebuffer *old;
    CALL(1, "%p, %p", object, rect);
    assert(object && rect);
-   old = GLHCKRD()->framebuffer[object->targetType];
-   glhckFramebufferBind(object);
-   GLHCKRA()->viewport(rect->x, rect->y, rect->w, rect->h);
-   if (old) glhckFramebufferBind(old);
-   else glhckFramebufferUnbind(object->targetType);
+   memcpy(&object->rect, rect, sizeof(glhckRect));
 }
 
 /* \brief set framebuffer's visible area (int) */

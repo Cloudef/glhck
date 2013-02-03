@@ -835,10 +835,11 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
    if (!(glhckFramebufferAttachTexture(fbo, texture, GLHCK_COLOR_ATTACHMENT0)))
       goto fail;
 
-   glhckFramebufferBind(fbo);
    glhckFramebufferRecti(fbo, 0, 0, linew, size);
+   glhckFramebufferBegin(fbo);
    glhckClear();
    glhckTextRender(text);
+   glhckFramebufferEnd(fbo);
 
    texture->importFlags |= GLHCK_TEXTURE_IMPORT_TEXT;
    glhckFramebufferFree(fbo);
