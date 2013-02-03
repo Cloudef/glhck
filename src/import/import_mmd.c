@@ -122,7 +122,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, unsigned int flags,
          /* normals */
          vertexData[ix].normal.x = mmd->normals[ix * 3 + 0];
          vertexData[ix].normal.y = mmd->normals[ix * 3 + 1];
-         vertexData[ix].normal.z = mmd->normals[ix * 3 + 2]*-1; /* flip Z */
+         vertexData[ix].normal.z = mmd->normals[ix * 3 + 2];
 
          /* texture coords */
          vertexData[ix].coord.x = mmd->coords[ix * 2 + 0];
