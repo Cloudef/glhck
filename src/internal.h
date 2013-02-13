@@ -34,6 +34,7 @@
 #define GLHCK_CHANNEL_VDATA         "VERTEXDATA"
 #define GLHCK_CHANNEL_TEXTURE       "TEXTURE"
 #define GLHCK_CHANNEL_ATLAS         "ATLAS"
+#define GLHCK_CHANNEL_LIGHT         "LIGHT"
 #define GLHCK_CHANNEL_FRAMEBUFFER   "FRAMEBUFFER"
 #define GLHCK_CHANNEL_HWBUFFER      "HWBUFFER"
 #define GLHCK_CHANNEL_SHADER        "SHADER"
@@ -49,7 +50,7 @@
 #define GLHCK_IMPORT_DYNAMIC 0
 
 /* disable triangle stripping? */
-#define GLHCK_TRISTRIP 1
+#define GLHCK_TRISTRIP 0
 
 /* floating point precision text? */
 #define GLHCK_TEXT_FLOAT_PRECISION 1
@@ -295,8 +296,8 @@ typedef struct __GLHCKtextGeometry {
 
 /* text texture container */
 typedef struct __GLHCKtextTexture {
-   unsigned int object, numRows;
-   int size;
+   unsigned int object;
+   int size, numRows;
    glhckTextureFormat format;
    struct __GLHCKtextGeometry geometry;
    struct __GLHCKtextTextureRow rows[GLHCK_TEXT_MAX_ROWS];
@@ -320,7 +321,7 @@ typedef struct __GLHCKcameraView {
    glhckProjectionType projectionType;
    kmScalar near, far, fov;
    kmVec3 upVector;
-   kmMat4 view, projection, mvp;
+   kmMat4 view, projection, viewProj;
    glhckRect viewport;
    char update, updateViewport;
 } __GLHCKcameraView;
@@ -333,6 +334,23 @@ typedef struct _glhckCamera {
    size_t refCounter;
    struct _glhckCamera *next;
 } _glhckCamera;
+
+/* light container */
+typedef struct _glhckLight {
+   kmVec3 oldPosition, oldTarget;
+   kmScalar oldNear, oldFar;
+   struct _glhckObject *object;
+   size_t refCounter;
+   struct _glhckLight *next;
+} _glhckLight;
+
+/* renderbuffer object */
+typedef struct _glhckRenderbuffer {
+   unsigned int object;
+   int width, height;
+   size_t refCounter;
+   struct _glhckRenderbuffer *next;
+} _glhckRenderbuffer;
 
 /* framebuffer object */
 typedef struct _glhckFramebuffer {
@@ -390,7 +408,7 @@ typedef void (*__GLHCKrenderAPIviewport) (int x, int y, int width, int height);
 typedef void (*__GLHCKrenderAPIsetProjection) (const kmMat4 *m);
 typedef const kmMat4* (*__GLHCKrenderAPIgetProjection) (void);
 typedef void (*__GLHCKrenderAPIsetClearColor) (char r, char g, char b, char a);
-typedef void (*__GLHCKrenderAPIclear) (void);
+typedef void (*__GLHCKrenderAPIclear) (unsigned int bufferBits);
 
 /* render */
 typedef void (*__GLHCKrenderAPIobjectRender) (const _glhckObject *object);
@@ -411,6 +429,11 @@ typedef void (*__GLHCKrenderAPItextureFill)
 typedef unsigned int (*__GLHCKrenderAPItextureCreate)
    (glhckTextureType type, const void *buffer, int size, int width, int height, int depth, glhckTextureFormat format,
     unsigned int reuseTextureObject, unsigned int flags);
+
+/* renderbuffer s*/
+typedef void (*__GLHCKrenderAPIrenderbufferGenerate) (int count, unsigned int *objects);
+typedef void (*__GLHCKrenderAPIrenderbufferDelete) (int count, const unsigned int *objects);
+typedef void (*__GLHCKrenderAPIrenderbufferBind) (unsigned int object);
 
 /* framebuffers */
 typedef void (*__GLHCKrenderAPIframebufferGenerate) (int count, unsigned int *objects);
@@ -473,6 +496,10 @@ typedef struct __GLHCKrenderAPI {
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(textureCreate);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(textureFill);
 
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(renderbufferGenerate);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(renderbufferDelete);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(renderbufferBind);
+
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferGenerate);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferDelete);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferBind);
@@ -531,13 +558,21 @@ typedef struct __GLHCKrenderDraw {
    struct __GLHCKtextureQueue textures;
 } __GLHCKrenderDraw;
 
+/* glhck render pass state
+ * the pass state overrides object state */
+typedef struct __GLHCKrenderPass {
+   unsigned int flags;
+   glhckCullFaceType cullFace;
+   unsigned int blenda, blendb;
+} __GLHCKrenderPass;
+
 /* glhck render properties */
 typedef struct __GLHCKrender {
-   int width, height;
    const char *name;
+   int width, height;
    glhckRenderType type;
    glhckDriverType driver;
-   unsigned int flags;
+   struct __GLHCKrenderPass pass;
    struct __GLHCKrenderAPI api;
    struct __GLHCKrenderDraw draw;
    glhckGeometryIndexType globalIndexType;
@@ -548,7 +583,9 @@ typedef struct __GLHCKrender {
 typedef struct __GLHCKworld {
    struct _glhckObject        *olist;
    struct _glhckCamera        *clist;
+   struct _glhckLight         *llist;
    struct _glhckAtlas         *alist;
+   struct _glhckRenderbuffer  *rlist;
    struct _glhckFramebuffer   *flist;
    struct _glhckTexture       *tlist;
    struct _glhckText          *tflist;
@@ -610,6 +647,7 @@ typedef struct __GLHCKlibrary {
 #define GLHCKR() (&_GLHCKlibrary.render)
 #define GLHCKRA() (&_GLHCKlibrary.render.api)
 #define GLHCKRD() (&_GLHCKlibrary.render.draw)
+#define GLHCKRP() (&_GLHCKlibrary.render.pass)
 
 /* tracking allocation macros */
 #define _glhckMalloc(x)    __glhckMalloc(GLHCK_CHANNEL, x)

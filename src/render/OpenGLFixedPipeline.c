@@ -139,7 +139,7 @@ static inline void materialState(const _glhckObject *object)
 
    /* alpha? */
    _OpenGL.state.flags |=
-      (object->material.blenda != GLHCK_ZERO && object->material.blendb != GLHCK_ZERO)?GL_STATE_BLEND:0;
+      (object->material.blenda != GLHCK_ZERO || object->material.blendb != GLHCK_ZERO)?GL_STATE_BLEND:0;
 
    /* depth? */
    _OpenGL.state.flags |=
@@ -226,6 +226,8 @@ static inline void materialState(const _glhckObject *object)
 #define geometryV2ToOpenGL(vprec, tprec, type, tunion)                        \
    GL_CALL(glVertexPointer(2, vprec,                                          \
             sizeof(type), &geometry->vertices.tunion[0].vertex));             \
+   GL_CALL(glNormalPointer(vprec,                                             \
+            sizeof(type), &geometry->vertices.tunion[0].normal));             \
    GL_CALL(glTexCoordPointer(2, tprec,                                        \
             sizeof(type), &geometry->vertices.tunion[0].coord));              \
    GL_CALL(glColorPointer(4, GL_UNSIGNED_BYTE,                                \

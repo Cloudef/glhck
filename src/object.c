@@ -661,16 +661,17 @@ GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags)
 }
 
 /* \brief set object's material blending */
-GLHCKAPI void glhckObjectMaterialBlend(glhckObject *object, unsigned int blenda, unsigned int blendb)
+GLHCKAPI void glhckObjectMaterialBlend(glhckObject *object, glhckBlendingMode blenda, glhckBlendingMode blendb)
 {
-   if (blenda == GLHCK_ZERO && blendb == GLHCK_ZERO) {
-      object->material.blenda = GLHCK_ZERO;
-      object->material.blendb = GLHCK_ZERO;
-      return;
-   }
-
+   CALL(1, "%p, %u, %u", object, blenda, blendb);
+   assert(object);
    object->material.blenda = blenda;
    object->material.blendb = blendb;
+
+   /* set blending modes on all the childs */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectMaterialBlend, blenda, blendb);
+   }
 }
 
 /* \brief get object's color */

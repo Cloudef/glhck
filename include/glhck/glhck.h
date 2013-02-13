@@ -121,11 +121,6 @@ typedef enum glhckDriverType {
    GLHCK_DRIVER_OTHER,
 } glhckDriverType;
 
-/* renderer flags (nothing here atm) */
-typedef enum glhckRenderFlags {
-   GLHCK_RENDER_FLAG_NONE = 0,
-} glhckRenderFlags;
-
 /* renderer properties */
 typedef enum glhckRenderProperty {
    GLHCK_MAX_TEXTURE_SIZE,
@@ -140,6 +135,32 @@ typedef enum glhckRenderProperty {
    GLHCK_MAX_RENDERBUFFER_SIZE,
    GLHCK_MAX_VIEWPORT_DIMS,
 } glhckRenderProperty;
+
+/* clear bits */
+typedef enum glhckClearBufferBits {
+   GLHCK_CLEAR_BIT_NONE,
+   GLHCK_COLOR_BUFFER,
+   GLHCK_DEPTH_BUFFER,
+} glhckClearBufferBits;
+
+/* cull side face */
+typedef enum glhckCullFaceType {
+   GLHCK_CULL_FRONT,
+   GLHCK_CULL_BACK,
+} glhckCullFaceType;
+
+/* render pass bits */
+typedef enum glhckRenderPassFlag {
+   GLHCK_PASS_NOTHING      = 0,
+   GLHCK_PASS_DEPTH        = 1,
+   GLHCK_PASS_CULL         = 2,
+   GLHCK_PASS_BLEND        = 4,
+   GLHCK_PASS_TEXTURE      = 8,
+   GLHCK_PASS_OBB          = 16,
+   GLHCK_PASS_AABB         = 32,
+   GLHCK_PASS_WIREFRAME    = 64,
+   GLHCK_PASS_DEFAULTS     = 128,
+} glhckRenderPassFlag;
 
 /* geometry type */
 typedef enum glhckGeometryType {
@@ -296,6 +317,9 @@ typedef enum glhckTextureFormat
    GLHCK_RGBA,
 
    GLHCK_DEPTH_COMPONENT,
+   GLHCK_DEPTH_COMPONENT16,
+   GLHCK_DEPTH_COMPONENT24,
+   GLHCK_DEPTH_COMPONENT32,
 
    GLHCK_COMPRESSED_RGB_DXT1,
    GLHCK_COMPRESSED_RGBA_DXT5,
@@ -384,6 +408,7 @@ typedef struct glhckVertexData3b {
 
 typedef struct glhckVertexData2b {
    glhckVector2b vertex;
+   glhckVector3b normal;
    glhckVector2s coord;
    glhckColorb color;
 } glhckVertexData2b;
@@ -397,6 +422,7 @@ typedef struct glhckVertexData3s {
 
 typedef struct glhckVertexData2s {
    glhckVector2s vertex;
+   glhckVector3s normal;
    glhckVector2s coord;
    glhckColorb color;
 } glhckVertexData2s;
@@ -410,6 +436,7 @@ typedef struct glhckVertexData3fs {
 
 typedef struct glhckVertexData2fs {
    glhckVector2f vertex;
+   glhckVector3f normal;
    glhckVector2s coord;
    glhckColorb color;
 } glhckVertexData2fs;
@@ -423,6 +450,7 @@ typedef struct glhckVertexData3f {
 
 typedef struct glhckVertexData2f {
    glhckVector2f vertex;
+   glhckVector3f normal;
    glhckVector2f coord;
    glhckColorb color;
 } glhckVertexData2f;
@@ -510,16 +538,18 @@ typedef struct glhckGeometry {
     * the texture matrix is scaled with
     * 1.0f/textureRange of geometry before
     * sending to OpenGL */
-   unsigned int textureRange;
+   int textureRange;
 } glhckGeometry;
 
 /* typedefs for better typing */
 typedef struct _glhckTexture     glhckTexture;
 typedef struct _glhckAtlas       glhckAtlas;
+typedef struct _glhckRenderbuffer glhckRenderbuffer;
 typedef struct _glhckFramebuffer glhckFramebuffer;
 typedef struct _glhckObject      glhckObject;
 typedef struct _glhckText        glhckText;
 typedef struct _glhckCamera      glhckCamera;
+typedef struct _glhckLight       glhckLight;
 typedef struct _glhckHwBuffer    glhckHwBuffer;
 typedef struct _glhckShader      glhckShader;
 
@@ -541,10 +571,12 @@ GLHCKAPI void glhckDisplayResize(int width, int height);
 GLHCKAPI glhckDriverType glhckRenderGetDriver(void);
 GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI void glhckRenderGetIntegerv(glhckRenderProperty pname, int *params);
-GLHCKAPI void glhckSetRenderFlags(unsigned int flags);
 GLHCKAPI void glhckRenderProjection(kmMat4 const* mat);
+GLHCKAPI void glhckCullFace(glhckCullFaceType face);
+GLHCKAPI void glhckBlendFunc(glhckBlendingMode blenda, glhckBlendingMode blendb);
+GLHCKAPI void glhckRenderPassFlags(unsigned int bits);
 GLHCKAPI void glhckRender(void);
-GLHCKAPI void glhckClear(void);
+GLHCKAPI void glhckClear(unsigned int bufferBits);
 GLHCKAPI void glhckTime(float time);
 
 /* frustum */
@@ -564,7 +596,7 @@ GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionTy
 GLHCKAPI glhckFrustum* glhckCameraGetFrustum(glhckCamera *camera);
 GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(const glhckCamera *camera);
 GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(const glhckCamera *camera);
-GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(const glhckCamera *camera);
+GLHCKAPI const kmMat4* glhckCameraGetVPMatrix(const glhckCamera *camera);
 GLHCKAPI void glhckCameraUpVector(glhckCamera *camera, const kmVec3 *upVector);
 GLHCKAPI void glhckCameraFov(glhckCamera *camera, const kmScalar fov);
 GLHCKAPI void glhckCameraRange(glhckCamera *camera, const kmScalar near, const kmScalar far);
@@ -646,7 +678,7 @@ GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, k
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
 GLHCKAPI size_t glhckTextFree(glhckText *text);
 GLHCKAPI void glhckTextGetMetrics(glhckText *text, unsigned int font_id, float size, float *ascender, float *descender, float *lineh);
-GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size, const char *s, kmVec2 *min, kmVec2 *max);
+GLHCKAPI void glhckTextGetMinMax(glhckText *text, unsigned int font_id, float size, const char *s, kmVec2 *min, kmVec2 *max);
 GLHCKAPI void glhckTextColor(glhckText *text, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI const glhckColorb* glhckGetTextColor(glhckText *text);
 GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *text, const void *data, size_t size);
@@ -685,6 +717,13 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
 GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(const glhckAtlas *atlas, unsigned short index);
 GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *atlas, glhckTexture *texture, glhckRect *transformed, short *degrees);
 GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTexture *texture, const kmVec2 *in, kmVec2 *out);
+
+/* light objects */
+GLHCKAPI glhckLight* glhckLightNew(void);
+GLHCKAPI glhckLight* glhckLightRef(glhckLight *object);
+GLHCKAPI size_t glhckLightFree(glhckLight *object);
+GLHCKAPI glhckCamera* glhckLightGetCamera(const glhckLight *object);
+GLHCKAPI glhckObject* glhckLightGetObject(const glhckLight *object);
 
 /* framebuffer objects */
 GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferType type);

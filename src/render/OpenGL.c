@@ -1,6 +1,7 @@
 #include "../internal.h"
 #include "render.h"
 #include <limits.h>
+#include <string.h>  /* for strdup */
 #include <stdio.h>   /* for sscanf */
 
 #ifdef __APPLE__
@@ -97,7 +98,8 @@ enum {
 typedef struct __OpenGLstate {
    GLchar attrib[GLHCK_ATTRIB_COUNT];
    GLuint flags;
-   GLuint blenda, blendb;
+   glhckBlendingMode blenda, blendb;
+   glhckCullFaceType cullFace;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
@@ -216,8 +218,8 @@ no_attributes:
 static _glhckShaderUniform* rProgramUniformList(GLuint obj)
 {
    GLenum type;
-   GLchar name[255];
-   GLint count, i;
+   GLchar name[255], *tmp;
+   GLint count, i, i2;
    GLsizei length, size;
    _glhckShaderUniform *uniforms = NULL, *u, *un;
    CALL(0, "%u", obj);
@@ -230,19 +232,39 @@ static _glhckShaderUniform* rProgramUniformList(GLuint obj)
       /* get uniform information */
       GL_CALL(glGetActiveUniform(obj, i, sizeof(name)-1, &length, &size, &type, name));
 
+      /* cut out [0] for arrays */
+      if (!strcmp(name+strlen(name)-3, "[0]"))
+         length -= 3;
+
       /* allocate new uniform slot */
       for (u = uniforms; u && u->next; u = u->next);
       if (u) u = u->next  = _glhckCalloc(1, sizeof(_glhckShaderUniform));
       else   u = uniforms = _glhckCalloc(1, sizeof(_glhckShaderUniform));
-      if (!u || !(u->name = _glhckMalloc(length+1)))
+      if (!u || !(u->name = _glhckCalloc(1, length+1)))
       goto fail;
 
       /* assign information */
-      memcpy(u->name, name, length+1);
+      memcpy(u->name, name, length);
       u->typeName = glhShaderVariableNameForOpenGLConstant(type);
       u->location = glGetUniformLocation(obj, u->name);
       u->type = glhGlhckShaderVariableTypeForGLType(type);
       u->size = size;
+      tmp = u->name;
+
+      /* generate uniform bindings for array slots */
+      for (i2 = 1; i2 < size; ++i2) {
+         for (u = uniforms; u && u->next; u = u->next);
+         if (u) u = u->next  = _glhckCalloc(1, sizeof(_glhckShaderUniform));
+         else   u = uniforms = _glhckCalloc(1, sizeof(_glhckShaderUniform));
+         if (!u || !(u->name = _glhckCalloc(1, length+4)))
+            goto fail;
+
+         snprintf(u->name, length+4, "%s[%d]", tmp, i2);
+         u->typeName = glhShaderVariableNameForOpenGLConstant(type);
+         u->location = glGetUniformLocation(obj, u->name);
+         u->type = glhGlhckShaderVariableTypeForGLType(type);
+         u->size = size;
+      }
    }
 
    RET(0, "%p", uniforms);
@@ -413,6 +435,7 @@ static void rProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei
       case GLHCK_SHADER_FLOAT_MAT4x3:
          GL_CALL(glUniformMatrix4x3fv(uniform->location, count, 0, (GLfloat*)value));
          break;
+#if 0
       case GLHCK_SHADER_DOUBLE_MAT2:
          GL_CALL(glUniformMatrix2dv(uniform->location, count, 0, (GLdouble*)value));
          break;
@@ -440,6 +463,7 @@ static void rProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei
       case GLHCK_SHADER_DOUBLE_MAT4x3:
          GL_CALL(glUniformMatrix4x3dv(uniform->location, count, 0, (GLdouble*)value));
          break;
+#endif
       default:
          DEBUG(GLHCK_DBG_ERROR, "uniform type not implemented.");
          break;
@@ -580,7 +604,7 @@ static inline void rMaterialState(const _glhckObject *object)
 
    /* alpha? */
    _OpenGL.state.flags |=
-      (object->material.blenda != GLHCK_ZERO && object->material.blendb != GLHCK_ZERO)?GL_STATE_BLEND:0;
+      (object->material.blenda != GLHCK_ZERO || object->material.blendb != GLHCK_ZERO)?GL_STATE_BLEND:0;
 
    /* depth? */
    _OpenGL.state.flags |=
@@ -590,9 +614,36 @@ static inline void rMaterialState(const _glhckObject *object)
    _OpenGL.state.flags |=
       (object->material.flags & GLHCK_MATERIAL_CULL)?GL_STATE_CULL:0;
 
+   /* cull face */
+   _OpenGL.state.cullFace = GLHCKRP()->cullFace;
+
    /* blending modes */
    _OpenGL.state.blenda = object->material.blenda;
    _OpenGL.state.blendb = object->material.blendb;
+
+   /* disabled pass bits override the above.
+    * it means that we don't want something for this render pass. */
+   if (!(GLHCKRP()->flags & GLHCK_PASS_DEPTH))
+      _OpenGL.state.flags &= ~GL_STATE_DEPTH;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_CULL))
+      _OpenGL.state.flags &= ~GL_STATE_CULL;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_BLEND))
+      _OpenGL.state.flags &= ~GL_STATE_BLEND;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_TEXTURE))
+      _OpenGL.state.flags &= ~GL_STATE_TEXTURE;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_OBB))
+      _OpenGL.state.flags &= ~GL_STATE_DRAW_OBB;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_AABB))
+      _OpenGL.state.flags &= ~GL_STATE_DRAW_AABB;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_WIREFRAME))
+      _OpenGL.state.flags &= ~GL_STATE_WIREFRAME;
+
+   /* pass blend override */
+   if (GLHCKRP()->blenda != GLHCK_ZERO || GLHCKRP()->blendb != GLHCK_ZERO) {
+      _OpenGL.state.flags |= GL_STATE_BLEND;
+      _OpenGL.state.blenda = GLHCKRP()->blenda;
+      _OpenGL.state.blendb = GLHCKRP()->blendb;
+   }
 
    /* depth? */
    if (GL_STATE_CHANGED(GL_STATE_DEPTH)) {
@@ -609,9 +660,13 @@ static inline void rMaterialState(const _glhckObject *object)
    if (GL_STATE_CHANGED(GL_STATE_CULL)) {
       if (GL_HAS_STATE(GL_STATE_CULL)) {
          GL_CALL(glEnable(GL_CULL_FACE));
-         GL_CALL(glCullFace(GL_BACK));
+         glhCullFace(_OpenGL.state.cullFace);
       } else {
          GL_CALL(glDisable(GL_CULL_FACE));
+      }
+   } else if (GL_HAS_STATE(GL_STATE_CULL)) {
+      if (_OpenGL.state.cullFace != old.cullFace) {
+         glhCullFace(_OpenGL.state.cullFace);
       }
    }
 
@@ -650,29 +705,40 @@ static inline void rMaterialState(const _glhckObject *object)
    /* bind texture if used */
    if (GL_HAS_STATE(GL_STATE_TEXTURE))
       glhckTextureBind(object->material.texture);
-   else glhckTextureUnbind(GLHCK_TEXTURE_2D);
+   else if (GL_STATE_CHANGED(GL_STATE_TEXTURE))
+      glhckTextureUnbind(GLHCK_TEXTURE_2D);
 }
 
 #undef GL_STATE_CHANGED
 
 /* helper macro for passing geometry */
-#define geometryV2ToOpenGL(vprec, tprec, type, tunion)                              \
-   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, vprec, 0,                  \
-            sizeof(type), &geometry->vertices.tunion[0].vertex));                   \
-   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
-            sizeof(type), &geometry->vertices.tunion[0].coord));                    \
-   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1,        \
-            sizeof(type), &geometry->vertices.tunion[0].color));
+#define geometryV2ToOpenGL(vprec, tprec, type, tunion)                                 \
+   if (_OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX])                                      \
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, vprec, 0,                  \
+               sizeof(type), &geometry->vertices.tunion[0].vertex));                   \
+   if (_OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL])                                      \
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, vprec, (vprec!=GL_FLOAT),  \
+               sizeof(type), &geometry->vertices.tunion[0].normal));                   \
+   if (_OpenGL.state.attrib[GLHCK_ATTRIB_TEXTURE])                                     \
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
+               sizeof(type), &geometry->vertices.tunion[0].coord));                    \
+   if (_OpenGL.state.attrib[GLHCK_ATTRIB_COLOR])                                       \
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1,        \
+               sizeof(type), &geometry->vertices.tunion[0].color));
 
-#define geometryV3ToOpenGL(vprec, tprec, type, tunion)                              \
-   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, vprec, 0,                  \
-            sizeof(type), &geometry->vertices.tunion[0].vertex));                   \
-   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, vprec, (vprec!=GL_FLOAT),  \
-            sizeof(type), &geometry->vertices.tunion[0].normal));                   \
-   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
-            sizeof(type), &geometry->vertices.tunion[0].coord));                    \
-   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1, \
-            sizeof(type), &geometry->vertices.tunion[0].color));
+#define geometryV3ToOpenGL(vprec, tprec, type, tunion)                                 \
+   if (_OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX])                                      \
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, vprec, 0,                  \
+             sizeof(type), &geometry->vertices.tunion[0].vertex));                     \
+   if (_OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL])                                      \
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, vprec, (vprec!=GL_FLOAT),  \
+               sizeof(type), &geometry->vertices.tunion[0].normal));                   \
+   if (_OpenGL.state.attrib[GLHCK_ATTRIB_TEXTURE])                                     \
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
+               sizeof(type), &geometry->vertices.tunion[0].coord));                    \
+   if (_OpenGL.state.attrib[GLHCK_ATTRIB_COLOR])                                       \
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1,        \
+               sizeof(type), &geometry->vertices.tunion[0].color));
 
 /* \brief pass interleaved vertex data to OpenGL nicely. */
 static inline void rGeometryPointer(const glhckGeometry *geometry)
@@ -958,7 +1024,11 @@ static inline void rTextRender(const _glhckText *text)
    /* set states */
    if (!GL_HAS_STATE(GL_STATE_CULL)) {
       _OpenGL.state.flags |= GL_STATE_CULL;
+      _OpenGL.state.cullFace = GLHCK_CULL_BACK;
       GL_CALL(glEnable(GL_CULL_FACE));
+      GL_CALL(glCullFace(GL_BACK));
+   } else if (_OpenGL.state.cullFace != GLHCK_CULL_BACK) {
+      GL_CALL(glCullFace(GL_BACK));
    }
 
    if (!GL_HAS_STATE(GL_STATE_BLEND)) {
@@ -1029,6 +1099,10 @@ static inline void rTextRender(const _glhckText *text)
 
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glEnable(GL_DEPTH_TEST));
+   }
+
+   if (_OpenGL.state.cullFace != GLHCK_CULL_BACK) {
+      glhCullFace(_OpenGL.state.cullFace);
    }
 
    /* restore back the original projection */
@@ -1177,6 +1251,11 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(textureBind, glhTextureBind);
    GLHCK_RENDER_FUNC(textureCreate, glhTextureCreate);
    GLHCK_RENDER_FUNC(textureFill, glhTextureFill);
+
+   /* renderbuffer objects */
+   GLHCK_RENDER_FUNC(renderbufferGenerate, glGenRenderbuffers);
+   GLHCK_RENDER_FUNC(renderbufferDelete, glDeleteRenderbuffers);
+   GLHCK_RENDER_FUNC(renderbufferBind, glhRenderbufferBind);
 
    /* framebuffer objects */
    GLHCK_RENDER_FUNC(framebufferGenerate, glGenFramebuffers);

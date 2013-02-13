@@ -114,6 +114,7 @@ static void x(unsigned int object)                                   \
 
 /*** binding mappings ***/
 void glhTextureBind(glhckTextureType type, GLuint object);
+void glhRenderbufferBind(GLuint object);
 void glhFramebufferBind(glhckFramebufferType type, GLuint object);
 
 void glhHwBufferBind(glhckHwBufferType type, GLuint object);
@@ -126,6 +127,7 @@ void glhHwBufferUnmap(glhckHwBufferType type);
 
 /*** glhck mapping functions ***/
 GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property);
+GLenum glhCullFaceTypeForGlhckType(glhckCullFaceType type);
 GLenum glhGeometryTypeForGlhckType(glhckGeometryType type);
 GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format);
 GLenum glhBlendingModeForGlhckMode(glhckBlendingMode mode);
@@ -141,8 +143,9 @@ const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type);
 
 /*** shared opengl functions ***/
 void glhGetIntegerv(GLenum pname, GLint *params);
-void glhClear(void);
+void glhClear(GLuint bufferBits);
 void glhClearColor(GLchar r, GLchar g, GLchar b, GLchar a);
+void glhCullFace(glhckCullFaceType face);
 void glhBufferGetPixels(GLint x, GLint y, GLsizei width, GLsizei height,
       glhckTextureFormat format, GLvoid *data);
 void glhBlendFunc(GLenum blenda, GLenum blendb);

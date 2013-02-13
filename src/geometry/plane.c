@@ -25,23 +25,23 @@ GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height,
 
    static const glhckImportVertexData vertices[] = {
       {
-         {  1,  1, 0 },      /* vertices */
-         {  0,  0, 0 },      /* normals */
+         {  1,  1,  0 },     /* vertices */
+         {  0,  0,  1 },     /* normals */
          {  1,  1 },         /* uv coord */
          { 0, 0, 0, 0 }      /* color */
       },{
-         { -1,  1, 0 },
-         {  0,  0, 0 },
+         { -1,  1,  0 },
+         {  0,  0,  1 },
          {  0,  1 },
          { 0, 0, 0, 0 }
       },{
-         {  1, -1, 0 },
-         {  0,  0, 0 },
+         {  1, -1,  0 },
+         {  0,  0,  1 },
          {  1,  0 },
          { 0, 0, 0, 0 }
       },{
-         { -1, -1, 0 },
-         {  0,  0, 0 },
+         { -1, -1,  0 },
+         {  0,  0,  1 },
          {  0,  0 },
          { 0, 0, 0, 0 }
       }
@@ -109,23 +109,23 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture,
    h = (float)(height?height:texture->height)/2.0f;
    const glhckImportVertexData vertices[] = {
       {
-         {  w,  h, 0 },
-         {  0,  0, 0 },      /* normals */
+         {  w,  h,  0 },
+         {  0,  0,  1 },     /* normals */
          {  1,  1 },         /* uv coord */
          { 0, 0, 0, 0 }      /* color */
       },{
-         { -w,  h, 0 },
-         {  0,  0, 0 },
+         { -w,  h,  0 },
+         {  0,  0,  1 },
          {  0,  1 },
          { 0, 0, 0, 0 }
       },{
-         {  w, -h, 0 },
-         {  0,  0, 0 },
+         {  w, -h,  0 },
+         {  0,  0,  1 },
          {  1,  0 },
          { 0, 0, 0, 0 }
       },{
-         { -w, -h, 0 },
-         {  0,  0, 0 },
+         { -w, -h,  0 },
+         {  0,  0,  1 },
          {  0,  0 },
          { 0, 0, 0, 0 }
       }

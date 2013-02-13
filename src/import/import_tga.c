@@ -103,8 +103,8 @@ int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int
    void *seg = NULL, *data;
    int bpp, vinverted = 0;
    int rle = 0, footer_present = 0;
-   size_t datasize, size, i, i2;
-   unsigned short w, h;
+   size_t datasize, size;
+   unsigned short i, i2, w, h;
    tga_header *header;
    tga_footer *footer;
 

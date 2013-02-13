@@ -21,8 +21,7 @@ static const char* getExt(const char *file)
    return ext + 1;
 }
 
-static int buildModel(const char *file, _glhckObject *object,
-      size_t numIndices, size_t numVertices,
+static int buildModel(glhckObject *object, size_t numIndices, size_t numVertices,
       const glhckImportIndexData *indices, const glhckImportVertexData *vertexData,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype, unsigned int flags)
 {
@@ -48,9 +47,8 @@ static int buildModel(const char *file, _glhckObject *object,
    return RETURN_OK;
 }
 
-static void joinMesh(const char *file, const struct aiScene *sc,
-      const struct aiNode *nd, const struct aiMesh *mesh, unsigned int flags,
-      size_t indexOffset, glhckImportIndexData *indices, glhckImportVertexData *vertexData,
+static void joinMesh(const struct aiMesh *mesh, size_t indexOffset,
+      glhckImportIndexData *indices, glhckImportVertexData *vertexData,
       glhckAtlas *atlas, glhckTexture *texture)
 {
    unsigned int f, i, skip;
@@ -73,7 +71,7 @@ static void joinMesh(const char *file, const struct aiScene *sc,
          if (mesh->mNormals) {
             vertexData[index].normal.x = mesh->mNormals[index].x;
             vertexData[index].normal.y = mesh->mNormals[index].y;
-            vertexData[index].normal.z = mesh->mNormals[index].z;
+            vertexData[index].normal.z = mesh->mNormals[index].z*-1;
          }
 
          if (mesh->mTextureCoords[0]) {
@@ -102,7 +100,7 @@ static void joinMesh(const char *file, const struct aiScene *sc,
    }
 }
 
-glhckTexture* textureFromMaterial(const char *file, glhckObject *object, const struct aiMaterial *mtl)
+glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl)
 {
    glhckTexture *texture;
    struct aiString textureName;
@@ -172,8 +170,7 @@ static int processModel(const char *file, _glhckObject *object,
          }
          numVertices += mesh->mNumVertices;
 
-         if ((texture = textureFromMaterial(file, current,
-                     sc->mMaterials[mesh->mMaterialIndex]))) {
+         if ((texture = textureFromMaterial(file, sc->mMaterials[mesh->mMaterialIndex]))) {
             glhckAtlasInsertTexture(atlas, texture);
             glhckTextureFree(texture);
             textureList[m] = texture;
@@ -205,8 +202,7 @@ static int processModel(const char *file, _glhckObject *object,
          if (textureList) texture = textureList[m];
          else texture = NULL;
 
-         joinMesh(file, sc, nd, mesh, flags, voffset, indices+ioffset,
-               vertexData+voffset, atlas, texture);
+         joinMesh(mesh, voffset, indices+ioffset, vertexData+voffset, atlas, texture);
 
          for (f = 0; f != mesh->mNumFaces; ++f) {
             face = &mesh->mFaces[f];
@@ -217,7 +213,7 @@ static int processModel(const char *file, _glhckObject *object,
       }
 
       /* finally build the model */
-      if (buildModel(file, current, numIndices,  numVertices,
+      if (buildModel(current, numIndices,  numVertices,
                indices, vertexData, itype, vtype, flags) == RETURN_OK) {
          if (hasTexture) glhckObjectTexture(current, glhckAtlasGetTexture(atlas));
          if (!(current = glhckObjectNew())) goto fail;
@@ -248,8 +244,7 @@ static int processModel(const char *file, _glhckObject *object,
 
          /* get texture */
          hasTexture = 0;
-         if ((texture = textureFromMaterial(file, current,
-                     sc->mMaterials[mesh->mMaterialIndex]))) {
+         if ((texture = textureFromMaterial(file, sc->mMaterials[mesh->mMaterialIndex]))) {
             hasTexture = 1;
          }
 
@@ -262,10 +257,10 @@ static int processModel(const char *file, _glhckObject *object,
             goto assimp_no_memory;
 
          /* fill arrays */
-         joinMesh(file, sc, nd, mesh, flags, 0, indices, vertexData, NULL, NULL);
+         joinMesh(mesh, 0, indices, vertexData, NULL, NULL);
 
          /* build model */
-         if (buildModel(file, current, numIndices,  numVertices,
+         if (buildModel(current, numIndices,  numVertices,
                   indices, vertexData, itype, vtype, flags) == RETURN_OK) {
             if (hasTexture) glhckObjectTexture(current, texture);
             if (!(current = glhckObjectNew())) goto fail;

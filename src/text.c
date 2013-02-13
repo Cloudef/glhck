@@ -434,7 +434,7 @@ GLHCKAPI void glhckTextGetMetrics(glhckText *text, unsigned int font_id,
 }
 
 /* \brief get min max of text */
-GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
+GLHCKAPI void glhckTextGetMinMax(glhckText *text, unsigned int font_id, float size,
       const char *s, kmVec2 *min, kmVec2 *max)
 {
    unsigned int codepoint, state = 0;
@@ -444,7 +444,7 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *text, int font_id, float size,
    __GLHCKtextQuad q;
    float x, y;
 
-   CALL(1, "%p, %d, %zu, %s, %p, %p",
+   CALL(1, "%p, %u, %zu, %s, %p, %p",
          text, font_id, size, s, min, max);
    assert(text && s && min && max);
 
@@ -714,7 +714,7 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
    short isize = (short)size*10.0f;
    size_t vcount;
 #if GLHCK_TEXT_FLOAT_PRECISION
-   glhckVertexData2f *v, *d;
+   glhckVertexData2f *v;
 #else
    glhckVertexData2s *v, *d;
 #endif
@@ -837,7 +837,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id,
 
    glhckFramebufferRecti(fbo, 0, 0, linew, size);
    glhckFramebufferBegin(fbo);
-   glhckClear();
+   glhckClear(GLHCK_COLOR_BUFFER);
    glhckTextRender(text);
    glhckFramebufferEnd(fbo);
 

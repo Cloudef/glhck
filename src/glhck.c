@@ -19,6 +19,7 @@ int feenableexcept(int excepts);
 #endif
 
 #if defined(__linux__) || defined(__APPLE__)
+#  include <sys/types.h>
 #  include <sys/wait.h>
 #endif
 
@@ -46,6 +47,9 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(textureBind);
    GLHCK_API_CHECK(textureCreate);
    GLHCK_API_CHECK(textureFill);
+   GLHCK_API_CHECK(renderbufferGenerate);
+   GLHCK_API_CHECK(renderbufferDelete);
+   GLHCK_API_CHECK(renderbufferBind);
    GLHCK_API_CHECK(framebufferGenerate);
    GLHCK_API_CHECK(framebufferDelete);
    GLHCK_API_CHECK(framebufferBind);
@@ -269,6 +273,12 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    _glhckCheckRenderApi(&_GLHCKlibrary.render);
    GLHCKR()->type = renderType;
 
+   /* default render pass bits */
+   glhckRenderPassFlags(GLHCK_PASS_DEFAULTS);
+
+   /* default cull face */
+   glhckCullFace(GLHCK_CULL_FRONT);
+
    /* resize display */
    glhckDisplayResize(width, height);
 
@@ -321,12 +331,48 @@ GLHCKAPI void glhckTime(float time)
 }
 
 /* \brief clear scene */
-GLHCKAPI void glhckClear(void)
+GLHCKAPI void glhckClear(unsigned int bufferBits)
 {
    GLHCK_INITIALIZED();
    TRACE(2);
    if (!GLHCKR()->name) return;
-   GLHCKRA()->clear();
+   GLHCKRA()->clear(bufferBits);
+}
+
+/* \brief set render pass cull face side */
+GLHCKAPI void glhckCullFace(glhckCullFaceType face)
+{
+   GLHCK_INITIALIZED();
+   TRACE(2);
+   if (!GLHCKR()->name) return;
+   GLHCKRP()->cullFace = face;
+}
+
+/* \brief set render pass blend func that overrides object specific */
+GLHCKAPI void glhckBlendFunc(glhckBlendingMode blenda, glhckBlendingMode blendb)
+{
+   GLHCK_INITIALIZED();
+   TRACE(2);
+   if (!GLHCKR()->name) return;
+   GLHCKRP()->blenda = blenda;
+   GLHCKRP()->blendb = blendb;
+}
+
+/* \brief set render pass flags */
+GLHCKAPI void glhckRenderPassFlags(unsigned int flags)
+{
+   GLHCK_INITIALIZED();
+   TRACE(2);
+   if (flags & GLHCK_PASS_DEFAULTS) {
+      flags  = GLHCK_PASS_DEPTH;
+      flags |= GLHCK_PASS_CULL;
+      flags |= GLHCK_PASS_BLEND;
+      flags |= GLHCK_PASS_TEXTURE;
+      flags |= GLHCK_PASS_OBB;
+      flags |= GLHCK_PASS_AABB;
+      flags |= GLHCK_PASS_WIREFRAME;
+   }
+   GLHCKRP()->flags = flags;
 }
 
 /* \brief return detected driver type */
@@ -354,14 +400,6 @@ GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params) {
    GLHCK_INITIALIZED();
    CALL(1, "%u, %p", pname, params);
    GLHCKRA()->getIntegerv(pname, params);
-}
-
-/* \brief set render flags */
-GLHCKAPI void glhckRenderSetFlags(unsigned int flags)
-{
-   GLHCK_INITIALIZED();
-   CALL(1, "%u", flags);
-   GLHCKR()->flags = flags;
 }
 
 /* \brief set projection matrix */
@@ -443,7 +481,7 @@ GLHCKAPI void glhckRender(void)
          /* don't draw if not same texture or opaque,
           * opaque objects are drawn last */
          if (o->material.texture != t ||
-            (o->material.blenda != GLHCK_ZERO && o->material.blendb != GLHCK_ZERO)) {
+            (o->material.blenda != GLHCK_ZERO || o->material.blendb != GLHCK_ZERO)) {
             if (o->material.texture == t) kt = 1; /* don't remove texture from queue */
             if (os != oi) objects->queue[oi] = NULL;
             objects->queue[os++] = o;
@@ -545,8 +583,10 @@ GLHCKAPI void glhckMassacreWorld(void)
 {
    _glhckObject *o;
    _glhckCamera *c;
+   _glhckLight *l;
    _glhckTexture *t;
    _glhckAtlas *a;
+   _glhckRenderbuffer *r;
    _glhckFramebuffer *f;
    _glhckText *tf;
    _glhckHwBuffer *h;
@@ -555,12 +595,14 @@ GLHCKAPI void glhckMassacreWorld(void)
    TRACE(0);
 
    /* destroy the world */
+   _massacre(llist, l, glhckLightFree);
    _massacre(clist, c, glhckCameraFree);
    _massacre(alist, a, glhckAtlasFree);
    _massacre(tflist, tf, glhckTextFree);
    _massacre(olist, o, glhckObjectFree);
    _massacre(tlist, t, glhckTextureFree);
    _massacre(slist, s, glhckShaderFree);
+   _massacre(rlist, r, glhckRenderbufferFree);
    _massacre(flist, f, glhckFramebufferFree);
    _massacre(hlist, h, glhckHwBufferFree);
 }

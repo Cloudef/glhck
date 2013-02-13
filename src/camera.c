@@ -65,9 +65,9 @@ static void _glhckCameraViewMatrix(_glhckCamera *camera)
    /* build view matrix */
    kmMat4LookAt(&camera->view.view, &camera->object->view.translation,
          &camera->object->view.target, &upvector);
-   kmMat4Multiply(&camera->view.mvp,
+   kmMat4Multiply(&camera->view.viewProj,
          &camera->view.projection, &camera->view.view);
-   glhckFrustumBuild(&camera->frustum, &camera->view.mvp);
+   glhckFrustumBuild(&camera->frustum, &camera->view.viewProj);
 }
 
 /* \brief update the camera stack after window resize */
@@ -111,7 +111,7 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    _glhckCamera *camera;
    TRACE(0);
 
-   /* allocate acmera */
+   /* allocate camera */
    if (!(camera = _glhckCalloc(1, sizeof(_glhckCamera))))
       goto fail;
 
@@ -172,7 +172,7 @@ GLHCKAPI size_t glhckCameraFree(glhckCamera *camera)
    if (GLHCKRD()->camera == camera)
       GLHCKRD()->camera = NULL;
 
-   /* free cemera's object */
+   /* free camera's object */
    NULLDO(glhckObjectFree, camera->object);
 
    /* remove camera from world */
@@ -207,12 +207,14 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
    }
 
    if (camera->view.update || camera->object->view.update) {
+      if (camera->view.projectionType == GLHCK_PROJECTION_ORTHOGRAPHIC)
+         _glhckCameraProjectionMatrix(camera);
       _glhckCameraViewMatrix(camera);
       camera->view.update = 0;
    }
 
    /* assign camera to global state */
-   GLHCKRA()->setProjection(&camera->view.mvp);
+   GLHCKRA()->setProjection(&camera->view.viewProj);
    GLHCKRD()->camera = camera;
 }
 
@@ -271,12 +273,12 @@ GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(const glhckCamera *camera)
 }
 
 /* \brief get camera's model view projection matrix */
-GLHCKAPI const kmMat4* glhckCameraGetMVPMatrix(const glhckCamera *camera)
+GLHCKAPI const kmMat4* glhckCameraGetVPMatrix(const glhckCamera *camera)
 {
    CALL(1, "%p", camera);
    assert(camera);
-   RET(1, "%p", &camera->view.mvp);
-   return &camera->view.mvp;
+   RET(1, "%p", &camera->view.viewProj);
+   return &camera->view.viewProj;
 }
 
 /* \brief set camera's up vector */

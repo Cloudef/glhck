@@ -49,9 +49,8 @@ fail:
 int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags)
 {
    FILE *f;
-   size_t i;
    char hasa = 0;
-   int w, h, bit_depth, color_type, interlace_type;
+   int i, w, h, bit_depth, color_type, interlace_type;
    png_uint_32 w32, h32;
    png_structp png = NULL;
    png_infop info = NULL;

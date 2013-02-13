@@ -30,6 +30,7 @@ __GLHCKtraceChannel _traceChannels[] =
    { GLHCK_CHANNEL_ATLAS,        0 },
    { GLHCK_CHANNEL_ALLOC,        0 },
    { GLHCK_CHANNEL_RENDER,       0 },
+   { GLHCK_CHANNEL_LIGHT,        0 },
    { GLHCK_CHANNEL_FRAMEBUFFER,  0 },
    { GLHCK_CHANNEL_HWBUFFER,     0 },
    { GLHCK_CHANNEL_SHADER,       0 },
@@ -65,7 +66,7 @@ static void _glhckTraceSet(const char *name, int active)
 /* \brief init debug system */
 void _glhckTraceInit(int argc, const char **argv)
 {
-   size_t i, count;
+   int i, count;
    const char *match;
    char **split;
 

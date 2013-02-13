@@ -262,7 +262,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
 
    glhckFramebufferRecti(fbo, 0, 0, width, height);
    glhckFramebufferBegin(fbo);
-   GLHCKRA()->clear();
+   glhckClear(GLHCK_COLOR_BUFFER);
    for (rect = atlas->rect; rect; rect = rect->next) {
       rect->packed.rotated = _glhckTexturePackerGetLocation(tp,
             rect->index, &rect->packed.x1, &rect->packed.y1,

@@ -39,6 +39,20 @@ GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property)
    return 0;
 }
 
+/* \brief map glhck face type to OpenGL face type */
+GLenum glhCullFaceTypeForGlhckType(glhckCullFaceType type)
+{
+   switch (type) {
+      case GLHCK_CULL_FRONT:
+         return GL_FRONT;
+      case GLHCK_CULL_BACK:
+         return GL_BACK;
+      default:break;
+   }
+   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
+   return 0;
+}
+
 /* \brief map glhck geometry constant to OpenGL geometry constant */
 GLenum glhGeometryTypeForGlhckType(glhckGeometryType type)
 {
@@ -101,6 +115,12 @@ GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format)
          return GL_RGBA;
       case GLHCK_DEPTH_COMPONENT:
          return GL_DEPTH_COMPONENT;
+      case GLHCK_DEPTH_COMPONENT16:
+         return GL_DEPTH_COMPONENT16;
+      case GLHCK_DEPTH_COMPONENT24:
+         return GL_DEPTH_COMPONENT24;
+      case GLHCK_DEPTH_COMPONENT32:
+         return GL_DEPTH_COMPONENT32;
       case GLHCK_COMPRESSED_RGBA_DXT5:
          return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
       case GLHCK_COMPRESSED_RGB_DXT1:
@@ -868,6 +888,9 @@ const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type)
 void glhTextureBind(glhckTextureType type, GLuint object) {
    GL_CALL(glBindTexture(glhTextureTypeForGlhckType(type), object));
 }
+void glhRenderbufferBind(GLuint object) {
+   GL_CALL(glBindRenderbuffer(GL_RENDERBUFFER, object));
+}
 void glhFramebufferBind(glhckFramebufferType type, GLuint object) {
    GL_CALL(glBindFramebuffer(glhFramebufferTypeForGlhckType(type), object));
 }
@@ -906,12 +929,17 @@ void glhGetIntegerv(GLenum pname, int *params)
 }
 
 /* \brief clear OpenGL buffers */
-void glhClear(void)
+void glhClear(GLuint bufferBits)
 {
+   GLuint glBufferBits = 0;
    TRACE(2);
 
-   /* clear buffers, FIXME: keep track of em */
-   GL_CALL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+   if (bufferBits & GLHCK_COLOR_BUFFER)
+      glBufferBits |= GL_COLOR_BUFFER_BIT;
+   if (bufferBits & GLHCK_DEPTH_BUFFER)
+      glBufferBits |= GL_DEPTH_BUFFER_BIT;
+
+   GL_CALL(glClear(glBufferBits));
 }
 
 /* \brief set OpenGL clear color */
@@ -926,6 +954,12 @@ void glhClearColor(char r, char g, char b, char a)
    GLHCKRD()->clearColor.g = g;
    GLHCKRD()->clearColor.b = b;
    GLHCKRD()->clearColor.a = a;
+}
+
+/* \brief set cull side */
+void glhCullFace(glhckCullFaceType face)
+{
+   GL_CALL(glCullFace(glhCullFaceTypeForGlhckType(face)));
 }
 
 /* \brief get pixels from OpenGL */

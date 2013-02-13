@@ -3,6 +3,7 @@
 #include <stdlib.h> /* for realloc  */
 #include <ctype.h>  /* for toupper  */
 #include <stdarg.h> /* for va_list  */
+#include <string.h> /* for strdup   */
 #include <limits.h> /* for LINE_MAX */
 
 #ifdef __APPLE__
@@ -110,8 +111,7 @@ inline void _glhckNormal(void)
 /* \brief colored puts */
 void _glhckPuts(const char *buffer)
 {
-   int i;
-   size_t len;
+   int i, len;
 
    len = strlen(buffer);
    for (i = 0; i != len; ++i) {
