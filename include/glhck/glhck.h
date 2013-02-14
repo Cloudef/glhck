@@ -641,7 +641,7 @@ GLHCKAPI void glhckObjectMaterialBlend(glhckObject *object, glhckBlendingMode bl
 /* object control */
 GLHCKAPI const kmAABB* glhckObjectGetOBB(const glhckObject *object);
 GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object);
-GLHCKAPI const kmMat4* glhckObjectGetMatrix(const glhckObject * object);
+GLHCKAPI const kmMat4* glhckObjectGetMatrix(glhckObject *object);
 GLHCKAPI const kmVec3* glhckObjectGetPosition(const glhckObject *object);
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
 GLHCKAPI void glhckObjectPositionf(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z);

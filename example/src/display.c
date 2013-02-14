@@ -313,7 +313,7 @@ int main(int argc, char **argv)
                sin(xspin*(li+1)*0.1)*85.0f, sin(xspin*0.1)*30.0f+60.0f, cos(xspin*(li+1)*0.1)*85.0f);
 #else
          glhckObjectPositionf(glhckLightGetObject(light[li]),
-               sin(li+1)*80.0f, sin(xspin*0.1)*30.0f+50.0f, cos(li+1)*80.0f);
+               sin(li+1)*80.0f, sin(xspin*0.1)*30.0f+10.0f, cos(li+1)*80.0f);
 #endif
          glhckObjectTargetf(glhckLightGetObject(light[li]), 0, 0, 0);
          glhckShaderSetUniform(shader, "Light", 1, (void*)glhckObjectGetPosition(glhckLightGetObject(light[li])));

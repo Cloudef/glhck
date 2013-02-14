@@ -754,10 +754,15 @@ GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object)
 }
 
 /* \brief get object's matrix */
-GLHCKAPI const kmMat4* glhckObjectGetMatrix(const glhckObject *object)
+GLHCKAPI const kmMat4* glhckObjectGetMatrix(glhckObject *object)
 {
    CALL(1, "%p", object);
    assert(object);
+
+   /* update matrix first, if needed */
+   if (object->view.update)
+      _glhckObjectUpdateMatrix(object);
+
    RET(1, "%p", &object->view.matrix);
    return &object->view.matrix;
 }
