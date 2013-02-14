@@ -401,14 +401,14 @@ typedef struct glhckVector2f {
  * make sure you cast to the right data type. */
 typedef struct glhckVertexData3b {
    glhckVector3b vertex;
-   glhckVector3b normal;
+   glhckVector3s normal;
    glhckVector2s coord;
    glhckColorb color;
 } glhckVertexData3b;
 
 typedef struct glhckVertexData2b {
    glhckVector2b vertex;
-   glhckVector3b normal;
+   glhckVector3s normal;
    glhckVector2s coord;
    glhckColorb color;
 } glhckVertexData2b;
@@ -429,14 +429,14 @@ typedef struct glhckVertexData2s {
 
 typedef struct glhckVertexData3fs {
    glhckVector3f vertex;
-   glhckVector3f normal;
+   glhckVector3s normal;
    glhckVector2s coord;
    glhckColorb color;
 } glhckVertexData3fs;
 
 typedef struct glhckVertexData2fs {
    glhckVector2f vertex;
-   glhckVector3f normal;
+   glhckVector3s normal;
    glhckVector2s coord;
    glhckColorb color;
 } glhckVertexData2fs;

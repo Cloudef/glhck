@@ -22,6 +22,14 @@
 #define GLHCK_SHORT_VBIAS   SHRT_MAX / (USHRT_MAX - 1.0f)
 #define GLHCK_SHORT_VSCALE  USHRT_MAX - 1.0f
 
+
+/* set scaled vector */
+#define glhckScaledV3(ov3, iv3, scale) \
+   glhckSetV3(ov3, iv3);               \
+   (ov3)->x *= scale;                  \
+   (ov3)->y *= scale;                  \
+   (ov3)->z *= scale;
+
 /* 1. 2D vector conversion function name
  * 2. 3D vector conversion function name
  * 3. 2D internal vector cast
@@ -105,12 +113,9 @@ static void _glhckConvertVertexData(
          &vmin, &vmax, &nmin, &nmax);
 
    /* do we need conversion? */
-   if ((vmax.x + vmin.x == 1 &&
-        vmax.y + vmin.y == 1 &&
-        vmax.z + vmin.z == 1) ||
-       (vmax.x + vmin.x == 0 &&
-        vmax.y + vmin.y == 0 &&
-        vmax.z + vmin.z == 0))
+   if (vmax.x == vmin.x ||
+       vmax.y == vmin.y ||
+       vmax.z == vmin.z)
       no_convert = 1;
 
    /* lie about bounds by 1 point so,
@@ -138,10 +143,10 @@ static void _glhckConvertVertexData(
 
                if (no_convert) {
                   glhckSetV3(&internal.v3b[i].vertex, &import[i].vertex);
-                  glhckSetV3(&internal.v3b[i].normal, &import[i].normal);
+                  glhckScaledV3(&internal.v3b[i].normal, &import[i].normal, GLHCK_SHORT_VMAGIC);
                } else {
                   glhckMagic3b(&internal.v3b[i].vertex, &import[i].vertex, &vmax, &vmin);
-                  glhckMagic3b(&internal.v3b[i].normal, &import[i].normal, &nmax, &nmin);
+                  glhckMagic3s(&internal.v3b[i].normal, &import[i].normal, &nmax, &nmin);
                }
 
                internal.v3b[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
@@ -156,10 +161,10 @@ static void _glhckConvertVertexData(
 
                if (no_convert) {
                   glhckSetV2(&internal.v2b[i].vertex, &import[i].vertex);
-                  glhckSetV3(&internal.v2b[i].normal, &import[i].normal);
+                  glhckScaledV3(&internal.v2b[i].normal, &import[i].normal, GLHCK_SHORT_VMAGIC);
                } else {
                   glhckMagic2b(&internal.v2b[i].vertex, &import[i].vertex, &vmax, &vmin);
-                  glhckMagic3b(&internal.v2b[i].normal, &import[i].normal, &nmax, &nmin);
+                  glhckMagic3s(&internal.v2b[i].normal, &import[i].normal, &nmax, &nmin);
                }
 
                internal.v2b[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
@@ -174,7 +179,7 @@ static void _glhckConvertVertexData(
 
                if (no_convert) {
                   glhckSetV3(&internal.v3s[i].vertex, &import[i].vertex);
-                  glhckSetV3(&internal.v3s[i].normal, &import[i].normal);
+                  glhckScaledV3(&internal.v3s[i].normal, &import[i].normal, GLHCK_SHORT_VMAGIC);
                } else {
                   glhckMagic3s(&internal.v3s[i].vertex, &import[i].vertex, &vmax, &vmin);
                   glhckMagic3s(&internal.v3s[i].normal, &import[i].normal, &nmax, &nmin);
@@ -192,7 +197,7 @@ static void _glhckConvertVertexData(
 
                if (no_convert) {
                   glhckSetV2(&internal.v2s[i].vertex, &import[i].vertex);
-                  glhckSetV3(&internal.v2s[i].normal, &import[i].normal);
+                  glhckScaledV3(&internal.v2s[i].normal, &import[i].normal, GLHCK_SHORT_VMAGIC);
                } else {
                   glhckMagic2s(&internal.v2s[i].vertex, &import[i].vertex, &vmax, &vmin);
                   glhckMagic3s(&internal.v2s[i].normal, &import[i].normal, &nmax, &nmin);
@@ -208,7 +213,12 @@ static void _glhckConvertVertexData(
             case GLHCK_VERTEX_V3FS:
                memcpy(&internal.v3fs[i].color,  &import[i].color,  sizeof(glhckColorb));
                memcpy(&internal.v3fs[i].vertex, &import[i].vertex, sizeof(glhckVector3f));
-               memcpy(&internal.v3fs[i].normal, &import[i].normal, sizeof(glhckVector3f));
+
+               if (no_convert) {
+                  glhckScaledV3(&internal.v3fs[i].normal, &import[i].normal, GLHCK_SHORT_VMAGIC);
+               } else {
+                  glhckMagic3s(&internal.v3fs[i].normal, &import[i].normal, &nmax, &nmin);
+               }
 
                internal.v3fs[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
                internal.v3fs[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
@@ -223,7 +233,12 @@ static void _glhckConvertVertexData(
             case GLHCK_VERTEX_V2FS:
                memcpy(&internal.v2fs[i].color,  &import[i].color,  sizeof(glhckColorb));
                memcpy(&internal.v2fs[i].vertex, &import[i].vertex, sizeof(glhckVector2f));
-               memcpy(&internal.v2fs[i].normal, &import[i].normal, sizeof(glhckVector3f));
+
+               if (no_convert) {
+                  glhckScaledV3(&internal.v2fs[i].normal, &import[i].normal, GLHCK_SHORT_VMAGIC);
+               } else {
+                  glhckMagic3s(&internal.v2fs[i].normal, &import[i].normal, &nmax, &nmin);
+               }
 
                internal.v2fs[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
                internal.v2fs[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);

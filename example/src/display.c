@@ -166,8 +166,8 @@ int main(int argc, char **argv)
 #if SKIP_ASSIMP
 #  define ASSIMP_PATH ""
 #else
-#  define ASSIMP_PATH "example/media/chaosgate/chaosgate.obj"
-//#  define ASSIMP_PATH "example/media/room/room.obj"
+//#  define ASSIMP_PATH "example/media/chaosgate/chaosgate.obj"
+#  define ASSIMP_PATH "example/media/room/room.obj"
 #endif
 
    if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
@@ -184,6 +184,8 @@ int main(int argc, char **argv)
       cameraPos.z = -20.0f;
       glhckObjectScalef(cube, 1.0f, 1.0f, 2.0f);
    } else return EXIT_FAILURE;
+
+   // glhckSetGlobalPrecision(GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3F);
 
    glhckShader *shader = glhckShaderNew("Glow.GLhck.Vertex", "Glow.GLhck.Shadow.Fragment", NULL);
    glhckShader *depthShader = glhckShaderNew("Glow.GLhck.Vertex", "Glow.GLhck.Depth.Fragment", NULL);
@@ -308,12 +310,12 @@ int main(int argc, char **argv)
       glhckObjectTarget(sprite3, glhckObjectGetPosition(camObj));
 
       for (li = 0; li != numLights; ++li) {
-#if 0
+#if 1
          glhckObjectPositionf(glhckLightGetObject(light[li]),
-               sin(xspin*(li+1)*0.1)*85.0f, sin(xspin*0.1)*30.0f+60.0f, cos(xspin*(li+1)*0.1)*85.0f);
+               sin(xspin*(li+1)*0.01)*85.0f, sin(xspin*0.01)*30.0f+60.0f, cos(xspin*(li+1)*0.01)*85.0f);
 #else
          glhckObjectPositionf(glhckLightGetObject(light[li]),
-               sin(li+1)*80.0f, sin(xspin*0.1)*30.0f+10.0f, cos(li+1)*80.0f);
+               sin(li+1)*80.0f, sin(xspin*0.1)*30.0f+45.0f, cos(li+1)*80.0f);
 #endif
          glhckObjectTargetf(glhckLightGetObject(light[li]), 0, 0, 0);
          glhckShaderSetUniform(shader, "Light", 1, (void*)glhckObjectGetPosition(glhckLightGetObject(light[li])));
@@ -358,9 +360,9 @@ int main(int argc, char **argv)
          }
 
 #if 1
-         glhckObjectDraw(sprite);
-         glhckObjectDraw(sprite3);
-         glhckObjectDraw(cube2);
+         //glhckObjectDraw(sprite);
+         //glhckObjectDraw(sprite3);
+         //glhckObjectDraw(cube2);
          glhckObjectDraw(cube);
          glhckObjectDraw(plane);
          glhckObjectDraw(glhckLightGetObject(light[li]));

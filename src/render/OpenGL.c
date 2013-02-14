@@ -712,12 +712,12 @@ static inline void rMaterialState(const _glhckObject *object)
 #undef GL_STATE_CHANGED
 
 /* helper macro for passing geometry */
-#define geometryV2ToOpenGL(vprec, tprec, type, tunion)                                 \
+#define geometryV2ToOpenGL(vprec, nprec, tprec, type, tunion)                          \
    if (_OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX])                                      \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, vprec, 0,                  \
                sizeof(type), &geometry->vertices.tunion[0].vertex));                   \
    if (_OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL])                                      \
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, vprec, (vprec!=GL_FLOAT),  \
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, nprec, (nprec!=GL_FLOAT),  \
                sizeof(type), &geometry->vertices.tunion[0].normal));                   \
    if (_OpenGL.state.attrib[GLHCK_ATTRIB_TEXTURE])                                     \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
@@ -726,12 +726,12 @@ static inline void rMaterialState(const _glhckObject *object)
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1,        \
                sizeof(type), &geometry->vertices.tunion[0].color));
 
-#define geometryV3ToOpenGL(vprec, tprec, type, tunion)                                 \
+#define geometryV3ToOpenGL(vprec, nprec, tprec, type, tunion)                          \
    if (_OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX])                                      \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, vprec, 0,                  \
              sizeof(type), &geometry->vertices.tunion[0].vertex));                     \
    if (_OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL])                                      \
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, vprec, (vprec!=GL_FLOAT),  \
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, nprec, (nprec!=GL_FLOAT),  \
                sizeof(type), &geometry->vertices.tunion[0].normal));                   \
    if (_OpenGL.state.attrib[GLHCK_ATTRIB_TEXTURE])                                     \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
@@ -748,35 +748,35 @@ static inline void rGeometryPointer(const glhckGeometry *geometry)
    /* vertex data */
    switch (geometry->vertexType) {
       case GLHCK_VERTEX_V3B:
-         geometryV3ToOpenGL(GL_BYTE, GL_SHORT, glhckVertexData3b, v3b);
+         geometryV3ToOpenGL(GL_BYTE, GL_SHORT, GL_SHORT, glhckVertexData3b, v3b);
          break;
 
       case GLHCK_VERTEX_V2B:
-         geometryV2ToOpenGL(GL_BYTE, GL_SHORT, glhckVertexData2b, v2b);
+         geometryV2ToOpenGL(GL_BYTE, GL_SHORT, GL_SHORT, glhckVertexData2b, v2b);
          break;
 
       case GLHCK_VERTEX_V3S:
-         geometryV3ToOpenGL(GL_SHORT, GL_SHORT, glhckVertexData3s, v3s);
+         geometryV3ToOpenGL(GL_SHORT, GL_SHORT, GL_SHORT, glhckVertexData3s, v3s);
          break;
 
       case GLHCK_VERTEX_V2S:
-         geometryV2ToOpenGL(GL_SHORT, GL_SHORT, glhckVertexData2s, v2s);
+         geometryV2ToOpenGL(GL_SHORT, GL_SHORT, GL_SHORT, glhckVertexData2s, v2s);
          break;
 
       case GLHCK_VERTEX_V3FS:
-         geometryV3ToOpenGL(GL_FLOAT, GL_SHORT, glhckVertexData3fs, v3fs);
+         geometryV3ToOpenGL(GL_FLOAT, GL_SHORT, GL_SHORT, glhckVertexData3fs, v3fs);
          break;
 
       case GLHCK_VERTEX_V2FS:
-         geometryV2ToOpenGL(GL_FLOAT, GL_SHORT, glhckVertexData2fs, v2fs);
+         geometryV2ToOpenGL(GL_FLOAT, GL_SHORT, GL_SHORT, glhckVertexData2fs, v2fs);
          break;
 
       case GLHCK_VERTEX_V3F:
-         geometryV3ToOpenGL(GL_FLOAT, GL_FLOAT, glhckVertexData3f, v3f);
+         geometryV3ToOpenGL(GL_FLOAT, GL_FLOAT, GL_FLOAT, glhckVertexData3f, v3f);
          break;
 
       case GLHCK_VERTEX_V2F:
-         geometryV2ToOpenGL(GL_FLOAT, GL_FLOAT, glhckVertexData2f, v2f);
+         geometryV2ToOpenGL(GL_FLOAT, GL_FLOAT, GL_FLOAT, glhckVertexData2f, v2f);
          break;
 
       default:break;
@@ -1055,7 +1055,7 @@ static inline void rTextRender(const _glhckText *text)
       GL_CALL(glEnableVertexAttribArray(GLHCK_ATTRIB_VERTEX));
    }
 
-   if (!_OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL]) {
+   if (_OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL]) {
       _OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL] = 0;
       GL_CALL(glDisableVertexAttribArray(GLHCK_ATTRIB_NORMAL));
    }

@@ -223,20 +223,20 @@ static inline void materialState(const _glhckObject *object)
 #undef GL_STATE_CHANGED
 
 /* helper macro for passing geometry */
-#define geometryV2ToOpenGL(vprec, tprec, type, tunion)                        \
+#define geometryV2ToOpenGL(vprec, nprec, tprec, type, tunion)                 \
    GL_CALL(glVertexPointer(2, vprec,                                          \
             sizeof(type), &geometry->vertices.tunion[0].vertex));             \
-   GL_CALL(glNormalPointer(vprec,                                             \
+   GL_CALL(glNormalPointer(nprec,                                             \
             sizeof(type), &geometry->vertices.tunion[0].normal));             \
    GL_CALL(glTexCoordPointer(2, tprec,                                        \
             sizeof(type), &geometry->vertices.tunion[0].coord));              \
    GL_CALL(glColorPointer(4, GL_UNSIGNED_BYTE,                                \
             sizeof(type), &geometry->vertices.tunion[0].color));
 
-#define geometryV3ToOpenGL(vprec, tprec, type, tunion)                        \
+#define geometryV3ToOpenGL(vprec, nprec, tprec, type, tunion)                 \
    GL_CALL(glVertexPointer(3, vprec,                                          \
             sizeof(type), &geometry->vertices.tunion[0].vertex));             \
-   GL_CALL(glNormalPointer(vprec,                                             \
+   GL_CALL(glNormalPointer(nprec,                                             \
             sizeof(type), &geometry->vertices.tunion[0].normal));             \
    GL_CALL(glTexCoordPointer(2, tprec,                                        \
             sizeof(type), &geometry->vertices.tunion[0].coord));              \
@@ -251,35 +251,35 @@ static inline void rGeometryPointer(const glhckGeometry *geometry)
    /* vertex data */
    switch (geometry->vertexType) {
       case GLHCK_VERTEX_V3B:
-         geometryV3ToOpenGL(GL_BYTE, GL_SHORT, glhckVertexData3b, v3b);
+         geometryV3ToOpenGL(GL_BYTE, GL_SHORT, GL_SHORT, glhckVertexData3b, v3b);
          break;
 
       case GLHCK_VERTEX_V2B:
-         geometryV2ToOpenGL(GL_BYTE, GL_SHORT, glhckVertexData2b, v2b);
+         geometryV2ToOpenGL(GL_BYTE, GL_SHORT, GL_SHORT, glhckVertexData2b, v2b);
          break;
 
       case GLHCK_VERTEX_V3S:
-         geometryV3ToOpenGL(GL_SHORT, GL_SHORT, glhckVertexData3s, v3s);
+         geometryV3ToOpenGL(GL_SHORT, GL_SHORT, GL_SHORT, glhckVertexData3s, v3s);
          break;
 
       case GLHCK_VERTEX_V2S:
-         geometryV2ToOpenGL(GL_SHORT, GL_SHORT, glhckVertexData2s, v2s);
+         geometryV2ToOpenGL(GL_SHORT, GL_SHORT, GL_SHORT, glhckVertexData2s, v2s);
          break;
 
       case GLHCK_VERTEX_V3FS:
-         geometryV3ToOpenGL(GL_FLOAT, GL_SHORT, glhckVertexData3fs, v3fs);
+         geometryV3ToOpenGL(GL_FLOAT, GL_SHORT, GL_SHORT, glhckVertexData3fs, v3fs);
          break;
 
       case GLHCK_VERTEX_V2FS:
-         geometryV2ToOpenGL(GL_FLOAT, GL_SHORT, glhckVertexData2fs, v2fs);
+         geometryV2ToOpenGL(GL_FLOAT, GL_SHORT, GL_SHORT, glhckVertexData2fs, v2fs);
          break;
 
       case GLHCK_VERTEX_V3F:
-         geometryV3ToOpenGL(GL_FLOAT, GL_FLOAT, glhckVertexData3f, v3f);
+         geometryV3ToOpenGL(GL_FLOAT, GL_FLOAT, GL_FLOAT, glhckVertexData3f, v3f);
          break;
 
       case GLHCK_VERTEX_V2F:
-         geometryV2ToOpenGL(GL_FLOAT, GL_FLOAT, glhckVertexData2f, v2f);
+         geometryV2ToOpenGL(GL_FLOAT, GL_FLOAT, GL_FLOAT, glhckVertexData2f, v2f);
          break;
 
       default:
