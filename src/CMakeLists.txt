@@ -11,6 +11,7 @@ SET(GLHCK_SRC
    texture.c
    atlas.c
    light.c
+   renderbuffer.c
    framebuffer.c
    hwbuffer.c
    shader.c

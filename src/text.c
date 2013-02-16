@@ -715,8 +715,14 @@ GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id,
    size_t vcount;
 #if GLHCK_TEXT_FLOAT_PRECISION
    glhckVertexData2f *v;
+#if GLHCK_TRISTRIP
+   glhckVertexData2f *d;
+#endif
 #else
-   glhckVertexData2s *v, *d;
+   glhckVertexData2s *v;
+#if GLHCK_TRISTRIP
+   glhckVertexData2s *d;
+#endif
 #endif
    __GLHCKtextTexture *texture;
    __GLHCKtextGlyph *glyph;

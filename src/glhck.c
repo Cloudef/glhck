@@ -50,10 +50,12 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(renderbufferGenerate);
    GLHCK_API_CHECK(renderbufferDelete);
    GLHCK_API_CHECK(renderbufferBind);
+   GLHCK_API_CHECK(renderbufferStorage);
    GLHCK_API_CHECK(framebufferGenerate);
    GLHCK_API_CHECK(framebufferDelete);
    GLHCK_API_CHECK(framebufferBind);
    GLHCK_API_CHECK(framebufferTexture);
+   GLHCK_API_CHECK(framebufferRenderbuffer);
    GLHCK_API_CHECK(hwBufferGenerate);
    GLHCK_API_CHECK(hwBufferDelete);
    GLHCK_API_CHECK(hwBufferBind);
@@ -65,9 +67,11 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(hwBufferUnmap);
    GLHCK_API_CHECK(programLink);
    GLHCK_API_CHECK(programDelete);
+   GLHCK_API_CHECK(programUniformBufferList);
    GLHCK_API_CHECK(programAttributeList);
    GLHCK_API_CHECK(programUniformList);
    GLHCK_API_CHECK(programSetUniform);
+   GLHCK_API_CHECK(programAttachUniformBuffer);
    GLHCK_API_CHECK(shaderCompile);
    GLHCK_API_CHECK(shaderDelete);
    GLHCK_API_CHECK(shadersPath);

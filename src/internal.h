@@ -35,6 +35,7 @@
 #define GLHCK_CHANNEL_TEXTURE       "TEXTURE"
 #define GLHCK_CHANNEL_ATLAS         "ATLAS"
 #define GLHCK_CHANNEL_LIGHT         "LIGHT"
+#define GLHCK_CHANNEL_RENDERBUFFER  "RENDERBUFFER"
 #define GLHCK_CHANNEL_FRAMEBUFFER   "FRAMEBUFFER"
 #define GLHCK_CHANNEL_HWBUFFER      "HWBUFFER"
 #define GLHCK_CHANNEL_SHADER        "SHADER"
@@ -50,7 +51,7 @@
 #define GLHCK_IMPORT_DYNAMIC 0
 
 /* disable triangle stripping? */
-#define GLHCK_TRISTRIP 0
+#define GLHCK_TRISTRIP 1
 
 /* floating point precision text? */
 #define GLHCK_TEXT_FLOAT_PRECISION 1
@@ -254,7 +255,12 @@ typedef struct __GLHCKobjectView {
 typedef struct __GLHCKobjectMaterial {
    unsigned int flags;
    unsigned int blenda, blendb;
-   struct glhckColorb color;
+   kmVec2 textureScale;
+   kmVec2 textureOffset;
+   float shininess;
+   struct glhckColorb ambient;
+   struct glhckColorb diffuse;
+   struct glhckColorb specular;
    struct _glhckTexture *texture;
    struct _glhckShader *shader;
 } __GLHCKobjectMaterial;
@@ -337,6 +343,9 @@ typedef struct _glhckCamera {
 
 /* light container */
 typedef struct _glhckLight {
+   kmVec3 atten;
+   kmVec2 cutout;
+   kmScalar pointLightFactor;
    kmVec3 oldPosition, oldTarget;
    kmScalar oldNear, oldFar;
    struct _glhckObject *object;
@@ -348,6 +357,7 @@ typedef struct _glhckLight {
 typedef struct _glhckRenderbuffer {
    unsigned int object;
    int width, height;
+   glhckTextureFormat format;
    size_t refCounter;
    struct _glhckRenderbuffer *next;
 } _glhckRenderbuffer;
@@ -361,13 +371,26 @@ typedef struct _glhckFramebuffer {
    struct _glhckFramebuffer *next;
 } _glhckFramebuffer;
 
+/* glhck hw buffer uniform location type */
+typedef struct _glhckHwBufferShaderUniform {
+   char *name;
+   const char *typeName;
+   int offset;
+   int size;
+   _glhckShaderVariableType type;
+   struct _glhckHwBufferShaderUniform *next;
+} _glhckHwBufferShaderUniform;
+
 /* glhck hw buffer object type */
 typedef struct _glhckHwBuffer {
+   char *name;
    unsigned int object;
+   int size;
    glhckHwBufferType targetType;
    glhckHwBufferStoreType storeType;
    char created;
    size_t refCounter;
+   struct _glhckHwBufferShaderUniform *uniforms;
    struct _glhckHwBuffer *next;
 } _glhckHwBuffer;
 
@@ -376,8 +399,8 @@ typedef struct _glhckShaderAttribute {
    char *name;
    const char *typeName;
    unsigned int location;
-   _glhckShaderVariableType type;
    int size;
+   _glhckShaderVariableType type;
    struct _glhckShaderAttribute *next;
 } _glhckShaderAttribute;
 
@@ -430,10 +453,14 @@ typedef unsigned int (*__GLHCKrenderAPItextureCreate)
    (glhckTextureType type, const void *buffer, int size, int width, int height, int depth, glhckTextureFormat format,
     unsigned int reuseTextureObject, unsigned int flags);
 
-/* renderbuffer s*/
+/* lights */
+typedef void (*__GLHCKrenderAPIlightBind) (glhckLight *light);
+
+/* renderbuffers */
 typedef void (*__GLHCKrenderAPIrenderbufferGenerate) (int count, unsigned int *objects);
 typedef void (*__GLHCKrenderAPIrenderbufferDelete) (int count, const unsigned int *objects);
 typedef void (*__GLHCKrenderAPIrenderbufferBind) (unsigned int object);
+typedef void (*__GLHCKrenderAPIrenderbufferStorage) (int width, int height, glhckTextureFormat format);
 
 /* framebuffers */
 typedef void (*__GLHCKrenderAPIframebufferGenerate) (int count, unsigned int *objects);
@@ -441,6 +468,8 @@ typedef void (*__GLHCKrenderAPIframebufferDelete) (int count, const unsigned int
 typedef void (*__GLHCKrenderAPIframebufferBind) (glhckFramebufferType type, unsigned int object);
 typedef int (*__GLHCKrenderAPIframebufferTexture)
    (glhckFramebufferType framebufferType, glhckTextureType textureType, unsigned int texture, glhckFramebufferAttachmentType type);
+typedef int (*__GLHCKrenderAPIframebufferRenderbuffer)
+   (glhckFramebufferType framebufferType, unsigned int buffer, glhckFramebufferAttachmentType type);
 
 /* hardware buffer objects */
 typedef void (*__GLHCKrenderAPIhwBufferGenerate) (int count, unsigned int *objects);
@@ -461,9 +490,11 @@ typedef void (*__GLHCKrenderAPIprogramDelete) (unsigned int program);
 typedef unsigned int (*__GLHCKrenderAPIshaderCompile)
    (glhckShaderType type, const char *effectKey, const char *contentsFromMemory);
 typedef void (*__GLHCKrenderAPIshaderDelete) (unsigned int shader);
+typedef _glhckHwBufferShaderUniform* (*__GLHCKrenderAPIprogramUniformBufferList) (unsigned int program, const char *uboName, int *size);
 typedef _glhckShaderAttribute* (*__GLHCKrenderAPIprogramAttributeList) (unsigned int program);
 typedef _glhckShaderUniform* (*__GLHCKrenderAPIprogramUniformList) (unsigned int program);
 typedef void (*__GLHCKrenderAPIprogramSetUniform) (unsigned int program, _glhckShaderUniform *uniform, int count, void *value);
+typedef unsigned int (*__GLHCKrenderAPIprogramAttachUniformBuffer) (unsigned int program, const char *name, unsigned int location);
 typedef int (*__GLHCKrenderAPIshadersPath) (const char *pathPrefix, const char *pathSuffix);
 typedef int (*__GLHCKrenderAPIshadersDirectiveToken) (const char* token, const char *directive);
 
@@ -496,14 +527,18 @@ typedef struct __GLHCKrenderAPI {
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(textureCreate);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(textureFill);
 
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(lightBind);
+
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(renderbufferGenerate);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(renderbufferDelete);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(renderbufferBind);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(renderbufferStorage);
 
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferGenerate);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferDelete);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferBind);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferTexture);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(framebufferRenderbuffer);
 
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(hwBufferGenerate);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(hwBufferDelete);
@@ -518,9 +553,11 @@ typedef struct __GLHCKrenderAPI {
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programBind);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programLink);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programDelete);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniformBufferList);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programAttributeList);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniformList);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programSetUniform);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programAttachUniformBuffer);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderCompile);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderDelete);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shadersPath);

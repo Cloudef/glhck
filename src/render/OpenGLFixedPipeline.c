@@ -499,10 +499,10 @@ static inline void rObjectStart(const _glhckObject *object) {
 #endif
 
    /* reset color */
-   GL_CALL(glColor4ub(object->material.color.r,
-                      object->material.color.g,
-                      object->material.color.b,
-                      object->material.color.a));
+   GL_CALL(glColor4ub(object->material.diffuse.r,
+                      object->material.diffuse.g,
+                      object->material.diffuse.b,
+                      object->material.diffuse.a));
 
    /* set states and draw */
    materialState(object);

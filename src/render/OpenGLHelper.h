@@ -154,8 +154,15 @@ GLuint glhTextureCreate(glhckTextureType type,
       glhckTextureFormat format, GLuint reuseTextureObject, GLuint flags);
 void glhTextureFill(glhckTextureType type, GLuint texture, const GLvoid *data, GLsizei size,
       GLint x, GLint y, GLint z, GLsizei width, GLsizei height, GLsizei depth, glhckTextureFormat format);
+void glhRenderbufferStorage(GLsizei width, GLsizei height, glhckTextureFormat format);
 GLint glhFramebufferTexture(glhckFramebufferType framebufferType, glhckTextureType textureType, GLuint texture,
       glhckFramebufferAttachmentType attachment);
+GLint glhFramebufferRenderbuffer(glhckFramebufferType framebufferType, GLuint buffer, glhckFramebufferAttachmentType attachment);
+GLuint glhProgramAttachUniformBuffer(GLuint program, const GLchar *uboName, GLuint location);
+_glhckHwBufferShaderUniform* glhProgramUniformBufferList(GLuint program, const GLchar *uboName, GLsizei *size);
+_glhckShaderAttribute* glhProgramAttributeList(GLuint obj);
+_glhckShaderUniform* glhProgramUniformList(GLuint obj);
+void glhProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, GLvoid *value);
 void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type);
 
 #endif /* __glhck_opengl_helper_h__ */

@@ -2,6 +2,19 @@
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_HWBUFFER
 
+/* \brief free current list of uniform buffer's uniforms */
+static void _glhckHwBufferFreeUniforms(_glhckHwBuffer *object)
+{
+   _glhckHwBufferShaderUniform *u, *un;
+   assert(object);
+   for (u = object->uniforms; u; u = un) {
+      un = u->next;
+      _glhckFree(u->name);
+      _glhckFree(u);
+   }
+   object->uniforms = NULL;
+}
+
 /* \brief allocate new hardware buffer object */
 GLHCKAPI glhckHwBuffer* glhckHwBufferNew(void)
 {
@@ -62,6 +75,9 @@ GLHCKAPI size_t glhckHwBufferFree(glhckHwBuffer *object)
    /* delete object */
    if (object->object)
       GLHCKRA()->hwBufferDelete(1, &object->object);
+
+   IFDO(_glhckFree, object->name);
+   _glhckHwBufferFreeUniforms(object);
 
    /* remove from world */
    _glhckWorldRemove(hlist, object, glhckHwBuffer*);
@@ -130,8 +146,9 @@ GLHCKAPI void glhckHwBufferCreate(glhckHwBuffer *object, glhckHwBufferType type,
    object->targetType = type;
    glhckHwBufferBind(object);
    GLHCKRA()->hwBufferCreate(type, size, data, usage);
-   object->storeType  = usage;
-   object->created    = 1;
+   object->size      = size;
+   object->storeType = usage;
+   object->created   = 1;
 
    /* bind back old buffer, or NULL */
    if (old) glhckHwBufferBind(old);
@@ -198,6 +215,63 @@ GLHCKAPI void glhckHwBufferUnmap(glhckHwBuffer *object)
    GLHCKRA()->hwBufferUnmap(object->targetType);
    if (old) glhckHwBufferBind(old);
    else glhckHwBufferUnbind(object->targetType);
+}
+
+/*
+ * Uniform Buffer Object related functions
+ */
+
+/* \brief create and intialize uniform buffer from shader */
+GLHCKAPI int glhckHwBufferCreateUniformBufferFromShader(glhckHwBuffer *object, glhckShader *shader,
+      const char *uboName, glhckHwBufferStoreType usage)
+{
+   char *bufferName = NULL;
+   int size;
+   _glhckHwBufferShaderUniform *uniforms = NULL, *u;
+   assert(object && shader);
+
+   /* create the uniform buffer */
+   if (!(uniforms = GLHCKRA()->programUniformBufferList(shader->program, uboName, &size)))
+      goto fail;
+
+   /* copy buffer name */
+   if (!(bufferName = _glhckStrdup(uboName)))
+      goto fail;
+
+   /* initialize uniform buffer with the size */
+   glhckHwBufferCreate(object, GLHCK_UNIFORM_BUFFER, size, NULL, usage);
+
+   /* store the name and uniforms for this hw buffer */
+   if (object->name) _glhckFree(object->name);
+   object->name = bufferName;
+   object->uniforms = uniforms;
+
+   for (u = object->uniforms; u; u = u->next)
+      printf("(%s:%u) %d : %d [%s]\n", u->name, u->offset, u->type, u->size, u->typeName);
+
+   return RETURN_OK;
+
+fail:
+   IFDO(_glhckFree, bufferName);
+   return RETURN_FAIL;
+}
+
+/* \brief fill single uniform in uniform buffer */
+GLHCKAPI void glhckHwBufferFillUniform(glhckHwBuffer *object, const char *uniform, int size, const void *data)
+{
+   _glhckHwBufferShaderUniform *u;
+   assert(object);
+   assert(object->targetType == GLHCK_UNIFORM_BUFFER);
+
+   /* search uniform */
+   for (u = object->uniforms; u; u = u->next)
+      if (!strcmp(uniform, u->name)) break;
+
+   /* uniform not found */
+   if (!u) return;
+
+   /* fill the uniform */
+   glhckHwBufferFill(object, u->offset, size, data);
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

@@ -680,8 +680,8 @@ GLHCKAPI const glhckColorb* glhckObjectGetColor(const glhckObject *object)
    CALL(2, "%p", object);
    assert(object);
 
-   RET(2, "%p", &object->material.color);
-   return &object->material.color;
+   RET(2, "%p", &object->material.diffuse);
+   return &object->material.diffuse;
 }
 
 /* \brief set object's color */
@@ -690,10 +690,10 @@ GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColorb *color)
    CALL(2, "%p, %p", object, color);
    assert(object && color);
 
-   object->material.color.r = color->r;
-   object->material.color.g = color->g;
-   object->material.color.b = color->b;
-   object->material.color.a = color->a;
+   object->material.diffuse.r = color->r;
+   object->material.diffuse.g = color->g;
+   object->material.diffuse.b = color->b;
+   object->material.diffuse.a = color->a;
 
    /* set color on all the childs */
    if (object->flags & GLHCK_OBJECT_ROOT) {

@@ -41,7 +41,6 @@ GLHCKAPI unsigned int glhckCompileShaderObject(glhckShaderType type,
 {
    unsigned int obj = 0;
    CALL(0, "%u, %s, %s", type, effectKey, contentsFromMemory);
-   assert(effectKey);
    obj = GLHCKRA()->shaderCompile(type, effectKey, contentsFromMemory);
    RET(0, "%u", obj);
    return obj;
@@ -207,6 +206,19 @@ GLHCKAPI void glhckShaderSetUniform(glhckShader *object, const char *uniform, in
 
    /* restore old bind */
    if (old) glhckShaderBind(old);
+}
+
+/* \brief attach uniform buffer object to shader
+ * name can be left NULL, if uniform buffer was created from shader before */
+GLHCKAPI int glhckShaderAttachHwBuffer(glhckShader *object, glhckHwBuffer *buffer, const char *name, unsigned int index)
+{
+   unsigned int location;
+   assert(object && buffer);
+   assert(name || buffer->name);
+   assert(index != 0 && "index 0 is already taken by GLhck");
+   location = GLHCKRA()->programAttachUniformBuffer(object->program, (name?name:buffer->name), index);
+   glhckHwBufferBindRange(buffer, index, 0, buffer->size);
+   return (location?RETURN_OK:RETURN_FAIL);
 }
 
 /* vm: set ts=8 sw=3 tw=0 :*/

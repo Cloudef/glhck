@@ -31,6 +31,7 @@ __GLHCKtraceChannel _traceChannels[] =
    { GLHCK_CHANNEL_ALLOC,        0 },
    { GLHCK_CHANNEL_RENDER,       0 },
    { GLHCK_CHANNEL_LIGHT,        0 },
+   { GLHCK_CHANNEL_RENDERBUFFER, 0 },
    { GLHCK_CHANNEL_FRAMEBUFFER,  0 },
    { GLHCK_CHANNEL_HWBUFFER,     0 },
    { GLHCK_CHANNEL_SHADER,       0 },

@@ -166,8 +166,8 @@ int main(int argc, char **argv)
 #if SKIP_ASSIMP
 #  define ASSIMP_PATH ""
 #else
-//#  define ASSIMP_PATH "example/media/chaosgate/chaosgate.obj"
-#  define ASSIMP_PATH "example/media/room/room.obj"
+#  define ASSIMP_PATH "example/media/chaosgate/chaosgate.obj"
+//#  define ASSIMP_PATH "example/media/room/room.obj"
 #endif
 
    if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
@@ -176,6 +176,7 @@ int main(int argc, char **argv)
    } else if ((cube = glhckModelNewEx(OCTM_PATH, 5.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
+      glhckObjectPositionf(cube, 0.0f, 5.0f, 0.0f);
    } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 2.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
@@ -185,26 +186,25 @@ int main(int argc, char **argv)
       glhckObjectScalef(cube, 1.0f, 1.0f, 2.0f);
    } else return EXIT_FAILURE;
 
-   // glhckSetGlobalPrecision(GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3F);
-
-   glhckShader *shader = glhckShaderNew("Glow.GLhck.Vertex", "Glow.GLhck.Shadow.Fragment", NULL);
-   glhckShader *depthShader = glhckShaderNew("Glow.GLhck.Vertex", "Glow.GLhck.Depth.Fragment", NULL);
-   glhckShader *depthRenderShader = glhckShaderNew("Glow.GLhck.Vertex", "Glow.GLhck.DepthRender.Fragment", NULL);
-   glhckShaderSetUniform(shader, "Texture0", 1, &((int[]){0}));
-   glhckShaderSetUniform(shader, "DepthMap", 1, &((int[]){1}));
+#if 0
+   glhckShader *shader = glhckShaderNew(NULL, "VSM.GLhck.Lighting.ShadowMapping.Unpacking.Fragment", NULL);
+   glhckShader *depthShader = glhckShaderNew(NULL, "VSM.GLhck.Depth.Packing.Fragment", NULL);
+   glhckShader *depthRenderShader = glhckShaderNew(NULL, "VSM.GLhck.DepthRender.Unpacking.Fragment", NULL);
+   glhckShaderSetUniform(shader, "ShadowMap", 1, &((int[]){1}));
 
    int sW = 1024, sH = 1024;
-   glhckRenderbuffer *depthBuffer = glhckRenderbufferNew(sW, sH);
+   glhckRenderbuffer *depthBuffer = glhckRenderbufferNew(sW, sH, GLHCK_DEPTH_COMPONENT16);
    glhckTexture *depthColorMap = glhckTextureNew(NULL, 0);
    glhckTextureCreate(depthColorMap, GLHCK_TEXTURE_2D, NULL, sW, sH, 0, GLHCK_RGBA, GLHCK_RGBA, 0);
    glhckFramebuffer *fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER);
    glhckFramebufferAttachTexture(fbo, depthColorMap, GLHCK_COLOR_ATTACHMENT0);
-   glhckFramebufferAttachBuffer(fbo, depthBuffer, GLHCK_DEPTH_COMPONENT16, GLHCK_DEPTH_ATTACHMENT);
+   glhckFramebufferAttachRenderbuffer(fbo, depthBuffer, GLHCK_DEPTH_ATTACHMENT);
    glhckFramebufferRecti(fbo, 0, 0, sW, sH);
 
    glhckObject *screen = glhckSpriteNew(depthColorMap, 128, 128);
    glhckObjectShader(screen, depthRenderShader);
    glhckObjectMaterialFlags(screen, 0);
+#endif
 
    glhckObject *plane = glhckPlaneNew(200.0f, 200.0f);
    glhckObjectTexture(plane, texture);
@@ -246,6 +246,9 @@ int main(int argc, char **argv)
    glhckLight *light[numLights];
    for (li = 0; li != numLights; ++li) {
       light[li] = glhckLightNew();
+      glhckLightCutoutf(light[li], 45.0f, 0.0f);
+      glhckLightPointLightFactor(light[li], 0.0f);
+      glhckLightColorb(light[li], rand()%255, rand()%255, rand()%255, 255);
       glhckObject *c = glhckCubeNew(1.0f);
       glhckObjectAddChildren(glhckLightGetObject(light[li]), c);
       glhckObjectTexture(c, texture);
@@ -318,10 +321,9 @@ int main(int argc, char **argv)
                sin(li+1)*80.0f, sin(xspin*0.1)*30.0f+45.0f, cos(li+1)*80.0f);
 #endif
          glhckObjectTargetf(glhckLightGetObject(light[li]), 0, 0, 0);
-         glhckShaderSetUniform(shader, "Light", 1, (void*)glhckObjectGetPosition(glhckLightGetObject(light[li])));
-         glhckShaderSetUniform(shader, "LightTarget", 1, (void*)glhckObjectGetTarget(glhckLightGetObject(light[li])));
 
-         if (1) { // (glhckLightGetCastShadow(light[li])) {
+#if 0
+         if (1) {
             glhckBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
             glhckRenderPassFlags(GLHCK_PASS_DEPTH | GLHCK_PASS_CULL);
             glhckObjectShader(cube, depthShader);
@@ -335,8 +337,6 @@ int main(int argc, char **argv)
 
             glhckCameraRange(camera, 5.0f, 250.0f);
             glhckLightBeginProjectionWithCamera(light[li], camera);
-            glhckShaderSetUniform(shader, "LightProjection", 1, (void*)glhckCameraGetVPMatrix(camera));
-            glhckShaderSetUniform(depthShader, "LightView", 1, (void*)glhckCameraGetViewMatrix(camera));
             glhckFramebufferBegin(fbo);
             glhckClear(GLHCK_DEPTH_BUFFER | GLHCK_COLOR_BUFFER);
             glhckRender();
@@ -350,7 +350,6 @@ int main(int argc, char **argv)
             glhckCameraRange(camera, 1.0f, 1000.0f);
             glhckCameraUpdate(camera);
 
-            if (li) glhckBlendFunc(GLHCK_ONE, GLHCK_ONE);
             glhckRenderPassFlags(GLHCK_PASS_DEFAULTS);
             glhckObjectShader(cube, shader);
             glhckObjectShader(cube2, shader);
@@ -358,16 +357,20 @@ int main(int argc, char **argv)
             glhckObjectShader(sprite3, shader);
             glhckObjectShader(plane, shader);
          }
+#else
+         glhckLightBeginProjectionWithCamera(light[li], camera);
+         glhckLightEndProjectionWithCamera(light[li], camera);
+#endif
 
-#if 1
-         //glhckObjectDraw(sprite);
-         //glhckObjectDraw(sprite3);
-         //glhckObjectDraw(cube2);
+         glhckObjectDraw(sprite);
+         glhckObjectDraw(sprite3);
+         glhckObjectDraw(cube2);
          glhckObjectDraw(cube);
          glhckObjectDraw(plane);
          glhckObjectDraw(glhckLightGetObject(light[li]));
+
+         if (li) glhckBlendFunc(GLHCK_ONE, GLHCK_ONE);
          glhckRender();
-#endif
       }
       glhckBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
 
@@ -381,11 +384,13 @@ int main(int argc, char **argv)
       /* render frustum */
       glhckFrustumRender(glhckCameraGetFrustum(camera));
 
+#if 0
       kmMat4 mat2d;
       kmMat4Scaling(&mat2d, -2.0f/WIDTH, 2.0f/HEIGHT, 0.0f);
       glhckRenderProjection(&mat2d);
       glhckObjectPositionf(screen, WIDTH/2.0f-128.0f/2.0f, HEIGHT/2.0f-128.0f/2.0f, 0);
       glhckObjectRender(screen);
+#endif
 
       /* draw some text */
       glhckTextColor(text, 255, 255, 255, 255);

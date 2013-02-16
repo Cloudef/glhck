@@ -1,4 +1,6 @@
 #include "../internal.h"
+#include <limits.h> /* for limits */
+#include <stdio.h>  /* for snprintf */
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #include "OpenGLHelper.h"
@@ -876,8 +878,7 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type)
 }
 
 /* return shader variable name for glhck shader variable constant */
-const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type)
-{
+const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type) {
    return glhShaderVariableNameForOpenGLConstant(glhShaderVariableTypeForGlhckType(type));
 }
 
@@ -1041,6 +1042,7 @@ GLuint glhTextureCreate(glhckTextureType type,
             GL_CALL(glTexImage1D(glTarget, 0, glFormat, width, 0, glFormat, GL_UNSIGNED_BYTE, buffer));
             break;
          case GLHCK_TEXTURE_2D:
+         case GLHCK_TEXTURE_CUBE_MAP:
             GL_CALL(glTexImage2D(glTarget, 0, glFormat, width, height, 0, glFormat, GL_UNSIGNED_BYTE, buffer));
             break;
          case GLHCK_TEXTURE_3D:
@@ -1108,12 +1110,19 @@ void glhTextureFill(glhckTextureType type, GLuint texture, const GLvoid *data, G
    else glhckTextureUnbind(type);
 }
 
+/* \brief glRenderbufferStorage wrapper */
+void glhRenderbufferStorage(GLsizei width, GLsizei height, glhckTextureFormat format)
+{
+   CALL(0, "%d, %d, %d", width, height, format);
+   glRenderbufferStorage(GL_RENDERBUFFER, glhTextureFormatForGlhckFormat(format), width, height);
+}
+
 /* \brief glFramebufferTexture wrapper with error checking */
 GLint glhFramebufferTexture(glhckFramebufferType framebufferType, glhckTextureType textureType, GLuint texture,
       glhckFramebufferAttachmentType attachment)
 {
    GLenum glTarget, glTexTarget, glAttachment;
-   CALL(0, "%d, %d, %d, %d", framebufferType, textureType, texture, attachment);
+   CALL(0, "%d, %d, %u, %d", framebufferType, textureType, texture, attachment);
 
    glTarget     = glhFramebufferTypeForGlhckType(framebufferType);
    glTexTarget  = glhTextureTypeForGlhckType(textureType);
@@ -1124,6 +1133,7 @@ GLint glhFramebufferTexture(glhckFramebufferType framebufferType, glhckTextureTy
          GL_CALL(glFramebufferTexture1D(glTarget, glAttachment, glTexTarget, texture, 0));
          break;
       case GLHCK_TEXTURE_2D:
+      case GLHCK_TEXTURE_CUBE_MAP:
          GL_CALL(glFramebufferTexture2D(glTarget, glAttachment, glTexTarget, texture, 0));
          break;
       case GLHCK_TEXTURE_3D:
@@ -1142,6 +1152,445 @@ fbo_fail:
    DEBUG(GLHCK_DBG_ERROR, "Framebuffer is not complete");
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
+}
+
+/* \brief glFramebufferRenderbuffer wrapper with error checking */
+GLint glhFramebufferRenderbuffer(glhckFramebufferType framebufferType, GLuint buffer, glhckFramebufferAttachmentType attachment)
+{
+   GLenum glTarget, glAttachment;
+   CALL(0, "%d, %u, %d", framebufferType, buffer, attachment);
+
+   glTarget     = glhFramebufferTypeForGlhckType(framebufferType);
+   glAttachment = glhAttachmentTypeForGlhckType(attachment);
+   glFramebufferRenderbuffer(glTarget, glAttachment, GL_RENDERBUFFER, buffer);
+
+   if (GL_CHECK(glCheckFramebufferStatus(glTarget)) != GL_FRAMEBUFFER_COMPLETE)
+      goto fbo_fail;
+
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
+
+fbo_fail:
+   DEBUG(GLHCK_DBG_ERROR, "Framebuffer is not complete");
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
+}
+
+/* \brief attach uniform buffer object to shader */
+GLuint glhProgramAttachUniformBuffer(GLuint program, const GLchar *uboName, GLuint location)
+{
+   GLuint ubo;
+   CALL(0, "%u, %s, %u", program, uboName, location);
+   if ((ubo = glGetUniformBlockIndex(program, uboName))) {
+      GL_CALL(glUniformBlockBinding(program, ubo, location));
+   }
+   return ubo;
+}
+
+/* \brief create uniform buffer from shader */
+_glhckHwBufferShaderUniform* glhProgramUniformBufferList(GLuint program, const GLchar *uboName, GLsizei *uboSize)
+{
+   GLchar name[255], *uname = NULL;
+   GLuint index;
+   GLint count, i, *indices = NULL;
+   GLsizei length, size;
+   GLenum type;
+   _glhckHwBufferShaderUniform *uniforms = NULL, *u, *un;
+   CALL(0, "%u, %s, %p", program, uboName, uboSize);
+   if (uboSize) *uboSize = 0;
+
+    /* get uniform block index */
+   index = glGetUniformBlockIndex(program, uboName);
+   if (index == GL_INVALID_INDEX) goto fail;
+
+   /* get uniform block size and initialize the hw buffer */
+   GL_CALL(glGetActiveUniformBlockiv(program, index, GL_UNIFORM_BLOCK_DATA_SIZE, &size));
+   if (uboSize) *uboSize = size;
+
+   /* get uniform count for UBO */
+   GL_CALL(glGetActiveUniformBlockiv(program, index, GL_UNIFORM_BLOCK_ACTIVE_UNIFORMS, &count));
+   if (!count) goto no_uniforms;
+
+   /* allocate space for uniform iteration */
+   if (!(indices = _glhckMalloc(sizeof(GLuint) * count)))
+      goto fail;
+
+   /* get indices for UBO's member uniforms */
+   GL_CALL(glGetActiveUniformBlockiv(program, index, GL_UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES, indices));
+
+   for (i = 0; i < count; ++i) {
+      index = (GLuint)indices[i];
+
+      /* get uniform information */
+      GL_CALL(glGetActiveUniform(program, index, sizeof(name)-1, &length, &size, &type, name));
+
+      /* cut out [0] for arrays */
+      if (!strcmp(name+strlen(name)-3, "[0]"))
+         length -= 3;
+
+      /* allocate name */
+      if (!(uname = _glhckCalloc(1, length+4)))
+         goto fail;
+
+      /* allocate new uniform slot */
+      memcpy(uname, name, length);
+      for (u = uniforms; u && u->next; u = u->next);
+      if (u) u = u->next  = _glhckCalloc(1, sizeof(_glhckHwBufferShaderUniform));
+      else   u = uniforms = _glhckCalloc(1, sizeof(_glhckHwBufferShaderUniform));
+      if (!u) goto fail;
+
+      /* assign information */
+      u->name = uname;
+      glGetActiveUniformsiv(program, 1, &index, GL_UNIFORM_OFFSET, &u->offset);
+      u->typeName = glhShaderVariableNameForOpenGLConstant(type);
+      u->type = glhGlhckShaderVariableTypeForGLType(type);
+      u->size = size;
+   }
+
+   _glhckFree(indices);
+   return uniforms;
+
+fail:
+no_uniforms:
+   if (uniforms) {
+      for (u = uniforms; u; u = un) {
+         un = u->next;
+         _glhckFree(u);
+      }
+   }
+   IFDO(_glhckFree, indices);
+   IFDO(_glhckFree, uname);
+   return NULL;
+}
+
+/* \brief get attribute list from program */
+_glhckShaderAttribute* glhProgramAttributeList(GLuint obj)
+{
+   GLenum type;
+   GLchar name[255];
+   GLint count, i;
+   GLsizei size, length;
+   _glhckShaderAttribute *attributes = NULL, *a, *an;
+   CALL(0, "%u", obj);
+
+   /* get attribute count */
+   GL_CALL(glGetProgramiv(obj, GL_ACTIVE_ATTRIBUTES, &count));
+   if (!count) goto no_attributes;
+
+   for (i = 0; i != count; ++i) {
+      /* get attribute information */
+      GL_CALL(glGetActiveAttrib(obj, i, sizeof(name)-1, &length, &size, &type, name));
+
+      /* allocate new attribute slot */
+      for (a = attributes; a && a->next; a = a->next);
+      if (a) a = a->next    = _glhckCalloc(1, sizeof(_glhckShaderAttribute));
+      else   a = attributes = _glhckCalloc(1, sizeof(_glhckShaderAttribute));
+      if (!a || !(a->name = _glhckMalloc(length+1)))
+         goto fail;
+
+      /* assign information */
+      memcpy(a->name, name, length+1);
+      a->typeName = glhShaderVariableNameForOpenGLConstant(type);
+      a->location = glGetAttribLocation(obj, a->name);
+      a->type = glhGlhckShaderVariableTypeForGLType(type);
+      a->size = size;
+   }
+
+   RET(0, "%p", attributes);
+   return attributes;
+
+fail:
+no_attributes:
+   if (attributes) {
+      for (a = attributes; a; a = an) {
+         an = a->next;
+         _glhckFree(a->name);
+         _glhckFree(a);
+      }
+   }
+   RET(0, "%p", NULL);
+   return NULL;
+}
+
+/* \brief get uniform list from program */
+_glhckShaderUniform* glhProgramUniformList(GLuint obj)
+{
+   GLenum type;
+   GLchar name[255], *uname = NULL, *tmp;
+   GLint count, i, i2;
+   GLuint location;
+   GLsizei length, size;
+   _glhckShaderUniform *uniforms = NULL, *u, *un;
+   CALL(0, "%u", obj);
+
+   /* get uniform count */
+   GL_CALL(glGetProgramiv(obj, GL_ACTIVE_UNIFORMS, &count));
+   if (!count) goto no_uniforms;
+
+   for (i = 0; i != count; ++i) {
+      /* get uniform information */
+      GL_CALL(glGetActiveUniform(obj, i, sizeof(name)-1, &length, &size, &type, name));
+
+      /* cut out [0] for arrays */
+      if (!strcmp(name+strlen(name)-3, "[0]"))
+         length -= 3;
+
+      /* allocate name */
+      if (!(uname = _glhckCalloc(1, length+4)))
+         goto fail;
+
+      /* get uniform location */
+      memcpy(uname, name, length);
+      location = glGetUniformLocation(obj, uname);
+      if (location == UINT_MAX) {
+         _glhckFree(uname);
+         continue;
+      }
+
+      /* allocate new uniform slot */
+      for (u = uniforms; u && u->next; u = u->next);
+      if (u) u = u->next  = _glhckCalloc(1, sizeof(_glhckShaderUniform));
+      else   u = uniforms = _glhckCalloc(1, sizeof(_glhckShaderUniform));
+      if (!u) goto fail;
+
+      /* assign information */
+      u->name = uname;
+      u->typeName = glhShaderVariableNameForOpenGLConstant(type);
+      u->location = location;
+      u->type = glhGlhckShaderVariableTypeForGLType(type);
+      u->size = size;
+
+      /* store for iterating the array slots */
+      tmp = uname;
+
+      /* generate uniform bindings for array slots */
+      for (i2 = 1; i2 < size; ++i2) {
+         if (!(uname = _glhckCalloc(1, length+4)))
+            goto fail;
+
+         /* get uniform location */
+         snprintf(uname, length+4, "%s[%d]", tmp, i2);
+         location = glGetUniformLocation(obj, uname);
+         if (location == UINT_MAX) {
+            _glhckFree(uname);
+            continue;
+         }
+
+         for (u = uniforms; u && u->next; u = u->next);
+         if (u) u = u->next  = _glhckCalloc(1, sizeof(_glhckShaderUniform));
+         else   u = uniforms = _glhckCalloc(1, sizeof(_glhckShaderUniform));
+         if (!u) goto fail;
+
+         u->name = uname;
+         u->typeName = glhShaderVariableNameForOpenGLConstant(type);
+         u->location = location;
+         u->type = glhGlhckShaderVariableTypeForGLType(type);
+         u->size = size;
+      }
+   }
+
+   RET(0, "%p", uniforms);
+   return uniforms;
+
+fail:
+no_uniforms:
+   if (uniforms) {
+      for (u = uniforms; u; u = un) {
+         un = u->next;
+         _glhckFree(u);
+      }
+   }
+   IFDO(_glhckFree, uname);
+   RET(0, "%p", NULL);
+   return NULL;
+}
+
+/* \brief set shader uniform */
+void glhProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, GLvoid *value)
+{
+   CALL(0, "%u", obj);
+
+   /* automatically figure out the data type */
+   switch (uniform->type) {
+      case GLHCK_SHADER_FLOAT:
+         GL_CALL(glUniform1fv(uniform->location, count, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_VEC2:
+         GL_CALL(glUniform2fv(uniform->location, count, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_VEC3:
+         GL_CALL(glUniform3fv(uniform->location, count, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_VEC4:
+         GL_CALL(glUniform4fv(uniform->location, count, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE:
+         GL_CALL(glUniform1dv(uniform->location, count, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_VEC2:
+         GL_CALL(glUniform2dv(uniform->location, count, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_VEC3:
+         GL_CALL(glUniform3dv(uniform->location, count, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_VEC4:
+         GL_CALL(glUniform4dv(uniform->location, count, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_INT:
+      case GLHCK_SHADER_BOOL:
+      case GLHCK_SHADER_SAMPLER_1D:
+      case GLHCK_SHADER_SAMPLER_2D:
+      case GLHCK_SHADER_SAMPLER_3D:
+      case GLHCK_SHADER_SAMPLER_CUBE:
+      case GLHCK_SHADER_SAMPLER_1D_SHADOW:
+      case GLHCK_SHADER_SAMPLER_2D_SHADOW:
+      case GLHCK_SHADER_SAMPLER_1D_ARRAY:
+      case GLHCK_SHADER_SAMPLER_2D_ARRAY:
+      case GLHCK_SHADER_SAMPLER_1D_ARRAY_SHADOW:
+      case GLHCK_SHADER_SAMPLER_2D_ARRAY_SHADOW:
+      case GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE:
+      case GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE_ARRAY:
+      case GLHCK_SHADER_SAMPLER_CUBE_SHADOW:
+      case GLHCK_SHADER_SAMPLER_BUFFER:
+      case GLHCK_SHADER_SAMPLER_2D_RECT:
+      case GLHCK_SHADER_SAMPLER_2D_RECT_SHADOW:
+      case GLHCK_SHADER_INT_SAMPLER_1D:
+      case GLHCK_SHADER_INT_SAMPLER_2D:
+      case GLHCK_SHADER_INT_SAMPLER_3D:
+      case GLHCK_SHADER_INT_SAMPLER_CUBE:
+      case GLHCK_SHADER_INT_SAMPLER_1D_ARRAY:
+      case GLHCK_SHADER_INT_SAMPLER_2D_ARRAY:
+      case GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE:
+      case GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+      case GLHCK_SHADER_INT_SAMPLER_BUFFER:
+      case GLHCK_SHADER_INT_SAMPLER_2D_RECT:
+      case GLHCK_SHADER_IMAGE_1D:
+      case GLHCK_SHADER_IMAGE_2D:
+      case GLHCK_SHADER_IMAGE_3D:
+      case GLHCK_SHADER_IMAGE_2D_RECT:
+      case GLHCK_SHADER_IMAGE_CUBE:
+      case GLHCK_SHADER_IMAGE_BUFFER:
+      case GLHCK_SHADER_IMAGE_1D_ARRAY:
+      case GLHCK_SHADER_IMAGE_2D_ARRAY:
+      case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE:
+      case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE_ARRAY:
+      case GLHCK_SHADER_INT_IMAGE_1D:
+      case GLHCK_SHADER_INT_IMAGE_2D:
+      case GLHCK_SHADER_INT_IMAGE_3D:
+      case GLHCK_SHADER_INT_IMAGE_2D_RECT:
+      case GLHCK_SHADER_INT_IMAGE_CUBE:
+      case GLHCK_SHADER_INT_IMAGE_BUFFER:
+      case GLHCK_SHADER_INT_IMAGE_1D_ARRAY:
+      case GLHCK_SHADER_INT_IMAGE_2D_ARRAY:
+      case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE:
+      case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
+         GL_CALL(glUniform1iv(uniform->location, count, (GLint*)value));
+         break;
+      case GLHCK_SHADER_INT_VEC2:
+      case GLHCK_SHADER_BOOL_VEC2:
+         GL_CALL(glUniform2iv(uniform->location, count, (GLint*)value));
+         break;
+      case GLHCK_SHADER_INT_VEC3:
+      case GLHCK_SHADER_BOOL_VEC3:
+         GL_CALL(glUniform3iv(uniform->location, count, (GLint*)value));
+         break;
+      case GLHCK_SHADER_INT_VEC4:
+      case GLHCK_SHADER_BOOL_VEC4:
+         GL_CALL(glUniform4iv(uniform->location, count, (GLint*)value));
+         break;
+      case GLHCK_SHADER_UNSIGNED_INT:
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D:
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D:
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_3D:
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_CUBE:
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D_ARRAY:
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_ARRAY:
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER:
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT:
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D:
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D:
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_3D:
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_RECT:
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_CUBE:
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_BUFFER:
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D_ARRAY:
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_ARRAY:
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
+      case GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER:
+         GL_CALL(glUniform1uiv(uniform->location, count, (GLuint*)value));
+         break;
+      case GLHCK_SHADER_UNSIGNED_INT_VEC2:
+         GL_CALL(glUniform2uiv(uniform->location, count, (GLuint*)value));
+         break;
+      case GLHCK_SHADER_UNSIGNED_INT_VEC3:
+         GL_CALL(glUniform3uiv(uniform->location, count, (GLuint*)value));
+         break;
+      case GLHCK_SHADER_UNSIGNED_INT_VEC4:
+         GL_CALL(glUniform4uiv(uniform->location, count, (GLuint*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_MAT2:
+         GL_CALL(glUniformMatrix2fv(uniform->location, count, 0, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_MAT3:
+         GL_CALL(glUniformMatrix3fv(uniform->location, count, 0, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_MAT4:
+         GL_CALL(glUniformMatrix4fv(uniform->location, count, 0, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_MAT2x3:
+         GL_CALL(glUniformMatrix2x3fv(uniform->location, count, 0, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_MAT2x4:
+         GL_CALL(glUniformMatrix2x4fv(uniform->location, count, 0, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_MAT3x2:
+         GL_CALL(glUniformMatrix3x2fv(uniform->location, count, 0, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_MAT3x4:
+         GL_CALL(glUniformMatrix3x4fv(uniform->location, count, 0, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_MAT4x2:
+         GL_CALL(glUniformMatrix4x2fv(uniform->location, count, 0, (GLfloat*)value));
+         break;
+      case GLHCK_SHADER_FLOAT_MAT4x3:
+         GL_CALL(glUniformMatrix4x3fv(uniform->location, count, 0, (GLfloat*)value));
+         break;
+#if 0
+      case GLHCK_SHADER_DOUBLE_MAT2:
+         GL_CALL(glUniformMatrix2dv(uniform->location, count, 0, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_MAT3:
+         GL_CALL(glUniformMatrix3dv(uniform->location, count, 0, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_MAT4:
+         GL_CALL(glUniformMatrix4dv(uniform->location, count, 0, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_MAT2x3:
+         GL_CALL(glUniformMatrix2x3dv(uniform->location, count, 0, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_MAT2x4:
+         GL_CALL(glUniformMatrix2x4dv(uniform->location, count, 0, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_MAT3x2:
+         GL_CALL(glUniformMatrix3x2dv(uniform->location, count, 0, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_MAT3x4:
+         GL_CALL(glUniformMatrix3x4dv(uniform->location, count, 0, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_MAT4x2:
+         GL_CALL(glUniformMatrix4x2dv(uniform->location, count, 0, (GLdouble*)value));
+         break;
+      case GLHCK_SHADER_DOUBLE_MAT4x3:
+         GL_CALL(glUniformMatrix4x3dv(uniform->location, count, 0, (GLdouble*)value));
+         break;
+#endif
+      default:
+         DEBUG(GLHCK_DBG_ERROR, "uniform type not implemented.");
+         break;
+   }
 }
 
 /* helper macro for passing indices to OpenGL */

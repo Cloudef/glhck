@@ -10,6 +10,7 @@ Ni 1.000000
 d 1.000000
 illum 2
 map_Kd /mnt/storage/dev/3d/Models/chaosgate/innerringuvw.png
+map_Bump /mnt/storage/dev/3d/Models/chaosgate/innerringuvw-normal.png
 
 newmtl Material.005
 Ns 96.078431
@@ -20,6 +21,7 @@ Ni 1.000000
 d 1.000000
 illum 2
 map_Kd /mnt/storage/dev/3d/Models/chaosgate/outerringuvw.png
+map_Bump /mnt/storage/dev/3d/Models/chaosgate/outerringuvw-normal.png
 
 newmtl Material.006
 Ns 96.078431
@@ -30,3 +32,4 @@ Ni 1.000000
 d 1.000000
 illum 2
 map_Kd /mnt/storage/dev/3d/Models/chaosgate/platformuvw-baked.png
+map_Bump /mnt/storage/dev/3d/Models/chaosgate/platformuvw-normal.png

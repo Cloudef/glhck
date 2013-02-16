@@ -150,7 +150,7 @@ int _glhckImportOpenCTM(_glhckObject *object, const char *file, unsigned int fla
 
       if (normals) {
          vertexData[ix].normal.x = normals[ix*3+0];
-         vertexData[ix].normal.z = normals[ix*3+1]*-1; /* flip Z */
+         vertexData[ix].normal.z = normals[ix*3+1]-1; /* flip Z */
          vertexData[ix].normal.y = normals[ix*3+2];
       }
 
