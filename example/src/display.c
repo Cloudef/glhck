@@ -109,7 +109,7 @@ int main(int argc, char **argv)
    puts("-!- window create");
 
    /* Turn on VSYNC if driver allows */
-   glfwSwapInterval(1);
+   glfwSwapInterval(0);
 
    if (!glhckInit(argc, argv))
       return EXIT_FAILURE;
@@ -329,41 +329,32 @@ int main(int argc, char **argv)
          glhckObjectTargetf(glhckLightGetObject(light[li]), 0, 0, 0);
 
 #if 0
-         if (1) {
-            glhckBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
-            glhckRenderPassFlags(GLHCK_PASS_DEPTH | GLHCK_PASS_CULL);
-            glhckObjectShader(cube, depthShader);
-            glhckObjectShader(cube2, depthShader);
-            glhckObjectShader(sprite, depthShader);
-            glhckObjectShader(sprite3, depthShader);
-            glhckObjectShader(plane, depthShader);
+         glhckRenderPassShader(NULL);
+         glhckBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
+         glhckRenderPassFlags(GLHCK_PASS_DEPTH | GLHCK_PASS_CULL);
+         glhckRenderPassShader(depthShader);
 
-            glhckObjectDraw(cube);
-            glhckObjectDraw(plane);
+         glhckObjectDraw(cube);
+         glhckObjectDraw(plane);
 
-            glhckCameraRange(camera, 5.0f, 250.0f);
-            glhckLightBeginProjectionWithCamera(light[li], camera);
-            glhckLightBind(light[li]);
-            glhckFramebufferBegin(fbo);
-            glhckClear(GLHCK_DEPTH_BUFFER | GLHCK_COLOR_BUFFER);
-            glhckRender();
-            glhckFramebufferEnd(fbo);
-            glhckLightEndProjectionWithCamera(light[li], camera);
+         glhckCameraRange(camera, 5.0f, 250.0f);
+         glhckLightBeginProjectionWithCamera(light[li], camera);
+         glhckLightBind(light[li]);
+         glhckFramebufferBegin(fbo);
+         glhckClear(GLHCK_DEPTH_BUFFER | GLHCK_COLOR_BUFFER);
+         glhckRender();
+         glhckFramebufferEnd(fbo);
+         glhckLightEndProjectionWithCamera(light[li], camera);
 
-            glActiveTexture(GL_TEXTURE1);
-            glhckTextureBind(depthColorMap);
-            glActiveTexture(GL_TEXTURE0);
+         glActiveTexture(GL_TEXTURE1);
+         glhckTextureBind(depthColorMap);
+         glActiveTexture(GL_TEXTURE0);
 
-            glhckCameraRange(camera, 1.0f, 1000.0f);
-            glhckCameraUpdate(camera);
+         glhckCameraRange(camera, 1.0f, 1000.0f);
+         glhckCameraUpdate(camera);
 
-            glhckRenderPassFlags(GLHCK_PASS_DEFAULTS);
-            glhckObjectShader(cube, shader);
-            glhckObjectShader(cube2, shader);
-            glhckObjectShader(sprite, shader);
-            glhckObjectShader(sprite3, shader);
-            glhckObjectShader(plane, shader);
-         }
+         glhckRenderPassFlags(GLHCK_PASS_DEFAULTS);
+         glhckRenderPassShader(shader);
 #else
          glhckLightBeginProjectionWithCamera(light[li], camera);
          glhckLightBind(light[li]);
