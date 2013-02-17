@@ -1052,20 +1052,20 @@ void _glhckRenderOpenGL(void)
          "  vec2 TextureScale;"
          "};"
          "uniform glhckMaterial GlhckMaterial ="
-         "  glhckMaterial(vec3(1,1,1),"
+         "  glhckMaterial(vec3(45,45,45),"
          "                vec4(255,255,255,255),"
-         "                vec3(255,255,255),0.2,"
+         "                vec3(200,200,200),0.1,"
          "                vec2(0,0),vec2(1,1));"
          "uniform sampler2D GlhckTexture0;");
 
    /* lighting functions */
    glswAddDirectiveToken("Lighting",
          "vec3 glhckLighting(vec3 Diffuse) {"
-         "  vec3 Color    = GlhckMaterial.Ambient/255.0;"
+         "  vec3 Color    = Diffuse * GlhckMaterial.Ambient/255.0;"
          "  vec3 LDiffuse = GlhckLight.Diffuse/255.0;"
-         "  vec3 LAtten   = GlhckLight.Atten;"
+         "  vec3 LAtten   = GlhckLight.Atten*0.01;"
          "  vec2 LCutout  = GlhckLight.Cutout;"
-         "  vec3 Specular = Diffuse.xyz;"
+         "  vec3 Specular = Diffuse * GlhckMaterial.Specular/255.0;"
          "  vec3 Normal   = normalize(GlhckFNormalWorld);"
          "  vec3 ViewVec  = normalize(-GlhckFVertexLightView.xyz);"
          "  vec3 LightVec = normalize(GlhckLight.Position - GlhckFVertexWorld.xyz);"

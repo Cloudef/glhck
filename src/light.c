@@ -21,7 +21,7 @@ GLHCKAPI glhckLight* glhckLightNew(void)
 
    /* defaults */
    glhckLightColorb(object, 255, 255, 255, 255);
-   glhckLightAttenf(object, 0.0, 0.0, 0.0008);
+   glhckLightAttenf(object, 0.0, 0.0, 0.1f);
    glhckLightPointLightFactor(object, 1.0);
 
     /* insert to world */
