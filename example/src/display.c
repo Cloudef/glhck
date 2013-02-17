@@ -236,6 +236,9 @@ int main(int argc, char **argv)
    if ((rttText2 = glhckTextPlane(text, font, 42, "GLHCKあいしてる", GLHCK_TEXTURE_DEFAULTS))) {
       glhckObjectRotatef(rttText2, 0, 210, 0);
       glhckObjectPositionf(rttText2, 200, 0, 500);
+
+      /* ignore lighting */
+      glhckObjectMaterialFlags(rttText2, GLHCK_MATERIAL_CULL | GLHCK_MATERIAL_DEPTH);
    }
 
    glfwSetWindowCloseCallback(window, close_callback);
@@ -250,7 +253,7 @@ int main(int argc, char **argv)
    for (li = 0; li != numLights; ++li) {
       light[li] = glhckLightNew();
       glhckLightCutoutf(light[li], 45.0f, 0.0f);
-      glhckLightPointLightFactor(light[li], 0.0f);
+      glhckLightPointLightFactor(light[li], 0.1f);
       glhckLightColorb(light[li], rand()%255, rand()%255, rand()%255, 255);
       glhckObject *c = glhckCubeNew(1.0f);
       glhckObjectAddChildren(glhckLightGetObject(light[li]), c);
@@ -367,6 +370,7 @@ int main(int argc, char **argv)
          glhckLightEndProjectionWithCamera(light[li], camera);
 #endif
 
+         glhckObjectDraw(rttText2);
          glhckObjectDraw(sprite);
          glhckObjectDraw(sprite3);
          glhckObjectDraw(cube2);
