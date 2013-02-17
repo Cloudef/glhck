@@ -76,7 +76,7 @@ static void joinMesh(const struct aiMesh *mesh, size_t indexOffset,
 
          if (mesh->mTextureCoords[0]) {
             vertexData[index].coord.x = mesh->mTextureCoords[0][index].x;
-            vertexData[index].coord.y = mesh->mTextureCoords[0][index].y*-1;
+            vertexData[index].coord.y = mesh->mTextureCoords[0][index].y;
 
             /* fix coords */
             if (vertexData[index].coord.x < 0.0f)
@@ -325,7 +325,7 @@ int _glhckImportAssimp(_glhckObject *object, const char *file, unsigned int flag
    /* import the model using assimp
     * TODO: make import hints tunable?
     * Needs changes to import protocol! */
-   aflags = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_FlipUVs | aiProcess_OptimizeGraph;
+   aflags = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_OptimizeGraph;
    scene = aiImportFile(file, aflags);
    if (!scene) goto assimp_fail;
 
