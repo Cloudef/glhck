@@ -1008,11 +1008,11 @@ GLuint glhTextureCreate(glhckTextureType type,
    GL_CALL(glhTextureBind(type, object));
 
    if (flags & GLHCK_TEXTURE_NEAREST) {
-      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
-      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST));
    } else {
-      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR));
    }
 
    if (flags & GLHCK_TEXTURE_REPEAT) {
@@ -1051,6 +1051,9 @@ GLuint glhTextureCreate(glhckTextureType type,
          default:assert(0 && "texture type not supported");break;
       }
    }
+
+   /* generate mipmaps */
+   glGenerateMipmap(glTarget);
 
    /* restore old texture */
    if (old) glhckTextureBind(old);
