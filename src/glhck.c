@@ -338,7 +338,7 @@ GLHCKAPI void glhckTime(float time)
 GLHCKAPI void glhckClear(unsigned int bufferBits)
 {
    GLHCK_INITIALIZED();
-   TRACE(2);
+   CALL(2, "%u", bufferBits);
    if (!GLHCKR()->name) return;
    GLHCKRA()->clear(bufferBits);
 }
@@ -347,7 +347,7 @@ GLHCKAPI void glhckClear(unsigned int bufferBits)
 GLHCKAPI void glhckCullFace(glhckCullFaceType face)
 {
    GLHCK_INITIALIZED();
-   TRACE(2);
+   CALL(2, "%d", face);
    if (!GLHCKR()->name) return;
    GLHCKRP()->cullFace = face;
 }
@@ -356,17 +356,26 @@ GLHCKAPI void glhckCullFace(glhckCullFaceType face)
 GLHCKAPI void glhckBlendFunc(glhckBlendingMode blenda, glhckBlendingMode blendb)
 {
    GLHCK_INITIALIZED();
-   TRACE(2);
+   CALL(2, "%d, %d", blenda, blendb);
    if (!GLHCKR()->name) return;
    GLHCKRP()->blenda = blenda;
    GLHCKRP()->blendb = blendb;
+}
+
+/* \brief set shader for render pass */
+GLHCKAPI void glhckRenderPassShader(glhckShader *shader)
+{
+   GLHCK_INITIALIZED();
+   CALL(2, "%p", shader);
+   if (!GLHCKR()->name) return;
+   GLHCKRP()->shader = shader;
 }
 
 /* \brief set render pass flags */
 GLHCKAPI void glhckRenderPassFlags(unsigned int flags)
 {
    GLHCK_INITIALIZED();
-   TRACE(2);
+   CALL(2, "%u", flags);
    if (flags & GLHCK_PASS_DEFAULTS) {
       flags  = GLHCK_PASS_DEPTH;
       flags |= GLHCK_PASS_CULL;
@@ -375,6 +384,7 @@ GLHCKAPI void glhckRenderPassFlags(unsigned int flags)
       flags |= GLHCK_PASS_OBB;
       flags |= GLHCK_PASS_AABB;
       flags |= GLHCK_PASS_WIREFRAME;
+      flags |= GLHCK_PASS_LIGHTING;
    }
    GLHCKRP()->flags = flags;
 }

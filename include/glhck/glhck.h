@@ -159,7 +159,8 @@ typedef enum glhckRenderPassFlag {
    GLHCK_PASS_OBB          = 16,
    GLHCK_PASS_AABB         = 32,
    GLHCK_PASS_WIREFRAME    = 64,
-   GLHCK_PASS_DEFAULTS     = 128,
+   GLHCK_PASS_LIGHTING     = 128,
+   GLHCK_PASS_DEFAULTS     = 256,
 } glhckRenderPassFlag;
 
 /* geometry type */
@@ -572,6 +573,7 @@ GLHCKAPI void glhckRenderGetIntegerv(glhckRenderProperty pname, int *params);
 GLHCKAPI void glhckRenderProjection(kmMat4 const* mat);
 GLHCKAPI void glhckCullFace(glhckCullFaceType face);
 GLHCKAPI void glhckBlendFunc(glhckBlendingMode blenda, glhckBlendingMode blendb);
+GLHCKAPI void glhckRenderPassShader(glhckShader *shader);
 GLHCKAPI void glhckRenderPassFlags(unsigned int bits);
 GLHCKAPI void glhckRender(void);
 GLHCKAPI void glhckClear(unsigned int bufferBits);
@@ -721,6 +723,7 @@ GLHCKAPI glhckLight* glhckLightNew(void);
 GLHCKAPI glhckLight* glhckLightRef(glhckLight *object);
 GLHCKAPI size_t glhckLightFree(glhckLight *object);
 GLHCKAPI glhckObject* glhckLightGetObject(const glhckLight *object);
+GLHCKAPI void glhckLightBind(glhckLight *object);
 GLHCKAPI void glhckLightBeginProjectionWithCamera(glhckLight *object, glhckCamera *camera);
 GLHCKAPI void glhckLightEndProjectionWithCamera(glhckLight *object, glhckCamera *camera);
 GLHCKAPI void glhckLightColor(glhckLight *object, const glhckColorb *color);

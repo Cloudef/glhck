@@ -588,6 +588,7 @@ typedef struct __GLHCKrenderDraw {
    glhckColorb clearColor;
    struct _glhckTexture *texture[GLHCK_TEXTURE_TYPE_LAST];
    struct _glhckCamera *camera;
+   struct _glhckLight *light;
    struct _glhckFramebuffer *framebuffer[GLHCK_FRAMEBUFFER_TYPE_LAST];
    struct _glhckHwBuffer *hwBuffer[GLHCK_HWBUFFER_TYPE_LAST];
    struct _glhckShader *shader;
@@ -601,6 +602,7 @@ typedef struct __GLHCKrenderPass {
    unsigned int flags;
    glhckCullFaceType cullFace;
    unsigned int blenda, blendb;
+   struct _glhckShader *shader;
 } __GLHCKrenderPass;
 
 /* glhck render properties */

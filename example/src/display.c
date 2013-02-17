@@ -337,6 +337,7 @@ int main(int argc, char **argv)
 
             glhckCameraRange(camera, 5.0f, 250.0f);
             glhckLightBeginProjectionWithCamera(light[li], camera);
+            glhckLightBind(light[li]);
             glhckFramebufferBegin(fbo);
             glhckClear(GLHCK_DEPTH_BUFFER | GLHCK_COLOR_BUFFER);
             glhckRender();
@@ -359,6 +360,7 @@ int main(int argc, char **argv)
          }
 #else
          glhckLightBeginProjectionWithCamera(light[li], camera);
+         glhckLightBind(light[li]);
          glhckLightEndProjectionWithCamera(light[li], camera);
 #endif
 

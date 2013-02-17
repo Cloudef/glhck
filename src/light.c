@@ -2,14 +2,6 @@
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_LIGHT
 
-/* \brief bind/unbind glhck light */
-static void _glhckLightBind(glhckLight *object)
-{
-   CALL(3, "%p", object);
-   assert(object);
-   GLHCKRA()->lightBind(object);
-}
-
 /* \brief allocate new light object */
 GLHCKAPI glhckLight* glhckLightNew(void)
 {
@@ -83,6 +75,14 @@ success:
    return object?object->refCounter:0;
 }
 
+/* \brief bind/unbind glhck light */
+GLHCKAPI void glhckLightBind(glhckLight *object)
+{
+   CALL(3, "%p", object);
+   GLHCKRA()->lightBind(object);
+   GLHCKRD()->light = object;
+}
+
 /* \brief begin projection from light with camera */
 GLHCKAPI void glhckLightBeginProjectionWithCamera(glhckLight *object, glhckCamera *camera)
 {
@@ -96,7 +96,6 @@ GLHCKAPI void glhckLightBeginProjectionWithCamera(glhckLight *object, glhckCamer
    glhckObjectPosition(obj, glhckObjectGetPosition(object->object));
    glhckObjectTarget(obj, glhckObjectGetTarget(object->object));
    glhckCameraUpdate(camera);
-   _glhckLightBind(object);
 }
 
 /* \brief end projection from light with camera */

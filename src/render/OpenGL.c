@@ -48,6 +48,16 @@ static const char *_glhckBaseShader =
 "  gl_Position = GlhckOrthographic * vec4(GlhckVertex, 1.0);"
 "}\n"
 
+"-- GLhck.Base.Fragment\n"
+"void main() {"
+"  GlhckFragColor = texture2D(GlhckTexture0, GlhckFUV0) * GlhckMaterial.Diffuse/255.0;"
+"}\n"
+
+"-- GLhck.Color.Fragment\n"
+"void main() {"
+"  GlhckFragColor = GlhckMaterial.Diffuse/255.0;"
+"}\n"
+
 "-- GLhck.Base.Lighting.Fragment\n"
 "void main() {"
 "  vec4 Diffuse = texture2D(GlhckTexture0, GlhckFUV0) * GlhckMaterial.Diffuse/255.0;"
@@ -73,7 +83,18 @@ enum {
    GL_STATE_TEXTURE     = 8,
    GL_STATE_DRAW_AABB   = 16,
    GL_STATE_DRAW_OBB    = 32,
-   GL_STATE_WIREFRAME   = 64
+   GL_STATE_WIREFRAME   = 64,
+   GL_STATE_LIGHTING    = 128,
+};
+
+/* internal shaders */
+enum {
+   GL_SHADER_BASE,
+   GL_SHADER_COLOR,
+   GL_SHADER_BASE_LIGHTING,
+   GL_SHADER_COLOR_LIGHTING,
+   GL_SHADER_TEXT,
+   GL_SHADER_LAST
 };
 
 /* global data */
@@ -89,9 +110,7 @@ typedef struct __OpenGLrender {
    GLsizei indexCount;
    kmMat4 projection;
    kmMat4 orthographic;
-   glhckShader *baseShader;
-   glhckShader *textShader;
-   glhckShader *colorShader;
+   glhckShader *shader[GL_SHADER_LAST];
    glhckHwBuffer *sharedUBO;
 } __OpenGLrender;
 static __OpenGLrender _OpenGL;
@@ -165,7 +184,11 @@ static void rLightBind(glhckLight *light)
 {
    glhckCamera *camera;
    glhckObject *object;
+
    if (!_OpenGL.sharedUBO)
+      return;
+
+   if (light == GLHCKRD()->light || !light)
       return;
 
    camera = GLHCKRD()->camera;
@@ -242,7 +265,7 @@ static GLuint rShaderCompile(glhckShaderType type, const GLchar *effectKey, cons
    /* if no effect key given, compile against internal shaders */
    if (!effectKey) {
       contentsFromMemory = _glhckBaseShader;
-      effectKey = (type==GLHCK_VERTEX_SHADER?".GLhck.Base.Vertex":".GLhck.Base.Lighting.Fragment");
+      effectKey = (type==GLHCK_VERTEX_SHADER?".GLhck.Base.Vertex":".GLhck.Base.Fragment");
    }
 
    /* wrangle effect key */
@@ -334,6 +357,9 @@ static inline void rMaterialState(const _glhckObject *object)
    _OpenGL.state.blenda = object->material.blenda;
    _OpenGL.state.blendb = object->material.blendb;
 
+   /* lighting */
+   _OpenGL.state.flags |= GLHCKRD()->light?GL_STATE_LIGHTING:0;
+
    /* disabled pass bits override the above.
     * it means that we don't want something for this render pass. */
    if (!(GLHCKRP()->flags & GLHCK_PASS_DEPTH))
@@ -350,6 +376,8 @@ static inline void rMaterialState(const _glhckObject *object)
       _OpenGL.state.flags &= ~GL_STATE_DRAW_AABB;
    if (!(GLHCKRP()->flags & GLHCK_PASS_WIREFRAME))
       _OpenGL.state.flags &= ~GL_STATE_WIREFRAME;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_LIGHTING))
+      _OpenGL.state.flags &= ~GL_STATE_LIGHTING;
 
    /* pass blend override */
    if (GLHCKRP()->blenda != GLHCK_ZERO || GLHCKRP()->blendb != GLHCK_ZERO) {
@@ -541,7 +569,7 @@ static inline void rFrustumRender(glhckFrustum *frustum)
 
    kmMat4 identity;
    kmMat4Identity(&identity);
-   glhckShaderBind(_OpenGL.colorShader);
+   glhckShaderBind(_OpenGL.shader[GL_SHADER_COLOR]);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&identity);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){255,0,0,255}));
 
@@ -598,7 +626,7 @@ static inline void rOBBRender(const _glhckObject *object)
          GL_CALL(glDisableVertexAttribArray(i));
       }
 
-   glhckShaderBind(_OpenGL.colorShader);
+   glhckShaderBind(_OpenGL.shader[GL_SHADER_COLOR]);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){0,255,0,255}));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
@@ -653,7 +681,7 @@ static inline void rAABBRender(const _glhckObject *object)
 
    kmMat4 identity;
    kmMat4Identity(&identity);
-   glhckShaderBind(_OpenGL.colorShader);
+   glhckShaderBind(_OpenGL.shader[GL_SHADER_COLOR]);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&identity);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){0,0,255,255}));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
@@ -671,13 +699,23 @@ static inline void rObjectStart(const _glhckObject *object)
    rMaterialState(object);
 
    /* pick shader */
-   if (object->material.shader) {
+   if (GLHCKRP()->shader) {
+      glhckShaderBind(GLHCKRP()->shader);
+   } else if (object->material.shader) {
       glhckShaderBind(object->material.shader);
    } else {
       if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
-         glhckShaderBind(_OpenGL.baseShader);
+         if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
+            glhckShaderBind(_OpenGL.shader[GL_SHADER_BASE_LIGHTING]);
+         } else {
+            glhckShaderBind(_OpenGL.shader[GL_SHADER_BASE]);
+         }
       } else {
-         glhckShaderBind(_OpenGL.colorShader);
+         if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
+            glhckShaderBind(_OpenGL.shader[GL_SHADER_COLOR_LIGHTING]);
+         } else {
+            glhckShaderBind(_OpenGL.shader[GL_SHADER_COLOR]);
+         }
       }
    }
 
@@ -792,7 +830,7 @@ static inline void rTextRender(const _glhckText *text)
    }
 
    if (text->shader) glhckShaderBind(text->shader);
-   else glhckShaderBind(_OpenGL.textShader);
+   else glhckShaderBind(_OpenGL.shader[GL_SHADER_TEXT]);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
          &((GLfloat[]){text->color.r, text->color.g, text->color.b, text->color.a}));
 
@@ -906,13 +944,14 @@ static int renderInit(void)
 /* \brief terminate renderer */
 static void renderTerminate(void)
 {
+   int i;
    TRACE(0);
 
    /* free shaders */
    if (_GLHCKlibrary.world.slist) {
-      NULLDO(glhckShaderFree, _OpenGL.baseShader);
-      NULLDO(glhckShaderFree, _OpenGL.textShader);
-      NULLDO(glhckShaderFree, _OpenGL.colorShader)
+      for (i = 0; i != GL_SHADER_LAST; ++i) {
+         NULLDO(glhckShaderFree, _OpenGL.shader[i]);
+      }
    }
 
    /* free hw buffers */
@@ -932,6 +971,7 @@ static void renderTerminate(void)
 /* \brief renderer main function */
 void _glhckRenderOpenGL(void)
 {
+   int i;
    TRACE(0);
 
    /* init OpenGL context */
@@ -1168,23 +1208,18 @@ void _glhckRenderOpenGL(void)
    if (!(_OpenGL.sharedUBO = glhckHwBufferNew()))
       goto fail;
 
-   /* compile base shader */
-   _OpenGL.baseShader = glhckShaderNew(NULL, NULL, _glhckBaseShader);
-   if (!_OpenGL.baseShader)
-      goto fail;
+   /* compile internal shaders */
+   _OpenGL.shader[GL_SHADER_BASE] = glhckShaderNew(NULL, NULL, _glhckBaseShader);
+   _OpenGL.shader[GL_SHADER_COLOR] = glhckShaderNew(NULL, ".GLhck.Color.Fragment", _glhckBaseShader);
+   _OpenGL.shader[GL_SHADER_BASE_LIGHTING] = glhckShaderNew(NULL, ".GLhck.Base.Lighting.Fragment", _glhckBaseShader);
+   _OpenGL.shader[GL_SHADER_COLOR_LIGHTING] = glhckShaderNew(NULL, ".GLhck.Color.Lighting.Fragment", _glhckBaseShader);
+   _OpenGL.shader[GL_SHADER_TEXT] = glhckShaderNew(".GLhck.Text.Vertex", ".GLhck.Text.Fragment", _glhckBaseShader);
 
-   /* compile text shader */
-   _OpenGL.textShader = glhckShaderNew(".GLhck.Text.Vertex", ".GLhck.Text.Fragment", _glhckBaseShader);
-   if (!_OpenGL.textShader)
-      goto fail;
-
-   /* compile color shader */
-   _OpenGL.colorShader = glhckShaderNew(NULL, ".GLhck.Color.Lighting.Fragment", _glhckBaseShader);
-   if (!_OpenGL.colorShader)
-      goto fail;
+   for (i = 0; i != GL_SHADER_LAST; ++i)
+      if (!_OpenGL.shader[i]) goto fail;
 
    /* initialize the UBO automaticlaly from shader */
-   glhckHwBufferCreateUniformBufferFromShader(_OpenGL.sharedUBO, _OpenGL.baseShader, "GlhckUBO", GLHCK_BUFFER_DYNAMIC_DRAW);
+   glhckHwBufferCreateUniformBufferFromShader(_OpenGL.sharedUBO, _OpenGL.shader[GL_SHADER_BASE], "GlhckUBO", GLHCK_BUFFER_DYNAMIC_DRAW);
    glhckHwBufferBindRange(_OpenGL.sharedUBO, 0, 0, _OpenGL.sharedUBO->size);
 
    /* this also tells library that everything went OK,
