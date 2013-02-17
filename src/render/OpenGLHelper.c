@@ -1007,12 +1007,19 @@ GLuint glhTextureCreate(glhckTextureType type,
    old = GLHCKRD()->texture[type];
    GL_CALL(glhTextureBind(type, object));
 
+   // FIXME: make these as parameters, not flags!
    if (flags & GLHCK_TEXTURE_NEAREST) {
       GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST));
       GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_NEAREST));
    } else {
-      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
-      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+      float max;
+      GL_CALL(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max));
+      if (max > 0.0f) {
+         GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, max));
+      } else {
+         GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+         GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+      }
    }
 
    if (flags & GLHCK_TEXTURE_REPEAT) {
