@@ -261,7 +261,8 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
 
    /* default material flags */
    glhckObjectMaterialFlags(object, GLHCK_MATERIAL_DEPTH |
-                                    GLHCK_MATERIAL_CULL);
+                                    GLHCK_MATERIAL_CULL  |
+                                    GLHCK_MATERIAL_LIGHTING);
 
    /* default affection flags */
    glhckObjectParentAffection(object, GLHCK_AFFECT_TRANSLATION |

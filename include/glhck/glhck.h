@@ -332,7 +332,8 @@ typedef enum glhckMaterialFlags {
    GLHCK_MATERIAL_WIREFRAME = 4,
    GLHCK_MATERIAL_COLOR     = 8,
    GLHCK_MATERIAL_CULL      = 16,
-   GLHCK_MATERIAL_DEPTH     = 32
+   GLHCK_MATERIAL_DEPTH     = 32,
+   GLHCK_MATERIAL_LIGHTING  = 64,
 } glhckMaterialFlags;
 
 /* blending modes */

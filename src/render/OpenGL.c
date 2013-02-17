@@ -358,7 +358,8 @@ static inline void rMaterialState(const _glhckObject *object)
    _OpenGL.state.blendb = object->material.blendb;
 
    /* lighting */
-   _OpenGL.state.flags |= GLHCKRD()->light?GL_STATE_LIGHTING:0;
+   _OpenGL.state.flags |=
+      (object->material.flags & GLHCK_MATERIAL_LIGHTING && GLHCKRD()->light)?GL_STATE_LIGHTING:0;
 
    /* disabled pass bits override the above.
     * it means that we don't want something for this render pass. */

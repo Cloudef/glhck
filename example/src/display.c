@@ -228,6 +228,9 @@ int main(int argc, char **argv)
       glhckObjectScalef(rttText, 0.05f, 0.05f, 1.0f); /* scale to fit our 3d world */
       glhckObjectPositionf(rttText, 0, 2, 0);
       glhckObjectAddChildren(cube2, rttText);
+
+      /* ignore lighting */
+      glhckObjectMaterialFlags(rttText, GLHCK_MATERIAL_CULL | GLHCK_MATERIAL_DEPTH);
    }
 
    if ((rttText2 = glhckTextPlane(text, font, 42, "GLHCKあいしてる", GLHCK_TEXTURE_DEFAULTS))) {
