@@ -188,7 +188,7 @@ static void rLightBind(glhckLight *light)
    if (!_OpenGL.sharedUBO)
       return;
 
-   if (light == GLHCKRD()->light || !light)
+   if ((light == GLHCKRD()->light && !light->object->view.update) || !light)
       return;
 
    camera = GLHCKRD()->camera;
