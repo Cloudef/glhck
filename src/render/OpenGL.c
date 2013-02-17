@@ -202,6 +202,8 @@ static void rLightBind(glhckLight *light)
             object->material.diffuse.g,
             object->material.diffuse.b}));
    glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.PointLight", sizeof(GLfloat), (float*)&light->pointLightFactor);
+   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Near", sizeof(GLfloat), (float*)&camera->view.near);
+   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Far", sizeof(GLfloat), (float*)&camera->view.far);
    glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Projection", sizeof(kmMat4), (void*)glhckCameraGetVPMatrix(camera));
    glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.View", sizeof(kmMat4), (void*)glhckCameraGetViewMatrix(camera));
 }
@@ -1034,13 +1036,20 @@ void _glhckRenderOpenGL(void)
          "  vec3 Atten;"
          "  vec3 Diffuse;"
          "  float PointLight;"
+         "  float Near;"
+         "  float Far;"
          "  mat4 Projection;"
          "  mat4 View;"
+         "};"
+         "struct glhckView {"
+         "  float Near;"
+         "  float Far;"
          "};"
          "uniform GlhckUBO {"
          "  float GlhckTime;"
          "  mat4 GlhckProjection;"
          "  mat4 GlhckOrthographic;"
+         "  glhckView GlhckView;"
          "  glhckLight GlhckLight;"
          "};"
          "struct glhckMaterial {"
@@ -1113,12 +1122,9 @@ void _glhckRenderOpenGL(void)
    /* shadow functions */
    glswAddDirectiveToken("ShadowMapping",
          "float glhckShadow(sampler2D ShadowMap) {"
-         "  const float Near = 5.0;"
-         "  const float Far  = 250.0;"
-         "  const float LinearDepthConstant = 1.0/(Far - Near);"
-         ""
+         "  float LinearScale = 1.0/(GlhckLight.Far - GlhckLight.Near);"
          "  vec3 ShadowCoord = GlhckFSC0.xyz/GlhckFSC0.w;"
-         "  ShadowCoord.z = length(GlhckFVertexWorld.xyz - GlhckLight.Position) * LinearDepthConstant;"
+         "  ShadowCoord.z = length(GlhckFVertexWorld.xyz - GlhckLight.Position) * LinearScale;"
          "  vec4 Texel = texture2D(ShadowMap, ShadowCoord.xy);"
          "  vec2 Moments = vec2(glhckUnpackHalf(Texel.xy), glhckUnpackHalf(Texel.zw));"
          ""
