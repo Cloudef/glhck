@@ -1434,6 +1434,7 @@ void glhProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei coun
       case GLHCK_SHADER_FLOAT_VEC4:
          GL_CALL(glUniform4fv(uniform->location, count, (GLfloat*)value));
          break;
+#if 0
       case GLHCK_SHADER_DOUBLE:
          GL_CALL(glUniform1dv(uniform->location, count, (GLdouble*)value));
          break;
@@ -1446,6 +1447,7 @@ void glhProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei coun
       case GLHCK_SHADER_DOUBLE_VEC4:
          GL_CALL(glUniform4dv(uniform->location, count, (GLdouble*)value));
          break;
+#endif
       case GLHCK_SHADER_INT:
       case GLHCK_SHADER_BOOL:
       case GLHCK_SHADER_SAMPLER_1D:
