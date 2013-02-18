@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 
 #define SKIP_MMD    1
 #define SKIP_OCTM   1
-#define SKIP_ASSIMP 0
+#define SKIP_ASSIMP 1
 
 #if SKIP_MMD
 #  define MMD_PATH ""
@@ -183,7 +183,6 @@ int main(int argc, char **argv)
    } else if ((cube = glhckCubeNew(1.0f))) {
       glhckObjectTexture(cube, texture);
       cameraPos.z = -20.0f;
-      glhckObjectScalef(cube, 1.0f, 1.0f, 2.0f);
    } else return EXIT_FAILURE;
 
 #if 0
