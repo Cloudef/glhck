@@ -102,7 +102,7 @@ static void _glhckConvertVertexData(
    float biasMagic = 0.0f, scaleMagic = 0.0f;
    glhckVector3f vmin, vmax,
                  nmin, nmax;
-   CALL(0, "%d, %p,dd, %p, %p", type, import, memb, bias, scale);
+   CALL(0, "%d, %p, %d, %p, %p", type, import, memb, bias, scale);
 
    /* default bias scale */
    bias->x  = bias->y  = bias->z  = 0.0f;
@@ -113,9 +113,12 @@ static void _glhckConvertVertexData(
          &vmin, &vmax, &nmin, &nmax);
 
    /* do we need conversion? */
-   if (vmax.x == vmin.x ||
-       vmax.y == vmin.y ||
-       vmax.z == vmin.z)
+   if ((vmax.x + vmin.x == 1 &&
+        vmax.y + vmin.y == 1 &&
+        vmax.z + vmin.z == 1) ||
+       (vmax.x + vmin.x == 0 &&
+        vmax.y + vmin.y == 0 &&
+        vmax.z + vmin.z == 0))
       no_convert = 1;
 
    /* lie about bounds by 1 point so,
@@ -223,7 +226,7 @@ static void _glhckConvertVertexData(
                internal.v3fs[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
                internal.v3fs[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
 
-               if (no_convert) {
+               if (!no_convert) {
                   internal.v3fs[i].vertex.x -= 0.5f * (vmax.x-vmin.x)+vmin.x;
                   internal.v3fs[i].vertex.y -= 0.5f * (vmax.y-vmin.y)+vmin.y;
                   internal.v3fs[i].vertex.z -= 0.5f * (vmax.z-vmin.z)+vmin.z;
@@ -243,7 +246,7 @@ static void _glhckConvertVertexData(
                internal.v2fs[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
                internal.v2fs[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
 
-               if (no_convert) {
+               if (!no_convert) {
                   internal.v2fs[i].vertex.x -= 0.5f * (vmax.x-vmin.x)+vmin.x;
                   internal.v2fs[i].vertex.y -= 0.5f * (vmax.y-vmin.y)+vmin.y;
                }
@@ -255,7 +258,7 @@ static void _glhckConvertVertexData(
                memcpy(&internal.v2f[i].normal, &import[i].normal, sizeof(glhckVector3f));
                memcpy(&internal.v2f[i].coord,  &import[i].coord,  sizeof(glhckVector2f));
 
-               if (no_convert) {
+               if (!no_convert) {
                   internal.v2f[i].vertex.x -= 0.5f * (vmax.x-vmin.x)+vmin.x;
                   internal.v2f[i].vertex.y -= 0.5f * (vmax.y-vmin.y)+vmin.y;
                }
