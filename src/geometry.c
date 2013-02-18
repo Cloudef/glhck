@@ -83,6 +83,40 @@ static void _glhckMaxMinIndexData(const glhckImportIndexData *import, int memb,
    }
 }
 
+/* \brief check that vertex type is ok for allocation. If not override it with better one */
+glhckGeometryVertexType _glhckGeometryCheckVertexType(glhckGeometryVertexType type)
+{
+   /* default to V3F on NONE type */
+   if (type == GLHCK_VERTEX_NONE) {
+      type = GLHCK_VERTEX_V3F;
+   }
+
+   /* fglrx on linux at least seems to fail with byte vertices.
+    * workaround for now until I stumble upon why it's wrong. */
+   if (GLHCKR()->driver == GLHCK_DRIVER_ATI) {
+      if (type == GLHCK_VERTEX_V2B || type == GLHCK_VERTEX_V3B) {
+         DEBUG(GLHCK_DBG_WARNING, "ATI has problems with BYTE precision vertexdata.");
+         DEBUG(GLHCK_DBG_WARNING, "Will use SHORT precision instead, just a friendly warning.");
+      }
+      if (type == GLHCK_VERTEX_V3B) type = GLHCK_VERTEX_V3S;
+      if (type == GLHCK_VERTEX_V2B) type = GLHCK_VERTEX_V2S;
+   }
+   return type;
+}
+
+/* \brief check that index type is ok for allocation. If not override it with better one */
+glhckGeometryIndexType _glhckGeometryCheckIndexType(const glhckImportIndexData *indices, int memb, glhckGeometryIndexType type)
+{
+   unsigned int mini, maxi;
+
+   /* autodetect */
+   if (type == GLHCK_INDEX_NONE) {
+      _glhckMaxMinIndexData(indices, memb, &mini, &maxi);
+      type = glhckIndexTypeForValue(maxi);
+   }
+   return type;
+}
+
 /* \brief convert vertex data to internal format */
 static void _glhckConvertVertexData(
       glhckGeometryVertexType type, glhckVertexData internal,
@@ -330,17 +364,6 @@ static void _glhckGeometrySetVertices(glhckGeometry *geometry,
    /* free old vertices */
    _glhckGeometryFreeVertices(geometry);
 
-   /* fglrx on linux at least seems to fail with byte vertices.
-    * workaround for now until I stumble upon why it's wrong. */
-   if (GLHCKR()->driver == GLHCK_DRIVER_ATI) {
-      if (type == GLHCK_VERTEX_V2B || type == GLHCK_VERTEX_V3B) {
-         DEBUG(GLHCK_DBG_WARNING, "ATI has problems with BYTE precision vertexdata.");
-         DEBUG(GLHCK_DBG_WARNING, "Will use SHORT precision instead, just a friendly warning.");
-      }
-      if (type == GLHCK_VERTEX_V3B) type = GLHCK_VERTEX_V3S;
-      if (type == GLHCK_VERTEX_V2B) type = GLHCK_VERTEX_V2S;
-   }
-
    /* assign vertices depending on type */
    switch (type) {
       case GLHCK_VERTEX_V3B:
@@ -459,10 +482,8 @@ int _glhckGeometryInsertVertices(
    CALL(0, "%p, %d, %d, %p", geometry, memb, type, vertices);
    assert(geometry);
 
-   /* default to V3F on NONE type */
-   if (type == GLHCK_VERTEX_NONE) {
-      type = GLHCK_VERTEX_V3F;
-   }
+   /* check vertex type */
+   type = _glhckGeometryCheckVertexType(type);
 
    /* check vertex precision conflicts */
    if ((unsigned int)memb > glhckIndexTypeMaxPrecision(geometry->indexType))
@@ -533,15 +554,11 @@ int _glhckGeometryInsertIndices(
 {
    void *data = NULL;
    glhckIndexData id;
-   unsigned int mini, maxi;
    CALL(0, "%p, %d, %d, %p", geometry, memb, type, indices);
    assert(geometry);
 
-   /* autodetect */
-   if (type == GLHCK_INDEX_NONE) {
-      _glhckMaxMinIndexData(indices, memb, &mini, &maxi);
-      type = glhckIndexTypeForValue(maxi);
-   }
+   /* check index type */
+   type = _glhckGeometryCheckIndexType(indices, memb, type);
 
    /* check vertex precision conflicts */
    if ((unsigned int)geometry->vertexCount > glhckIndexTypeMaxPrecision(geometry->indexType))
@@ -1143,6 +1160,9 @@ GLHCKAPI int glhckGeometrySetIndices(glhckGeometry *geometry,
    CALL(0, "%p, %d, %p, %d", geometry, type, data, memb);
    assert(geometry);
 
+   /* check index type */
+   type = _glhckGeometryCheckIndexType(data, memb, type);
+
    size = memb * glhckIndexTypeElementSize(type);
    if (!(idata = _glhckMalloc(size)))
       goto fail;
@@ -1166,6 +1186,9 @@ GLHCKAPI int glhckGeometrySetVertices(glhckGeometry *geometry,
    int size;
    CALL(0, "%p, %d, %p, %d", geometry, type, data, memb);
    assert(geometry);
+
+   /* check vertex type */
+   type = _glhckGeometryCheckVertexType(type);
 
    size = memb * glhckVertexTypeElementSize(type);
    if (!(vdata = _glhckMalloc(size)))
