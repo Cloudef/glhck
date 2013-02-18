@@ -1061,7 +1061,7 @@ void _glhckRenderOpenGL(void)
          "  vec2 TextureScale;"
          "};"
          "uniform glhckMaterial GlhckMaterial ="
-         "  glhckMaterial(vec3(45,45,45),"
+         "  glhckMaterial(vec3(1,1,1),"
          "                vec4(255,255,255,255),"
          "                vec3(200,200,200),0.1,"
          "                vec2(0,0),vec2(1,1));"
