@@ -64,6 +64,11 @@ static void rTime(float time)
 {
 }
 
+/* \brief bind light */
+static void rLightBind(glhckLight *light)
+{
+}
+
 /* \brief set projection matrix */
 static void rSetProjection(const kmMat4 *m)
 {
@@ -790,6 +795,9 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(textureBind, glhTextureBind);
    GLHCK_RENDER_FUNC(textureCreate, glhTextureCreate);
    GLHCK_RENDER_FUNC(textureFill, glhTextureFill);
+
+   /* lights */
+   GLHCK_RENDER_FUNC(lightBind, rLightBind);
 
    /* framebuffer objects */
    GLHCK_RENDER_FUNC(framebufferGenerate, glGenFramebuffers);
