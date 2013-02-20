@@ -1094,12 +1094,12 @@ void _glhckRenderOpenGL(void)
 
    /* unpacking functions */
    glswAddDirectiveToken("Unpacking",
-         "float glhckUnpack(vec4 colour) {"
+         "float glhckUnpack(vec4 color) {"
          "  const vec4 bitShifts = vec4(1.0, 1.0/255.0, 1.0/(255.0 * 255.0), 1.0/(255.0 * 255.0 * 255.0));"
-         "  return dot(colour, bitShifts);"
+         "  return dot(color, bitShifts);"
          "}"
-         "float glhckUnpackHalf(vec2 colour) {"
-         "  return colour.x + (colour.y / 255.0);"
+         "float glhckUnpackHalf(vec2 color) {"
+         "  return color.x + (color.y / 255.0);"
          "}");
 
    /* packing functions */
@@ -1110,13 +1110,13 @@ void _glhckRenderOpenGL(void)
          "  float g = fract(r * 255.0);"
          "  float b = fract(g * 255.0);"
          "  float a = fract(b * 255.0);"
-         "  vec4 colour = vec4(r, g, b, a);"
-         "  return colour - (colour.yzww * bias);"
+         "  vec4 color = vec4(r, g, b, a);"
+         "  return color - (color.yzww * bias);"
          "}"
          "vec2 glhckPackHalf(float depth) {"
          "  const vec2 bias = vec2(1.0/255.0, 0.0);"
-         "  vec2 colour = vec2(depth, fract(depth * 255.0));"
-         "  return colour - (colour.yy * bias);"
+         "  vec2 color = vec2(depth, fract(depth * 255.0));"
+         "  return color - (color.yy * bias);"
          "}");
 
    /* shadow functions */
