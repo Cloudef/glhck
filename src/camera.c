@@ -214,7 +214,8 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
    }
 
    /* assign camera to global state */
-   GLHCKRA()->setProjection(&camera->view.viewProj);
+   GLHCKRA()->setProjection(&camera->view.projection);
+   GLHCKRA()->setView(&camera->view.view);
    GLHCKRD()->camera = camera;
 }
 

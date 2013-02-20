@@ -35,11 +35,11 @@ static const char *_glhckBaseShader =
 ""
 "void main() {"
 "  GlhckFVertexWorld = GlhckModel * vec4(GlhckVertex, 1.0);"
-"  GlhckFVertexLightView = GlhckLight.View * GlhckFVertexWorld;"
+"  GlhckFVertexView = GlhckView * GlhckFVertexWorld;"
 "  GlhckFNormalWorld = normalize(mat3(GlhckModel) * GlhckNormal);"
 "  GlhckFUV0 = GlhckMaterial.TextureOffset + (GlhckUV0 * GlhckMaterial.TextureScale);"
-"  GlhckFSC0 = ScaleMatrix * GlhckLight.Projection * GlhckFVertexWorld;"
-"  gl_Position = GlhckProjection * GlhckFVertexWorld;"
+"  GlhckFSC0 = ScaleMatrix * GlhckLight.Projection * GlhckLight.View * GlhckFVertexWorld;"
+"  gl_Position = GlhckProjection * GlhckFVertexView;"
 "}\n"
 
 "-- GLhck.Text.Vertex\n"
@@ -109,6 +109,7 @@ typedef struct __OpenGLrender {
    struct __OpenGLstate state;
    GLsizei indexCount;
    kmMat4 projection;
+   kmMat4 view;
    kmMat4 orthographic;
    glhckShader *shader[GL_SHADER_LAST];
    glhckHwBuffer *sharedUBO;
@@ -143,6 +144,35 @@ static void rSetProjection(const kmMat4 *m)
       memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
 }
 
+ /* \brief get current projection */
+static const kmMat4* rGetProjection(void)
+{
+   TRACE(2);
+   RET(2, "%p", &_OpenGL.projection);
+   return &_OpenGL.projection;
+}
+
+/* \brief set view matrix */
+static void rSetView(const kmMat4 *m)
+{
+   CALL(2, "%p", m);
+
+   /* update view on shared UBO */
+   if (_OpenGL.sharedUBO)
+      glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckView", sizeof(kmMat4), &m[0]);
+
+   if (m != &_OpenGL.view)
+      memcpy(&_OpenGL.view, m, sizeof(kmMat4));
+}
+
+/* \brief get current view */
+static const kmMat4* rGetView(void)
+{
+   TRACE(2);
+   RET(2, "%p", &_OpenGL.view);
+   return &_OpenGL.view;
+}
+
 /* \brief set orthographic projection for 2D drawing */
 static void rSetOrthographic(const kmMat4 *m)
 {
@@ -154,14 +184,6 @@ static void rSetOrthographic(const kmMat4 *m)
 
    if (m != &_OpenGL.orthographic)
       memcpy(&_OpenGL.orthographic, m, sizeof(kmMat4));
-}
-
-/* \brief get current projection */
-static const kmMat4* rGetProjection(void)
-{
-   TRACE(2);
-   RET(2, "%p", &_OpenGL.projection);
-   return &_OpenGL.projection;
 }
 
 /* \brief resize viewport */
@@ -204,7 +226,7 @@ static void rLightBind(glhckLight *light)
    glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.PointLight", sizeof(GLfloat), (float*)&light->pointLightFactor);
    glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Near", sizeof(GLfloat), (float*)&camera->view.near);
    glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Far", sizeof(GLfloat), (float*)&camera->view.far);
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Projection", sizeof(kmMat4), (void*)glhckCameraGetVPMatrix(camera));
+   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Projection", sizeof(kmMat4), (void*)glhckCameraGetProjectionMatrix(camera));
    glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.View", sizeof(kmMat4), (void*)glhckCameraGetViewMatrix(camera));
 }
 
@@ -1013,7 +1035,7 @@ void _glhckRenderOpenGL(void)
          "in vec2 GlhckUV0;"
          "uniform mat4 GlhckModel;"
          "out vec4 GlhckFVertexWorld;"
-         "out vec4 GlhckFVertexLightView;"
+         "out vec4 GlhckFVertexView;"
          "out vec3 GlhckFNormalWorld;"
          "out vec2 GlhckFUV0;"
          "out vec4 GlhckFSC0;");
@@ -1021,7 +1043,7 @@ void _glhckRenderOpenGL(void)
    /* fragment directivies */
    glswAddDirectiveToken("Fragment",
          "in vec4 GlhckFVertexWorld;"
-         "in vec4 GlhckFVertexLightView;"
+         "in vec4 GlhckFVertexView;"
          "in vec3 GlhckFNormalWorld;"
          "in vec2 GlhckFUV0;"
          "in vec4 GlhckFSC0;"
@@ -1041,15 +1063,11 @@ void _glhckRenderOpenGL(void)
          "  mat4 Projection;"
          "  mat4 View;"
          "};"
-         "struct glhckView {"
-         "  float Near;"
-         "  float Far;"
-         "};"
          "uniform GlhckUBO {"
          "  float GlhckTime;"
          "  mat4 GlhckProjection;"
          "  mat4 GlhckOrthographic;"
-         "  glhckView GlhckView;"
+         "  mat4 GlhckView;"
          "  glhckLight GlhckLight;"
          "};"
          "struct glhckMaterial {"
@@ -1063,7 +1081,7 @@ void _glhckRenderOpenGL(void)
          "uniform glhckMaterial GlhckMaterial ="
          "  glhckMaterial(vec3(1,1,1),"
          "                vec4(255,255,255,255),"
-         "                vec3(200,200,200),0.1,"
+         "                vec3(200,200,200),0.9,"
          "                vec2(0,0),vec2(1,1));"
          "uniform sampler2D GlhckTexture0;");
 
@@ -1076,7 +1094,7 @@ void _glhckRenderOpenGL(void)
          "  vec2 LCutout  = GlhckLight.Cutout;"
          "  vec3 Specular = Diffuse * GlhckMaterial.Specular/255.0;"
          "  vec3 Normal   = normalize(GlhckFNormalWorld);"
-         "  vec3 ViewVec  = normalize(-GlhckFVertexLightView.xyz);"
+         "  vec3 ViewVec  = normalize(-GlhckFVertexView.xyz);"
          "  vec3 LightVec = normalize(GlhckLight.Position - GlhckFVertexWorld.xyz);"
          "  vec3 LightDir = normalize(GlhckLight.Target   - GlhckFVertexWorld.xyz);"
          ""
@@ -1084,7 +1102,7 @@ void _glhckRenderOpenGL(void)
          "  float Spotlight = max(-dot(LightVec, LightDir), 0.0);"
          "  float SpotlightFade = clamp((LCutout.x - Spotlight) / (LCutout.x - LCutout.y), 0.0, 1.0);"
          "  Spotlight = clamp(pow(Spotlight * SpotlightFade, 1.0), GlhckLight.PointLight, 1.0);"
-         "  vec3  R = -normalize(reflect(LightVec, Normal));"
+         "  vec3  R = normalize(-reflect(LightVec, Normal));"
          "  float S = pow(max(dot(R, ViewVec), 0.0), GlhckMaterial.Shininess);"
          "  float D = distance(GlhckFVertexWorld.xyz, GlhckLight.Position);"
          "  float A = 1.0 / (LAtten.x + (LAtten.y * D) + (LAtten.z * D * D));"
@@ -1121,20 +1139,24 @@ void _glhckRenderOpenGL(void)
 
    /* shadow functions */
    glswAddDirectiveToken("ShadowMapping",
-         "float glhckShadow(sampler2D ShadowMap) {"
-         "  float LinearScale = 1.0/(GlhckLight.Far - GlhckLight.Near);"
-         "  vec3 ShadowCoord = GlhckFSC0.xyz/GlhckFSC0.w;"
-         "  ShadowCoord.z = length(GlhckFVertexWorld.xyz - GlhckLight.Position) * LinearScale;"
-         "  vec4 Texel = texture2D(ShadowMap, ShadowCoord.xy);"
-         "  vec2 Moments = vec2(glhckUnpackHalf(Texel.xy), glhckUnpackHalf(Texel.zw));"
-         ""
-         "  if (ShadowCoord.z <= Moments.x)"
+         "float glhckChebychevInequality(vec2 Moments, float Depth) {"
+         "  if (Depth <= Moments.x)"
          "     return 1.0;"
          ""
          "  float Variance = Moments.y - (Moments.x * Moments.x);"
          "  Variance = max(Variance, 0.02);"
-         "  float D = ShadowCoord.z - Moments.x;"
+         "  float D = Depth - Moments.x;"
          "  return Variance/(Variance + D * D);"
+         "}"
+         ""
+         "float glhckShadow(sampler2D ShadowMap, float Darkness) {"
+         "  float LinearScale = 1.0/(GlhckLight.Far - GlhckLight.Near);"
+         "  vec3 ShadowCoord = GlhckFSC0.xyz/GlhckFSC0.w;"
+         "  ShadowCoord.z = length(GlhckFVertexView) * LinearScale;"
+         "  vec4 Texel = texture2D(ShadowMap, ShadowCoord.xy);"
+         "  vec2 Moments = vec2(glhckUnpackHalf(Texel.xy), glhckUnpackHalf(Texel.zw));"
+         "  float Shadow = glhckChebychevInequality(Moments, ShadowCoord.z);"
+         "  return Darkness-Shadow;"
          "}");
 
    /* reset global data */
@@ -1194,6 +1216,8 @@ void _glhckRenderOpenGL(void)
    /* drawing functions */
    GLHCK_RENDER_FUNC(setProjection, rSetProjection);
    GLHCK_RENDER_FUNC(getProjection, rGetProjection);
+   GLHCK_RENDER_FUNC(setView, rSetView);
+   GLHCK_RENDER_FUNC(getView, rGetView);
    GLHCK_RENDER_FUNC(setClearColor, glhClearColor);
    GLHCK_RENDER_FUNC(clear, glhClear);
    GLHCK_RENDER_FUNC(objectRender, rObjectRender);

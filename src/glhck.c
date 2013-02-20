@@ -36,6 +36,8 @@ static void _glhckCheckRenderApi(__GLHCKrender *render)
    GLHCK_API_CHECK(viewport);
    GLHCK_API_CHECK(setProjection);
    GLHCK_API_CHECK(getProjection);
+   GLHCK_API_CHECK(setView);
+   GLHCK_API_CHECK(getView);
    GLHCK_API_CHECK(setClearColor);
    GLHCK_API_CHECK(clear);
    GLHCK_API_CHECK(objectRender);
@@ -90,7 +92,7 @@ void _glhckDefaultProjection(int width, int height)
    GLHCKRA()->viewport(0, 0, width, height);
    kmMat4PerspectiveProjection(&projection, 35,
          (float)width/(float)height, 0.1f, 100.0f);
-   GLHCKRA()->setProjection(&projection);
+   glhckRenderProjection(&projection);
 }
 
 /* dirty debug build stuff */
@@ -419,9 +421,12 @@ GLHCKAPI void glhckRenderGetIntegerv(unsigned int pname, int *params) {
 /* \brief set projection matrix */
 GLHCKAPI void glhckRenderProjection(kmMat4 const* mat)
 {
+   kmMat4 identity;
+   kmMat4Identity(&identity);
    GLHCK_INITIALIZED();
    CALL(1, "%p", mat);
    GLHCKRA()->setProjection(mat);
+   GLHCKRA()->setView(&identity);
 }
 
 /* \brief output queued objects */

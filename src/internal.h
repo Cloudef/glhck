@@ -430,6 +430,8 @@ typedef void (*__GLHCKrenderAPIterminate) (void);
 typedef void (*__GLHCKrenderAPIviewport) (int x, int y, int width, int height);
 typedef void (*__GLHCKrenderAPIsetProjection) (const kmMat4 *m);
 typedef const kmMat4* (*__GLHCKrenderAPIgetProjection) (void);
+typedef void (*__GLHCKrenderAPIsetView) (const kmMat4 *m);
+typedef const kmMat4* (*__GLHCKrenderAPIgetView) (void);
 typedef void (*__GLHCKrenderAPIsetClearColor) (char r, char g, char b, char a);
 typedef void (*__GLHCKrenderAPIclear) (unsigned int bufferBits);
 
@@ -512,6 +514,8 @@ typedef struct __GLHCKrenderAPI {
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(viewport);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(setProjection);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(getProjection);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(setView);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(getView);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(setClearColor);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(clear);
 
