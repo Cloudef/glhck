@@ -107,17 +107,15 @@ typedef struct __OpenGLstate {
 
 typedef struct __OpenGLrender {
    struct __OpenGLstate state;
-   GLsizei indexCount;
-   kmMat4 projection;
-   kmMat4 view;
-   kmMat4 orthographic;
    glhckShader *shader[GL_SHADER_LAST];
    glhckHwBuffer *sharedUBO;
 } __OpenGLrender;
-static __OpenGLrender _OpenGL;
+
+/* typecast the glhck's render pointer where we allocate our context */
+#define GLPOINTER() ((__OpenGLrender*)GLHCKR()->renderPointer)
 
 /* check if we have certain draw state active */
-#define GL_HAS_STATE(x) (_OpenGL.state.flags & x)
+#define GL_HAS_STATE(x) (GLPOINTER()->state.flags & x)
 
 /* ---- Render API ---- */
 
@@ -125,80 +123,40 @@ static __OpenGLrender _OpenGL;
 static void rTime(float time)
 {
    CALL(2, "%f", time);
-
-   /* update time on shared UBO */
-   if (_OpenGL.sharedUBO)
-      glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckTime", sizeof(float), &time);
+   if (GLPOINTER()->sharedUBO)
+      glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckTime", sizeof(float), &time);
 }
 
 /* \brief set projection matrix */
 static void rSetProjection(const kmMat4 *m)
 {
    CALL(2, "%p", m);
-
-   /* update projection on shared UBO */
-   if (_OpenGL.sharedUBO)
-      glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckProjection", sizeof(kmMat4), &m[0]);
-
-   if (m != &_OpenGL.projection)
-      memcpy(&_OpenGL.projection, m, sizeof(kmMat4));
-}
-
- /* \brief get current projection */
-static const kmMat4* rGetProjection(void)
-{
-   TRACE(2);
-   RET(2, "%p", &_OpenGL.projection);
-   return &_OpenGL.projection;
+   if (GLPOINTER()->sharedUBO)
+      glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckProjection", sizeof(kmMat4), &m[0]);
 }
 
 /* \brief set view matrix */
 static void rSetView(const kmMat4 *m)
 {
    CALL(2, "%p", m);
-
-   /* update view on shared UBO */
-   if (_OpenGL.sharedUBO)
-      glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckView", sizeof(kmMat4), &m[0]);
-
-   if (m != &_OpenGL.view)
-      memcpy(&_OpenGL.view, m, sizeof(kmMat4));
-}
-
-/* \brief get current view */
-static const kmMat4* rGetView(void)
-{
-   TRACE(2);
-   RET(2, "%p", &_OpenGL.view);
-   return &_OpenGL.view;
+   if (GLPOINTER()->sharedUBO)
+      glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckView", sizeof(kmMat4), &m[0]);
 }
 
 /* \brief set orthographic projection for 2D drawing */
 static void rSetOrthographic(const kmMat4 *m)
 {
    CALL(2, "%p", m);
-
-   /* update projection on shared UBO */
-   if (_OpenGL.sharedUBO)
-      glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckOrthographic", sizeof(kmMat4), &m[0]);
-
-   if (m != &_OpenGL.orthographic)
-      memcpy(&_OpenGL.orthographic, m, sizeof(kmMat4));
+   if (GLPOINTER()->sharedUBO)
+      glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckOrthographic", sizeof(kmMat4), &m[0]);
 }
 
 /* \brief resize viewport */
 static void rViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
-   kmMat4 ortho;
    CALL(2, "%d, %d, %d, %d", x, y, width, height);
    assert(width > 0 && height > 0);
-
-   /* set viewport */
    GL_CALL(glViewport(x, y, width, height));
-
-   /* create orthographic projection matrix */
-   kmMat4OrthographicProjection(&ortho, 0, width, height, 0, -1, 1);
-   rSetOrthographic(&ortho);
 }
 
 /* \brief bind light to renderer */
@@ -207,27 +165,27 @@ static void rLightBind(glhckLight *light)
    glhckCamera *camera;
    glhckObject *object;
 
-   if (!_OpenGL.sharedUBO)
+   if (!GLPOINTER()->sharedUBO)
       return;
 
-   if ((light == GLHCKRD()->light && !light->object->view.update) || !light)
+   if (!light)
       return;
 
    camera = GLHCKRD()->camera;
    object = glhckLightGetObject(light);
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Position", sizeof(kmVec3), (void*)glhckObjectGetPosition(object));
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Target", sizeof(kmVec3), (void*)glhckObjectGetTarget(object));
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Cutout", sizeof(kmVec2), (void*)&light->cutout);
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Atten", sizeof(kmVec3), (void*)&light->atten);
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Diffuse", sizeof(GLfloat)*3, &((GLfloat[]){
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Position", sizeof(kmVec3), (GLvoid*)glhckObjectGetPosition(object));
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Target", sizeof(kmVec3), (GLvoid*)glhckObjectGetTarget(object));
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Cutout", sizeof(kmVec2), (GLvoid*)glhckLightGetCutout(light));
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Atten", sizeof(kmVec3), (GLvoid*)glhckLightGetAtten(light));
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Diffuse", sizeof(GLfloat)*3, &((GLfloat[]){
             object->material.diffuse.r,
             object->material.diffuse.g,
             object->material.diffuse.b}));
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.PointLight", sizeof(GLfloat), (float*)&light->pointLightFactor);
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Near", sizeof(GLfloat), (float*)&camera->view.near);
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Far", sizeof(GLfloat), (float*)&camera->view.far);
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.Projection", sizeof(kmMat4), (void*)glhckCameraGetProjectionMatrix(camera));
-   glhckHwBufferFillUniform(_OpenGL.sharedUBO, "GlhckLight.View", sizeof(kmMat4), (void*)glhckCameraGetViewMatrix(camera));
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.PointLight", sizeof(GLfloat), (GLvoid*)&light->options.pointLightFactor);
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Near", sizeof(GLfloat), (GLvoid*)&camera->view.near);
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Far", sizeof(GLfloat), (GLvoid*)&camera->view.far);
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Projection", sizeof(kmMat4), (GLvoid*)glhckCameraGetProjectionMatrix(camera));
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.View", sizeof(kmMat4), (GLvoid*)glhckCameraGetViewMatrix(camera));
 }
 
 /* \brief link program from 2 compiled shader objects */
@@ -327,88 +285,88 @@ fail:
 }
 
 /* helper for checking state changes */
-#define GL_STATE_CHANGED(x) (_OpenGL.state.flags & x) != (old.flags & x)
+#define GL_STATE_CHANGED(x) ((GLPOINTER()->state.flags & x) != (old.flags & x))
 
 /* \brief set needed state from object data */
 static inline void rMaterialState(const _glhckObject *object)
 {
    GLuint i;
-   __OpenGLstate old   = _OpenGL.state;
-   _OpenGL.state.flags = 0; /* reset this state */
+   __OpenGLstate old   = GLPOINTER()->state;
+   GLPOINTER()->state.flags = 0; /* reset this state */
 
    /* always draw vertices */
-   _OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
 
    /* enable normals always for now */
-   _OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL] = glhckVertexTypeHasNormal(object->geometry->vertexType);
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL] = glhckVertexTypeHasNormal(object->geometry->vertexType);
 
    /* need color? */
-   _OpenGL.state.attrib[GLHCK_ATTRIB_COLOR] = (glhckVertexTypeHasColor(object->geometry->vertexType) &&
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR] = (glhckVertexTypeHasColor(object->geometry->vertexType) &&
          object->material.flags & GLHCK_MATERIAL_COLOR);
 
    /* need texture? */
-   _OpenGL.state.attrib[GLHCK_ATTRIB_TEXTURE] = object->material.texture?1:0;
-   _OpenGL.state.flags |= object->material.texture?GL_STATE_TEXTURE:0;
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = object->material.texture?1:0;
+   GLPOINTER()->state.flags |= object->material.texture?GL_STATE_TEXTURE:0;
 
    /* aabb? */
-   _OpenGL.state.flags |=
+   GLPOINTER()->state.flags |=
       (object->material.flags & GLHCK_MATERIAL_DRAW_AABB)?GL_STATE_DRAW_AABB:0;
 
    /* obb? */
-   _OpenGL.state.flags |=
+   GLPOINTER()->state.flags |=
       (object->material.flags & GLHCK_MATERIAL_DRAW_OBB)?GL_STATE_DRAW_OBB:0;
 
    /* wire? */
-   _OpenGL.state.flags |=
+   GLPOINTER()->state.flags |=
       (object->material.flags & GLHCK_MATERIAL_WIREFRAME)?GL_STATE_WIREFRAME:0;
 
    /* alpha? */
-   _OpenGL.state.flags |=
+   GLPOINTER()->state.flags |=
       (object->material.blenda != GLHCK_ZERO || object->material.blendb != GLHCK_ZERO)?GL_STATE_BLEND:0;
 
    /* depth? */
-   _OpenGL.state.flags |=
+   GLPOINTER()->state.flags |=
       (object->material.flags & GLHCK_MATERIAL_DEPTH)?GL_STATE_DEPTH:0;
 
    /* cull? */
-   _OpenGL.state.flags |=
+   GLPOINTER()->state.flags |=
       (object->material.flags & GLHCK_MATERIAL_CULL)?GL_STATE_CULL:0;
 
    /* cull face */
-   _OpenGL.state.cullFace = GLHCKRP()->cullFace;
+   GLPOINTER()->state.cullFace = GLHCKRP()->cullFace;
 
    /* blending modes */
-   _OpenGL.state.blenda = object->material.blenda;
-   _OpenGL.state.blendb = object->material.blendb;
+   GLPOINTER()->state.blenda = object->material.blenda;
+   GLPOINTER()->state.blendb = object->material.blendb;
 
    /* lighting */
-   _OpenGL.state.flags |=
+   GLPOINTER()->state.flags |=
       (object->material.flags & GLHCK_MATERIAL_LIGHTING && GLHCKRD()->light)?GL_STATE_LIGHTING:0;
 
    /* disabled pass bits override the above.
     * it means that we don't want something for this render pass. */
    if (!(GLHCKRP()->flags & GLHCK_PASS_DEPTH))
-      _OpenGL.state.flags &= ~GL_STATE_DEPTH;
+      GLPOINTER()->state.flags &= ~GL_STATE_DEPTH;
    if (!(GLHCKRP()->flags & GLHCK_PASS_CULL))
-      _OpenGL.state.flags &= ~GL_STATE_CULL;
+      GLPOINTER()->state.flags &= ~GL_STATE_CULL;
    if (!(GLHCKRP()->flags & GLHCK_PASS_BLEND))
-      _OpenGL.state.flags &= ~GL_STATE_BLEND;
+      GLPOINTER()->state.flags &= ~GL_STATE_BLEND;
    if (!(GLHCKRP()->flags & GLHCK_PASS_TEXTURE))
-      _OpenGL.state.flags &= ~GL_STATE_TEXTURE;
+      GLPOINTER()->state.flags &= ~GL_STATE_TEXTURE;
    if (!(GLHCKRP()->flags & GLHCK_PASS_OBB))
-      _OpenGL.state.flags &= ~GL_STATE_DRAW_OBB;
+      GLPOINTER()->state.flags &= ~GL_STATE_DRAW_OBB;
    if (!(GLHCKRP()->flags & GLHCK_PASS_AABB))
-      _OpenGL.state.flags &= ~GL_STATE_DRAW_AABB;
+      GLPOINTER()->state.flags &= ~GL_STATE_DRAW_AABB;
    if (!(GLHCKRP()->flags & GLHCK_PASS_WIREFRAME))
-      _OpenGL.state.flags &= ~GL_STATE_WIREFRAME;
+      GLPOINTER()->state.flags &= ~GL_STATE_WIREFRAME;
    if (!(GLHCKRP()->flags & GLHCK_PASS_LIGHTING))
-      _OpenGL.state.flags &= ~GL_STATE_LIGHTING;
+      GLPOINTER()->state.flags &= ~GL_STATE_LIGHTING;
 
    /* pass blend override */
    if (GLHCKRP()->blenda != GLHCK_ZERO || GLHCKRP()->blendb != GLHCK_ZERO) {
-      _OpenGL.state.flags |= GL_STATE_BLEND;
-      _OpenGL.state.blenda = GLHCKRP()->blenda;
-      _OpenGL.state.blendb = GLHCKRP()->blendb;
+      GLPOINTER()->state.flags |= GL_STATE_BLEND;
+      GLPOINTER()->state.blenda = GLHCKRP()->blenda;
+      GLPOINTER()->state.blendb = GLHCKRP()->blendb;
    }
 
    /* depth? */
@@ -426,13 +384,13 @@ static inline void rMaterialState(const _glhckObject *object)
    if (GL_STATE_CHANGED(GL_STATE_CULL)) {
       if (GL_HAS_STATE(GL_STATE_CULL)) {
          GL_CALL(glEnable(GL_CULL_FACE));
-         glhCullFace(_OpenGL.state.cullFace);
+         glhCullFace(GLPOINTER()->state.cullFace);
       } else {
          GL_CALL(glDisable(GL_CULL_FACE));
       }
    } else if (GL_HAS_STATE(GL_STATE_CULL)) {
-      if (_OpenGL.state.cullFace != old.cullFace) {
-         glhCullFace(_OpenGL.state.cullFace);
+      if (GLPOINTER()->state.cullFace != old.cullFace) {
+         glhCullFace(GLPOINTER()->state.cullFace);
       }
    }
 
@@ -447,20 +405,20 @@ static inline void rMaterialState(const _glhckObject *object)
    if (GL_STATE_CHANGED(GL_STATE_BLEND)) {
       if (GL_HAS_STATE(GL_STATE_BLEND)) {
          GL_CALL(glEnable(GL_BLEND));
-         GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+         GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
       } else {
          GL_CALL(glDisable(GL_BLEND));
       }
    } else if (GL_HAS_STATE(GL_STATE_BLEND) &&
-         (_OpenGL.state.blenda != old.blenda ||
-          _OpenGL.state.blendb != old.blendb)) {
-      GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+         (GLPOINTER()->state.blenda != old.blenda ||
+          GLPOINTER()->state.blendb != old.blendb)) {
+      GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
    }
 
    /* check attribs */
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i) {
-      if (_OpenGL.state.attrib[i] != old.attrib[i]) {
-         if (_OpenGL.state.attrib[i]) {
+      if (GLPOINTER()->state.attrib[i] != old.attrib[i]) {
+         if (GLPOINTER()->state.attrib[i]) {
             GL_CALL(glEnableVertexAttribArray(i));
          } else {
             GL_CALL(glDisableVertexAttribArray(i));
@@ -469,40 +427,41 @@ static inline void rMaterialState(const _glhckObject *object)
    }
 
    /* bind texture if used */
-   if (GL_HAS_STATE(GL_STATE_TEXTURE))
+   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
       glhckTextureBind(object->material.texture);
-   else if (GL_STATE_CHANGED(GL_STATE_TEXTURE))
+   } else if (GL_STATE_CHANGED(GL_STATE_TEXTURE)) {
       glhckTextureUnbind(GLHCK_TEXTURE_2D);
+   }
 }
 
 #undef GL_STATE_CHANGED
 
 /* helper macro for passing geometry */
 #define geometryV2ToOpenGL(vprec, nprec, tprec, type, tunion)                          \
-   if (_OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX])                                      \
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX])                                      \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, vprec, 0,                  \
                sizeof(type), &geometry->vertices.tunion[0].vertex));                   \
-   if (_OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL])                                      \
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL])                                      \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, nprec, (nprec!=GL_FLOAT),  \
                sizeof(type), &geometry->vertices.tunion[0].normal));                   \
-   if (_OpenGL.state.attrib[GLHCK_ATTRIB_TEXTURE])                                     \
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE])                                     \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
                sizeof(type), &geometry->vertices.tunion[0].coord));                    \
-   if (_OpenGL.state.attrib[GLHCK_ATTRIB_COLOR])                                       \
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR])                                       \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1,        \
                sizeof(type), &geometry->vertices.tunion[0].color));
 
 #define geometryV3ToOpenGL(vprec, nprec, tprec, type, tunion)                          \
-   if (_OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX])                                      \
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX])                                      \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, vprec, 0,                  \
              sizeof(type), &geometry->vertices.tunion[0].vertex));                     \
-   if (_OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL])                                      \
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL])                                      \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, nprec, (nprec!=GL_FLOAT),  \
                sizeof(type), &geometry->vertices.tunion[0].normal));                   \
-   if (_OpenGL.state.attrib[GLHCK_ATTRIB_TEXTURE])                                     \
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE])                                     \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
                sizeof(type), &geometry->vertices.tunion[0].coord));                    \
-   if (_OpenGL.state.attrib[GLHCK_ATTRIB_COLOR])                                       \
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR])                                       \
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1,        \
                sizeof(type), &geometry->vertices.tunion[0].color));
 
@@ -588,13 +547,13 @@ static inline void rFrustumRender(glhckFrustum *frustum)
                        far[3].x,  far[3].y,  far[3].z  };
 
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+      if (i != GLHCK_ATTRIB_VERTEX && GLPOINTER()->state.attrib[i]) {
          GL_CALL(glDisableVertexAttribArray(i));
       }
 
    kmMat4 identity;
    kmMat4Identity(&identity);
-   glhckShaderBind(_OpenGL.shader[GL_SHADER_COLOR]);
+   glhckShaderBind(GLPOINTER()->shader[GL_SHADER_COLOR]);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&identity);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){255,0,0,255}));
 
@@ -604,7 +563,7 @@ static inline void rFrustumRender(glhckFrustum *frustum)
    GL_CALL(glLineWidth(1));
 
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+      if (i != GLHCK_ATTRIB_VERTEX && GLPOINTER()->state.attrib[i]) {
          GL_CALL(glEnableVertexAttribArray(i));
       }
 }
@@ -647,18 +606,18 @@ static inline void rOBBRender(const _glhckObject *object)
                       min.x, max.y, max.z  };
 
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+      if (i != GLHCK_ATTRIB_VERTEX && GLPOINTER()->state.attrib[i]) {
          GL_CALL(glDisableVertexAttribArray(i));
       }
 
-   glhckShaderBind(_OpenGL.shader[GL_SHADER_COLOR]);
+   glhckShaderBind(GLPOINTER()->shader[GL_SHADER_COLOR]);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){0,255,0,255}));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
 
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+      if (i != GLHCK_ATTRIB_VERTEX && GLPOINTER()->state.attrib[i]) {
          GL_CALL(glEnableVertexAttribArray(i));
       }
 }
@@ -700,20 +659,20 @@ static inline void rAABBRender(const _glhckObject *object)
                       min.x, max.y, max.z  };
 
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+      if (i != GLHCK_ATTRIB_VERTEX && GLPOINTER()->state.attrib[i]) {
          GL_CALL(glDisableVertexAttribArray(i));
       }
 
    kmMat4 identity;
    kmMat4Identity(&identity);
-   glhckShaderBind(_OpenGL.shader[GL_SHADER_COLOR]);
+   glhckShaderBind(GLPOINTER()->shader[GL_SHADER_COLOR]);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&identity);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){0,0,255,255}));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
 
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
-      if (i != GLHCK_ATTRIB_VERTEX && _OpenGL.state.attrib[i]) {
+      if (i != GLHCK_ATTRIB_VERTEX && GLPOINTER()->state.attrib[i]) {
          GL_CALL(glEnableVertexAttribArray(i));
       }
 }
@@ -731,15 +690,15 @@ static inline void rObjectStart(const _glhckObject *object)
    } else {
       if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
          if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
-            glhckShaderBind(_OpenGL.shader[GL_SHADER_BASE_LIGHTING]);
+            glhckShaderBind(GLPOINTER()->shader[GL_SHADER_BASE_LIGHTING]);
          } else {
-            glhckShaderBind(_OpenGL.shader[GL_SHADER_BASE]);
+            glhckShaderBind(GLPOINTER()->shader[GL_SHADER_BASE]);
          }
       } else {
          if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
-            glhckShaderBind(_OpenGL.shader[GL_SHADER_COLOR_LIGHTING]);
+            glhckShaderBind(GLPOINTER()->shader[GL_SHADER_COLOR_LIGHTING]);
          } else {
-            glhckShaderBind(_OpenGL.shader[GL_SHADER_COLOR]);
+            glhckShaderBind(GLPOINTER()->shader[GL_SHADER_COLOR]);
          }
       }
    }
@@ -780,8 +739,6 @@ static inline void rObjectEnd(const _glhckObject *object)
        object->geometry->type == GLHCK_TRIANGLE_STRIP) {
       GL_CALL(glEnable(GL_CULL_FACE));
    }
-
-   _OpenGL.indexCount += object->geometry->indexCount;
 }
 
 /* \brief render single 3d object */
@@ -802,51 +759,50 @@ static inline void rObjectRender(const _glhckObject *object)
 /* \brief render text */
 static inline void rTextRender(const _glhckText *text)
 {
-   glhckTexture *old;
    __GLHCKtextTexture *texture;
    CALL(2, "%p", text);
 
    /* set states */
    if (!GL_HAS_STATE(GL_STATE_CULL)) {
-      _OpenGL.state.flags |= GL_STATE_CULL;
-      _OpenGL.state.cullFace = GLHCK_CULL_BACK;
+      GLPOINTER()->state.flags |= GL_STATE_CULL;
+      GLPOINTER()->state.cullFace = GLHCK_CULL_BACK;
       GL_CALL(glEnable(GL_CULL_FACE));
       GL_CALL(glCullFace(GL_BACK));
-   } else if (_OpenGL.state.cullFace != GLHCK_CULL_BACK) {
+   } else if (GLPOINTER()->state.cullFace != GLHCK_CULL_BACK) {
       GL_CALL(glCullFace(GL_BACK));
    }
 
    if (!GL_HAS_STATE(GL_STATE_BLEND)) {
-      _OpenGL.state.flags |= GL_STATE_BLEND;
-      _OpenGL.state.blenda = GLHCK_SRC_ALPHA;
-      _OpenGL.state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
+      GLPOINTER()->state.flags |= GL_STATE_BLEND;
+      GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
+      GLPOINTER()->state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
       GL_CALL(glEnable(GL_BLEND));
-      GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
-   } else if (_OpenGL.state.blenda != GLHCK_SRC_ALPHA ||
-              _OpenGL.state.blendb != GLHCK_ONE_MINUS_SRC_ALPHA) {
-      _OpenGL.state.blenda = GLHCK_SRC_ALPHA;
-      _OpenGL.state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
-      GL_CALL(glhBlendFunc(_OpenGL.state.blenda, _OpenGL.state.blendb));
+      GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
+   } else if (GLPOINTER()->state.blenda != GLHCK_SRC_ALPHA ||
+              GLPOINTER()->state.blendb != GLHCK_ONE_MINUS_SRC_ALPHA) {
+      GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
+      GLPOINTER()->state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
+      GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
    }
 
    if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
-      _OpenGL.state.flags |= GL_STATE_TEXTURE;
-      _OpenGL.state.attrib[GLHCK_ATTRIB_TEXTURE] = 1;
+      GLPOINTER()->state.flags |= GL_STATE_TEXTURE;
+      GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = 1;
       GL_CALL(glEnableVertexAttribArray(GLHCK_ATTRIB_TEXTURE));
    }
 
-   if (!_OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX]) {
-      _OpenGL.state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
+   if (!GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX]) {
+      GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
       GL_CALL(glEnableVertexAttribArray(GLHCK_ATTRIB_VERTEX));
    }
 
-   if (_OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL]) {
-      _OpenGL.state.attrib[GLHCK_ATTRIB_NORMAL] = 0;
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL]) {
+      GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL] = 0;
       GL_CALL(glDisableVertexAttribArray(GLHCK_ATTRIB_NORMAL));
    }
 
-   if (_OpenGL.state.attrib[GLHCK_ATTRIB_COLOR]) {
-      _OpenGL.state.attrib[GLHCK_ATTRIB_COLOR] = 0;
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR]) {
+      GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR] = 0;
       GL_CALL(glDisableVertexAttribArray(GLHCK_ATTRIB_COLOR));
    }
 
@@ -855,18 +811,15 @@ static inline void rTextRender(const _glhckText *text)
    }
 
    if (text->shader) glhckShaderBind(text->shader);
-   else glhckShaderBind(_OpenGL.shader[GL_SHADER_TEXT]);
+   else glhckShaderBind(GLPOINTER()->shader[GL_SHADER_TEXT]);
    glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
          &((GLfloat[]){text->color.r, text->color.g, text->color.b, text->color.a}));
-
-   /* store old texture */
-   old = GLHCKRD()->texture[GLHCK_TEXTURE_2D];
 
    for (texture = text->tcache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
-      GL_CALL(glBindTexture(GL_TEXTURE_2D, texture->object));
+      glhckTextureBind(texture->texture);
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT), 0,
                (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
                &texture->geometry.vertexData[0].vertex));
@@ -878,20 +831,13 @@ static inline void rTextRender(const _glhckText *text)
                0, texture->geometry.vertexCount));
    }
 
-   /* restore old */
-   if (old) glhckTextureBind(old);
-   else glhckTextureUnbind(GLHCK_TEXTURE_2D);
-
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glEnable(GL_DEPTH_TEST));
    }
 
-   if (_OpenGL.state.cullFace != GLHCK_CULL_BACK) {
-      glhCullFace(_OpenGL.state.cullFace);
+   if (GLPOINTER()->state.cullFace != GLHCK_CULL_BACK) {
+      glhCullFace(GLPOINTER()->state.cullFace);
    }
-
-   /* restore back the original projection */
-   rSetProjection(&_OpenGL.projection);
 }
 
 /* ---- Initialization ---- */
@@ -937,9 +883,9 @@ static int renderInfo(void)
       free(extcpy);
    }
 
-   glhGetIntegerv(GLHCK_MAX_TEXTURE_SIZE, &maxTex);
+   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTex);
    DEBUG(3, "GL_MAX_TEXTURE_SIZE: %d", maxTex);
-   glhGetIntegerv(GLHCK_MAX_RENDERBUFFER_SIZE, &maxTex);
+   glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxTex);
    DEBUG(3, "GL_MAX_RENDERBUFFER_SIZE: %d", maxTex);
 
    RET(0, "%d", RETURN_OK);
@@ -953,55 +899,12 @@ fail:
 /* \brief init renderers global state */
 static int renderInit(void)
 {
-   TRACE(0);
-
-   /* init global data */
-   memset(&_OpenGL, 0, sizeof(__OpenGLrender));
-   memset(&_OpenGL.state, 0, sizeof(__OpenGLstate));
-
-   /* save from some headache */
-   GL_CALL(glPixelStorei(GL_UNPACK_ALIGNMENT,1));
-
-   RET(0, "%d", RETURN_OK);
-   return RETURN_OK;
-}
-
-/* \brief terminate renderer */
-static void renderTerminate(void)
-{
    int i;
    TRACE(0);
 
-   /* free shaders */
-   if (_GLHCKlibrary.world.slist) {
-      for (i = 0; i != GL_SHADER_LAST; ++i) {
-         NULLDO(glhckShaderFree, _OpenGL.shader[i]);
-      }
-   }
-
-   /* free hw buffers */
-   if (_GLHCKlibrary.world.hlist) {
-      NULLDO(glhckHwBufferFree, _OpenGL.sharedUBO);
-   }
-
-   /* shutdown shader wrangler */
-   glswShutdown();
-
-   /* this tells library that we are no longer alive. */
-   GLHCK_RENDER_TERMINATE(RENDER_NAME);
-}
-
-/* ---- Main ---- */
-
-/* \brief renderer main function */
-void _glhckRenderOpenGL(void)
-{
-   int i;
-   TRACE(0);
-
-   /* init OpenGL context */
-   glhClearColor(0,0,0,1);
-   GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+   /* init render's context */
+   if (!(GLHCKR()->renderPointer = _glhckCalloc(1, sizeof(__OpenGLrender))))
+      goto fail;
 
    /* NOTE: Currently we don't use GLEW for anything.
     * GLEW used to be in libraries as submodule.
@@ -1012,10 +915,6 @@ void _glhckRenderOpenGL(void)
    if (glewInit() != GLEW_OK)
       goto fail;
 #endif
-
-   /* output information */
-   if (renderInfo() != RETURN_OK)
-      goto fail;
 
    /* init shader wrangler */
    if (!glswInit())
@@ -1159,9 +1058,66 @@ void _glhckRenderOpenGL(void)
          "  return Darkness-Shadow;"
          "}");
 
-   /* reset global data */
-   if (renderInit() != RETURN_OK)
+   /* save from some headache */
+   GL_CALL(glPixelStorei(GL_UNPACK_ALIGNMENT,1));
+
+   /* create shared uniform buffer objects */
+   if (!(GLPOINTER()->sharedUBO = glhckHwBufferNew()))
       goto fail;
+
+   /* compile internal shaders */
+   GLPOINTER()->shader[GL_SHADER_BASE] = glhckShaderNew(NULL, NULL, _glhckBaseShader);
+   GLPOINTER()->shader[GL_SHADER_COLOR] = glhckShaderNew(NULL, ".GLhck.Color.Fragment", _glhckBaseShader);
+   GLPOINTER()->shader[GL_SHADER_BASE_LIGHTING] = glhckShaderNew(NULL, ".GLhck.Base.Lighting.Fragment", _glhckBaseShader);
+   GLPOINTER()->shader[GL_SHADER_COLOR_LIGHTING] = glhckShaderNew(NULL, ".GLhck.Color.Lighting.Fragment", _glhckBaseShader);
+   GLPOINTER()->shader[GL_SHADER_TEXT] = glhckShaderNew(".GLhck.Text.Vertex", ".GLhck.Text.Fragment", _glhckBaseShader);
+
+   for (i = 0; i != GL_SHADER_LAST; ++i)
+      if (!GLPOINTER()->shader[i]) goto fail;
+
+   /* initialize the UBO automaticlaly from shader */
+   glhckHwBufferCreateUniformBufferFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_BASE], "GlhckUBO", GLHCK_BUFFER_DYNAMIC_DRAW);
+   glhckHwBufferBindRange(GLPOINTER()->sharedUBO, 0, 0, GLPOINTER()->sharedUBO->size);
+
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
+
+fail:
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
+}
+
+/* \brief terminate renderer */
+static void renderTerminate(void)
+{
+   int i;
+   TRACE(0);
+
+   /* free shaders */
+   if (GLHCKW()->shader) {
+      for (i = 0; i != GL_SHADER_LAST; ++i) {
+         NULLDO(glhckShaderFree, GLPOINTER()->shader[i]);
+      }
+   }
+
+   /* free hw buffers */
+   if (GLHCKW()->hwbuffer) {
+      NULLDO(glhckHwBufferFree, GLPOINTER()->sharedUBO);
+   }
+
+   /* shutdown shader wrangler */
+   glswShutdown();
+
+   /* this tells library that we are no longer alive. */
+   GLHCK_RENDER_TERMINATE(RENDER_NAME);
+}
+
+/* ---- Main ---- */
+
+/* \brief renderer main function */
+void _glhckRenderOpenGL(void)
+{
+   TRACE(0);
 
    /* register api functions */
 
@@ -1169,8 +1125,11 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(textureGenerate, glGenTextures);
    GLHCK_RENDER_FUNC(textureDelete, glDeleteTextures);
    GLHCK_RENDER_FUNC(textureBind, glhTextureBind);
-   GLHCK_RENDER_FUNC(textureCreate, glhTextureCreate);
+   GLHCK_RENDER_FUNC(textureActive, glhTextureActive);
    GLHCK_RENDER_FUNC(textureFill, glhTextureFill);
+   GLHCK_RENDER_FUNC(textureImage, glhTextureImage);
+   GLHCK_RENDER_FUNC(textureParameter, glhTextureParameter);
+   GLHCK_RENDER_FUNC(textureGenerateMipmap, glhTextureMipmap);
 
    /* lights */
    GLHCK_RENDER_FUNC(lightBind, rLightBind);
@@ -1214,11 +1173,10 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(shadersDirectiveToken, glswAddDirectiveToken);
 
    /* drawing functions */
+   GLHCK_RENDER_FUNC(setOrthographic, rSetOrthographic);
    GLHCK_RENDER_FUNC(setProjection, rSetProjection);
-   GLHCK_RENDER_FUNC(getProjection, rGetProjection);
    GLHCK_RENDER_FUNC(setView, rSetView);
-   GLHCK_RENDER_FUNC(getView, rGetView);
-   GLHCK_RENDER_FUNC(setClearColor, glhClearColor);
+   GLHCK_RENDER_FUNC(clearColor, glhClearColor);
    GLHCK_RENDER_FUNC(clear, glhClear);
    GLHCK_RENDER_FUNC(objectRender, rObjectRender);
    GLHCK_RENDER_FUNC(textRender, rTextRender);
@@ -1232,32 +1190,16 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(viewport, rViewport);
    GLHCK_RENDER_FUNC(terminate, renderTerminate);
 
-   /* parameters */
-   GLHCK_RENDER_FUNC(getIntegerv, glhGetIntegerv);
-
-   /* create shared uniform buffer objects */
-   if (!(_OpenGL.sharedUBO = glhckHwBufferNew()))
+   /* init renderer */
+   if (renderInit() != RETURN_OK)
       goto fail;
 
-   /* compile internal shaders */
-   _OpenGL.shader[GL_SHADER_BASE] = glhckShaderNew(NULL, NULL, _glhckBaseShader);
-   _OpenGL.shader[GL_SHADER_COLOR] = glhckShaderNew(NULL, ".GLhck.Color.Fragment", _glhckBaseShader);
-   _OpenGL.shader[GL_SHADER_BASE_LIGHTING] = glhckShaderNew(NULL, ".GLhck.Base.Lighting.Fragment", _glhckBaseShader);
-   _OpenGL.shader[GL_SHADER_COLOR_LIGHTING] = glhckShaderNew(NULL, ".GLhck.Color.Lighting.Fragment", _glhckBaseShader);
-   _OpenGL.shader[GL_SHADER_TEXT] = glhckShaderNew(".GLhck.Text.Vertex", ".GLhck.Text.Fragment", _glhckBaseShader);
+   /* output information */
+   if (renderInfo() != RETURN_OK)
+      goto fail;
 
-   for (i = 0; i != GL_SHADER_LAST; ++i)
-      if (!_OpenGL.shader[i]) goto fail;
-
-   /* initialize the UBO automaticlaly from shader */
-   glhckHwBufferCreateUniformBufferFromShader(_OpenGL.sharedUBO, _OpenGL.shader[GL_SHADER_BASE], "GlhckUBO", GLHCK_BUFFER_DYNAMIC_DRAW);
-   glhckHwBufferBindRange(_OpenGL.sharedUBO, 0, 0, _OpenGL.sharedUBO->size);
-
-   /* this also tells library that everything went OK,
-    * so do it last */
+   /* this also tells library that everything went OK, so do it last */
    GLHCK_RENDER_INIT(RENDER_NAME);
-
-   /* ok */
    return;
 
 fail:

@@ -7,8 +7,11 @@
 #  include <windows.h>
 #endif
 
-/* debug hook function */
-static glhckDebugHookFunc _glhckDebugHook = NULL;
+#ifdef __APPLE__
+#   include <malloc/malloc.h>
+#else
+#   include <malloc.h>
+#endif
 
 /* Tracing levels:
  * 0: Non frequent calls (creation, freeing, etc..)
@@ -16,7 +19,7 @@ static glhckDebugHookFunc _glhckDebugHook = NULL;
  * 2: Spam call (render, draw, transformation, ref/deref, etc..) */
 
 /* list all debug channels */
-__GLHCKtraceChannel _traceChannels[] =
+static __GLHCKtraceChannel _traceChannels[] =
 {
    /* glhck's channels */
    { GLHCK_CHANNEL_GLHCK,        0 },
@@ -47,9 +50,9 @@ __GLHCKtraceChannel _traceChannels[] =
 static int _glhckTraceIsActive(const char *name)
 {
    int i;
-   for (i = 0; _GLHCKlibrary.trace.channel[i].name; ++i)
-      if (!_glhckStrupcmp(_GLHCKlibrary.trace.channel[i].name, name))
-            return _GLHCKlibrary.trace.channel[i].active;
+   for (i = 0; GLHCKT()->channel[i].name; ++i)
+      if (!_glhckStrupcmp(GLHCKT()->channel[i].name, name))
+            return GLHCKT()->channel[i].active;
    return 0;
 }
 
@@ -57,11 +60,11 @@ static int _glhckTraceIsActive(const char *name)
 static void _glhckTraceSet(const char *name, int active)
 {
    int i;
-   for(i = 0; _GLHCKlibrary.trace.channel[i].name ; ++i)
-      if (!_glhckStrupcmp(name, _GLHCKlibrary.trace.channel[i].name)           ||
-         (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL)                             &&
-          _glhckStrupcmp(_GLHCKlibrary.trace.channel[i].name, GLHCK_CHANNEL_TRACE)))
-      _GLHCKlibrary.trace.channel[i].active = (char)active;
+   for(i = 0; GLHCKT()->channel[i].name ; ++i)
+      if (!_glhckStrupcmp(name, GLHCKT()->channel[i].name)  ||
+         (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL)          &&
+          _glhckStrupcmp(GLHCKT()->channel[i].name, GLHCK_CHANNEL_TRACE)))
+      GLHCKT()->channel[i].active = active;
 }
 
 /* \brief init debug system */
@@ -70,11 +73,16 @@ void _glhckTraceInit(int argc, const char **argv)
    int i, count;
    const char *match;
    char **split;
+   __GLHCKtraceChannel *channels;
 
    /* init */
-   _GLHCKlibrary.trace.channel = _traceChannels;
+   if (!(channels = malloc(sizeof(_traceChannels))))
+      return;
 
-   i = 0; match = NULL;
+   /* copy the template */
+   memcpy(channels, _traceChannels, sizeof(_traceChannels));
+   GLHCKT()->channel = channels;
+
    for(i = 0, match = NULL; i != argc; ++i) {
       if (!_glhckStrnupcmp(argv[i], GLHCK_CHANNEL_SWITCH"=", strlen(GLHCK_CHANNEL_SWITCH"="))) {
          match = argv[i] + strlen(GLHCK_CHANNEL_SWITCH"=");
@@ -88,11 +96,11 @@ void _glhckTraceInit(int argc, const char **argv)
 
    for (i = 0; i != count; ++i) {
       if (!strncmp(split[i], "-color", 6))
-         _GLHCKlibrary.misc.coloredLog = 0;
+         GLHCKM()->coloredLog = 0;
       else if (!strncmp(split[i], "2", 1))
-         _GLHCKlibrary.trace.level = 2;
+         GLHCKT()->level = 2;
       else if (!strncmp(split[i], "1", 1))
-         _GLHCKlibrary.trace.level = 1;
+         GLHCKT()->level = 1;
       else if (!strncmp(split[i], "+", 1))
          _glhckTraceSet(split[i] + 1, 1);
       else if (!strncmp(split[i], "-", 1))
@@ -102,15 +110,21 @@ void _glhckTraceInit(int argc, const char **argv)
    _glhckStrsplitClear(&split);
 }
 
+/* \brief destroy debug system */
+void _glhckTraceTerminate(void)
+{
+   IFDO(free, GLHCKT()->channel);
+}
+
 /* \brief output trace info */
 void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...)
 {
    va_list args;
    char buffer[LINE_MAX];
 
-   if (!_GLHCKlibrary.trace.channel) return;
+   if (!GLHCKT()->channel) return;
 
-   if (level > _GLHCKlibrary.trace.level)
+   if (level > GLHCKT()->level)
       return;
 
    if (!_glhckTraceIsActive(GLHCK_CHANNEL_TRACE))
@@ -139,7 +153,7 @@ void _glhckPassDebug(const char *file, int line, const char *func,
    vsnprintf(buffer, LINE_MAX-1, fmt, args);
    va_end(args);
 
-   if (!_glhckDebugHook) {
+   if (!GLHCKT()->debugHook) {
       /* by default, we assume debug prints are
        * useless if tracing. */
       if (_glhckTraceIsActive(GLHCK_CHANNEL_TRACE) ||
@@ -148,7 +162,7 @@ void _glhckPassDebug(const char *file, int line, const char *func,
       return;
    }
 
-   _glhckDebugHook(file, line, func, level, buffer);
+   GLHCKT()->debugHook(file, line, func, level, buffer);
 }
 
 /***
@@ -159,7 +173,7 @@ void _glhckPassDebug(const char *file, int line, const char *func,
 GLHCKAPI void glhckSetDebugHook(glhckDebugHookFunc func)
 {
    GLHCK_INITIALIZED();
-   _glhckDebugHook = func;
+   GLHCKT()->debugHook = func;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

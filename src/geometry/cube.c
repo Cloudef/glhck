@@ -10,18 +10,16 @@
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size)
 {
    glhckGeometryVertexType vtype;
-
-   /* choose internal vertexdata precision */
-   vtype = GLHCKR()->globalVertexType;
+   glhckGetGlobalPrecision(NULL, &vtype);
    if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V3B;
    return glhckCubeNewEx(size, GLHCK_INDEX_NONE, vtype);
 }
 
 /* \brief create new cube object (specify precision) */
-GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
-   _glhckObject *object;
+   glhckObject *object;
+   CALL(0, "%f, %d, %d", size, itype, vtype);
 
    const glhckImportVertexData vertices[] = {
       {
@@ -163,8 +161,6 @@ GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size,
          { 0,  0,  0,  0 }
       }
    };
-
-   CALL(0, "%f", size);
 
    /* create new object */
    if (!(object = glhckObjectNew()))

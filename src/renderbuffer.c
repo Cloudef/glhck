@@ -30,7 +30,7 @@ GLHCKAPI glhckRenderbuffer* glhckRenderbufferNew(int width, int height, glhckTex
    glhckRenderbufferBind(NULL);
 
    /* insert to world */
-   _glhckWorldInsert(rlist, object, glhckRenderbuffer*);
+   _glhckWorldInsert(renderbuffer, object, glhckRenderbuffer*);
 
    RET(0, "%p", object);
    return object;
@@ -57,11 +57,9 @@ GLHCKAPI glhckRenderbuffer* glhckRenderbufferRef(glhckRenderbuffer *object)
 /* \brief free renderbuffer object */
 GLHCKAPI size_t glhckRenderbufferFree(glhckRenderbuffer *object)
 {
+   if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
    assert(object);
-
-   /* not initialized */
-   if (!_glhckInitialized) return 0;
 
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
@@ -70,7 +68,7 @@ GLHCKAPI size_t glhckRenderbufferFree(glhckRenderbuffer *object)
    GLHCKRA()->framebufferDelete(1, &object->object);
 
    /* remove from world */
-   _glhckWorldRemove(rlist, object, glhckRenderbuffer*);
+   _glhckWorldRemove(renderbuffer, object, glhckRenderbuffer*);
 
    /* free */
    NULLDO(_glhckFree, object);

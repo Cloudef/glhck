@@ -19,6 +19,7 @@ SET(GLHCK_SRC
    geometry/cube.c
    geometry/plane.c
    geometry/model.c
+   render/render.c
    render/OpenGLHelper.c
    render/OpenGL.c
    render/OpenGLFixedPipeline.c

@@ -27,12 +27,12 @@ static void trackAlloc(const char *channel, void *ptr, size_t size)
 
    /* real alloc failed */
    if (!ptr) return;
-   data = _GLHCKlibrary.alloc;
+   data = glhckContextGet()->alloc;
 
    /* track */
    for (; data && data->next; data = data->next);
    if (data) data = data->next = calloc(1, sizeof(__GLHCKalloc));
-   else      data = _GLHCKlibrary.alloc = calloc(1, sizeof(__GLHCKalloc));
+   else      data = glhckContextGet()->alloc = calloc(1, sizeof(__GLHCKalloc));
 
    /* alloc failed */
    if (!data)
@@ -47,7 +47,7 @@ static void trackAlloc(const char *channel, void *ptr, size_t size)
 /* \brief internal realloc hook */
 static void trackRealloc(const void *ptr, void *ptr2, size_t size)
 {
-   __GLHCKalloc *data = _GLHCKlibrary.alloc;
+   __GLHCKalloc *data = glhckContextGet()->alloc;
 
    /* find */
    for (; data; data = data->next)
@@ -60,7 +60,7 @@ static void trackRealloc(const void *ptr, void *ptr2, size_t size)
 /* \brief internal free hook */
 static void trackFree(const void *ptr)
 {
-   __GLHCKalloc *found, *data = _GLHCKlibrary.alloc;
+   __GLHCKalloc *found, *data = glhckContextGet()->alloc;
 
    /* find */
    for (; data && data->next &&
@@ -87,14 +87,14 @@ void _glhckTrackFake(void *ptr, size_t size)
 /* \brief terminate all tracking */
 void _glhckTrackTerminate(void)
 {
-   __GLHCKalloc *next, *data = _GLHCKlibrary.alloc;
+   __GLHCKalloc *next, *data = glhckContextGet()->alloc;
 
    for (; data; data = next) {
       next = data->next;
       free(data);
    }
 
-   _GLHCKlibrary.alloc = NULL;
+   glhckContextGet()->alloc = NULL;
 }
 #endif /* NDEBUG */
 
@@ -239,7 +239,7 @@ GLHCKAPI void glhckMemoryGraph(void)
    __GLHCKtraceChannel *trace;
    unsigned int i;
    size_t allocChannel, allocTotal;
-   trace = _GLHCKlibrary.trace.channel;
+   trace = GLHCKT()->channel;
 
    puts("");
    puts("--- Memory Graph ---");
@@ -249,7 +249,7 @@ GLHCKAPI void glhckMemoryGraph(void)
       allocChannel = 0;
 
       if (trace[i].name) {
-         for (data = _GLHCKlibrary.alloc;
+         for (data = glhckContextGet()->alloc;
               data; data = data->next)
             if (!strcmp(data->channel, trace[i].name))
                allocChannel += data->size;

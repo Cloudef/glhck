@@ -275,7 +275,7 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    object->drawFunc = _glhckObjectStubDraw;
 
    /* insert to world */
-   _glhckWorldInsert(olist, object, _glhckObject*);
+   _glhckWorldInsert(object, object, _glhckObject*);
 
    RET(0, "%p", object);
    return object;
@@ -320,7 +320,7 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    object->refCounter = 1;
 
    /* insert to world */
-   _glhckWorldInsert(olist, object, _glhckObject*);
+   _glhckWorldInsert(object, object, _glhckObject*);
 
    RET(0, "%p", object);
    return object;
@@ -347,11 +347,9 @@ GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object)
 /* \brief free object */
 GLHCKAPI size_t glhckObjectFree(glhckObject *object)
 {
+   if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
    assert(object);
-
-   /* not initialized */
-   if (!_glhckInitialized) return 0;
 
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
@@ -374,7 +372,7 @@ GLHCKAPI size_t glhckObjectFree(glhckObject *object)
    glhckObjectShader(object, NULL);
 
    /* remove from world */
-   _glhckWorldRemove(olist, object, _glhckObject*);
+   _glhckWorldRemove(object, object, _glhckObject*);
 
    /* free */
    NULLDO(_glhckFree, object);

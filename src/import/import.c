@@ -293,33 +293,19 @@ fail:
 }
 
 /* post-processing of image data */
-int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct *data, unsigned int flags)
+int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct *data)
 {
-   unsigned char *outData = NULL;
-   unsigned int outFormat, inFormat;
-   CALL(0, "%p, %p, %u", texture, data, flags);
-
-   /* assign default format for texture,
-    * most imports are in RGBA and is preferred. */
-   inFormat = outFormat = data->format;
-
-   /* post processing below */
-
-   /* format manipulations here */
+   CALL(0, "%p, %p", texture, data);
 
    /* upload texture */
-   glhckTextureCreate(texture, GLHCK_TEXTURE_2D,
-         outData?outData:data->data, data->width, data->height, 0,
-         inFormat, outFormat, flags);
+   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, data->width, data->height, 0, 0,
+            data->format, data->type, 0, data->data) != RETURN_OK)
+      goto fail;
 
-   IFDO(_glhckFree, outData);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
-out_of_memory:
-   DEBUG(GLHCK_DBG_ERROR, "Out of memory");
 fail:
-   IFDO(_glhckFree, outData);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }

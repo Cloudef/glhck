@@ -111,7 +111,7 @@ GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(
       printf("(%s:%u) %d : %d [%s]\n", u->name, u->location, u->type, u->size, u->typeName);
 
    /* insert to world */
-   _glhckWorldInsert(slist, object, glhckShader*);
+   _glhckWorldInsert(shader, object, glhckShader*);
 
    RET(0, "%p", object);
    return object;
@@ -141,6 +141,7 @@ GLHCKAPI glhckShader* glhckShaderRef(glhckShader *object)
 /* \brief free shader object */
 GLHCKAPI size_t glhckShaderFree(glhckShader *object)
 {
+   if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
    assert(object);
 
@@ -160,7 +161,7 @@ GLHCKAPI size_t glhckShaderFree(glhckShader *object)
    _glhckShaderFreeUniforms(object);
 
    /* remove from world */
-   _glhckWorldRemove(slist, object, glhckShader*);
+   _glhckWorldRemove(shader, object, glhckShader*);
 
    /* free */
    NULLDO(_glhckFree, object);

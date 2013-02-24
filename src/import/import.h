@@ -4,9 +4,11 @@
 /* Import struct for post processing */
 typedef struct _glhckImagePostProcessStruct
 {
-   unsigned long long width, height;
-   unsigned char *data;
-   unsigned int format;
+   void *data;
+   unsigned int flags;
+   int width, height;
+   glhckTextureFormat format;
+   glhckDataType type;
 } _glhckImagePostProcessStruct;
 
 /* Load and unload functions when importers are configured
@@ -55,8 +57,8 @@ int _glhckFormatAssimp(const char *file);
  */
 int _glhckImportImage(_glhckTexture *texture, const char *file, unsigned int flags);
 
-/* Post-process the RGBA image data */
-int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct *data, unsigned int flags);
+/* Post-process the image data */
+int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct *data);
 
 #if !GLHCK_IMPORT_DYNAMIC
 

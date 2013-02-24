@@ -25,7 +25,7 @@ GLHCKAPI glhckLight* glhckLightNew(void)
    glhckLightPointLightFactor(object, 1.0);
 
     /* insert to world */
-   _glhckWorldInsert(llist, object, glhckLight*);
+   _glhckWorldInsert(light, object, glhckLight*);
 
    RET(0, "%p", object);
    return object;
@@ -52,11 +52,9 @@ GLHCKAPI glhckLight* glhckLightRef(glhckLight *object)
 /* \brief free light object */
 GLHCKAPI size_t glhckLightFree(glhckLight *object)
 {
+   if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
    assert(object);
-
-   /* not initialized */
-   if (!_glhckInitialized) return 0;
 
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
@@ -65,7 +63,7 @@ GLHCKAPI size_t glhckLightFree(glhckLight *object)
    NULLDO(glhckObjectFree, object->object);
 
    /* remove object from world */
-   _glhckWorldRemove(llist, object, glhckLight*);
+   _glhckWorldRemove(light, object, glhckLight*);
 
    /* free */
    NULLDO(_glhckFree, object);
@@ -78,7 +76,7 @@ success:
 /* \brief bind/unbind glhck light */
 GLHCKAPI void glhckLightBind(glhckLight *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    GLHCKRA()->lightBind(object);
    GLHCKRD()->light = object;
 }
@@ -86,27 +84,34 @@ GLHCKAPI void glhckLightBind(glhckLight *object)
 /* \brief begin projection from light with camera */
 GLHCKAPI void glhckLightBeginProjectionWithCamera(glhckLight *object, glhckCamera *camera)
 {
-   glhckObject *obj;
+   glhckObject *cobj, *lobj;
    assert(object && camera);
-   obj = glhckCameraGetObject(camera);
-   memcpy(&object->oldPosition, glhckObjectGetPosition(obj), sizeof(kmVec3));
-   memcpy(&object->oldTarget, glhckObjectGetTarget(obj), sizeof(kmVec3));
-   object->oldNear = camera->view.near;
-   object->oldFar  = camera->view.far;
-   glhckObjectPosition(obj, glhckObjectGetPosition(object->object));
-   glhckObjectTarget(obj, glhckObjectGetTarget(object->object));
+   lobj = glhckLightGetObject(object);
+   cobj = glhckCameraGetObject(camera);
+
+   /* this is pointless */
+   memcpy(&object->current.objectView, &lobj->view, sizeof(__GLHCKobjectView));
+
+   /* store old camera view state */
+   memcpy(&object->old.cameraView, &camera->view, sizeof(__GLHCKcameraView));
+   memcpy(&object->old.objectView, &cobj->view, sizeof(__GLHCKobjectView));
+
+   /* set new camera view state */
+   memcpy(&cobj->view, &object->current.objectView, sizeof(__GLHCKobjectView));
+   memcpy(&camera->view, &object->current.cameraView, sizeof(__GLHCKcameraView));
    glhckCameraUpdate(camera);
 }
 
 /* \brief end projection from light with camera */
 GLHCKAPI void glhckLightEndProjectionWithCamera(glhckLight *object, glhckCamera *camera)
 {
-   glhckObject *obj;
+   glhckObject *cobj;
    assert(object && camera);
-   obj = glhckCameraGetObject(camera);
-   glhckObjectPosition(obj, &object->oldPosition);
-   glhckObjectTarget(obj, &object->oldTarget);
-   glhckCameraRange(camera, object->oldNear, object->oldFar);
+   cobj = glhckCameraGetObject(camera);
+
+   /* restore old camera view state */
+   memcpy(&cobj->view, &object->old.objectView, sizeof(__GLHCKobjectView));
+   memcpy(&camera->view, &object->old.cameraView, sizeof(__GLHCKcameraView));
    glhckCameraUpdate(camera);
 }
 
@@ -123,7 +128,7 @@ GLHCKAPI glhckObject* glhckLightGetObject(const glhckLight *object)
 /* \brief color light */
 GLHCKAPI void glhckLightColor(glhckLight *object, const glhckColorb *color)
 {
-   CALL(3, "%p, "COLBS, object, COLB(color));
+   CALL(2, "%p, "COLBS, object, COLB(color));
    assert(object && color);
    glhckObjectColor(glhckLightGetObject(object), color);
 }
@@ -138,17 +143,26 @@ GLHCKAPI void glhckLightColorb(glhckLight *object, char r, char g, char b, char 
 /* \brief 1.0 for pointlight */
 GLHCKAPI void glhckLightPointLightFactor(glhckLight *object, kmScalar factor)
 {
-   CALL(3, "%p, %f", object, factor);
+   CALL(2, "%p, %f", object, factor);
    assert(object);
-   object->pointLightFactor = factor;
+   object->options.pointLightFactor = factor;
+}
+
+/* \brief get light's point light factor */
+GLHCKAPI kmScalar glhckLightGetPointLightFactor(glhckLight *object)
+{
+   CALL(2, "%p", object);
+   assert(object);
+   RET(2, "%p", object->options.pointLightFactor);
+   return object->options.pointLightFactor;
 }
 
 /* \brief set light's atten factor */
 GLHCKAPI void glhckLightAtten(glhckLight *object, const kmVec3 *atten)
 {
-   CALL(3, "%p, "VEC3S, object, VEC3(atten));
+   CALL(2, "%p, "VEC3S, object, VEC3(atten));
    assert(object && atten);
-   kmVec3Assign(&object->atten, atten);
+   kmVec3Assign(&object->options.atten, atten);
 }
 
 /* \brief set light's atten factor (kmScalar) */
@@ -158,11 +172,12 @@ GLHCKAPI void glhckLightAttenf(glhckLight *object, kmScalar constant, kmScalar l
    glhckLightAtten(object, &atten);
 }
 
-/* \brief set light's cutout */
-GLHCKAPI void glhckLightCutout(glhckLight *object, const kmVec2 *cutout)
+/* \brief get light's atten */
+GLHCKAPI const kmVec3* glhckLightGetAtten(glhckLight *object)
 {
-   CALL(3, "%p, "VEC2S, object, VEC2(cutout));
-   kmVec2Assign(&object->cutout, cutout);
+   CALL(2, "%p", object);
+   RET(2, "%p", &object->options.atten);
+   return &object->options.atten;
 }
 
 /* \brief set light's cutout (kmScalar) */
@@ -170,6 +185,21 @@ GLHCKAPI void glhckLightCutoutf(glhckLight *object, kmScalar outer, kmScalar inn
 {
    kmVec2 cutout = {outer, inner};
    glhckLightCutout(object, &cutout);
+}
+
+/* \brief set light's cutout */
+GLHCKAPI void glhckLightCutout(glhckLight *object, const kmVec2 *cutout)
+{
+   CALL(2, "%p, "VEC2S, object, VEC2(cutout));
+   kmVec2Assign(&object->options.cutout, cutout);
+}
+
+/* \brief get light's cutout */
+GLHCKAPI const kmVec2* glhckLightGetCutout(glhckLight *object)
+{
+   CALL(2, "%p", object);
+   RET(2, "%p", &object->options.cutout);
+   return &object->options.cutout;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

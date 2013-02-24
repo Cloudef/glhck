@@ -107,9 +107,10 @@ glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl
    enum aiTextureMapping textureMapping;
    enum aiTextureOp op;
    enum aiTextureMapMode textureMapMode[3] = {0,0,0};
-   unsigned int uvwIndex, flags, tflags = GLHCK_TEXTURE_DEFAULTS;
+   unsigned int uvwIndex, flags;
    float blend;
    char *texturePath;
+   glhckTextureParameters params;
 
    if (!aiGetMaterialTextureCount(mtl, aiTextureType_DIFFUSE))
       return NULL;
@@ -119,15 +120,27 @@ glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl
             textureMapMode, &flags) != AI_SUCCESS)
       return NULL;
 
-   if (textureMapMode[0] == aiTextureMapMode_Wrap) {
-      tflags |= GLHCK_TEXTURE_REPEAT;
+   memcpy(&params, glhckTextureDefaultParameters(), sizeof(glhckTextureParameters));
+   switch (textureMapMode[0]) {
+      case aiTextureMapMode_Clamp:
+      case aiTextureMapMode_Decal:
+         params.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
+         params.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
+         params.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
+         break;
+      case aiTextureMapMode_Mirror:
+         params.wrapR = GLHCK_WRAP_MIRRORED_REPEAT;
+         params.wrapS = GLHCK_WRAP_MIRRORED_REPEAT;
+         params.wrapT = GLHCK_WRAP_MIRRORED_REPEAT;
+      break;
+      default:break;
    }
 
    if (!(texturePath = _glhckImportTexturePath(textureName.data, file)))
       return NULL;
 
    DEBUG(0, "%s", texturePath);
-   texture = glhckTextureNew(texturePath, tflags);
+   texture = glhckTextureNew(texturePath, 0, &params);
    free(texturePath);
    return texture;
 }

@@ -81,8 +81,7 @@ void _glhckCameraWorldUpdate(int width, int height)
    diffw = width  - GLHCKR()->width;
    diffh = height - GLHCKR()->height;
 
-   for (camera = _GLHCKlibrary.world.clist;
-        camera; camera = camera->next) {
+   for (camera = GLHCKW()->camera; camera; camera = camera->next) {
       glhckCameraViewportf(camera,
             camera->view.viewport.x,
             camera->view.viewport.y,
@@ -91,9 +90,9 @@ void _glhckCameraWorldUpdate(int width, int height)
    }
 
    /* no camera binded, upload default projection */
-   if (!(camera = GLHCKRD()->camera))
-      _glhckDefaultProjection(width, height);
-   else {
+   if (!(camera = GLHCKRD()->camera)) {
+      _glhckRenderDefaultProjection(width, height);
+   } else {
       /* update camera */
       GLHCKRD()->camera = NULL;
       camera->view.update = 1;
@@ -132,7 +131,7 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    glhckCameraReset(camera);
 
    /* insert to world */
-   _glhckWorldInsert(clist, camera, _glhckCamera*);
+   _glhckWorldInsert(camera, camera, _glhckCamera*);
 
    RET(0, "%p", camera);
    return camera;
@@ -159,11 +158,9 @@ GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *camera)
 /* \brief free camera */
 GLHCKAPI size_t glhckCameraFree(glhckCamera *camera)
 {
+   if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(camera), "%p", camera);
    assert(camera);
-
-   /* not initialized */
-   if (!_glhckInitialized) return 0;
 
    /* there is still references to this object alive */
    if (--camera->refCounter != 0) goto success;
@@ -176,7 +173,7 @@ GLHCKAPI size_t glhckCameraFree(glhckCamera *camera)
    NULLDO(glhckObjectFree, camera->object);
 
    /* remove camera from world */
-   _glhckWorldRemove(clist, camera, _glhckCamera*);
+   _glhckWorldRemove(camera, camera, _glhckCamera*);
 
    /* free */
    NULLDO(_glhckFree, camera);
@@ -198,7 +195,7 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *camera)
    }
 
    if (GLHCKRD()->camera != camera || camera->view.updateViewport) {
-      GLHCKRA()->viewport(
+      glhckRenderViewport(
             camera->view.viewport.x,
             camera->view.viewport.y,
             camera->view.viewport.w,

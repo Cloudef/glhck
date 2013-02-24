@@ -15,11 +15,10 @@
 #define NULLDO(f, x) { f(x); x = NULL; }
 
 /* insert to glhck world */
-#define _glhckWorldInsert(list, object, cast)   \
-{                                               \
+#define _glhckWorldInsert(list, object, cast) { \
    cast i;                                      \
-   if (!(i = _GLHCKlibrary.world.list))         \
-      _GLHCKlibrary.world.list = object;        \
+   if (!(i = GLHCKW()->list))                   \
+      GLHCKW()->list = object;                  \
    else {                                       \
       for (; i && i->next; i = i->next);        \
       i->next = object;                         \
@@ -27,15 +26,14 @@
 }
 
 /* remove from glhck world */
-#define _glhckWorldRemove(list, object, cast)      \
-{                                                  \
+#define _glhckWorldRemove(list, object, cast) {    \
    cast i;                                         \
-   if (object == (i = _GLHCKlibrary.world.list))   \
-      _GLHCKlibrary.world.list = object->next;     \
+   if (object == (i = GLHCKW()->list))             \
+      GLHCKW()->list = object->next;               \
    else {                                          \
       for (; i && i->next != object; i = i->next); \
       if (i) i->next = object->next;               \
-      else _GLHCKlibrary.world.list = NULL;        \
+      else GLHCKW()->list = NULL;                  \
    }                                               \
 }
 

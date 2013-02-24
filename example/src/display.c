@@ -111,7 +111,7 @@ int main(int argc, char **argv)
    /* Turn on VSYNC if driver allows */
    glfwSwapInterval(0);
 
-   if (!glhckInit(argc, argv))
+   if (!glhckContextCreate(argc, argv))
       return EXIT_FAILURE;
 
    puts("-!- glhck init");
@@ -130,11 +130,11 @@ int main(int argc, char **argv)
    glhckCameraRange(camera, 1.0f, 1000.0f);
    camObj = glhckCameraGetObject(camera);
 
-   if (!(texture = glhckTextureNew("example/media/glhck.png", GLHCK_TEXTURE_DEFAULTS)))
+   if (!(texture = glhckTextureNew("example/media/glhck.png", 0, NULL)))
       return EXIT_FAILURE;
 
    sprite  = glhckSpriteNew(texture, 0, 0);
-   sprite3 = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, GLHCK_TEXTURE_DEFAULTS);
+   sprite3 = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, 0, NULL);
    cube2   = glhckCubeNew(1.0f);
    glhckObjectMaterialFlags(cube2, glhckObjectGetMaterialFlags(cube2)|
          GLHCK_MATERIAL_DRAW_OBB|GLHCK_MATERIAL_DRAW_AABB);
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
 
 #define SKIP_MMD    1
 #define SKIP_OCTM   1
-#define SKIP_ASSIMP 1
+#define SKIP_ASSIMP 0
 
 #if SKIP_MMD
 #  define MMD_PATH ""
@@ -166,8 +166,8 @@ int main(int argc, char **argv)
 #if SKIP_ASSIMP
 #  define ASSIMP_PATH ""
 #else
-#  define ASSIMP_PATH "example/media/chaosgate/chaosgate.obj"
-//#  define ASSIMP_PATH "example/media/room/room.obj"
+//#  define ASSIMP_PATH "example/media/chaosgate/chaosgate.obj"
+#  define ASSIMP_PATH "example/media/room/room.obj"
 #endif
 
    if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
@@ -223,7 +223,7 @@ int main(int argc, char **argv)
 
    glhckObject *rttText = NULL, *rttText2 = NULL;
    glhckTextColor(text, 255, 255, 255, 255);
-   if ((rttText = glhckTextPlane(text, font2, 42, "RTT Text", GLHCK_TEXTURE_DEFAULTS))) {
+   if ((rttText = glhckTextPlane(text, font2, 42, "RTT Text", NULL))) {
       glhckObjectScalef(rttText, 0.05f, 0.05f, 1.0f); /* scale to fit our 3d world */
       glhckObjectPositionf(rttText, 0, 2, 0);
       glhckObjectAddChildren(cube2, rttText);
@@ -232,7 +232,7 @@ int main(int argc, char **argv)
       glhckObjectMaterialFlags(rttText, GLHCK_MATERIAL_CULL | GLHCK_MATERIAL_DEPTH);
    }
 
-   if ((rttText2 = glhckTextPlane(text, font, 42, "GLHCKあいしてる", GLHCK_TEXTURE_DEFAULTS))) {
+   if ((rttText2 = glhckTextPlane(text, font, 42, "GLHCKあいしてる", NULL))) {
       glhckObjectRotatef(rttText2, 0, 210, 0);
       glhckObjectPositionf(rttText2, 200, 0, 500);
 
@@ -267,7 +267,7 @@ int main(int argc, char **argv)
       last  =  now;
       now   =  glfwGetTime();
       delta =  now - last;
-      glhckTime(now);
+      glhckRenderTime(now);
 
       glfwPollEvents();
       handleCamera(window, delta, &cameraPos, &cameraRot, &projectionType);
@@ -329,7 +329,7 @@ int main(int argc, char **argv)
 
 #if 0
          glhckRenderPassShader(NULL);
-         glhckBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
+         glhckRenderRenderBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
          glhckRenderPassFlags(GLHCK_PASS_DEPTH | GLHCK_PASS_CULL);
          glhckRenderPassShader(depthShader);
 
@@ -368,15 +368,15 @@ int main(int argc, char **argv)
          glhckObjectDraw(plane);
          glhckObjectDraw(glhckLightGetObject(light[li]));
 
-         if (li) glhckBlendFunc(GLHCK_ONE, GLHCK_ONE);
+         if (li) glhckRenderBlendFunc(GLHCK_ONE, GLHCK_ONE);
          glhckRender();
       }
-      glhckBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
+      glhckRenderBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
 
       /* debug */
       if (!queuePrinted) {
-         glhckPrintTextureQueue();
-         glhckPrintObjectQueue();
+         glhckRenderPrintTextureQueue();
+         glhckRenderPrintObjectQueue();
          queuePrinted = 1;
       }
 
@@ -405,7 +405,7 @@ int main(int argc, char **argv)
 
       /* actual swap and clear */
       glfwSwapBuffers(window);
-      glhckClear(GLHCK_COLOR_BUFFER | GLHCK_DEPTH_BUFFER);
+      glhckRenderClear(GLHCK_COLOR_BUFFER | GLHCK_DEPTH_BUFFER);
 
       /* fps calc */
       if (fpsDelay < now) {
@@ -439,7 +439,7 @@ int main(int argc, char **argv)
 
    /* should cleanup all
     * objects as well */
-   glhckTerminate();
+   glhckContextTerminate();
    glfwTerminate();
    return EXIT_SUCCESS;
 }

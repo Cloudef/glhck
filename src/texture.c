@@ -18,7 +18,7 @@ static _glhckTexture* _glhckTextureCacheCheck(const char *file)
    if (!file)
       goto nothing;
 
-   for (cache = _GLHCKlibrary.world.tlist; cache; cache = cache->next) {
+   for (cache = GLHCKW()->texture; cache; cache = cache->next) {
       if (cache->file && !strcmp(cache->file, file))
          return glhckTextureRef(cache);
    }
@@ -68,37 +68,99 @@ static void _glhckTextureSetData(_glhckTexture *texture, void *data)
    texture->data = data;
 }
 
+/* \brief guess size for texture */
+inline int _glhckSizeForTexture(glhckTextureTarget target, int width, int height, int depth, glhckTextureFormat format, glhckDataType type)
+{
+   int size = 0;
+   size_t b = 0;
+
+   switch (type) {
+      case GLHCK_DATA_BYTE:
+      case GLHCK_DATA_UNSIGNED_BYTE:
+         b = sizeof(unsigned char);
+         break;
+      case GLHCK_DATA_SHORT:
+      case GLHCK_DATA_UNSIGNED_SHORT:
+         b = sizeof(unsigned short);
+         break;
+      case GLHCK_DATA_INT:
+      case GLHCK_DATA_UNSIGNED_INT:
+         b = sizeof(unsigned int);
+         break;
+      case GLHCK_DATA_FLOAT:
+         b = sizeof(float);
+         break;
+      case GLHCK_DATA_COMPRESSED:
+         assert(0 && "This should not never happen");break;
+         break;
+      default:assert(0 && "Datatype size not known");break;
+   }
+
+   switch (target) {
+      case GLHCK_TEXTURE_1D:
+         size = width * _glhckNumChannels(format) * b;
+         break;
+      case GLHCK_TEXTURE_2D:
+      case GLHCK_TEXTURE_CUBE_MAP:
+         size = width * height * _glhckNumChannels(format) * b;
+         break;
+      case GLHCK_TEXTURE_3D:
+         size = width * height * depth * _glhckNumChannels(format) * b;
+         break;
+      default:assert(0 && "Target's size calculation not implemented");break;
+   }
+   return size;
+}
+
 /* \brief returns number of channels needed for texture format */
 inline unsigned int _glhckNumChannels(glhckTextureFormat format)
 {
-   return format==GLHCK_LUMINANCE_ALPHA?2:
-          format==GLHCK_RGB?3:
-          format==GLHCK_RGBA?4:1;
+   switch (format) {
+      case GLHCK_RED:
+      case GLHCK_ALPHA:
+      case GLHCK_LUMINANCE:
+      case GLHCK_DEPTH_COMPONENT:
+      case GLHCK_DEPTH_COMPONENT16:
+      case GLHCK_DEPTH_COMPONENT24:
+      case GLHCK_DEPTH_COMPONENT32:
+      case GLHCK_DEPTH_STENCIL:
+         return 1;
+      case GLHCK_RG:
+      case GLHCK_LUMINANCE_ALPHA:
+         return 2;
+      case GLHCK_RGB:
+      case GLHCK_BGR:
+      case GLHCK_COMPRESSED_RGB_DXT1:
+         return 3;
+      case GLHCK_RGBA:
+      case GLHCK_BGRA:
+      case GLHCK_COMPRESSED_RGBA_DXT5:
+         return 4;
+      default:break;
+   }
+   assert(0 && "Num channels not implemented for texture format");
+   return 0;
 }
 
 /* \brief returns if format is compressed format */
 inline int _glhckIsCompressedFormat(glhckTextureFormat format)
 {
-   return (format==GLHCK_COMPRESSED_RGB_DXT1 ||
-           format==GLHCK_COMPRESSED_RGBA_DXT5);
-}
-
-/* \brief assign default flags */
-static void _glhckTextureDefaultFlags(unsigned int *flags)
-{
-   *flags |= GLHCK_TEXTURE_DXT;
+   switch (format) {
+      case GLHCK_COMPRESSED_RGB_DXT1:
+      case GLHCK_COMPRESSED_RGBA_DXT5:
+         return 1;
+      default:break;
+   }
+   return 0;
 }
 
 /* \brief compress image data internally */
-static void* _glhckTextureCompress(
-      const void *data, int width, int height,
-      glhckTextureFormat format, unsigned int flags,
-      glhckTextureFormat *outFormat)
+static void* _glhckTextureCompress(glhckTextureCompression compression, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, const void *data, int *size, glhckTextureFormat *outFormat)
 {
-   unsigned char *compressed = NULL;
-   CALL(0, "%p, %u, %u, %u, %u, %p",
-         data, width, height, format, flags, outFormat);
-   assert(outFormat);
+   void *compressed = NULL;
+   CALL(0, "%d, %d, %d, %d, %d, %d, %p, %p, %p", compression, width, height, depth, format, type, data, size, outFormat);
+   if (size)      *size = 0;
+   if (outFormat) *outFormat = 0;
 
    /* NULL data, just return */
    if (!data) goto fail;
@@ -107,35 +169,29 @@ static void* _glhckTextureCompress(
    if (_glhckIsCompressedFormat(format))
       goto already_compressed;
 
-   /* get default flags */
-   if (flags & GLHCK_TEXTURE_DEFAULTS)
-      _glhckTextureDefaultFlags(&flags);
-
-   /* check that flags have compression */
-   if (!(flags & GLHCK_TEXTURE_DXT))
-      goto fail;
-
    /* DXT compression requested */
-   if (flags & GLHCK_TEXTURE_DXT) {
+   if (compression == GLHCK_COMPRESSION_DXT) {
       if ((_glhckNumChannels(format) & 1) == 1) {
          /* RGB */
          if (!(compressed = _glhckMalloc(imghckSizeForDXT1(width, height))))
             goto out_of_memory;
 
-         imghckConvertToDXT1(compressed, data, width, height,
-               _glhckNumChannels(format));
-         *outFormat = GLHCK_COMPRESSED_RGB_DXT1;
+         imghckConvertToDXT1(compressed, data, width, height, _glhckNumChannels(format));
+         if (size)      *size      = imghckSizeForDXT1(width, height);
+         if (outFormat) *outFormat = GLHCK_COMPRESSED_RGB_DXT1;
          DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT1");
       } else {
          /* RGBA */
          if (!(compressed = _glhckMalloc(imghckSizeForDXT5(width, height))))
             goto out_of_memory;
 
-         imghckConvertToDXT5(compressed, data, width, height,
-               _glhckNumChannels(format));
-         *outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
+         imghckConvertToDXT5(compressed, data, width, height, _glhckNumChannels(format));
+         if (size)      *size      = imghckSizeForDXT5(width, height);
+         if (outFormat) *outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
          DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT5");
       }
+   } else {
+      DEBUG(GLHCK_DBG_WARNING, "Compression type not implemented or supported for the texture format/datatype combination.");
    }
 
    RET(0, "%p", compressed);
@@ -156,10 +212,10 @@ fail:
 
 /* \brief Allocate texture
  * Takes filename as argument, pass NULL to use user data */
-GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
+GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int importFlags, const glhckTextureParameters *params)
 {
    glhckTexture *texture;
-   CALL(0, "%s, %u", file, flags);
+   CALL(0, "%s, %u, %p", file, importFlags, params);
 
    /* check if texture is in cache */
    if ((texture = _glhckTextureCacheCheck(file)))
@@ -170,7 +226,7 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
       goto fail;
 
    /* default target type */
-   texture->targetType = GLHCK_TEXTURE_2D;
+   texture->target = GLHCK_TEXTURE_2D;
    texture->refCounter++;
 
    /* If file is passed, then try import it */
@@ -179,17 +235,16 @@ GLHCKAPI _glhckTexture* glhckTextureNew(const char *file, unsigned int flags)
       if (!(texture->file = _glhckStrdup(file)))
          goto fail;
 
-      /* default flags if not any specified */
-      if (flags & GLHCK_TEXTURE_DEFAULTS)
-         _glhckTextureDefaultFlags(&flags);
-
       /* import image */
-      if (_glhckImportImage(texture, file, flags) != RETURN_OK)
+      if (_glhckImportImage(texture, file, importFlags) != RETURN_OK)
          goto fail;
+
+      /* apply texture parameters */
+      glhckTextureParameter(texture, params);
    }
 
    /* insert to world */
-   _glhckWorldInsert(tlist, texture, glhckTexture*);
+   _glhckWorldInsert(texture, texture, glhckTexture*);
 
 success:
    RET(0, "%p", texture);
@@ -218,14 +273,13 @@ GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src)
    if (src->file)
       texture->file = _glhckStrdup(src->file);
 
-   glhckTextureCreate(texture, src->targetType, src->data,
-         src->width, src->height, src->depth, src->format, src->outFormat, src->flags);
+   glhckTextureCreate(texture, src->target, 0, src->width, src->height, src->depth, 0, src->format, src->type, src->size, src->data);
 
    /* set ref counter to 1 */
    texture->refCounter = 1;
 
    /* insert to world */
-   _glhckWorldInsert(tlist, texture, glhckTexture*);
+   _glhckWorldInsert(texture, texture, glhckTexture*);
 
    /* Return texture */
    RET(0, "%p", texture);
@@ -254,11 +308,10 @@ GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture)
 /* \brief free texture */
 GLHCKAPI size_t glhckTextureFree(glhckTexture *texture)
 {
+   unsigned int i;
+   if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(texture), "%p", texture);
    assert(texture);
-
-   /* not initialized */
-   if (!_glhckInitialized) return 0;
 
    /* there is still references to this texture alive */
    if (--texture->refCounter != 0) goto success;
@@ -267,8 +320,10 @@ GLHCKAPI size_t glhckTextureFree(glhckTexture *texture)
          texture->width, texture->height, (float)texture->size / 1048576);
 
    /* unbind from active slot */
-   if (GLHCKRD()->texture[texture->targetType] == texture)
-      glhckTextureUnbind(texture->targetType);
+   for (i = 0; i != GLHCK_MAX_ACTIVE_TEXTURE; ++i) {
+      if (GLHCKRD()->texture[i][texture->target] == texture)
+         glhckTextureUnbind(texture->target);
+   }
 
    /* delete texture if there is one */
    if (texture->object)
@@ -279,7 +334,7 @@ GLHCKAPI size_t glhckTextureFree(glhckTexture *texture)
    _glhckTextureSetData(texture, NULL);
 
    /* remove from world */
-   _glhckWorldRemove(tlist, texture, glhckTexture*);
+   _glhckWorldRemove(texture, texture, glhckTexture*);
 
    /* free */
    NULLDO(_glhckFree, texture);
@@ -289,92 +344,135 @@ success:
    return texture?texture->refCounter:0;
 }
 
-/* \brief create texture manually. */
-GLHCKAPI int glhckTextureCreate(glhckTexture *texture, glhckTextureType type, const void *data,
-      int width, int height, int depth, glhckTextureFormat format, glhckTextureFormat outFormat, unsigned int flags)
+/* \brief apply texture parameters. */
+GLHCKAPI void glhckTextureParameter(glhckTexture *texture, const glhckTextureParameters *params)
 {
-   size_t size;
-   unsigned int object;
-   unsigned char *compressed = NULL;
-   CALL(0, "%p, %p, %d, %d, %u, %u, %u", texture, data,
-         width, height, format, outFormat, flags);
-   assert(texture);
+   int size;
+   void *data = NULL;
+   glhckTexture *old = NULL;
+   glhckTextureFormat outFormat;
 
-   /* get default flags */
-   if (flags & GLHCK_TEXTURE_DEFAULTS)
-      _glhckTextureDefaultFlags(&flags);
+   /* copy texture parameters over */
+   memcpy(&texture->params, (params?params:glhckTextureDefaultParameters()), sizeof(glhckTextureParameters));
+   params = &texture->params;
 
    /* will do compression if requested */
-   if ((compressed = _glhckTextureCompress(data,
-               width, height, outFormat, flags, &outFormat))) {
-      data = compressed;
+   if (params->compression != GLHCK_COMPRESSION_NONE) {
+      if ((data = _glhckTextureCompress(params->compression, texture->width, texture->height, texture->depth, texture->format,
+                  texture->type, texture->data, &size, &outFormat))) {
+         glhckTextureRecreate(texture, outFormat, GLHCK_DATA_UNSIGNED_BYTE, size, data);
+         _glhckFree(data);
+      }
    }
 
-   /* check the true data size */
-   if (outFormat == GLHCK_COMPRESSED_RGB_DXT1)
-      size = imghckSizeForDXT1(width, height);
-   else if (outFormat == GLHCK_COMPRESSED_RGBA_DXT5)
-      size = imghckSizeForDXT5(width, height);
-   else
-      size = width * height * _glhckNumChannels(format);
+   /* push texture parameters to renderer */
+   old = glhckTextureCurrentForTarget(texture->target);
+   glhckTextureBind(texture);
+   GLHCKRA()->textureParameter(texture->target, params);
+   if (params->mipmap) GLHCKRA()->textureGenerateMipmap(texture->target);
+   if (old) glhckTextureBind(old);
+}
+
+/* \brief return default texture parameters */
+GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void)
+{
+   static glhckTextureParameters defaultParameters = {
+      .minLod      = -1000.0f,
+      .maxLod      = 1000.0f,
+      .biasLod     = 0.0f,
+      .baseLevel   = 0,
+      .maxLevel    = 1000,
+      .wrapS       = GLHCK_WRAP_REPEAT,
+      .wrapT       = GLHCK_WRAP_REPEAT,
+      .wrapR       = GLHCK_WRAP_REPEAT,
+      .minFilter   = GLHCK_FILTER_NEAREST_MIPMAP_LINEAR,
+      .magFilter   = GLHCK_FILTER_LINEAR,
+      .compareMode = GLHCK_COMPARE_NONE,
+      .compareFunc = GLHCK_COMPARE_LEQUAL,
+      .compression = GLHCK_COMPRESSION_NONE,
+      .mipmap      = 1,
+   };
+   return &defaultParameters;
+}
+
+/* \brief create texture manually. */
+GLHCKAPI int glhckTextureCreate(glhckTexture *texture, glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, glhckDataType type, int size, const void *data)
+{
+   void *copied = NULL;
+   glhckTexture *old = NULL;
+   CALL(0, "%p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p", texture, target, level, width, height, depth, border, format, type, size, data);
+   assert(texture);
+   assert(level == 0 && "For now the level parameter must be 0!");
+   assert(border == 0 && "For now the border parameter must be 0!");
+
+   /* check the true data size, if not provided */
+   if (!size) {
+      size = _glhckSizeForTexture(target, width, height, depth, format, type);
+   }
 
    /* create texture */
-   object = GLHCKRA()->textureCreate(
-         type, data, size, width, height, depth, outFormat,
-         texture->object?texture->object:0, flags);
+   if (!texture->object) GLHCKRA()->textureGenerate(1, &texture->object);
+   if (!texture->object) goto fail;
 
-   if (!object)
-      goto fail;
+   /* set texture type */
+   texture->target = target;
 
-   /* remove old texture data */
-   _glhckTextureSetData(texture, NULL);
-
-   /* if size is zero, calculate the size here */
-   texture->object     = object;
-   texture->targetType = type;
-   texture->width      = width;
-   texture->height     = height;
-   texture->depth      = depth;
-   texture->format     = format;
-   texture->outFormat  = outFormat;
-   texture->size       = size;
-   texture->flags      = flags;
+   old = glhckTextureCurrentForTarget(texture->target);
+   glhckTextureBind(texture);
+   GLHCKRA()->textureImage(target, level, width, height, depth, border, format, type, size, data);
+   if (old) glhckTextureBind(old);
 
    /* copy data */
    if (data) {
-      if (!(texture->data = _glhckCopy(data, texture->size)))
+      if (!(copied = _glhckCopy(data, texture->size)))
          goto fail;
    }
+
+   /* set the copied data */
+   _glhckTextureSetData(texture, copied);
+
+   /* set rest */
+   texture->width  = width;
+   texture->height = height;
+   texture->depth  = depth;
+   texture->format = format;
+   texture->type   = type;
+   texture->size   = size;
 
    DEBUG(GLHCK_DBG_CRAP, "NEW(%p) %dx%dx%d %.2f MiB", texture,
          texture->width, texture->height, texture->depth, (float)texture->size / 1048576);
 
-   IFDO(_glhckFree, compressed);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
-   IFDO(_glhckFree, compressed);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
 /* \brief recreate texture with new data.
  * dimensions of texture must be the same. */
-GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, const void *data, glhckTextureFormat format)
+GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, glhckTextureFormat format, glhckDataType type, int size, const void *data)
 {
-   return glhckTextureCreate(texture, texture->targetType, data,
-         texture->width, texture->height, texture->depth, format, format, texture->flags);
+   /* check the true data size, if not provided */
+   if (!size) {
+      size = _glhckSizeForTexture(texture->target, texture->width, texture->height, texture->depth, format, type);
+   }
+
+   return glhckTextureCreate(texture, texture->target, 0, texture->width, texture->height,
+         texture->depth, 0, format, type, size, data);
 }
 
 /* \brief fill subdata to texture */
-GLHCKAPI void glhckTextureFill(glhckTexture *texture, const void *data,
-      int size, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format)
+GLHCKAPI void glhckTextureFill(glhckTexture *texture, int level, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data)
 {
-   CALL(2, "%p, %p, %d, %d, %d, %d, %d", texture, data, size, x, y, width, height);
+   glhckTexture *old;
+   CALL(2, "%p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p", texture, level, x, y, z, width, height, depth, format, type, size, data);
    assert(texture);
-   GLHCKRA()->textureFill(texture->targetType, texture->object,
-         data, size, x, y, z, width, height, depth, format);
+   old = glhckTextureCurrentForTarget(texture->target);
+   glhckTextureBind(texture);
+   GLHCKRA()->textureFill(texture->target, level, x, y, z, width, height, depth, format, type, size, data);
+   if (old) glhckTextureBind(old);
 }
 
 /* \brief save texture to file in TGA format */
@@ -418,23 +516,42 @@ format_fail:
    return RETURN_FAIL;
 }
 
+/* \brief get current active texture for type */
+GLHCKAPI glhckTexture* glhckTextureCurrentForTarget(glhckTextureTarget target)
+{
+   CALL(2, "%d", target);
+   RET(2, "%p", GLHCKRD()->texture[GLHCKRD()->activeTexture][target]);
+   return GLHCKRD()->texture[GLHCKRD()->activeTexture][target];
+}
+
+/* \brief active texture index */
+GLHCKAPI void glhckTextureActive(unsigned int index)
+{
+   assert(index < GLHCK_MAX_ACTIVE_TEXTURE && "Tried to active bigger texture index than GLhck supports");
+   if (GLHCKRD()->activeTexture == index)
+      return;
+
+   GLHCKRA()->textureActive(index);
+   GLHCKRD()->activeTexture = index;
+}
+
 /* \brief bind texture */
 GLHCKAPI void glhckTextureBind(glhckTexture *texture)
 {
    CALL(2, "%p", texture);
    assert(texture);
-   if (GLHCKRD()->texture[texture->targetType] == texture) return;
-   GLHCKRA()->textureBind(texture->targetType, texture->object);
-   GLHCKRD()->texture[texture->targetType] = texture;
+   if (GLHCKRD()->texture[GLHCKRD()->activeTexture][texture->target] == texture) return;
+   GLHCKRA()->textureBind(texture->target, texture->object);
+   GLHCKRD()->texture[GLHCKRD()->activeTexture][texture->target] = texture;
 }
 
 /* \brief unbind texture */
-GLHCKAPI void glhckTextureUnbind(glhckTextureType type)
+GLHCKAPI void glhckTextureUnbind(glhckTextureTarget target)
 {
-   CALL(2, "%d", type);
-   if (!GLHCKRD()->texture[type]) return;
-   GLHCKRA()->textureBind(type, 0);
-   GLHCKRD()->texture[type] = NULL;
+   CALL(2, "%d", target);
+   if (!GLHCKRD()->texture[GLHCKRD()->activeTexture][target]) return;
+   GLHCKRA()->textureBind(target, 0);
+   GLHCKRD()->texture[GLHCKRD()->activeTexture][target] = NULL;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

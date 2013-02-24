@@ -174,12 +174,12 @@ typedef enum glhckGeometryType {
 } glhckGeometryType;
 
 /* framebuffer types */
-typedef enum glhckFramebufferType {
+typedef enum glhckFramebufferTarget {
    GLHCK_FRAMEBUFFER,
    GLHCK_FRAMEBUFFER_READ,
    GLHCK_FRAMEBUFFER_DRAW,
    GLHCK_FRAMEBUFFER_TYPE_LAST,
-} glhckFramebufferType;
+} glhckFramebufferTarget;
 
 /* framebuffer attachment types */
 typedef enum glhckFramebufferAttachmentType {
@@ -204,7 +204,7 @@ typedef enum glhckFramebufferAttachmentType {
 } glhckFramebufferAttachmentType;
 
 /* hardware buffer type */
-typedef enum glhckHwBufferType {
+typedef enum glhckHwBufferTarget {
    GLHCK_ARRAY_BUFFER,
    GLHCK_COPY_READ_BUFFER,
    GLHCK_COPY_WRITE_BUFFER,
@@ -217,7 +217,7 @@ typedef enum glhckHwBufferType {
    GLHCK_SHADER_STORAGE_BUFFER,
    GLHCK_ATOMIC_COUNTER_BUFFER,
    GLHCK_HWBUFFER_TYPE_LAST,
-} glhckHwBufferType;
+} glhckHwBufferTarget;
 
 /* hardware buffer storage type */
 typedef enum glhckHwBufferStoreType {
@@ -286,43 +286,114 @@ typedef enum glhckObjectAffectionFlags {
    GLHCK_AFFECT_SCALING       = 4,
 } glhckObjectAffectionFlags;
 
-/* texture flags */
-typedef enum glhckTextureFlags {
-   GLHCK_TEXTURE_NONE      = 0,
-   GLHCK_TEXTURE_DEFAULTS  = 1,
-   GLHCK_TEXTURE_DXT       = 2,
-   GLHCK_TEXTURE_NEAREST   = 4,
-   GLHCK_TEXTURE_REPEAT    = 8,
-} glhckTextureFlags;
+/* texture wrap modes */
+typedef enum glhckTextureWrap {
+   GLHCK_WRAP_REPEAT,
+   GLHCK_WRAP_MIRRORED_REPEAT,
+   GLHCK_WRAP_CLAMP_TO_EDGE,
+   GLHCK_WRAP_CLAMP_TO_BORDER,
+} glhckTextureWrap;
+
+/* texture filter modes */
+typedef enum glhckTextureFilter {
+   GLHCK_FILTER_NEAREST,
+   GLHCK_FILTER_LINEAR,
+   GLHCK_FILTER_NEAREST_MIPMAP_NEAREST,
+   GLHCK_FILTER_LINEAR_MIPMAP_NEAREST,
+   GLHCK_FILTER_NEAREST_MIPMAP_LINEAR,
+   GLHCK_FILTER_LINEAR_MIPMAP_LINEAR,
+} glhckTextureFilter;
+
+/* texture compression type */
+typedef enum glhckTextureCompression {
+   GLHCK_COMPRESSION_NONE,
+   GLHCK_COMPRESSION_DXT,
+} glhckTextureCompression;
+
+/* texture compare mode */
+typedef enum glhckTextureCompareMode {
+   GLHCK_COMPARE_NONE,
+   GLHCK_COMPARE_REF_TO_TEXTURE
+} glhckTextureCompareMode;
+
+/* compare func */
+typedef enum glhckCompareFunc {
+   GLHCK_COMPARE_LEQUAL,
+   GLHCK_COMPARE_GEQUAL,
+   GLHCK_COMPARE_LESS,
+   GLHCK_COMPARE_GREATER,
+   GLHCK_COMPARE_EQUAL,
+   GLHCK_COMPARE_NOTEQUAL,
+   GLHCK_COMPARE_ALWAYS,
+   GLHCK_COMPARE_NEVER,
+} glhckCompareFunc;
 
 /* texture types */
-typedef enum glhckTextureType {
+typedef enum glhckTextureTarget {
    GLHCK_TEXTURE_1D,
    GLHCK_TEXTURE_2D,
    GLHCK_TEXTURE_3D,
    GLHCK_TEXTURE_CUBE_MAP,
    GLHCK_TEXTURE_TYPE_LAST,
-} glhckTextureType;
+} glhckTextureTarget;
 
 /* texture formats */
 typedef enum glhckTextureFormat {
    GLHCK_RED,
-   GLHCK_GREEN,
-   GLHCK_BLUE,
+   GLHCK_RG,
    GLHCK_ALPHA,
    GLHCK_LUMINANCE,
    GLHCK_LUMINANCE_ALPHA,
    GLHCK_RGB,
+   GLHCK_BGR,
    GLHCK_RGBA,
+   GLHCK_BGRA,
 
    GLHCK_DEPTH_COMPONENT,
    GLHCK_DEPTH_COMPONENT16,
    GLHCK_DEPTH_COMPONENT24,
    GLHCK_DEPTH_COMPONENT32,
+   GLHCK_DEPTH_STENCIL,
 
    GLHCK_COMPRESSED_RGB_DXT1,
    GLHCK_COMPRESSED_RGBA_DXT5,
 } glhckTextureFormat;
+
+/* data formats */
+typedef enum glhckDataType {
+   GLHCK_DATA_COMPRESSED,
+   GLHCK_DATA_UNSIGNED_BYTE,
+   GLHCK_DATA_BYTE,
+   GLHCK_DATA_UNSIGNED_SHORT,
+   GLHCK_DATA_SHORT,
+   GLHCK_DATA_UNSIGNED_INT,
+   GLHCK_DATA_INT,
+   GLHCK_DATA_FLOAT,
+   GLHCK_DATA_UNSIGNED_BYTE_3_3_2,
+   GLHCK_DATA_UNSIGNED_BYTE_2_3_3_REV,
+   GLHCK_DATA_UNSIGNED_SHORT_5_6_5,
+   GLHCK_DATA_UNSIGNED_SHORT_5_6_5_REV,
+   GLHCK_DATA_UNSIGNED_SHORT_4_4_4_4,
+   GLHCK_DATA_UNISNGED_SHORT_4_4_4_4_REV,
+   GLHCK_DATA_UNISGNED_SHORT_5_5_5_1,
+   GLHCK_DATA_UNSIGNED_SHORT_1_5_5_5_REV,
+   GLHCK_DATA_UNSIGNED_INT_8_8_8_8,
+   GLHCK_DATA_UNSIGNED_INT_8_8_8_8_REV,
+   GLHCK_DATA_UNSIGNED_INT_10_10_10_2,
+   GLHCK_DATA_UNSIGNED_INT_2_10_10_10_REV,
+} glhckDataType;
+
+/* texture parameters struct */
+typedef struct glhckTextureParameters {
+   float minLod, maxLod, biasLod;
+   int baseLevel, maxLevel;
+   glhckTextureWrap wrapS, wrapT, wrapR;
+   glhckTextureFilter minFilter, magFilter;
+   glhckTextureCompareMode compareMode;
+   glhckCompareFunc compareFunc;
+   glhckTextureCompression compression;
+   char mipmap;
+} glhckTextureParameters;
 
 /* material flags */
 typedef enum glhckMaterialFlags {
@@ -504,21 +575,16 @@ typedef enum glhckGeometryIndexType {
 
 /* teture coordinate transformation */
 typedef struct glhckCoordTransform {
-   short degrees;
    glhckRect transform;
+   short degrees;
 } glhckCoordTransform;
 
 /* datatype that presents object's geometry */
 typedef struct glhckGeometry {
-   /* geometry type (triangles, triangle strip, etc..) */
-   glhckGeometryType type;
-
-   /* vertex && indices types */
-   glhckGeometryVertexType vertexType;
-   glhckGeometryIndexType indexType;
-
-   /* counts for vertices && indices */
-   int vertexCount, indexCount;
+   /* geometry transformation needed
+    * after precision conversion */
+   glhckVector3f bias;
+   glhckVector3f scale;
 
    /* vertices */
    glhckVertexData vertices;
@@ -529,16 +595,21 @@ typedef struct glhckGeometry {
    /* transformed coordinates */
    glhckCoordTransform *transformedCoordinates;
 
-   /* geometry transformation needed
-    * after precision conversion */
-   glhckVector3f bias;
-   glhckVector3f scale;
+   /* counts for vertices && indices */
+   int vertexCount, indexCount;
 
    /* transformed texture range
     * the texture matrix is scaled with
     * 1.0f/textureRange of geometry before
     * sending to OpenGL */
    int textureRange;
+
+   /* vertex && indices types */
+   glhckGeometryVertexType vertexType;
+   glhckGeometryIndexType indexType;
+
+   /* geometry type (triangles, triangle strip, etc..) */
+   glhckGeometryType type;
 } glhckGeometry;
 
 /* typedefs for better typing */
@@ -552,15 +623,20 @@ typedef struct _glhckCamera      glhckCamera;
 typedef struct _glhckLight       glhckLight;
 typedef struct _glhckHwBuffer    glhckHwBuffer;
 typedef struct _glhckShader      glhckShader;
+typedef struct __GLHCKcontext    glhckContext;
 
 typedef void (*glhckDebugHookFunc)(const char *file, int line, const char *function, glhckDebugLevel level, const char *str);
 
 /* init && terminate */
-GLHCKAPI int glhckInit(int argc, char **argv);
-GLHCKAPI void glhckTerminate(void);
-GLHCKAPI void glhckMassacreWorld(void);
 GLHCKAPI int glhckInitialized(void);
+GLHCKAPI void glhckContextSet(glhckContext *ctx);
+GLHCKAPI glhckContext* glhckContextGet(void);
+GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv);
+GLHCKAPI void glhckContextTerminate(void);
+GLHCKAPI void glhckMassacreWorld(void);
 GLHCKAPI void glhckLogColor(char color);
+GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+GLHCKAPI void glhckGetGlobalPrecision(glhckGeometryIndexType *itype, glhckGeometryVertexType *vtype);
 
 /* display */
 GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderType);
@@ -568,17 +644,28 @@ GLHCKAPI void glhckDisplayClose(void);
 GLHCKAPI void glhckDisplayResize(int width, int height);
 
 /* rendering */
+GLHCKAPI const char* glhckRenderName(void);
 GLHCKAPI glhckDriverType glhckRenderGetDriver(void);
-GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
-GLHCKAPI void glhckRenderGetIntegerv(glhckRenderProperty pname, int *params);
-GLHCKAPI void glhckRenderProjection(kmMat4 const* mat);
-GLHCKAPI void glhckCullFace(glhckCullFaceType face);
-GLHCKAPI void glhckBlendFunc(glhckBlendingMode blenda, glhckBlendingMode blendb);
-GLHCKAPI void glhckRenderPassShader(glhckShader *shader);
+GLHCKAPI void glhckRenderResize(int width, int height);
+GLHCKAPI void glhckRenderViewport(int x, int y, int width, int height);
 GLHCKAPI void glhckRenderPassFlags(unsigned int bits);
+GLHCKAPI void glhckRenderTime(float time);
+GLHCKAPI void glhckRenderClearColor(const glhckColorb *color);
+GLHCKAPI void glhckRenderClearColorb(char r, char g, char b, char a);
+GLHCKAPI const glhckColorb* glhckRenderGetClearColor(void);
+GLHCKAPI void glhckRenderClear(unsigned int bufferBits);
+GLHCKAPI void glhckRenderBlendFunc(glhckBlendingMode blenda, glhckBlendingMode blendb);
+GLHCKAPI void glhckRenderGetBlendFunc(glhckBlendingMode *blenda, glhckBlendingMode *blendb);
+GLHCKAPI void glhckRenderCullFace(glhckCullFaceType face);
+GLHCKAPI glhckCullFaceType glhckRenderGetCullFace(void);
+GLHCKAPI void glhckRenderPassShader(glhckShader *shader);
+GLHCKAPI glhckShader* glhckRenderGetShader(void);
+GLHCKAPI void glhckRenderProjection(kmMat4 const* mat);
+GLHCKAPI void glhckRenderProjectionOnly(const kmMat4 *mat);
+GLHCKAPI const kmMat4* glhckRenderGetProjection(void);
+GLHCKAPI void glhckRenderView(kmMat4 const* mat);
+GLHCKAPI const kmMat4* glhckRenderGetView(void);
 GLHCKAPI void glhckRender(void);
-GLHCKAPI void glhckClear(unsigned int bufferBits);
-GLHCKAPI void glhckTime(float time);
 
 /* frustum */
 GLHCKAPI void glhckFrustumBuild(glhckFrustum *frustum, const kmMat4 *mvp);
@@ -665,15 +752,15 @@ GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object);
 GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object);
 
 /* pre-defined geometry */
-GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, unsigned int flags);
-GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned int flags,
+GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, unsigned int importFlags);
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned int importFlags,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
 GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height);
 GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, kmScalar width, kmScalar height);
-GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, kmScalar height, unsigned int flags);
+GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, kmScalar height, unsigned int importFlags, const glhckTextureParameters *params);
 
 /* text */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
@@ -692,22 +779,24 @@ GLHCKAPI void glhckTextRender(glhckText *text);
 GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id, float size, float x, float y, const char *s, float *dx);
 GLHCKAPI void glhckTextShader(glhckText *text, glhckShader *shader);
 GLHCKAPI glhckShader* glhckTextGetShader(const glhckText *text);
-GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id, float size, const char *s, unsigned int textureFlags);
-GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id, float size, const char *s, unsigned int textureFlags);
+GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id, float size, const char *s, const glhckTextureParameters *params);
+GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id, float size, const char *s, const glhckTextureParameters *params);
 
 /* textures */
-GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int flags);
+GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int importFlags, const glhckTextureParameters *params);
 GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
 GLHCKAPI size_t glhckTextureFree(glhckTexture *texture);
-GLHCKAPI int glhckTextureCreate(glhckTexture *texture, glhckTextureType type, const void *data,
-      int width, int height, int depth, glhckTextureFormat format, glhckTextureFormat outFormat, unsigned int flags);
-GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, const void *data, glhckTextureFormat format);
-GLHCKAPI void glhckTextureFill(glhckTexture *texture, const void *data, int size, int x, int y, int z,
-      int width, int height, int depth, glhckTextureFormat format);
+GLHCKAPI int glhckTextureCreate(glhckTexture *texture, glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, glhckDataType type, int size, const void *data);
+GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, glhckTextureFormat format, glhckDataType type, int size, const void *data);
+GLHCKAPI void glhckTextureFill(glhckTexture *texture, int level, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data);
+GLHCKAPI void glhckTextureParameter(glhckTexture *texture, const glhckTextureParameters *params);
+GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void);
 GLHCKAPI int glhckTextureSave(glhckTexture *texture, const char *path);
+GLHCKAPI glhckTexture* glhckTextureCurrentForTarget(glhckTextureTarget target);
+GLHCKAPI void glhckTextureActive(unsigned int index);
 GLHCKAPI void glhckTextureBind(glhckTexture *texture);
-GLHCKAPI void glhckTextureUnbind(glhckTextureType type);
+GLHCKAPI void glhckTextureUnbind(glhckTextureTarget target);
 
 /* texture atlases */
 GLHCKAPI glhckAtlas* glhckAtlasNew(void);
@@ -730,10 +819,13 @@ GLHCKAPI void glhckLightEndProjectionWithCamera(glhckLight *object, glhckCamera 
 GLHCKAPI void glhckLightColor(glhckLight *object, const glhckColorb *color);
 GLHCKAPI void glhckLightColorb(glhckLight *object, char r, char g, char b, char a);
 GLHCKAPI void glhckLightPointLightFactor(glhckLight *object, kmScalar factor);
+GLHCKAPI kmScalar glhckLightGetPointLightFactor(glhckLight *object);
 GLHCKAPI void glhckLightAtten(glhckLight *object, const kmVec3 *atten);
 GLHCKAPI void glhckLightAttenf(glhckLight *object, kmScalar constant, kmScalar linear, kmScalar quadratic);
-GLHCKAPI void glhckLightCutout(glhckLight *object, const kmVec2 *cutoff);
+GLHCKAPI const kmVec3* glhckLightGetAtten(glhckLight *object);
+GLHCKAPI void glhckLightCutout(glhckLight *object, const kmVec2 *cutout);
 GLHCKAPI void glhckLightCutoutf(glhckLight *object, kmScalar outer, kmScalar inner);
+GLHCKAPI const kmVec2* glhckLightGetCutout(glhckLight *object);
 
 /* renderbuffer objects */
 GLHCKAPI glhckRenderbuffer* glhckRenderbufferNew(int width, int height, glhckTextureFormat format);
@@ -742,11 +834,12 @@ GLHCKAPI size_t glhckRenderbufferFree(glhckRenderbuffer *object);
 GLHCKAPI void glhckRenderbufferBind(glhckRenderbuffer *object);
 
 /* framebuffer objects */
-GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferType type);
+GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferTarget target);
 GLHCKAPI glhckFramebuffer* glhckFramebufferRef(glhckFramebuffer *object);
 GLHCKAPI size_t glhckFramebufferFree(glhckFramebuffer *object);
+GLHCKAPI glhckFramebuffer* glhckFramebufferCurrentForTarget(glhckFramebufferTarget target);
 GLHCKAPI void glhckFramebufferBind(glhckFramebuffer *object);
-GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferType type);
+GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferTarget target);
 GLHCKAPI void glhckFramebufferBegin(glhckFramebuffer *object);
 GLHCKAPI void glhckFramebufferEnd(glhckFramebuffer *object);
 GLHCKAPI void glhckFramebufferRect(glhckFramebuffer *object, glhckRect *rect);
@@ -760,11 +853,12 @@ GLHCKAPI int glhckFramebufferAttachRenderbuffer(glhckFramebuffer *object, glhckR
 GLHCKAPI glhckHwBuffer* glhckHwBufferNew(void);
 GLHCKAPI glhckHwBuffer* glhckHwBufferRef(glhckHwBuffer *object);
 GLHCKAPI size_t glhckHwBufferFree(glhckHwBuffer *object);
+GLHCKAPI glhckHwBuffer* glhckHwBufferCurrentForTarget(glhckHwBufferTarget target);
 GLHCKAPI void glhckHwBufferBind(glhckHwBuffer *object);
-GLHCKAPI void glhckHwBufferUnbind(glhckHwBufferType type);
-GLHCKAPI glhckHwBufferType glhckHwBufferGetType(glhckHwBuffer *object);
+GLHCKAPI void glhckHwBufferUnbind(glhckHwBufferTarget target);
+GLHCKAPI glhckHwBufferTarget glhckHwBufferGetType(glhckHwBuffer *object);
 GLHCKAPI glhckHwBufferStoreType glhckHwBufferGetStoreType(glhckHwBuffer *object);
-GLHCKAPI void glhckHwBufferCreate(glhckHwBuffer *object, glhckHwBufferType type, int size, const void *data, glhckHwBufferStoreType usage);
+GLHCKAPI void glhckHwBufferCreate(glhckHwBuffer *object, glhckHwBufferTarget target, int size, const void *data, glhckHwBufferStoreType usage);
 GLHCKAPI void glhckHwBufferBindBase(glhckHwBuffer *object, unsigned int index);
 GLHCKAPI void glhckHwBufferBindRange(glhckHwBuffer *object, unsigned int index, int offset, int size);
 GLHCKAPI void glhckHwBufferFill(glhckHwBuffer *object, int offset, int size, const void *data);
@@ -790,8 +884,8 @@ GLHCKAPI int glhckShaderAttachHwBuffer(glhckShader *object, glhckHwBuffer *buffe
 /* trace && debug */
 GLHCKAPI void glhckDebugHook(glhckDebugHookFunc func);
 GLHCKAPI void glhckMemoryGraph(void);
-GLHCKAPI void glhckPrintObjectQueue(void);
-GLHCKAPI void glhckPrintTextureQueue(void);
+GLHCKAPI void glhckRenderPrintObjectQueue(void);
+GLHCKAPI void glhckRenderPrintTextureQueue(void);
 
 /* vertexdata geometry */
 GLHCKAPI size_t glhckIndexTypeElementSize(glhckGeometryIndexType type);

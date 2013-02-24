@@ -63,7 +63,7 @@ GLHCKAPI glhckAtlas* glhckAtlasNew(void)
    atlas->refCounter++;
 
    /* insert to world */
-   _glhckWorldInsert(alist, atlas, _glhckAtlas*);
+   _glhckWorldInsert(atlas, atlas, _glhckAtlas*);
 
    RET(0, "%p", atlas);
    return atlas;
@@ -76,11 +76,9 @@ fail:
 /* \brief free atlas */
 GLHCKAPI size_t glhckAtlasFree(glhckAtlas *atlas)
 {
+   if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(atlas), "%p", atlas);
    assert(atlas);
-
-   /* not initialized */
-   if (!_glhckInitialized) return 0;
 
    /* there is still references to this atlas alive */
    if (--atlas->refCounter != 0) goto success;
@@ -92,7 +90,7 @@ GLHCKAPI size_t glhckAtlasFree(glhckAtlas *atlas)
    IFDO(glhckTextureFree, atlas->texture);
 
    /* remove from world */
-   _glhckWorldRemove(alist, atlas, _glhckAtlas*);
+   _glhckWorldRemove(atlas, atlas, _glhckAtlas*);
 
    /* free */
    NULLDO(_glhckFree, atlas);
@@ -186,8 +184,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
 {
    int width, height, maxTexSize;
    unsigned short count;
-   glhckColorb old_clear;
-   kmMat4 old_projection;
+   glhckColorb oldClear;
+   kmMat4 oldProjection, oldView;
    _glhckTexturePacker *tp;
    _glhckAtlasRect *rect;
    _glhckFramebuffer *fbo = NULL;
@@ -226,7 +224,9 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    _glhckTexturePackerPack(tp, &width, &height, power_of_two, border);
 
    /* downscale if over maximum texture size */
-   glhckRenderGetIntegerv(GLHCK_MAX_TEXTURE_SIZE, &maxTexSize);
+
+   /* FIXME: render properties! */
+   maxTexSize = 4096;
    if (width > maxTexSize) {
       height *= (float)maxTexSize/width;
       width   = maxTexSize;
@@ -238,9 +238,9 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    }
 
    /* create stuff needed for rendering */
-   if (!(texture = glhckTextureNew(NULL, GLHCK_TEXTURE_DEFAULTS)))
+   if (!(texture = glhckTextureNew(NULL, 0, NULL)))
       goto fail;
-   if (!(glhckTextureCreate(texture, GLHCK_TEXTURE_2D, NULL, width, height, 0, GLHCK_RGBA, GLHCK_RGBA, GLHCK_TEXTURE_DEFAULTS)))
+   if (!(glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, width, height, 0, 0, GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL)))
       goto fail;
    if (!(fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER)))
       goto fail;
@@ -253,16 +253,17 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    kmMat4OrthographicProjection(&ortho, 0, width, 0, height, -1.0f, 1.0f);
    kmMat4Translation(&ortho, -1, -1, 0);
 
-   memcpy(&old_projection, GLHCKRA()->getProjection(), sizeof(kmMat4));
-   GLHCKRA()->setProjection(&ortho);
+   memcpy(&oldProjection, glhckRenderGetProjection(), sizeof(kmMat4));
+   memcpy(&oldView, glhckRenderGetView(), sizeof(kmMat4));
+   glhckRenderProjectionOnly(&ortho);
 
    /* set clear color */
-   memcpy(&old_clear, &GLHCKRD()->clearColor, sizeof(glhckColorb));
-   GLHCKRA()->setClearColor(0,0,0,0);
+   memcpy(&oldClear, glhckRenderGetClearColor(), sizeof(glhckColorb));
+   glhckRenderClearColorb(0,0,0,0);
 
    glhckFramebufferRecti(fbo, 0, 0, width, height);
    glhckFramebufferBegin(fbo);
-   glhckClear(GLHCK_COLOR_BUFFER);
+   glhckRenderClear(GLHCK_COLOR_BUFFER);
    for (rect = atlas->rect; rect; rect = rect->next) {
       rect->packed.rotated = _glhckTexturePackerGetLocation(tp,
             rect->index, &rect->packed.x1, &rect->packed.y1,
@@ -288,8 +289,9 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int
    glhckFramebufferEnd(fbo);
 
    /* restore old state */
-   GLHCKRA()->setProjection(&old_projection);
-   GLHCKRA()->setClearColor(old_clear.r, old_clear.g, old_clear.b, old_clear.a);
+   glhckRenderProjection(&oldProjection);
+   glhckRenderView(&oldView);
+   glhckRenderClearColor(&oldClear);
 
    /* reference rtt's texture */
    IFDO(glhckTextureFree, atlas->texture);

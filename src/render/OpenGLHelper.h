@@ -96,43 +96,33 @@ static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum
 }
 #endif
 
-/* declare gl generation function */
-#define DECLARE_GL_GEN_FUNC(x,y)                                     \
-static void x(int count, unsigned int *objects)                      \
-{                                                                    \
-   CALL(0, "%d, %p", count, objects);                                \
-   GL_CALL(y(count, objects));                                       \
-}
-
-/* declare gl bind function */
-#define DECLARE_GL_BIND_FUNC(x,y)                                    \
-static void x(unsigned int object)                                   \
-{                                                                    \
-   CALL(2, "%d", object);                                            \
-   GL_CALL(y);                                                       \
-}
-
 /*** binding mappings ***/
-void glhTextureBind(glhckTextureType type, GLuint object);
+void glhTextureBind(glhckTextureTarget target, GLuint object);
+void glhTextureActive(GLuint index);
 void glhRenderbufferBind(GLuint object);
-void glhFramebufferBind(glhckFramebufferType type, GLuint object);
+void glhFramebufferBind(glhckFramebufferTarget target, GLuint object);
 
-void glhHwBufferBind(glhckHwBufferType type, GLuint object);
-void glhHwBufferBindBase(glhckHwBufferType type, GLuint index, GLuint object);
-void glhHwBufferBindRange(glhckHwBufferType type, GLuint index, GLuint object, GLintptr offset, GLsizeiptr size);
-void glhHwBufferCreate(glhckHwBufferType type, GLsizeiptr size, const GLvoid *data, glhckHwBufferStoreType usage);
-void glhHwBufferFill(glhckHwBufferType type, GLintptr offset, GLsizeiptr size, const GLvoid *data);
-void* glhHwBufferMap(glhckHwBufferType type, glhckHwBufferAccessType access);
-void glhHwBufferUnmap(glhckHwBufferType type);
+void glhHwBufferBind(glhckHwBufferTarget target, GLuint object);
+void glhHwBufferBindBase(glhckHwBufferTarget target, GLuint index, GLuint object);
+void glhHwBufferBindRange(glhckHwBufferTarget target, GLuint index, GLuint object, GLintptr offset, GLsizeiptr size);
+void glhHwBufferCreate(glhckHwBufferTarget target, GLsizeiptr size, const GLvoid *data, glhckHwBufferStoreType usage);
+void glhHwBufferFill(glhckHwBufferTarget target, GLintptr offset, GLsizeiptr size, const GLvoid *data);
+void* glhHwBufferMap(glhckHwBufferTarget target, glhckHwBufferAccessType access);
+void glhHwBufferUnmap(glhckHwBufferTarget target);
 
 /*** glhck mapping functions ***/
 GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property);
 GLenum glhCullFaceTypeForGlhckType(glhckCullFaceType type);
 GLenum glhGeometryTypeForGlhckType(glhckGeometryType type);
 GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format);
+GLenum glhDataTypeForGlhckType(glhckDataType type);
+GLenum glhTextureCompareModeForGlhckMode(glhckTextureCompareMode mode);
+GLenum glhCompareFuncForGlhckFunc(glhckCompareFunc mode);
+GLenum glhTextureWrapModeForGlhckMode(glhckTextureWrap wrap);
+GLenum glhTextureFilterModeForGlhckMode(glhckTextureFilter filter);
 GLenum glhBlendingModeForGlhckMode(glhckBlendingMode mode);
 GLenum glhAttachmentTypeForGlhckType(glhckFramebufferAttachmentType type);
-GLenum glhHwBufferTypeForGlhckType(glhckHwBufferType type);
+GLenum glhHwBufferTargetForGlhckType(glhckHwBufferTarget target);
 GLenum glhHwBufferStoreTypeForGlhckType(glhckHwBufferStoreType type);
 GLenum glhHwBufferAccessTypeForGlhckType(glhckHwBufferAccessType type);
 GLenum glhShaderTypeForGlhckType(glhckShaderType type);
@@ -142,27 +132,23 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type);
 const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type);
 
 /*** shared opengl functions ***/
-void glhGetIntegerv(GLenum pname, GLint *params);
 void glhClear(GLuint bufferBits);
-void glhClearColor(GLchar r, GLchar g, GLchar b, GLchar a);
+void glhClearColor(const glhckColorb *color);
 void glhCullFace(glhckCullFaceType face);
-void glhBufferGetPixels(GLint x, GLint y, GLsizei width, GLsizei height,
-      glhckTextureFormat format, GLvoid *data);
+void glhBufferGetPixels(GLint x, GLint y, GLsizei width, GLsizei height, glhckTextureFormat format, GLvoid *data);
 void glhBlendFunc(GLenum blenda, GLenum blendb);
-GLuint glhTextureCreate(glhckTextureType type,
-      const GLvoid *buffer, GLsizei size, GLsizei width, GLsizei height, GLsizei depth,
-      glhckTextureFormat format, GLuint reuseTextureObject, GLuint flags);
-void glhTextureFill(glhckTextureType type, GLuint texture, const GLvoid *data, GLsizei size,
-      GLint x, GLint y, GLint z, GLsizei width, GLsizei height, GLsizei depth, glhckTextureFormat format);
+void glhTextureFill(glhckTextureTarget target, GLint level, GLint x, GLint y, GLint z, GLsizei width, GLsizei height, GLsizei depth, glhckTextureFormat format, GLint datatype, GLsizei size, const GLvoid *data);
+void glhTextureImage(glhckTextureTarget target, GLint level, GLsizei width, GLsizei height, GLsizei depth, GLint border, glhckTextureFormat format, GLint datatype, GLsizei size, const GLvoid *data);
+void glhTextureParameter(glhckTextureTarget target, const glhckTextureParameters *params);
+void glhTextureMipmap(glhckTextureTarget target);
 void glhRenderbufferStorage(GLsizei width, GLsizei height, glhckTextureFormat format);
-GLint glhFramebufferTexture(glhckFramebufferType framebufferType, glhckTextureType textureType, GLuint texture,
-      glhckFramebufferAttachmentType attachment);
-GLint glhFramebufferRenderbuffer(glhckFramebufferType framebufferType, GLuint buffer, glhckFramebufferAttachmentType attachment);
+GLint glhFramebufferTexture(glhckFramebufferTarget framebufferTarget, glhckTextureTarget textureTarget, GLuint texture, glhckFramebufferAttachmentType attachment);
+GLint glhFramebufferRenderbuffer(glhckFramebufferTarget framebufferTarget, GLuint buffer, glhckFramebufferAttachmentType attachment);
 GLuint glhProgramAttachUniformBuffer(GLuint program, const GLchar *uboName, GLuint location);
 _glhckHwBufferShaderUniform* glhProgramUniformBufferList(GLuint program, const GLchar *uboName, GLsizei *size);
 _glhckShaderAttribute* glhProgramAttributeList(GLuint obj);
 _glhckShaderUniform* glhProgramUniformList(GLuint obj);
-void glhProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, GLvoid *value);
+void glhProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, const GLvoid *value);
 void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type);
 
 #endif /* __glhck_opengl_helper_h__ */

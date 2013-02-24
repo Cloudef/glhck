@@ -174,11 +174,13 @@ int _glhckImportJPEG(_glhckTexture *texture, const char *file, unsigned int flag
 
    /* do post processing to imported data, and assign to texture */
    _glhckImagePostProcessStruct importData;
+   memset(&importData, 0, sizeof(_glhckImagePostProcessStruct));
    importData.width  = w;
    importData.height = h;
    importData.data   = import;
    importData.format = GLHCK_RGB;
-   if (_glhckImagePostProcess(texture, &importData, flags) != RETURN_OK)
+   importData.type   = GLHCK_DATA_UNSIGNED_BYTE;
+   if (_glhckImagePostProcess(texture, &importData) != RETURN_OK)
       goto fail;
 
    /* free */

@@ -4,7 +4,7 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_FRAMEBUFFER
 
 /* \brief create new framebuffer */
-GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferType type)
+GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferTarget target)
 {
    glhckFramebuffer *object = NULL;
    unsigned int obj;
@@ -21,10 +21,10 @@ GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferType type)
    /* init */
    object->refCounter++;
    object->object = obj;
-   object->targetType = type;
+   object->target = target;
 
    /* insert to world */
-   _glhckWorldInsert(flist, object, glhckFramebuffer*);
+   _glhckWorldInsert(framebuffer, object, glhckFramebuffer*);
 
    RET(0, "%p", object);
    return object;
@@ -51,24 +51,22 @@ GLHCKAPI glhckFramebuffer* glhckFramebufferRef(glhckFramebuffer *object)
 /* \brief free framebuffer object */
 GLHCKAPI size_t glhckFramebufferFree(glhckFramebuffer *object)
 {
+   if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
    assert(object);
-
-   /* not initialized */
-   if (!_glhckInitialized) return 0;
 
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
    /* unbind from active slot */
-   if (GLHCKRD()->framebuffer[object->targetType] == object)
-      glhckFramebufferUnbind(object->targetType);
+   if (glhckFramebufferCurrentForTarget(object->target) == object)
+      glhckFramebufferUnbind(object->target);
 
    /* delete framebuffer object */
    GLHCKRA()->framebufferDelete(1, &object->object);
 
    /* remove from world */
-   _glhckWorldRemove(flist, object, glhckFramebuffer*);
+   _glhckWorldRemove(framebuffer, object, glhckFramebuffer*);
 
    /* free */
    NULLDO(_glhckFree, object);
@@ -78,23 +76,31 @@ success:
    return object?object->refCounter:0;
 }
 
+/* \brief get current bound framebuffer for target */
+GLHCKAPI glhckFramebuffer* glhckFramebufferCurrentForTarget(glhckFramebufferTarget target)
+{
+   CALL(1, "%d", target);
+   RET(1, "%p", GLHCKRD()->framebuffer[target]);
+   return GLHCKRD()->framebuffer[target];
+}
+
 /* \brief bind hardware buffer */
 GLHCKAPI void glhckFramebufferBind(glhckFramebuffer *object)
 {
    CALL(3, "%p", object);
    assert(object);
-   if (GLHCKRD()->framebuffer[object->targetType] == object) return;
-   GLHCKRA()->framebufferBind(object->targetType, object->object);
-   GLHCKRD()->framebuffer[object->targetType] = object;
+   if (GLHCKRD()->framebuffer[object->target] == object) return;
+   GLHCKRA()->framebufferBind(object->target, object->object);
+   GLHCKRD()->framebuffer[object->target] = object;
 }
 
 /* \brief unbind hardware buffer from target type slot */
-GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferType type)
+GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferTarget target)
 {
-   CALL(3, "%d", type);
-   if (!GLHCKRD()->framebuffer[type]) return;
-   GLHCKRA()->framebufferBind(type, 0);
-   GLHCKRD()->framebuffer[type] = NULL;
+   CALL(3, "%d", target);
+   if (!GLHCKRD()->framebuffer[target]) return;
+   GLHCKRA()->framebufferBind(target, 0);
+   GLHCKRD()->framebuffer[target] = NULL;
 }
 
 /* \brief begin render with the fbo */
@@ -103,7 +109,7 @@ GLHCKAPI void glhckFramebufferBegin(glhckFramebuffer *object)
    CALL(3, "%p", object);
    assert(object);
    glhckFramebufferBind(object);
-   GLHCKRA()->viewport(object->rect.x, object->rect.y, object->rect.w, object->rect.h);
+   glhckRenderViewport(object->rect.x, object->rect.y, object->rect.w, object->rect.h);
 }
 
 /* \brief end rendering with the fbo */
@@ -111,11 +117,11 @@ GLHCKAPI void glhckFramebufferEnd(glhckFramebuffer *object)
 {
    CALL(3, "%p", object);
    assert(object);
-   glhckFramebufferUnbind(object->targetType);
+   glhckFramebufferUnbind(object->target);
    if (GLHCKRD()->camera) {
       GLHCKRD()->camera->view.updateViewport = 1;
       glhckCameraUpdate(GLHCKRD()->camera);
-   } else GLHCKRA()->viewport(0, 0, GLHCKR()->width, GLHCKR()->height);
+   } else glhckRenderViewport(0, 0, GLHCKR()->width, GLHCKR()->height);
 }
 
 /* \brief set framebuffer's visible area */
@@ -141,11 +147,11 @@ GLHCKAPI int glhckFramebufferAttachTexture(glhckFramebuffer *object, glhckTextur
    CALL(1, "%p", object);
    assert(object);
 
-   old = GLHCKRD()->framebuffer[object->targetType];
+   old = glhckFramebufferCurrentForTarget(object->target);
    glhckFramebufferBind(object);
-   ret = GLHCKRA()->framebufferTexture(object->targetType, texture->targetType, texture->object, attachment);
+   ret = GLHCKRA()->framebufferTexture(object->target, texture->target, texture->object, attachment);
    if (old) glhckFramebufferBind(old);
-   else glhckFramebufferUnbind(object->targetType);
+   else glhckFramebufferUnbind(object->target);
 
    RET(1, "%d", ret);
    return ret;
@@ -160,13 +166,13 @@ GLHCKAPI int glhckFramebufferAttachRenderbuffer(glhckFramebuffer *object, glhckR
    CALL(1, "%p, %p", object, buffer);
    assert(object);
 
-   old = GLHCKRD()->framebuffer[object->targetType];
+   old = glhckFramebufferCurrentForTarget(object->target);
    glhckFramebufferBind(object);
    glhckRenderbufferBind(buffer);
-   ret = GLHCKRA()->framebufferRenderbuffer(object->targetType, attachment,  buffer->object);
+   ret = GLHCKRA()->framebufferRenderbuffer(object->target, attachment,  buffer->object);
    glhckRenderbufferBind(NULL);
    if (old) glhckFramebufferBind(old);
-   else glhckFramebufferUnbind(object->targetType);
+   else glhckFramebufferUnbind(object->target);
 
    RET(1, "%d", ret);
    return ret;
@@ -177,25 +183,27 @@ GLHCKAPI int glhckFramebufferFillTexture(glhckFramebuffer *object, glhckTexture 
 {
    glhckFramebuffer *old;
    unsigned char *data = NULL;
+   int size;
    CALL(1, "%p", object);
    assert(object);
 
+   /* get texture size */
+   size = _glhckSizeForTexture(texture->target, texture->width, texture->height, texture->depth,
+         texture->format, GLHCK_DATA_UNSIGNED_BYTE);
+
    /* remember old framebuffer */
-   old = GLHCKRD()->framebuffer[object->targetType];
+   old = glhckFramebufferCurrentForTarget(object->target);
    glhckFramebufferBind(object);
 
    /* allocate data for getPixels */
-   data = _glhckMalloc(texture->width    *
-                       texture->height   *
-      _glhckNumChannels(texture->format) *
-                       sizeof(unsigned char));
+   data = _glhckMalloc(size);
 
    if (!data)
       goto fail;
 
    /* fill the texture */
    GLHCKRA()->bufferGetPixels(0, 0, texture->width, texture->height, texture->format, data);
-   glhckTextureRecreate(texture, data, texture->format);
+   glhckTextureRecreate(texture, texture->format, GLHCK_DATA_UNSIGNED_BYTE, size, data);
 
    /* apply internal flags for texture */
    if (texture->format == GLHCK_RGBA) texture->importFlags |= GLHCK_TEXTURE_IMPORT_ALPHA;
@@ -205,14 +213,14 @@ GLHCKAPI int glhckFramebufferFillTexture(glhckFramebuffer *object, glhckTexture 
 
    /* restore old framebuffer */
    if (old) glhckFramebufferBind(old);
-   else glhckFramebufferUnbind(object->targetType);
+   else glhckFramebufferUnbind(object->target);
 
    RET(1, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
    if (old) glhckFramebufferBind(old);
-   else glhckFramebufferUnbind(object->targetType);
+   else glhckFramebufferUnbind(object->target);
    IFDO(_glhckFree, data);
    RET(1, "%d", RETURN_FAIL);
    return RETURN_FAIL;
