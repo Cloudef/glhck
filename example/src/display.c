@@ -116,7 +116,7 @@ int main(int argc, char **argv)
 
    puts("-!- glhck init");
 
-   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_OPENGL_FIXED_PIPELINE))
+   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_OPENGL))
       return EXIT_FAILURE;
 
    puts("-!- glhck display create");
@@ -185,7 +185,8 @@ int main(int argc, char **argv)
       cameraPos.z = -20.0f;
    } else return EXIT_FAILURE;
 
-#if 0
+#define SHADOW 0
+#if SHADOW
    glhckShader *shader = glhckShaderNew(NULL, "VSM.GLhck.Lighting.ShadowMapping.Unpacking.Fragment", NULL);
    glhckShader *depthShader = glhckShaderNew(NULL, "VSM.GLhck.Depth.Packing.Fragment", NULL);
    glhckShader *depthRenderShader = glhckShaderNew(NULL, "VSM.GLhck.DepthRender.Unpacking.Fragment", NULL);
@@ -193,8 +194,8 @@ int main(int argc, char **argv)
 
    int sW = 1024, sH = 1024;
    glhckRenderbuffer *depthBuffer = glhckRenderbufferNew(sW, sH, GLHCK_DEPTH_COMPONENT16);
-   glhckTexture *depthColorMap = glhckTextureNew(NULL, 0);
-   glhckTextureCreate(depthColorMap, GLHCK_TEXTURE_2D, NULL, sW, sH, 0, GLHCK_RGBA, GLHCK_RGBA, 0);
+   glhckTexture *depthColorMap = glhckTextureNew(NULL, 0, NULL);
+   glhckTextureCreate(depthColorMap, GLHCK_TEXTURE_2D, 0, sW, sH, 0, 0, GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL);
    glhckFramebuffer *fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER);
    glhckFramebufferAttachTexture(fbo, depthColorMap, GLHCK_COLOR_ATTACHMENT0);
    glhckFramebufferAttachRenderbuffer(fbo, depthBuffer, GLHCK_DEPTH_ATTACHMENT);
@@ -327,9 +328,8 @@ int main(int argc, char **argv)
 #endif
          glhckObjectTargetf(glhckLightGetObject(light[li]), 0, 0, 0);
 
-#if 0
-         glhckRenderPassShader(NULL);
-         glhckRenderRenderBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
+#if SHADOW
+         glhckRenderBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
          glhckRenderPassFlags(GLHCK_PASS_DEPTH | GLHCK_PASS_CULL);
          glhckRenderPassShader(depthShader);
 
@@ -340,7 +340,7 @@ int main(int argc, char **argv)
          glhckLightBeginProjectionWithCamera(light[li], camera);
          glhckLightBind(light[li]);
          glhckFramebufferBegin(fbo);
-         glhckClear(GLHCK_DEPTH_BUFFER | GLHCK_COLOR_BUFFER);
+         glhckRenderClear(GLHCK_DEPTH_BUFFER | GLHCK_COLOR_BUFFER);
          glhckRender();
          glhckFramebufferEnd(fbo);
          glhckLightEndProjectionWithCamera(light[li], camera);
@@ -383,10 +383,10 @@ int main(int argc, char **argv)
       /* render frustum */
       glhckFrustumRender(glhckCameraGetFrustum(camera));
 
-#if 0
+#if SHADOW
       kmMat4 mat2d;
       kmMat4Scaling(&mat2d, -2.0f/WIDTH, 2.0f/HEIGHT, 0.0f);
-      glhckRenderProjection(&mat2d);
+      glhckRenderProjectionOnly(&mat2d);
       glhckObjectPositionf(screen, WIDTH/2.0f-128.0f/2.0f, HEIGHT/2.0f-128.0f/2.0f, 0);
       glhckObjectRender(screen);
 #endif
