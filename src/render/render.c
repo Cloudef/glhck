@@ -2,6 +2,10 @@
 #include "render.h"
 #include <assert.h> /* for assert */
 
+#ifndef __STRING
+#  define __STRING(x) #x
+#endif
+
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 

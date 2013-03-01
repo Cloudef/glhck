@@ -12,6 +12,10 @@
 #   include <malloc.h>
 #endif
 
+#ifdef __WIN32__
+#  include <windows.h>
+#endif
+
 /* \brief output in red */
 inline void _glhckRed(void)
 {
