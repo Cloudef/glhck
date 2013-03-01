@@ -242,7 +242,8 @@ GLHCKAPI void glhckRenderPassShader(glhckShader *shader)
    GLHCK_INITIALIZED();
    CALL(2, "%p", shader);
    if (GLHCKRP()->shader) glhckShaderFree(GLHCKRP()->shader);
-   GLHCKRP()->shader = glhckShaderRef(shader);
+   if (shader) GLHCKRP()->shader = glhckShaderRef(shader);
+   else GLHCKRP()->shader = NULL;
 }
 
 /* \brief get current shader for render pass */
