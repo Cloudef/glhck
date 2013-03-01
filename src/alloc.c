@@ -3,7 +3,6 @@
 #include <stdio.h>   /* for printf */
 #include <stdlib.h>  /* for malloc */
 #include <assert.h>  /* for assert */
-#include <dlfcn.h>   /* for dlsym  */
 
 #ifdef __APPLE__
 #   include <malloc/malloc.h>
