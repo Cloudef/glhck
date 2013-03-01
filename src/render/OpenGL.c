@@ -72,7 +72,8 @@ static const char *_glhckBaseShader =
 
 "-- GLhck.Text.Fragment\n"
 "void main() {"
-"  GlhckFragColor = GlhckMaterial.Diffuse/255.0 * texture2D(GlhckTexture0, GlhckFUV0).a;"
+"  vec4 Diffuse = texture2D(GlhckTexture0, GlhckFUV0);"
+"  GlhckFragColor = GlhckMaterial.Diffuse/255.0 * vec4(1.0-Diffuse.rgb, Diffuse.a);"
 "}\n";
 
 /* state flags */
