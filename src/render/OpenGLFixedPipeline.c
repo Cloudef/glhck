@@ -56,6 +56,26 @@ typedef struct __OpenGLrender {
 /* check if we have certain draw state active */
 #define GL_HAS_STATE(x) (GLPOINTER()->state.flags & x)
 
+/* \brief load matrix */
+static void rLoadMatrix(const kmMat4 *mat)
+{
+#ifdef USE_DOUBLE_PRECISION
+   GL_CALL(glLoadMatrixd((GLdouble*)mat));
+#else
+   GL_CALL(glLoadMatrixf((GLfloat*)mat));
+#endif
+}
+
+/* \brief multiplies current matrix with given matrix */
+static void rMultMatrix(const kmMat4 *mat)
+{
+#ifdef USE_DOUBLE_PRECISION
+   GL_CALL(glMultMatrixd((GLdouble*)mat));
+#else
+   GL_CALL(glMultMatrixf((GLfloat*)mat));
+#endif
+}
+
 /* ---- Render API ---- */
 
 /* \brief set time */
@@ -73,11 +93,7 @@ static void rSetProjection(const kmMat4 *m)
 {
    CALL(2, "%p", m);
    GL_CALL(glMatrixMode(GL_PROJECTION));
-#ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((GLdouble*)m));
-#else
-   GL_CALL(glLoadMatrixf((GLfloat*)m));
-#endif
+   rLoadMatrix(m);
 }
 
 /* \brief set view matrix */
@@ -336,7 +352,7 @@ static inline void rFrustumRender(glhckFrustum *frustum)
       }
 
    GL_CALL(glMatrixMode(GL_MODELVIEW));
-   GL_CALL(glLoadIdentity());
+   rLoadMatrix(&GLHCKRD()->view.view);
 
    GL_CALL(glLineWidth(4));
    GL_CALL(glColor3ub(255, 0, 0));
@@ -461,18 +477,15 @@ static inline void rAABBRender(const _glhckObject *object)
       }
 
    GL_CALL(glMatrixMode(GL_MODELVIEW));
-   GL_CALL(glLoadIdentity());
+   rLoadMatrix(&GLHCKRD()->view.view);
+
    GL_CALL(glColor3ub(0, 0, 255));
    GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
    GL_CALL(glColor3ub(255, 255, 255));
 
-   /* go back */
-#ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((GLdouble*)&object->view.matrix));
-#else
-   GL_CALL(glLoadMatrixf((GLfloat*)&object->view.matrix));
-#endif
+   /* back to modelView matrix */
+   rMultMatrix(&object->view.matrix);
 
    /* re enable stuff we disabled */
    if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
@@ -493,11 +506,8 @@ static inline void rObjectStart(const _glhckObject *object) {
 
    /* load view matrix */
    GL_CALL(glMatrixMode(GL_MODELVIEW));
-#ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((GLdouble*)&object->view.matrix));
-#else
-   GL_CALL(glLoadMatrixf((GLfloat*)&object->view.matrix));
-#endif
+   rLoadMatrix(&GLHCKRD()->view.view);
+   rMultMatrix(&object->view.matrix);
 
    /* reset color */
    GL_CALL(glColor4ub(object->material.diffuse.r,
@@ -600,11 +610,7 @@ static inline void rTextRender(const _glhckText *text)
 
    /* set 2d projection */
    GL_CALL(glMatrixMode(GL_PROJECTION));
-#ifdef USE_DOUBLE_PRECISION
-   GL_CALL(glLoadMatrixd((GLdouble*)&GLHCKRD()->view.orthographic));
-#else
-   GL_CALL(glLoadMatrixf((GLfloat*)&GLHCKRD()->view.orthographic));
-#endif
+   rLoadMatrix(&GLHCKRD()->view.orthographic);
 
    GL_CALL(glMatrixMode(GL_TEXTURE));
    GL_CALL(glLoadIdentity());
@@ -633,6 +639,10 @@ static inline void rTextRender(const _glhckText *text)
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glEnable(GL_DEPTH_TEST));
    }
+
+   /* reset projection */
+   GL_CALL(glMatrixMode(GL_PROJECTION));
+   rLoadMatrix(&GLHCKRD()->view.projection);
 }
 
 /* ---- Initialization ---- */
@@ -741,11 +751,24 @@ static GLuint rProgramLink(GLuint vsobj, GLuint fsobj) {
 static void rProgramDelete(GLuint obj) {
    DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
 }
+static void rProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, const GLvoid *value) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+}
+static _glhckHwBufferShaderUniform* rProgramUniformBufferList(GLuint program, const GLchar *uboName, GLsizei *size) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+   return NULL;
+}
 static _glhckShaderAttribute* rProgramAttributeList(GLuint obj) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
    return NULL;
 }
 static _glhckShaderUniform* rProgramUniformList(GLuint obj) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
    return NULL;
+}
+static GLuint rProgramAttachUniformBuffer(GLuint program, const GLchar *uboName, GLuint location) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+   return 0;
 }
 static GLuint rShaderCompile(glhckShaderType type, const GLchar *effectKey, const GLchar *memoryContents) {
    DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
@@ -753,6 +776,14 @@ static GLuint rShaderCompile(glhckShaderType type, const GLchar *effectKey, cons
 }
 static void rShaderDelete(GLuint obj) {
    DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+}
+static int rShadersPath(const char *pathPrefic, const char *pathSuffix) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+   return 0;
+}
+static int rShadersDirectiveToken(const char *token, const char *directive) {
+   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
+   return 0;
 }
 
 /* ---- Main ---- */
@@ -771,15 +802,24 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(textureActive, glhTextureActive);
    GLHCK_RENDER_FUNC(textureFill, glhTextureFill);
    GLHCK_RENDER_FUNC(textureImage, glhTextureImage);
+   GLHCK_RENDER_FUNC(textureParameter, glhTextureParameter);
+   GLHCK_RENDER_FUNC(textureGenerateMipmap, glhTextureMipmap);
 
    /* lights */
    GLHCK_RENDER_FUNC(lightBind, rLightBind);
+
+   /* renderbuffer objects */
+   GLHCK_RENDER_FUNC(renderbufferGenerate, glGenRenderbuffers);
+   GLHCK_RENDER_FUNC(renderbufferDelete, glDeleteRenderbuffers);
+   GLHCK_RENDER_FUNC(renderbufferBind, glhRenderbufferBind);
+   GLHCK_RENDER_FUNC(renderbufferStorage, glhRenderbufferStorage);
 
    /* framebuffer objects */
    GLHCK_RENDER_FUNC(framebufferGenerate, glGenFramebuffers);
    GLHCK_RENDER_FUNC(framebufferDelete, glDeleteFramebuffers);
    GLHCK_RENDER_FUNC(framebufferBind, glhFramebufferBind);
    GLHCK_RENDER_FUNC(framebufferTexture, glhFramebufferTexture);
+   GLHCK_RENDER_FUNC(framebufferRenderbuffer, glhFramebufferRenderbuffer);
 
    /* hardware buffer objects */
    GLHCK_RENDER_FUNC(hwBufferGenerate, glGenBuffers);
@@ -796,10 +836,15 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(programBind, rProgramUse);
    GLHCK_RENDER_FUNC(programLink, rProgramLink);
    GLHCK_RENDER_FUNC(programDelete, rProgramDelete);
+   GLHCK_RENDER_FUNC(programSetUniform, rProgramSetUniform);
+   GLHCK_RENDER_FUNC(programUniformBufferList, rProgramUniformBufferList);
    GLHCK_RENDER_FUNC(programAttributeList, rProgramAttributeList);
    GLHCK_RENDER_FUNC(programUniformList, rProgramUniformList);
+   GLHCK_RENDER_FUNC(programAttachUniformBuffer, rProgramAttachUniformBuffer);
    GLHCK_RENDER_FUNC(shaderCompile, rShaderCompile);
    GLHCK_RENDER_FUNC(shaderDelete, rShaderDelete);
+   GLHCK_RENDER_FUNC(shadersPath, rShadersPath);
+   GLHCK_RENDER_FUNC(shadersDirectiveToken, rShadersDirectiveToken);
 
    /* drawing functions */
    GLHCK_RENDER_FUNC(setOrthographic, rSetOrthographic);
