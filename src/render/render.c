@@ -8,7 +8,7 @@
 /* \brief is renderer initialized? */
 int _glhckRenderInitialized(void)
 {
-   return (glhckRenderName()?1:0);
+   return (GLHCKR()->name?1:0);
 }
 
 /* \brief macro and function for checking render api calls */
