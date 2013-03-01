@@ -7,6 +7,10 @@
 
 #include <sys/types.h>
 
+#ifndef uint
+#  define uint unsigned int
+#endif
+
 typedef struct _ACTCData ACTCData;
 
 /*
