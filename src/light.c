@@ -98,7 +98,7 @@ GLHCKAPI void glhckLightBeginProjectionWithCamera(glhckLight *object, glhckCamer
 
    /* set new camera view state */
    memcpy(&cobj->view, &object->current.objectView, sizeof(__GLHCKobjectView));
-   memcpy(&camera->view, &object->current.cameraView, sizeof(__GLHCKcameraView));
+   //memcpy(&camera->view, &object->current.cameraView, sizeof(__GLHCKcameraView));
    glhckCameraUpdate(camera);
 }
 
