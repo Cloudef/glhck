@@ -163,6 +163,9 @@ GLHCKAPI void glhckLightAtten(glhckLight *object, const kmVec3 *atten)
    CALL(2, "%p, "VEC3S, object, VEC3(atten));
    assert(object && atten);
    kmVec3Assign(&object->options.atten, atten);
+   object->options.atten.x *= 0.01;
+   object->options.atten.y *= 0.01;
+   object->options.atten.z *= 0.01;
 }
 
 /* \brief set light's atten factor (kmScalar) */
