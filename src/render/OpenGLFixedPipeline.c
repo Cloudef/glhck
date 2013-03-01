@@ -830,6 +830,7 @@ void _glhckRenderOpenGLFixedPipeline(void)
    /* this also tells library that everything went OK,
     * so do it last */
    GLHCK_RENDER_INIT(RENDER_NAME);
+   return;
 
 fail:
    renderTerminate();
