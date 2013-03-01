@@ -36,7 +36,8 @@ enum {
    GL_STATE_TEXTURE     = 8,
    GL_STATE_DRAW_AABB   = 16,
    GL_STATE_DRAW_OBB    = 32,
-   GL_STATE_WIREFRAME   = 64
+   GL_STATE_WIREFRAME   = 64,
+   GL_STATE_LIGHTING    = 128,
 };
 
 /* global data */
@@ -44,6 +45,7 @@ typedef struct __OpenGLstate {
    GLchar attrib[GLHCK_ATTRIB_COUNT];
    GLuint flags;
    GLuint blenda, blendb;
+   glhckCullFaceType cullFace;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
@@ -86,6 +88,21 @@ static void rTime(float time)
 /* \brief bind light */
 static void rLightBind(glhckLight *light)
 {
+   glhckObject *object;
+
+   if (!light)
+      return;
+
+   object = glhckLightGetObject(light);
+   GL_CALL(glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat*)glhckObjectGetPosition(object)));
+   GL_CALL(glLightfv(GL_LIGHT0, GL_CONSTANT_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->x));
+   GL_CALL(glLightfv(GL_LIGHT0, GL_LINEAR_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->y));
+   GL_CALL(glLightfv(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->z));
+#if 0
+   GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_CUTOFF, (GLfloat*)&glhckLightGetCutout(light)->x));
+   GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_EXPONENT, (GLfloat*)&glhckLightGetCutout(light)->y));
+   GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, (GLfloat*)glhckObjectGetTarget(object)));
+#endif
 }
 
 /* \brief set projection matrix */
@@ -166,9 +183,42 @@ static inline void materialState(const _glhckObject *object)
    GLPOINTER()->state.flags |=
       (object->material.flags & GLHCK_MATERIAL_CULL)?GL_STATE_CULL:0;
 
+   /* cull face */
+   GLPOINTER()->state.cullFace = GLHCKRP()->cullFace;
+
    /* blending modes */
    GLPOINTER()->state.blenda = object->material.blenda;
    GLPOINTER()->state.blendb = object->material.blendb;
+
+   /* lighting */
+   GLPOINTER()->state.flags |=
+      (object->material.flags & GLHCK_MATERIAL_LIGHTING && GLHCKRD()->light)?GL_STATE_LIGHTING:0;
+
+   /* disabled pass bits override the above.
+    * it means that we don't want something for this render pass. */
+   if (!(GLHCKRP()->flags & GLHCK_PASS_DEPTH))
+      GLPOINTER()->state.flags &= ~GL_STATE_DEPTH;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_CULL))
+      GLPOINTER()->state.flags &= ~GL_STATE_CULL;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_BLEND))
+      GLPOINTER()->state.flags &= ~GL_STATE_BLEND;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_TEXTURE))
+      GLPOINTER()->state.flags &= ~GL_STATE_TEXTURE;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_OBB))
+      GLPOINTER()->state.flags &= ~GL_STATE_DRAW_OBB;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_AABB))
+      GLPOINTER()->state.flags &= ~GL_STATE_DRAW_AABB;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_WIREFRAME))
+      GLPOINTER()->state.flags &= ~GL_STATE_WIREFRAME;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_LIGHTING))
+      GLPOINTER()->state.flags &= ~GL_STATE_LIGHTING;
+
+   /* pass blend override */
+   if (GLHCKRP()->blenda != GLHCK_ZERO || GLHCKRP()->blendb != GLHCK_ZERO) {
+      GLPOINTER()->state.flags |= GL_STATE_BLEND;
+      GLPOINTER()->state.blenda = GLHCKRP()->blenda;
+      GLPOINTER()->state.blendb = GLHCKRP()->blendb;
+   }
 
    /* depth? */
    if (GL_STATE_CHANGED(GL_STATE_DEPTH)) {
@@ -185,9 +235,13 @@ static inline void materialState(const _glhckObject *object)
    if (GL_STATE_CHANGED(GL_STATE_CULL)) {
       if (GL_HAS_STATE(GL_STATE_CULL)) {
          GL_CALL(glEnable(GL_CULL_FACE));
-         GL_CALL(glCullFace(GL_BACK));
+         glhCullFace(GLPOINTER()->state.cullFace);
       } else {
          GL_CALL(glDisable(GL_CULL_FACE));
+      }
+   } else if (GL_HAS_STATE(GL_STATE_CULL)) {
+      if (GLPOINTER()->state.cullFace != old.cullFace) {
+         glhCullFace(GLPOINTER()->state.cullFace);
       }
    }
 
@@ -218,6 +272,17 @@ static inline void materialState(const _glhckObject *object)
          GL_CALL(glEnable(GL_TEXTURE_2D));
       } else {
          GL_CALL(glDisable(GL_TEXTURE_2D));
+      }
+   }
+
+   /* check lighting */
+   if (GL_STATE_CHANGED(GL_STATE_LIGHTING)) {
+      if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
+         GL_CALL(glEnable(GL_LIGHTING));
+         GL_CALL(glEnable(GL_LIGHT0));
+      } else {
+         GL_CALL(glDisable(GL_LIGHT0));
+         GL_CALL(glDisable(GL_LIGHTING));
       }
    }
 
@@ -514,6 +579,25 @@ static inline void rObjectStart(const _glhckObject *object) {
                       object->material.diffuse.g,
                       object->material.diffuse.b,
                       object->material.diffuse.a));
+
+   /* upload material parameters */
+   if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
+      GL_CALL(glLightfv(GL_LIGHT0, GL_AMBIENT, ((GLfloat[]){
+               (GLfloat)object->material.ambient.r/255.0f,
+               (GLfloat)object->material.ambient.g/255.0f,
+               (GLfloat)object->material.ambient.b/255.0f,
+               (GLfloat)object->material.ambient.a/255.0f})));
+      GL_CALL(glLightfv(GL_LIGHT0, GL_DIFFUSE, ((GLfloat[]){
+               (GLfloat)object->material.diffuse.r/255.0f,
+               (GLfloat)object->material.diffuse.g/255.0f,
+               (GLfloat)object->material.diffuse.b/255.0f,
+               (GLfloat)object->material.diffuse.a/255.0f})));
+      GL_CALL(glLightfv(GL_LIGHT0, GL_SPECULAR, ((GLfloat[]){
+               (GLfloat)object->material.specular.r/255.0f,
+               (GLfloat)object->material.specular.g/255.0f,
+               (GLfloat)object->material.specular.b/255.0f,
+               (GLfloat)object->material.specular.a/255.0f})));
+   }
 
    /* set states and draw */
    materialState(object);
