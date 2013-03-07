@@ -787,6 +787,8 @@ GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int importFlag
 GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
 GLHCKAPI size_t glhckTextureFree(glhckTexture *texture);
+GLHCKAPI const void* glhckTextureGetData(glhckTexture *texture, int *size);
+GLHCKAPI void glhckTextureGetInformation(glhckTexture *texture, glhckTextureTarget *target, int *width, int *height, int *depth, int *border, glhckTextureFormat *format, glhckDataType *type);
 GLHCKAPI int glhckTextureCreate(glhckTexture *texture, glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, glhckDataType type, int size, const void *data);
 GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, glhckTextureFormat format, glhckDataType type, int size, const void *data);
 GLHCKAPI void glhckTextureFill(glhckTexture *texture, int level, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data);

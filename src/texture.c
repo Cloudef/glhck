@@ -395,6 +395,30 @@ GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void)
    return &defaultParameters;
 }
 
+/* \brief get texture's data */
+GLHCKAPI const void* glhckTextureGetData(glhckTexture *texture, int *size)
+{
+   CALL(0, "%p, %p", texture, size);
+   assert(texture);
+   if (size) *size = texture->size;
+   RET(0, "%p", texture->data);
+   return texture->data;
+}
+
+/* \brief get texture's information */
+GLHCKAPI void glhckTextureGetInformation(glhckTexture *texture, glhckTextureTarget *target, int *width, int *height, int *depth, int *border, glhckTextureFormat *format, glhckDataType *type)
+{
+   CALL(0, "%p, %p, %p, %p, %p, %p, %p, %p", texture, target, width, height, depth, border, format, type);
+   assert(texture);
+   if (target) *target = texture->target;
+   if (width) *width = texture->width;
+   if (height) *height = texture->height;
+   if (depth) *depth = texture->depth;
+   if (border) *border = 0;
+   if (format) *format = texture->format;
+   if (type) *type = texture->type;
+}
+
 /* \brief create texture manually. */
 GLHCKAPI int glhckTextureCreate(glhckTexture *texture, glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, glhckDataType type, int size, const void *data)
 {
