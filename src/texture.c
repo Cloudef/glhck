@@ -448,7 +448,7 @@ GLHCKAPI int glhckTextureCreate(glhckTexture *texture, glhckTextureTarget target
 
    /* copy data */
    if (data) {
-      if (!(copied = _glhckCopy(data, texture->size)))
+      if (!(copied = _glhckCopy(data, size)))
          goto fail;
    }
 
