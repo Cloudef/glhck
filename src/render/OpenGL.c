@@ -190,7 +190,7 @@ static void rLightBind(glhckLight *light)
 }
 
 /* \brief link program from 2 compiled shader objects */
-static unsigned int rProgramLink(GLuint vertexShader, GLuint fragmentShader)
+static GLuint rProgramLink(GLuint vertexShader, GLuint fragmentShader)
 {
    GLuint obj = 0;
    GLchar *log = NULL;
