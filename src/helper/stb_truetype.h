@@ -1242,6 +1242,7 @@ float stbtt_ScaleForPixelHeight(const stbtt_fontinfo *info, float height)
 
 void stbtt_FreeShape(const stbtt_fontinfo *info, stbtt_vertex *v)
 {
+   (void)info;
    STBTT_free(v, info->userdata);
 }
 
@@ -1295,6 +1296,7 @@ typedef struct stbtt__active_edge
 
 static stbtt__active_edge *new_active(stbtt__edge *e, int off_x, float start_point, void *userdata)
 {
+   (void)userdata;
    stbtt__active_edge *z = (stbtt__active_edge *) STBTT_malloc(sizeof(*z), userdata); // @TODO: make a pool of these!!!
    float dxdy = (e->x1 - e->x0) / (e->y1 - e->y0);
    STBTT_assert(e->y0 <= start_point);
@@ -1554,6 +1556,7 @@ static int stbtt__tesselate_curve(stbtt__point *points, int *num_points, float x
 // returns number of contours
 stbtt__point *stbtt_FlattenCurves(stbtt_vertex *vertices, int num_verts, float objspace_flatness, int **contour_lengths, int *num_contours, void *userdata)
 {
+   (void)userdata;
    stbtt__point *points=0;
    int num_points=0;
 
@@ -1635,6 +1638,7 @@ void stbtt_Rasterize(stbtt__bitmap *result, float flatness_in_pixels, stbtt_vert
 
 void stbtt_FreeBitmap(unsigned char *bitmap, void *userdata)
 {
+   (void)userdata;
    STBTT_free(bitmap, userdata);
 }
 
