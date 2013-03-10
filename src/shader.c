@@ -1,4 +1,5 @@
 #include "internal.h"
+#include <stdio.h> /* temporary printf */
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_SHADER
 

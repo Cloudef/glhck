@@ -17,6 +17,7 @@ typedef struct jpegErrorStruct {
 static void _JPEGFatalErrorHandler(j_common_ptr cinfo)
 {
    jpegErrorStruct *errmgr;
+   (void)cinfo;
    errmgr = (jpegErrorStruct*)cinfo->err;
    cinfo->err->output_message(cinfo);
    siglongjmp(errmgr->setjmp_buffer, 1);
@@ -25,11 +26,13 @@ static void _JPEGFatalErrorHandler(j_common_ptr cinfo)
 /* failure handler */
 static void _JPEGErrorHandler(j_common_ptr cinfo)
 {
+   (void)cinfo;
 }
 
 /* failure handler */
 static void _JPEGErrorHandler2(j_common_ptr cinfo, int msg_level)
 {
+   (void)cinfo; (void)msg_level;
 }
 
 /* \brief check if file is JPEG */

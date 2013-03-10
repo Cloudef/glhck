@@ -897,12 +897,14 @@ GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(kmScalar width, kmScalar
 /* \brief does vertex type have normal? */
 GLHCKAPI int glhckVertexTypeHasNormal(glhckGeometryVertexType type)
 {
+   (void)type;
    return 1;
 }
 
 /* \brief does vertex type have color? */
 GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type)
 {
+   (void)type;
    return 1;
 }
 

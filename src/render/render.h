@@ -9,6 +9,7 @@
 /* renderers */
 void _glhckRenderOpenGLFixedPipeline(void);
 void _glhckRenderOpenGL(void);
+void _glhckRenderStub(void);
 
 #endif /* __glhck_render_h__ */
 

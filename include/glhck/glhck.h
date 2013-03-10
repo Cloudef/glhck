@@ -109,7 +109,7 @@ typedef enum glhckRenderType {
    GLHCK_RENDER_OPENGL_FIXED_PIPELINE,
    GLHCK_RENDER_GLES1,
    GLHCK_RENDER_GLES2,
-   GLHCK_RENDER_NULL,
+   GLHCK_RENDER_STUB,
 } glhckRenderType;
 
 /* driver type */

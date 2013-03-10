@@ -121,6 +121,7 @@ void _glhckTrace(int level, const char *channel, const char *function, const cha
 {
    va_list args;
    char buffer[LINE_MAX];
+   (void)function;
 
    if (!GLHCKT()->channel) return;
 

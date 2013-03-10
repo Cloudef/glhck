@@ -3,7 +3,7 @@
 #include <stdio.h>  /* for snprintf */
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
-#include "OpenGLHelper.h"
+#include "helper_opengl.h"
 
 /*
  * glhck to OpenGL mappings
@@ -1037,7 +1037,6 @@ void glhRenderbufferBind(GLuint object) {
 void glhFramebufferBind(glhckFramebufferTarget target, GLuint object) {
    GL_CALL(glBindFramebuffer(glhFramebufferTargetForGlhckType(target), object));
 }
-
 void glhHwBufferBind(glhckHwBufferTarget target, GLuint object) {
    GL_CALL(glBindBuffer(glhHwBufferTargetForGlhckType(target), object));
 }
@@ -1068,7 +1067,7 @@ void glhHwBufferUnmap(glhckHwBufferTarget target) {
 void glhClear(GLuint bufferBits)
 {
    GLuint glBufferBits = 0;
-   TRACE(2);
+   CALL(2, "%u", bufferBits);
 
    if (bufferBits & GLHCK_COLOR_BUFFER)
       glBufferBits |= GL_COLOR_BUFFER_BIT;
@@ -1081,7 +1080,7 @@ void glhClear(GLuint bufferBits)
 /* \brief set OpenGL clear color */
 void glhClearColor(const glhckColorb *color)
 {
-   TRACE(2);
+   CALL(2, "%p", color);
    float fr = (float)color->r/255;
    float fg = (float)color->g/255;
    float fb = (float)color->b/255;
@@ -1119,7 +1118,7 @@ void glhTextureParameter(glhckTextureTarget target, const glhckTextureParameters
    GLenum minFilter, magFilter;
    GLenum wrapS, wrapT, wrapR;
    GLenum compareMode, compareFunc;
-   CALL(0, "%d, %p", params);
+   CALL(0, "%d, %p", target, params);
    assert(params);
 
    glTarget    = glhTextureTargetForGlhckType(target);
@@ -1314,6 +1313,7 @@ GLuint glhProgramAttachUniformBuffer(GLuint program, const GLchar *uboName, GLui
    if ((ubo = glGetUniformBlockIndex(program, uboName))) {
       GL_CALL(glUniformBlockBinding(program, ubo, location));
    }
+   RET(0, "%u", ubo);
    return ubo;
 }
 
@@ -1378,6 +1378,7 @@ _glhckHwBufferShaderUniform* glhProgramUniformBufferList(GLuint program, const G
    }
 
    _glhckFree(indices);
+   RET(0, "%p", uniforms);
    return uniforms;
 
 fail:
@@ -1390,6 +1391,7 @@ no_uniforms:
    }
    IFDO(_glhckFree, indices);
    IFDO(_glhckFree, uname);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
@@ -1538,7 +1540,7 @@ no_uniforms:
 /* \brief set shader uniform */
 void glhProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, const GLvoid *value)
 {
-   CALL(0, "%u", obj);
+   CALL(2, "%u, %p, %d, %p", obj, uniform, count, value);
 
    /* automatically figure out the data type */
    switch (uniform->type) {

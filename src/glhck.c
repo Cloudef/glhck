@@ -31,8 +31,9 @@ int feenableexcept(int excepts);
 
 /* floating point exception handler */
 #if defined(__linux__) || defined(_WIN32) || defined(OSX_SSE_FPE)
-static void _glhckFpeHandler(int sig)
+static void _glhckFpeHandler(int signal)
 {
+   (void)signal;
    _glhckPuts("\4SIGFPE \1signal received!");
    _glhckPuts("Run the program again with DEBUG=2,+all,+trace to catch where it happens.");
    _glhckPuts("Or optionally run the program with GDB.");
@@ -42,7 +43,7 @@ static void _glhckFpeHandler(int sig)
 
 /* set floating point exception stuff
  * this stuff is from blender project. */
-static void _glhckSetFPE(int argc, const char **argv)
+static void _glhckSetupFPE(void)
 {
 #if defined(__linux__) || defined(_WIN32) || defined(OSX_SSE_FPE)
    /* zealous but makes float issues a heck of a lot easier to find!
@@ -69,6 +70,8 @@ static void _glhckSetFPE(int argc, const char **argv)
 /* \brief backtrace handler of glhck */
 static void _glhckBacktrace(int signal)
 {
+   (void)signal;
+
    /* GDB */
 #if defined(__linux__) || defined(__APPLE__)
    char buf[1024];
@@ -149,7 +152,7 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
    /* FIXME: change the signal calls in these functions to sigaction's */
 #ifndef NDEBUG
    /* set FPE handler */
-   _glhckSetFPE(argc, _argv);
+   _glhckSetupFPE();
 
    /* setup backtrace handler
     * make this optional.. */
@@ -229,7 +232,9 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
       case GLHCK_RENDER_GLES1:
          _glhckRenderOpenGLFixedPipeline();
          break;
+      case GLHCK_RENDER_STUB:
       default:
+         _glhckRenderStub();
          break;
    }
 

@@ -19,7 +19,8 @@
 #define GLHCK_ATTRIB_COUNT 4
 
 /* include shared OpenGL functions */
-#include "OpenGLHelper.h"
+#include "helper_opengl.h"
+#include "helper_stub.h"
 
 static const GLenum _glhckAttribName[] = {
    GL_VERTEX_ARRAY,
@@ -79,11 +80,6 @@ static void rMultMatrix(const kmMat4 *mat)
 }
 
 /* ---- Render API ---- */
-
-/* \brief set time */
-static void rTime(float time)
-{
-}
 
 /* \brief bind light */
 static void rLightBind(glhckLight *light)
@@ -820,55 +816,15 @@ static void renderTerminate(void)
 {
    TRACE(0);
 
+   /* free our render structure */
+   IFDO(_glhckFree, GLHCKR()->renderPointer);
+
    /* this tells library that we are no longer alive. */
    GLHCK_RENDER_TERMINATE(RENDER_NAME);
 }
 
 /* stub shader functions */
-static void rProgramUse(GLuint obj) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-}
-static GLuint rProgramLink(GLuint vsobj, GLuint fsobj) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-   return 0;
-}
-static void rProgramDelete(GLuint obj) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-}
-static void rProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, const GLvoid *value) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-}
-static _glhckHwBufferShaderUniform* rProgramUniformBufferList(GLuint program, const GLchar *uboName, GLsizei *size) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-   return NULL;
-}
-static _glhckShaderAttribute* rProgramAttributeList(GLuint obj) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-   return NULL;
-}
-static _glhckShaderUniform* rProgramUniformList(GLuint obj) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-   return NULL;
-}
-static GLuint rProgramAttachUniformBuffer(GLuint program, const GLchar *uboName, GLuint location) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-   return 0;
-}
-static GLuint rShaderCompile(glhckShaderType type, const GLchar *effectKey, const GLchar *memoryContents) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-   return 0;
-}
-static void rShaderDelete(GLuint obj) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-}
-static int rShadersPath(const char *pathPrefic, const char *pathSuffix) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-   return 0;
-}
-static int rShadersDirectiveToken(const char *token, const char *directive) {
-   DEBUG(GLHCK_DBG_WARNING, "Shaders not supported on this renderer!");
-   return 0;
-}
+
 
 /* ---- Main ---- */
 
@@ -917,18 +873,18 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(hwBufferUnmap, glhHwBufferUnmap);
 
    /* shader objects */
-   GLHCK_RENDER_FUNC(programBind, rProgramUse);
-   GLHCK_RENDER_FUNC(programLink, rProgramLink);
-   GLHCK_RENDER_FUNC(programDelete, rProgramDelete);
-   GLHCK_RENDER_FUNC(programSetUniform, rProgramSetUniform);
-   GLHCK_RENDER_FUNC(programUniformBufferList, rProgramUniformBufferList);
-   GLHCK_RENDER_FUNC(programAttributeList, rProgramAttributeList);
-   GLHCK_RENDER_FUNC(programUniformList, rProgramUniformList);
-   GLHCK_RENDER_FUNC(programAttachUniformBuffer, rProgramAttachUniformBuffer);
-   GLHCK_RENDER_FUNC(shaderCompile, rShaderCompile);
-   GLHCK_RENDER_FUNC(shaderDelete, rShaderDelete);
-   GLHCK_RENDER_FUNC(shadersPath, rShadersPath);
-   GLHCK_RENDER_FUNC(shadersDirectiveToken, rShadersDirectiveToken);
+   GLHCK_RENDER_FUNC(programBind, stubProgramBind);
+   GLHCK_RENDER_FUNC(programLink, stubProgramLink);
+   GLHCK_RENDER_FUNC(programDelete, stubProgramDelete);
+   GLHCK_RENDER_FUNC(programSetUniform, stubProgramSetUniform);
+   GLHCK_RENDER_FUNC(programUniformBufferList, stubProgramUniformBufferList);
+   GLHCK_RENDER_FUNC(programAttributeList, stubProgramAttributeList);
+   GLHCK_RENDER_FUNC(programUniformList, stubProgramUniformList);
+   GLHCK_RENDER_FUNC(programAttachUniformBuffer, stubProgramAttachUniformBuffer);
+   GLHCK_RENDER_FUNC(shaderCompile, stubShaderCompile);
+   GLHCK_RENDER_FUNC(shaderDelete, stubShaderDelete);
+   GLHCK_RENDER_FUNC(shadersPath, stubShadersPath);
+   GLHCK_RENDER_FUNC(shadersDirectiveToken, stubShadersDirectiveToken);
 
    /* drawing functions */
    GLHCK_RENDER_FUNC(setOrthographic, rSetOrthographic);
@@ -944,7 +900,7 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(bufferGetPixels, glhBufferGetPixels);
 
    /* common */
-   GLHCK_RENDER_FUNC(time, rTime);
+   GLHCK_RENDER_FUNC(time, stubTime);
    GLHCK_RENDER_FUNC(viewport, rViewport);
    GLHCK_RENDER_FUNC(terminate, renderTerminate);
 

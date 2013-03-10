@@ -20,9 +20,11 @@ SET(GLHCK_SRC
    geometry/plane.c
    geometry/model.c
    render/render.c
-   render/OpenGLHelper.c
-   render/OpenGL.c
-   render/OpenGLFixedPipeline.c
+   render/helper_opengl.c
+   render/helper_stub.c
+   render/stub.c
+   render/opengl.c
+   render/opengl_fixpipe.c
    import/import.c)
 
 # Setup importers

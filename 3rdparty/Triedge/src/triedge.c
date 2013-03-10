@@ -76,6 +76,7 @@ int main(int argc, char **argv)
    unsigned int *in_indices = NULL, *out_indices = NULL;
    unsigned int v1, v2, v3 = 0, test;
    char buffer[LINE_MAX], **read_indices = NULL;
+   (void)argc; (void)argv;
 
    if (!(fgets(buffer, LINE_MAX, stdin)))
          goto read_fail;

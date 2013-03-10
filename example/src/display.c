@@ -16,18 +16,21 @@ static int MOUSEX = 0, MOUSEY = 0;
 static int LASTMOUSEX = 0, LASTMOUSEY = 0;
 static int close_callback(GLFWwindow* window)
 {
+   (void)window;
    RUNNING = 0;
    return 1;
 }
 
 static void resize_callback(GLFWwindow* window, int width, int height)
 {
+   (void)window;
    WIDTH = width; HEIGHT = height;
    glhckDisplayResize(width, height);
 }
 
 static void mousepos_callback(GLFWwindow* window, int mousex, int mousey)
 {
+   (void)window;
    MOUSEX = mousex;
    MOUSEY = mousey;
    if (!LASTMOUSEX && !LASTMOUSEY) {
@@ -421,12 +424,14 @@ int main(int argc, char **argv)
       duration += delta;
    }
 
-   /* check that everything is freed
-    * like should */
+   /* check that everything is freed like should */
+   for (li = 0; li != numLights; ++li)
+      glhckLightFree(light[li]);
    glhckObjectFree(cube);
    glhckObjectFree(sprite);
    glhckObjectFree(cube2);
    glhckObjectFree(sprite3);
+   glhckObjectFree(plane);
    if (rttText)  glhckObjectFree(rttText);
    if (rttText2) glhckObjectFree(rttText2);
    if (texture)  glhckTextureFree(texture);

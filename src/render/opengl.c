@@ -19,7 +19,7 @@
 #define GLHCK_ATTRIB_COUNT GLHCK_ATTRIB_LAST
 
 /* include shared OpenGL functions */
-#include "OpenGLHelper.h"
+#include "helper_opengl.h"
 
 /* GLSW */
 #include "glsw.h"
@@ -1108,6 +1108,9 @@ static void renderTerminate(void)
 
    /* shutdown shader wrangler */
    glswShutdown();
+
+   /* free our render structure */
+   IFDO(_glhckFree, GLHCKR()->renderPointer);
 
    /* this tells library that we are no longer alive. */
    GLHCK_RENDER_TERMINATE(RENDER_NAME);

@@ -28,6 +28,7 @@ static int buildModel(glhckObject *object, size_t numIndices, size_t numVertices
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
    size_t numStrippedIndices = 0;
    glhckImportIndexData *stripIndices = NULL;
+   (void)flags;
 
    if (!numVertices)
       return RETURN_OK;

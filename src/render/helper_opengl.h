@@ -101,7 +101,6 @@ void glhTextureBind(glhckTextureTarget target, GLuint object);
 void glhTextureActive(GLuint index);
 void glhRenderbufferBind(GLuint object);
 void glhFramebufferBind(glhckFramebufferTarget target, GLuint object);
-
 void glhHwBufferBind(glhckHwBufferTarget target, GLuint object);
 void glhHwBufferBindBase(glhckHwBufferTarget target, GLuint index, GLuint object);
 void glhHwBufferBindRange(glhckHwBufferTarget target, GLuint index, GLuint object, GLintptr offset, GLsizeiptr size);
