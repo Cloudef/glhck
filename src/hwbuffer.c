@@ -232,15 +232,14 @@ GLHCKAPI void glhckHwBufferUnmap(glhckHwBuffer *object)
  */
 
 /* \brief create and intialize uniform buffer from shader */
-GLHCKAPI int glhckHwBufferCreateUniformBufferFromShader(glhckHwBuffer *object, glhckShader *shader,
-      const char *uboName, glhckHwBufferStoreType usage)
+GLHCKAPI int glhckHwBufferCreateUniformBufferFromShader(glhckHwBuffer *object, glhckShader *shader, const char *uboName, glhckHwBufferStoreType usage)
 {
    char *bufferName = NULL;
    int size;
-   _glhckHwBufferShaderUniform *uniforms = NULL, *u;
+   _glhckHwBufferShaderUniform *uniforms = NULL, *u, *un;
    assert(object && shader);
 
-   /* create the uniform buffer */
+   /* list ubo information from program */
    if (!(uniforms = GLHCKRA()->programUniformBufferList(shader->program, uboName, &size)))
       goto fail;
 
@@ -257,12 +256,67 @@ GLHCKAPI int glhckHwBufferCreateUniformBufferFromShader(glhckHwBuffer *object, g
    object->uniforms = uniforms;
 
    for (u = object->uniforms; u; u = u->next)
-      printf("(%s:%u) %d : %d [%s]\n", u->name, u->offset, u->type, u->size, u->typeName);
+      printf("UBO: (%s:%u) %d : %d [%s]\n", u->name, u->offset, u->type, u->size, u->typeName);
 
    return RETURN_OK;
 
 fail:
    IFDO(_glhckFree, bufferName);
+   for (u = uniforms; u; u = un) {
+      un = u->next;
+      _glhckFree(u->name);
+      _glhckFree(u);
+   }
+   return RETURN_FAIL;
+}
+
+/* \brief append information about UBO from shader */
+GLHCKAPI int glhckHwBufferAppendInformationFromShader(glhckHwBuffer *object, glhckShader *shader)
+{
+   int size;
+   _glhckHwBufferShaderUniform *uniforms = NULL, *u, *ua, *up, *un;
+   assert(object && shader);
+   assert(object->created);
+
+   /* list ubo information from program */
+   if (!(uniforms = GLHCKRA()->programUniformBufferList(shader->program, object->name, &size)))
+      goto fail;
+
+   /* filter out stuff from list that we already have */
+   for (u = object->uniforms; u; u = u->next) {
+      for (ua = uniforms, up = NULL; ua; up = ua, ua = un) {
+         un = ua->next;
+         if (u->offset != ua->offset) continue;
+         if (ua == uniforms) uniforms = ua->next;
+         else if (up) up->next = ua->next;
+         _glhckFree(ua->name);
+         _glhckFree(ua);
+         break;
+      }
+   }
+
+   /* there is nothing to do */
+   if (!uniforms) return RETURN_OK;
+
+   /* initialize uniform buffer with the size */
+   glhckHwBufferCreate(object, GLHCK_UNIFORM_BUFFER, size, NULL, object->storeType);
+
+   /* append the uniforms */
+   for (u = object->uniforms; u && u->next; u = u->next);
+   if (u) u->next = uniforms;
+   else object->uniforms = uniforms;
+
+   for (u = uniforms; u; u = u->next)
+      printf("UBO: (%s:%u) %d : %d [%s]\n", u->name, u->offset, u->type, u->size, u->typeName);
+
+   return RETURN_OK;
+
+fail:
+   for (u = uniforms; u; u = un) {
+      un = u->next;
+      _glhckFree(u->name);
+      _glhckFree(u);
+   }
    return RETURN_FAIL;
 }
 

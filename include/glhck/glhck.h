@@ -868,8 +868,8 @@ GLHCKAPI void* glhckHwBufferMap(glhckHwBuffer *object, glhckHwBufferAccessType a
 GLHCKAPI void glhckHwBufferUnmap(glhckHwBuffer *object);
 
 /* uniform buffer specific */
-GLHCKAPI int glhckHwBufferCreateUniformBufferFromShader(glhckHwBuffer *object, glhckShader *shader,
-      const char *uboName, glhckHwBufferStoreType usage);
+GLHCKAPI int glhckHwBufferCreateUniformBufferFromShader(glhckHwBuffer *object, glhckShader *shader, const char *uboName, glhckHwBufferStoreType usage);
+GLHCKAPI int glhckHwBufferAppendInformationFromShader(glhckHwBuffer *object, glhckShader *shader);
 GLHCKAPI void glhckHwBufferFillUniform(glhckHwBuffer *object, const char *uniform, int size, const void *data);
 
 /* shaders */

@@ -1074,12 +1074,14 @@ static int renderInit(void)
    for (i = 0; i != GL_SHADER_LAST; ++i)
       if (!GLPOINTER()->shader[i]) goto fail;
 
-   /* initialize the UBO automaticlaly from shader */
-   /* FIXME: Nvidia bug(?)
-    * Maybe the compiler optimizes stuff out from UBO that is not used thus,
-    * we get crazy results when we gather UBO data from GL_SHADER_BASE.
-    * As workaround, lets gather from GL_SHADER_BASE_LIGHTING. We are sure it's used there fully. */
-   glhckHwBufferCreateUniformBufferFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_BASE_LIGHTING], "GlhckUBO", GLHCK_BUFFER_DYNAMIC_DRAW);
+   /* initialize the UBO from shaders */
+   glhckHwBufferCreateUniformBufferFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_BASE], "GlhckUBO", GLHCK_BUFFER_DYNAMIC_DRAW);
+   glhckHwBufferAppendInformationFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_COLOR]);
+   glhckHwBufferAppendInformationFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_BASE_LIGHTING]);
+   glhckHwBufferAppendInformationFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_COLOR_LIGHTING]);
+   glhckHwBufferAppendInformationFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_TEXT]);
+   DEBUG(GLHCK_DBG_CRAP, "GLHCK UBO SIZE: %d", GLPOINTER()->sharedUBO->size);
+
    glhckHwBufferBindRange(GLPOINTER()->sharedUBO, 0, 0, GLPOINTER()->sharedUBO->size);
 
    RET(0, "%d", RETURN_OK);
