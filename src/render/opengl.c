@@ -174,14 +174,12 @@ static void rLightBind(glhckLight *light)
 
    camera = GLHCKRD()->camera;
    object = glhckLightGetObject(light);
+   kmVec3 diffuse = { object->material.diffuse.r, object->material.diffuse.g, object->material.diffuse.b };
    glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Position", sizeof(kmVec3), (GLvoid*)glhckObjectGetPosition(object));
    glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Target", sizeof(kmVec3), (GLvoid*)glhckObjectGetTarget(object));
    glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Cutout", sizeof(kmVec2), (GLvoid*)glhckLightGetCutout(light));
    glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Atten", sizeof(kmVec3), (GLvoid*)glhckLightGetAtten(light));
-   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Diffuse", sizeof(GLfloat)*3, &((GLfloat[]){
-            object->material.diffuse.r,
-            object->material.diffuse.g,
-            object->material.diffuse.b}));
+   glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Diffuse", sizeof(kmVec3), (GLvoid*)&diffuse);
    glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.PointLight", sizeof(GLfloat), (GLvoid*)&light->options.pointLightFactor);
    glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Near", sizeof(GLfloat), (GLvoid*)&camera->view.near);
    glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Far", sizeof(GLfloat), (GLvoid*)&camera->view.far);
