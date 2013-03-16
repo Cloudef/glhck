@@ -25,6 +25,7 @@ void _glhckRenderCheckApi(void)
    GLHCK_API_CHECK(viewport);
    GLHCK_API_CHECK(setProjection);
    GLHCK_API_CHECK(setView);
+   GLHCK_API_CHECK(setOrthographic);
    GLHCK_API_CHECK(clearColor);
    GLHCK_API_CHECK(clear);
    GLHCK_API_CHECK(objectRender);

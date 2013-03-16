@@ -256,7 +256,7 @@ int main(int argc, char **argv)
    for (li = 0; li != numLights; ++li) {
       light[li] = glhckLightNew();
       glhckLightCutoutf(light[li], 45.0f, 0.0f);
-      glhckLightPointLightFactor(light[li], 0.1f);
+      glhckLightPointLightFactor(light[li], 0.0f);
       glhckLightColorb(light[li], rand()%255, rand()%255, rand()%255, 255);
       glhckObject *c = glhckCubeNew(1.0f);
       glhckObjectAddChildren(glhckLightGetObject(light[li]), c);

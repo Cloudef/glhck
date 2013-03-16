@@ -992,7 +992,6 @@ static int renderInit(void)
          "  vec2 LCutout  = GlhckLight.Cutout;"
          "  vec3 Specular = Diffuse * GlhckMaterial.Specular/255.0;"
          "  vec3 Normal   = normalize(GlhckFNormalWorld);"
-         "  vec3 ViewVec  = normalize(-GlhckFVertexView.xyz);"
          "  vec3 LightVec = normalize(GlhckLight.Position - GlhckFVertexWorld.xyz);"
          "  vec3 LightDir = normalize(GlhckLight.Target   - GlhckFVertexWorld.xyz);"
          ""
@@ -1000,11 +999,11 @@ static int renderInit(void)
          "  float Spotlight = max(-dot(LightVec, LightDir), 0.0);"
          "  float SpotlightFade = clamp((LCutout.x - Spotlight) / (LCutout.x - LCutout.y), 0.0, 1.0);"
          "  Spotlight = clamp(pow(Spotlight * SpotlightFade, 1.0), GlhckLight.PointLight, 1.0);"
-         "  vec3  R = normalize(-reflect(LightVec, Normal));"
-         "  float S = pow(max(dot(R, ViewVec), 0.0), GlhckMaterial.Shininess);"
+         "  vec3  R = -normalize(reflect(LightVec, Normal));"
+         "  float S = pow(max(dot(R, LightVec), 0.0), GlhckMaterial.Shininess);"
          "  float D = distance(GlhckFVertexWorld.xyz, GlhckLight.Position);"
          "  float A = 1.0 / (LAtten.x + (LAtten.y * D) + (LAtten.z * D * D));"
-         "  Color += (Diffuse * L + (Specular * S)) * LDiffuse * A * Spotlight;"
+         "  Color += (Diffuse * L + Specular * S) * LDiffuse * A * Spotlight;"
          "  return Color;"
          "}");
 

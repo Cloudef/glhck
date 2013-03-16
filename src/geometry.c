@@ -53,27 +53,21 @@ glhckMagicDefine(glhckMagic2s, glhckMagic3s,
       glhckVector2s, glhckVector3s, short, GLHCK_SHORT_VMAGIC);
 
 /* \brief get min/max from import data */
-static void _glhckMaxMinImportData(const glhckImportVertexData *import, int memb,
-      glhckVector3f *vmin, glhckVector3f *vmax, glhckVector3f *nmin, glhckVector3f *nmax)
+static void _glhckMaxMinImportData(const glhckImportVertexData *import, int memb, glhckVector3f *vmin, glhckVector3f *vmax)
 {
    int i;
    glhckSetV3(vmax, &import[0].vertex);
    glhckSetV3(vmin, &import[0].vertex);
-   glhckSetV3(nmax, &import[0].normal);
-   glhckSetV3(nmin, &import[0].normal);
 
    /* find max && min first */
    for (i = 1; i != memb; ++i) {
       glhckMaxV3(vmax, &import[i].vertex);
       glhckMinV3(vmin, &import[i].vertex);
-      glhckMaxV3(nmax, &import[i].normal);
-      glhckMinV3(nmin, &import[i].normal);
    }
 }
 
 /* \brief get /min/max from index data */
-static void _glhckMaxMinIndexData(const glhckImportIndexData *import, int memb,
-      unsigned int *mini, unsigned int *maxi)
+static void _glhckMaxMinIndexData(const glhckImportIndexData *import, int memb, unsigned int *mini, unsigned int *maxi)
 {
    int i;
    *mini = *maxi = import[0];
@@ -125,8 +119,7 @@ static void _glhckConvertVertexData(
 {
    int i;
    float biasMagic = 0.0f, scaleMagic = 0.0f;
-   glhckVector3f vmin, vmax,
-                 nmin, nmax;
+   glhckVector3f vmin, vmax;
    CALL(0, "%d, %p, %d, %p, %p", type, import, memb, bias, scale);
 
    /* default bias scale */
@@ -134,15 +127,12 @@ static void _glhckConvertVertexData(
    scale->x = scale->y = scale->z = 1.0f;
 
    /* get min and max from import data */
-   _glhckMaxMinImportData(import, memb,
-         &vmin, &vmax, &nmin, &nmax);
+   _glhckMaxMinImportData(import, memb, &vmin, &vmax);
 
    /* lie about bounds by 1 point so,
     * we don't get artifacts */
    vmax.x++; vmax.y++; vmax.z++;
    vmin.x--; vmin.y--; vmin.z--;
-   nmax.x++; nmax.y++; nmax.z++;
-   nmin.x--; nmin.y--; nmin.z--;
 
    if (type == GLHCK_VERTEX_V3F) {
       memcpy(internal.v3f, import, memb * sizeof(glhckVertexData3f));
@@ -161,7 +151,10 @@ static void _glhckConvertVertexData(
                memcpy(&internal.v3b[i].color,  &import[i].color,  sizeof(glhckColorb));
 
                glhckMagic3b(&internal.v3b[i].vertex, &import[i].vertex, &vmax, &vmin);
-               glhckMagic3s(&internal.v3b[i].normal, &import[i].normal, &nmax, &nmin);
+
+               internal.v3b[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
+               internal.v3b[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
+               internal.v3b[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
 
                internal.v3b[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
                internal.v3b[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
@@ -174,7 +167,10 @@ static void _glhckConvertVertexData(
                memcpy(&internal.v2b[i].color,  &import[i].color,  sizeof(glhckColorb));
 
                glhckMagic2b(&internal.v2b[i].vertex, &import[i].vertex, &vmax, &vmin);
-               glhckMagic3s(&internal.v2b[i].normal, &import[i].normal, &nmax, &nmin);
+
+               internal.v2b[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
+               internal.v2b[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
+               internal.v2b[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
 
                internal.v2b[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
                internal.v2b[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
@@ -187,7 +183,10 @@ static void _glhckConvertVertexData(
                memcpy(&internal.v3s[i].color,  &import[i].color,  sizeof(glhckColorb));
 
                glhckMagic3s(&internal.v3s[i].vertex, &import[i].vertex, &vmax, &vmin);
-               glhckMagic3s(&internal.v3s[i].normal, &import[i].normal, &nmax, &nmin);
+
+               internal.v3s[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
+               internal.v3s[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
+               internal.v3s[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
 
                internal.v3s[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
                internal.v3s[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
@@ -200,7 +199,10 @@ static void _glhckConvertVertexData(
                memcpy(&internal.v2s[i].color,  &import[i].color,  sizeof(glhckColorb));
 
                glhckMagic2s(&internal.v2s[i].vertex, &import[i].vertex, &vmax, &vmin);
-               glhckMagic3s(&internal.v2s[i].normal, &import[i].normal, &nmax, &nmin);
+
+               internal.v2s[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
+               internal.v2s[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
+               internal.v2s[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
 
                internal.v2s[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
                internal.v2s[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
@@ -213,7 +215,9 @@ static void _glhckConvertVertexData(
                memcpy(&internal.v3fs[i].color,  &import[i].color,  sizeof(glhckColorb));
                memcpy(&internal.v3fs[i].vertex, &import[i].vertex, sizeof(glhckVector3f));
 
-               glhckMagic3s(&internal.v3fs[i].normal, &import[i].normal, &nmax, &nmin);
+               internal.v3fs[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
+               internal.v3fs[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
+               internal.v3fs[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
 
                internal.v3fs[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
                internal.v3fs[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
@@ -228,7 +232,9 @@ static void _glhckConvertVertexData(
                memcpy(&internal.v2fs[i].color,  &import[i].color,  sizeof(glhckColorb));
                memcpy(&internal.v2fs[i].vertex, &import[i].vertex, sizeof(glhckVector2f));
 
-               glhckMagic3s(&internal.v2fs[i].normal, &import[i].normal, &nmax, &nmin);
+               internal.v2fs[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
+               internal.v2fs[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
+               internal.v2fs[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
 
                internal.v2fs[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
                internal.v2fs[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
