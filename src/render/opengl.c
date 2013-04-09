@@ -915,6 +915,9 @@ static int renderInit(void)
       goto fail;
 #endif
 
+   /* setup OpenGL debug output */
+   glhSetupDebugOutput();
+
    /* init shader wrangler */
    if (!glswInit())
       goto fail;

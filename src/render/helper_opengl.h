@@ -150,4 +150,7 @@ _glhckShaderUniform* glhProgramUniformList(GLuint obj);
 void glhProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, const GLvoid *value);
 void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type);
 
+/*** misc ***/
+void glhSetupDebugOutput(void);
+
 #endif /* __glhck_opengl_helper_h__ */

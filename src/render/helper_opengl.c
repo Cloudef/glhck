@@ -1765,4 +1765,23 @@ inline void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType t
 /* the helper is no longer needed */
 #undef indicesToOpenGL
 
+/*
+ * misc
+ */
+
+/* \brief debug output callback function */
+void glhDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+      GLsizei length, const GLchar *message, void *user)
+{
+   (void)source; (void)type; (void)id; (void)severity; (void)length; (void)user;
+   printf(" [GPU::DBG] %s\n", message);
+}
+
+/* \brief setup OpenGL debug output extension */
+void glhSetupDebugOutput(void)
+{
+   GL_CALL(glDebugMessageCallbackARB(glhDebugCallback, NULL));
+   GL_CALL(glEnable(GL_DEBUG_OUTPUT));
+}
+
 /* vim: set ts=8 sw=3 tw=0 :*/

@@ -800,6 +800,9 @@ static int renderInit(void)
       goto fail;
 #endif
 
+   /* setup OpenGL debug output */
+   glhSetupDebugOutput();
+
    /* save from some headache */
    GL_CALL(glPixelStorei(GL_UNPACK_ALIGNMENT,1));
 
