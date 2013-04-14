@@ -28,6 +28,7 @@ Move on.
 
 ## Projects using GLhck
 *  [glhck-scene][] - QMLON GLhck scene viewer
+*  [2dshooter][] - 2D Shooter
 *  [spacerocks][] - 2D Asteroids clone
 
 ## Thanks to
@@ -39,6 +40,7 @@ Move on.
 *  [STB-stuff][] - Used as freetype replacement
 
 [glhck-scene]: https://github.com/bzar/glhck-scene
+[2dshooter]: https://github.com/bzar/2dshooter
 [spacerocks]: https://github.com/bzar/spacerocks
 
 [GLEW]: http://glew.sourceforge.net/
