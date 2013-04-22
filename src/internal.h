@@ -21,6 +21,9 @@
 #define GLHCK_CHANNEL_NETWORK       "NETWORK"
 #define GLHCK_CHANNEL_IMPORT        "IMPORT"
 #define GLHCK_CHANNEL_OBJECT        "OBJECT"
+#define GLHCK_CHANNEL_BONE          "BONE"
+#define GLHCK_CHANNEL_KEY_ANIMATION "KEYANIMATION"
+#define GLHCK_CHANNEL_KEY_ANIMATOR  "KEYANIMATOR"
 #define GLHCK_CHANNEL_TEXT          "TEXT"
 #define GLHCK_CHANNEL_FRUSTUM       "FRUSTUM"
 #define GLHCK_CHANNEL_CAMERA        "CAMERA"
@@ -277,6 +280,63 @@ typedef struct _glhckObject {
    unsigned char affectionFlags; /* flags how parent affects us */
    unsigned char flags;
 } _glhckObject;
+
+/* bone container */
+typedef struct _glhckBone {
+   kmMat4 offsetMatrix;
+   kmMat4 transformationMatrix;
+   kmMat4 transformedMatrix;
+   struct glhckVertexWeight *weights;
+   struct _glhckBone *next;
+   struct _glhckBone *parent;
+   unsigned int numWeights;
+   REFERENCE_COUNTED();
+} _glhckBone;
+
+/* animation node container
+ * contains keys for each bone (translation, rotation, scaling) */
+typedef struct _glhckKeyAnimationNode {
+   struct _glhckKeyAnimationNode *next;
+   glhckKeyAnimationQuaternion *rotations;
+   glhckKeyAnimationVector *translations;
+   glhckKeyAnimationVector *scalings;
+   unsigned int numTranslations;
+   unsigned int numRotations;
+   unsigned int numScalings;
+   unsigned int boneIndex;
+   REFERENCE_COUNTED();
+} _glhckKeyAnimationNode;
+
+/* animation container
+ * stores information for single animation */
+typedef struct _glhckKeyAnimation {
+   struct _glhckKeyAnimation *next;
+   struct _glhckKeyAnimationNode **nodes;
+   float ticksPerSecond;
+   float duration;
+   unsigned int numNodes;
+   REFERENCE_COUNTED();
+} _glhckKeyAnimation;
+
+/* stores history of glhcKKeyAnimatioNode timings */
+typedef struct _glhckKeyAnimatorState {
+   unsigned int translationFrame;
+   unsigned int rotationFrame;
+   unsigned int scalingFrame;
+} _glhckKeyAnimatorState;
+
+/* animator object
+ * animates glhckObject, using glhckBones and glhckKeyAnimation */
+typedef struct _glhckKeyAnimator {
+   struct _glhckKeyAnimator *next;
+   struct _glhckKeyAnimation *animation;
+   struct _glhckKeyAnimatorState *previousNodes;
+   struct _glhckBone **bones;
+   struct _glhckObject *object;
+   float lastTime;
+   unsigned int numBones;
+   REFERENCE_COUNTED();
+} _glhckKeyAnimator;
 
 #define GLHCK_TEXT_MAX_ROWS   128
 #define GLHCK_TEXT_VERT_COUNT (6*128)
@@ -633,16 +693,20 @@ typedef struct __GLHCKrender {
 
 /* context's world */
 typedef struct __GLHCKworld {
-   struct _glhckObject        *object;
-   struct _glhckCamera        *camera;
-   struct _glhckLight         *light;
-   struct _glhckAtlas         *atlas;
-   struct _glhckRenderbuffer  *renderbuffer;
-   struct _glhckFramebuffer   *framebuffer;
-   struct _glhckTexture       *texture;
-   struct _glhckText          *text;
-   struct _glhckHwBuffer      *hwbuffer;
-   struct _glhckShader        *shader;
+   struct _glhckObject           *object;
+   struct _glhckBone             *bone;
+   struct _glhckKeyAnimationNode *keyAnimationNode;
+   struct _glhckKeyAnimation     *keyAnimation;
+   struct _glhckKeyAnimator      *keyAnimator;
+   struct _glhckCamera           *camera;
+   struct _glhckLight            *light;
+   struct _glhckAtlas            *atlas;
+   struct _glhckRenderbuffer     *renderbuffer;
+   struct _glhckFramebuffer      *framebuffer;
+   struct _glhckTexture          *texture;
+   struct _glhckText             *text;
+   struct _glhckHwBuffer         *hwbuffer;
+   struct _glhckShader           *shader;
 } __GLHCKworld;
 
 /* context trace channel */
