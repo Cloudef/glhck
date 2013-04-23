@@ -374,6 +374,7 @@ typedef struct _glhckText {
    float itw, ith;
    unsigned int textureRange;
    int tw, th;
+   REFERENCE_COUNTED();
    struct glhckColorb color;
 } _glhckText;
 
