@@ -58,8 +58,8 @@ GLHCKAPI glhckAtlas* glhckAtlasNew(void)
    if (!(object = _glhckCalloc(1, sizeof(glhckAtlas))))
       goto fail;
 
-   /* set ref counter to 1 */
-   object->refCounter = 1;
+   /* increase reference */
+   object->refCounter++;
 
    /* insert to world */
    _glhckWorldInsert(atlas, object, glhckAtlas*);

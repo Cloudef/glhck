@@ -18,8 +18,10 @@ GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferTarget target)
    if (!(object = _glhckCalloc(1, sizeof(glhckFramebuffer))))
       goto fail;
 
-   /* init */
+   /* increase reference */
    object->refCounter++;
+
+   /* init */
    object->object = obj;
    object->target = target;
 

@@ -295,6 +295,9 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    if (!(object = _glhckCalloc(1, sizeof(glhckObject))))
       goto fail;
 
+   /* increase reference */
+   object->refCounter++;
+
    /* copy static data */
    memcpy(&object->view, &src->view, sizeof(__GLHCKobjectView));
    memcpy(&object->material, &src->material, sizeof(__GLHCKobjectMaterial));
@@ -315,9 +318,6 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
 
    /* assign stub draw to copy */
    object->drawFunc = _glhckObjectStubDraw;
-
-   /* set ref counter to 1 */
-   object->refCounter = 1;
 
    /* insert to world */
    _glhckWorldInsert(object, object, glhckObject*);

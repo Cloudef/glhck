@@ -13,7 +13,7 @@ GLHCKAPI glhckKeyAnimationNode* glhckKeyAnimationNodeNew(void)
    if (!(object = _glhckCalloc(1, sizeof(glhckKeyAnimationNode))))
       goto fail;
 
-   /* init */
+   /* increase reference */
    object->refCounter++;
 
    /* insert to world */
@@ -170,7 +170,7 @@ GLHCKAPI glhckKeyAnimation* glhckKeyAnimationNew(void)
    if (!(object = _glhckCalloc(1, sizeof(glhckKeyAnimation))))
       goto fail;
 
-   /* init */
+   /* increase reference */
    object->refCounter++;
 
    /* insert to world */

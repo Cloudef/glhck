@@ -333,6 +333,9 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    if (!(object = _glhckCalloc(1, sizeof(glhckText))))
       goto fail;
 
+   /* increase reference */
+   object->refCounter++;
+
    object->tw  = cachew;
    object->th  = cacheh;
    object->itw = (float)1.0f/cachew;
@@ -350,9 +353,6 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
 
    /* default color */
    glhckTextColor(object, 255, 255, 255, 255);
-
-   /* set ref counter to 1 */
-   object->refCounter = 1;
 
    /* insert to world */
    _glhckWorldInsert(text, object, glhckText*);

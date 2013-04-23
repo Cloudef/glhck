@@ -118,6 +118,9 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    if (!(object->object = glhckObjectNew()))
       goto fail;
 
+   /* increase reference */
+   object->refCounter++;
+
    /* defaults */
    object->view.projectionType = GLHCK_PROJECTION_PERSPECTIVE;
    object->view.near = 1.0f;
@@ -126,9 +129,6 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
 
    /* reset */
    glhckCameraReset(object);
-
-   /* set ref counter to 1 */
-   object->refCounter = 1;
 
    /* insert to world */
    _glhckWorldInsert(camera, object, glhckCamera*);

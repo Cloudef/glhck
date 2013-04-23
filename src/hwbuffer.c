@@ -31,8 +31,10 @@ GLHCKAPI glhckHwBuffer* glhckHwBufferNew(void)
    if (!(object = _glhckCalloc(1, sizeof(glhckHwBuffer))))
       goto fail;
 
-   /* init */
+   /* increase reference */
    object->refCounter++;
+
+   /* init */
    object->object  = obj;
    object->created = 0;
 

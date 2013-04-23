@@ -64,7 +64,7 @@ GLHCKAPI glhckKeyAnimator* glhckKeyAnimatorNew(void)
    if (!(object = _glhckCalloc(1, sizeof(glhckKeyAnimator))))
       goto fail;
 
-   /* init */
+   /* increase reference */
    object->refCounter++;
 
    /* insert to world */

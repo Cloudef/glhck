@@ -224,9 +224,11 @@ GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int importFlag
    if (!(object = (glhckTexture*)_glhckCalloc(1, sizeof(glhckTexture))))
       goto fail;
 
+   /* increase reference */
+   object->refCounter++;
+
    /* default target type */
    object->target = GLHCK_TEXTURE_2D;
-   object->refCounter = 1;
 
    /* If file is passed, then try import it */
    if (file) {
@@ -266,6 +268,9 @@ GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src)
    if (!(object = (glhckTexture*)_glhckCalloc(1, sizeof(glhckTexture))))
       goto fail;
 
+   /* increase reference */
+   object->refCounter++;
+
    /* copy */
    GLHCKRA()->textureGenerate(1, &object->object);
 
@@ -274,9 +279,6 @@ GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src)
 
    glhckTextureCreate(object, src->target, 0, src->width, src->height, src->depth, 0,
          src->format, src->type, src->size, src->data);
-
-   /* set ref counter to 1 */
-   object->refCounter = 1;
 
    /* insert to world */
    _glhckWorldInsert(texture, object, glhckTexture*);

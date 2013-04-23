@@ -13,7 +13,7 @@ GLHCKAPI glhckBone* glhckBoneNew(void)
    if (!(object = _glhckCalloc(1, sizeof(glhckBone))))
       goto fail;
 
-   /* init */
+   /* increase reference */
    object->refCounter++;
 
    /* insert to world */
