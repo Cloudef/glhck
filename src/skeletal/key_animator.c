@@ -151,7 +151,7 @@ GLHCKAPI int glhckKeyAnimatorInsertBones(glhckKeyAnimator *object, glhckBone **b
    assert(object);
 
    /* copy bones, if they exist */
-   if (bones && !(bonesCopy = _glhckCopy(bones, memb)))
+   if (bones && !(bonesCopy = _glhckCopy(bones, memb * sizeof(glhckBone*))))
       goto fail;
 
    /* free old bones */

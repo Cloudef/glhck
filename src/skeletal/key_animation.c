@@ -90,7 +90,7 @@ GLHCKAPI int glhckKeyAnimationNodeInsertTranslations(glhckKeyAnimationNode *obje
    assert(object);
 
    /* copy keys, if they exist */
-   if (keys && !(keysCopy = _glhckCopy(keys, memb)))
+   if (keys && !(keysCopy = _glhckCopy(keys, memb * sizeof(glhckKeyAnimationVector))))
       goto fail;
 
    IFDO(_glhckFree, object->translations);
@@ -119,7 +119,7 @@ GLHCKAPI int glhckKeyAnimationNodeInsertScalings(glhckKeyAnimationNode *object, 
    assert(object);
 
    /* copy keys, if they exist */
-   if (keys && !(keysCopy = _glhckCopy(keys, memb)))
+   if (keys && !(keysCopy = _glhckCopy(keys, memb * sizeof(glhckKeyAnimationVector))))
       goto fail;
 
    IFDO(_glhckFree, object->scalings);
@@ -148,7 +148,7 @@ GLHCKAPI int glhckKeyAnimationNodeInsertRotations(glhckKeyAnimationNode *object,
    assert(object);
 
    /* copy keys, if they exist */
-   if (keys && !(keysCopy = _glhckCopy(keys, memb)))
+   if (keys && !(keysCopy = _glhckCopy(keys, memb * sizeof(glhckKeyAnimationQuaternion))))
       goto fail;
 
    IFDO(_glhckFree, object->rotations);
@@ -238,7 +238,7 @@ GLHCKAPI int glhckKeyAnimationInsertNodes(glhckKeyAnimation *object, glhckKeyAni
    assert(object);
 
    /* copy nodes, if they exist */
-   if (nodes && !(nodesCopy = _glhckCopy(nodes, memb)))
+   if (nodes && !(nodesCopy = _glhckCopy(nodes, memb * sizeof(glhckKeyAnimationNode*))))
       goto fail;
 
    /* free old nodes */

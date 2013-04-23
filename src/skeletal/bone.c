@@ -95,7 +95,7 @@ GLHCKAPI int glhckBoneInsertWeights(glhckBone *object, const glhckVertexWeight *
    assert(object);
 
    /* copy weights, if they exist */
-   if (weights && !(weightsCopy = _glhckCopy(weights, memb)))
+   if (weights && !(weightsCopy = _glhckCopy(weights, memb * sizeof(glhckVertexWeight))))
       goto fail;
 
    IFDO(_glhckFree, object->weights);
