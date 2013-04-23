@@ -221,7 +221,7 @@ GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int importFlag
       goto success;
 
    /* allocate texture */
-   if (!(object = (glhckTexture*)_glhckCalloc(1, sizeof(glhckTexture))))
+   if (!(object = _glhckCalloc(1, sizeof(glhckTexture))))
       goto fail;
 
    /* increase reference */
@@ -265,7 +265,7 @@ GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src)
    assert(src);
 
    /* allocate texture */
-   if (!(object = (glhckTexture*)_glhckCalloc(1, sizeof(glhckTexture))))
+   if (!(object = _glhckCalloc(1, sizeof(glhckTexture))))
       goto fail;
 
    /* increase reference */
