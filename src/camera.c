@@ -114,12 +114,12 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    if (!(object = _glhckCalloc(1, sizeof(glhckCamera))))
       goto fail;
 
+   /* increase reference */
+   object->refCounter++;
+
    /* initialize camera's object */
    if (!(object->object = glhckObjectNew()))
       goto fail;
-
-   /* increase reference */
-   object->refCounter++;
 
    /* defaults */
    object->view.projectionType = GLHCK_PROJECTION_PERSPECTIVE;
