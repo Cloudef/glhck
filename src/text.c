@@ -692,11 +692,14 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *object,
 /* \brief render all drawn text */
 GLHCKAPI void glhckTextRender(glhckText *object)
 {
-   __GLHCKtextTexture *texture;
    CALL(2, "%p", object); assert(object);
    GLHCKRA()->textRender(object);
+}
 
-   /* reset vertex counts */
+/* \brief clear text from stash */
+GLHCKAPI void glhckTextClear(glhckText *object)
+{
+   __GLHCKtextTexture *texture;
    for (texture = object->tcache; texture;
         texture = texture->next) {
       texture->geometry.vertexCount = 0;
@@ -704,7 +707,7 @@ GLHCKAPI void glhckTextRender(glhckText *object)
 }
 
 /* \brief draw text using font */
-GLHCKAPI void glhckTextDraw(glhckText *object, unsigned int font_id,
+GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id,
       float size, float x, float y, const char *s, float *dx)
 {
    unsigned int i, codepoint, state = 0;
@@ -830,7 +833,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id,
    if (!(texture = glhckTextureNew(NULL, 0, params)))
       goto fail;
 
-   glhckTextDraw(object, font_id, size, 0, size*0.82f, s, &linew);
+   glhckTextStash(object, font_id, size, 0, size*0.82f, s, &linew);
 
    if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, linew+3, size, 0, 0, GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
       goto fail;

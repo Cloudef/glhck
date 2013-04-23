@@ -181,7 +181,9 @@ int main(int argc, char **argv)
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
       glhckObjectPositionf(cube, 0.0f, 5.0f, 0.0f);
-   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 2.0f, GLHCK_MODEL_ANIMATED, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, GLHCK_MODEL_ANIMATED, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+      glhckObjectTexture(cube, glhckTextureNew("example/media/texture-b.png", 0, NULL));
+      glhckObjectRotatef(cube, -90, 0, 0);
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {
@@ -360,7 +362,7 @@ int main(int argc, char **argv)
          glhckRenderPassShader(shader);
 #else
          glhckLightBeginProjectionWithCamera(light[li], camera);
-         //glhckLightBind(light[li]);
+         glhckLightBind(light[li]);
          glhckLightEndProjectionWithCamera(light[li], camera);
 #endif
 
@@ -397,15 +399,17 @@ int main(int argc, char **argv)
 
       /* draw some text */
       glhckTextColor(text, 255, 255, 255, 255);
-      glhckTextDraw(text, font2, 18,         0,  HEIGHT-4, WIN_TITLE, NULL);
-      glhckTextDraw(text, font,  42,        25, HEIGHT-80, "愛してるGLHCK", NULL);
-      glhckTextDraw(text, font2, 32,        25, HEIGHT-40, "Äöäö DejaVuSans perkele", NULL);
-      glhckTextDraw(text, font2, 18,         0,        18, "SADASD!?,.:;", NULL);
+      glhckTextStash(text, font2, 18,         0,  HEIGHT-4, WIN_TITLE, NULL);
+      glhckTextStash(text, font,  42,        25, HEIGHT-80, "愛してるGLHCK", NULL);
+      glhckTextStash(text, font2, 32,        25, HEIGHT-40, "Äöäö DejaVuSans perkele", NULL);
+      glhckTextStash(text, font2, 18,         0,        18, "SADASD!?,.:;", NULL);
       glhckTextRender(text);
+      glhckTextClear(text);
 
       glhckTextColor(text, 255, 0, 0, 255);
-      glhckTextDraw(text, font2, 12, WIDTH-100,        18, "Wall of text", NULL);
+      glhckTextStash(text, font2, 12, WIDTH-100,        18, "Wall of text", NULL);
       glhckTextRender(text);
+      glhckTextClear(text);
 
       /* actual swap and clear */
       glfwSwapBuffers(window);

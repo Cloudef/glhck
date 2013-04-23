@@ -843,8 +843,9 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *text, const char *fi
 GLHCKAPI void glhckTextNewGlyph(glhckText *text, unsigned int font_id, const char *s,
       short size, short base, int x, int y, int w, int h,
       float xoff, float yoff, float xadvance);
+GLHCKAPI void glhckTextStash(glhckText *text, unsigned int font_id, float size, float x, float y, const char *s, float *dx);
+GLHCKAPI void glhckTextClear(glhckText *text);
 GLHCKAPI void glhckTextRender(glhckText *text);
-GLHCKAPI void glhckTextDraw(glhckText *text, unsigned int font_id, float size, float x, float y, const char *s, float *dx);
 GLHCKAPI void glhckTextShader(glhckText *text, glhckShader *shader);
 GLHCKAPI glhckShader* glhckTextGetShader(const glhckText *text);
 GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id, float size, const char *s, const glhckTextureParameters *params);
