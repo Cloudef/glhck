@@ -183,6 +183,7 @@ int main(int argc, char **argv)
       glhckObjectPositionf(cube, 0.0f, 5.0f, 0.0f);
    } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, GLHCK_MODEL_ANIMATED, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       glhckObjectTexture(cube, glhckTextureNew("example/media/texture-b.png", 0, NULL));
+      glhckObjectMaterialBlend(cube, GLHCK_SRC_ALPHA, GLHCK_ONE_MINUS_SRC_ALPHA);
       glhckObjectRotatef(cube, -90, 0, 0);
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;

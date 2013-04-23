@@ -13,6 +13,7 @@
 inline void _glhckObjectInsertToQueue(glhckObject *object)
 {
    __GLHCKobjectQueue *objects;
+   glhckObject **queue;
    unsigned int i;
 
    objects = &GLHCKRD()->objects;
@@ -23,13 +24,14 @@ inline void _glhckObjectInsertToQueue(glhckObject *object)
 
    /* need alloc dynamically more? */
    if (objects->allocated <= objects->count+1) {
-      objects->queue = _glhckRealloc(objects->queue,
+      queue = _glhckRealloc(objects->queue,
             objects->allocated,
             objects->allocated + GLHCK_QUEUE_ALLOC_STEP,
             sizeof(glhckObject*));
 
       /* epic fail here */
-      if (!objects->queue) return;
+      if (!queue) return;
+      objects->queue = queue;
       objects->allocated += GLHCK_QUEUE_ALLOC_STEP;
    }
 
@@ -380,7 +382,7 @@ GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
+   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
    return object?object->refCounter:0;
 }
 

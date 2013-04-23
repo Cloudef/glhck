@@ -69,8 +69,7 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, unsigned int flag
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    FILE *f;
-   size_t numIndices;
-   unsigned int i, ix, *stripIndices = NULL;
+   unsigned int i, ix, *stripIndices = NULL, numIndices = 0;
    CTMcontext context = NULL;
    CTMuint num_vertices, numTriangles, numUvs, numAttribs;
    const CTMuint *indices;

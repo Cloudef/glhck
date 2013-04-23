@@ -61,7 +61,7 @@ GLHCKAPI unsigned int glhckKeyAnimationNodeFree(glhckKeyAnimationNode *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
+   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
    return object?object->refCounter:0;
 }
 
@@ -86,7 +86,7 @@ GLHCKAPI unsigned int glhckKeyAnimationNodeGetBoneIndex(glhckKeyAnimationNode *o
 GLHCKAPI int glhckKeyAnimationNodeInsertTranslations(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb)
 {
    glhckKeyAnimationVector *keysCopy = NULL;
-   CALL(0, "%p, %p, %zu", object, keys, memb);
+   CALL(0, "%p, %p, %u", object, keys, memb);
    assert(object);
 
    /* copy keys, if they exist */
@@ -115,7 +115,7 @@ GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeTranslations(glhckK
 GLHCKAPI int glhckKeyAnimationNodeInsertScalings(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb)
 {
    glhckKeyAnimationVector *keysCopy = NULL;
-   CALL(0, "%p, %p, %zu", object, keys, memb);
+   CALL(0, "%p, %p, %u", object, keys, memb);
    assert(object);
 
    /* copy keys, if they exist */
@@ -144,7 +144,7 @@ GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeScalings(glhckKeyAn
 GLHCKAPI int glhckKeyAnimationNodeInsertRotations(glhckKeyAnimationNode *object, const glhckKeyAnimationQuaternion *keys, unsigned int memb)
 {
    glhckKeyAnimationQuaternion *keysCopy = NULL;
-   CALL(0, "%p, %p, %zu", object, keys, memb);
+   CALL(0, "%p, %p, %u", object, keys, memb);
    assert(object);
 
    /* copy keys, if they exist */
@@ -225,7 +225,7 @@ GLHCKAPI unsigned int glhckKeyAnimationFree(glhckKeyAnimation *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
+   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
    return object?object->refCounter:0;
 }
 
@@ -234,7 +234,7 @@ GLHCKAPI int glhckKeyAnimationInsertNodes(glhckKeyAnimation *object, glhckKeyAni
 {
    unsigned int i;
    glhckKeyAnimationNode **nodesCopy = NULL;
-   CALL(0, "%p, %p, %zu", object, nodes, memb);
+   CALL(0, "%p, %p, %u", object, nodes, memb);
    assert(object);
 
    /* copy nodes, if they exist */

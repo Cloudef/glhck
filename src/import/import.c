@@ -339,22 +339,20 @@ fail:
  */
 
 /* \brief return tristripped indecies for triangle index data */
-glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, size_t num_indices, size_t *out_num_indices)
+glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsigned int memb, unsigned int *outMemb)
 {
 #if GLHCK_TRISTRIP
    glhckImportIndexData v1, v2, v3;
-   glhckImportIndexData *outIndices = NULL, test;
-   size_t i, primCount, tmp;
+   glhckImportIndexData *outIndices = NULL, *newIndices = NULL;
+   unsigned int i, primCount, tmp;
    ACTCData *tc = NULL;
-   CALL(0, "%p, %zu, %p", indices, num_indices, out_num_indices);
+   CALL(0, "%p, %u, %p", indices, memb, outMemb);
 
    /* check if the triangles we got are valid */
-   test = num_indices;
-   while ((test-=3)>3);
-   if (test != 3 && test != 0)
+   if (memb % 3 != 0)
       goto not_valid;
 
-   if (!(outIndices = _glhckMalloc(num_indices * sizeof(glhckImportIndexData))))
+   if (!(outIndices = _glhckMalloc(memb * sizeof(glhckImportIndexData))))
       goto out_of_memory;
 
    if (!(tc = actcNew()))
@@ -366,7 +364,7 @@ glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, size_t
    /* input data */
    i = 0;
    ACTC_CALL(actcBeginInput(tc));
-   while (i != num_indices) {
+   while (i != memb) {
       ACTC_CALL(actcAddTriangle(tc,
                indices[i+0],
                indices[i+1],
@@ -376,10 +374,10 @@ glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, size_t
    ACTC_CALL(actcEndInput(tc));
 
    /* output data */
-   tmp = num_indices; i = 0; primCount = 0;
+   tmp = memb; i = 0; primCount = 0;
    ACTC_CALL(actcBeginOutput(tc));
    while (actcStartNextPrim(tc, &v1, &v2) != ACTC_DATABASE_EMPTY) {
-      if (i + (primCount?5:3) > num_indices)
+      if (i + (primCount?5:3) > memb)
          goto no_profit;
       if (primCount) {
          outIndices[i++] = v3;
@@ -388,7 +386,7 @@ glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, size_t
       outIndices[i++] = v1;
       outIndices[i++] = v2;
       while (actcGetNextVert(tc, &v3) != ACTC_PRIM_COMPLETE) {
-         if (i + 1 > num_indices)
+         if (i + 1 > memb)
             goto no_profit;
          outIndices[i++] = v3;
       }
@@ -396,13 +394,18 @@ glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, size_t
    }
    ACTC_CALL(actcEndOutput(tc));
    puts("");
-   printf("%zu alloc\n", num_indices);
-   *out_num_indices = i; num_indices = tmp;
+   printf("%u alloc\n", memb);
+   if (outMemb) *outMemb = i;
+   memb = tmp;
 
-   printf("%zu indices\n", num_indices);
-   printf("%zu out indicies\n", i);
-   printf("%zu tristrips\n", primCount);
-   printf("%zu profit\n", num_indices - i);
+   if (!(newIndices = _glhckRealloc(outIndices, memb, i, sizeof(glhckImportIndexData))))
+      goto out_of_memory;
+   outIndices = newIndices;
+
+   printf("%u indices\n", memb);
+   printf("%u out indicies\n", i);
+   printf("%u tristrips\n", primCount);
+   printf("%u profit\n", memb - i);
    actcDelete(tc);
 
    RET(0, "%p", outIndices);

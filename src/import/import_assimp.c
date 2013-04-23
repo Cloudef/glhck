@@ -136,12 +136,12 @@ static int processAnimations(const struct aiScene *sc)
    return RETURN_OK;
 }
 
-static int buildModel(glhckObject *object, size_t numIndices, size_t numVertices,
+static int buildModel(glhckObject *object, unsigned int numIndices, unsigned int numVertices,
       const glhckImportIndexData *indices, const glhckImportVertexData *vertexData,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype, unsigned int flags)
 {
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
-   size_t numStrippedIndices = 0;
+   unsigned int numStrippedIndices = 0;
    glhckImportIndexData *stripIndices = NULL;
    (void)flags;
 
@@ -163,7 +163,7 @@ static int buildModel(glhckObject *object, size_t numIndices, size_t numVertices
    return RETURN_OK;
 }
 
-static void joinMesh(const struct aiMesh *mesh, size_t indexOffset,
+static void joinMesh(const struct aiMesh *mesh, unsigned int indexOffset,
       glhckImportIndexData *indices, glhckImportVertexData *vertexData,
       glhckAtlas *atlas, glhckTexture *texture)
 {
@@ -268,8 +268,8 @@ static int processModel(const char *file, glhckObject *object,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype, unsigned int flags)
 {
    unsigned int m, f;
-   size_t numVertices = 0, numIndices = 0;
-   size_t ioffset, voffset;
+   unsigned int numVertices = 0, numIndices = 0;
+   unsigned int ioffset, voffset;
    glhckImportIndexData *indices = NULL;
    glhckImportVertexData *vertexData = NULL;
    glhckTexture **textureList = NULL, *texture;

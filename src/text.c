@@ -232,10 +232,10 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font,
    }
 
    /* create new glyph */
-   font->gcache = _glhckRealloc(font->gcache,
+   glyph = _glhckRealloc(font->gcache,
          font->numGlyph, font->numGlyph+1, sizeof(__GLHCKtextGlyph));
-   if (!font->gcache)
-      return NULL;
+   if (!glyph) return NULL;
+   font->gcache = glyph;
 
    /* init glyph */
    glyph = &font->gcache[font->numGlyph++];
@@ -416,7 +416,7 @@ GLHCKAPI unsigned int glhckTextFree(glhckText *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
+   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
    return object?object->refCounter:0;
 }
 
@@ -425,7 +425,7 @@ GLHCKAPI void glhckTextGetMetrics(glhckText *object, unsigned int font_id,
       float size, float *ascender, float *descender, float *lineh)
 {
    __GLHCKtextFont *font;
-   CALL(1, "%p, %d, %zu, %f, %f, %f", object, font_id, size,
+   CALL(1, "%p, %d, %f, %f, %f, %f", object, font_id, size,
          ascender, descender, lineh);
    assert(object);
 
@@ -454,7 +454,7 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float 
    __GLHCKtextQuad q;
    float x, y;
 
-   CALL(1, "%p, %u, %zu, %s, %p, %p",
+   CALL(1, "%p, %u, %f, %s, %p, %p",
          object, font_id, size, s, min, max);
    assert(object && s && min && max);
 
@@ -668,9 +668,10 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *object,
    if (state != UTF8_ACCEPT) return;
 
    /* allocate space for new glyph */
-   font->gcache = _glhckRealloc(font->gcache,
+   glyph = _glhckRealloc(font->gcache,
          font->numGlyph, font->numGlyph+1, sizeof(__GLHCKtextGlyph));
-   if (!font->gcache) return;
+   if (!glyph) return;
+   font->gcache = glyph;
 
    /* init glyph */
    glyph = &font->gcache[font->numGlyph++];
@@ -728,7 +729,7 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id,
    __GLHCKtextGlyph *glyph;
    __GLHCKtextFont *font;
    __GLHCKtextQuad q;
-   CALL(2, "%p, %d, %zu, %f, %f, %s, %p", object, font_id,
+   CALL(2, "%p, %d, %f, %f, %f, %s, %p", object, font_id,
          size, x, y, s, dx);
    assert(object && s);
    if (!object->tcache) return;

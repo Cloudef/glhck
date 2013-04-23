@@ -74,7 +74,7 @@ int main(int argc, char **argv)
    ACTCData *tc = NULL;
    size_t i, num_indices, out_num_indices;
    unsigned int *in_indices = NULL, *out_indices = NULL;
-   unsigned int v1, v2, v3 = 0, test;
+   unsigned int v1, v2, v3 = 0;
    char buffer[LINE_MAX], **read_indices = NULL;
    (void)argc; (void)argv;
 
@@ -82,9 +82,8 @@ int main(int argc, char **argv)
          goto read_fail;
 
    num_indices = strsplit(&read_indices, buffer, " ");
-   test = num_indices;
-   while ((test-=3)>3);
-   if (test != 3 && test != 0) goto not_valid;
+   if (num_indices % 3 != 0)
+      goto not_valid;
 
    if (!(in_indices = malloc(num_indices * sizeof(unsigned int))))
       goto no_memory;

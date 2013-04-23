@@ -62,7 +62,7 @@ GLHCKAPI unsigned int glhckBoneFree(glhckBone *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
+   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
    return object?object->refCounter:0;
 }
 
@@ -91,7 +91,7 @@ GLHCKAPI const char* glhckBoneGetName(glhckBone *object)
 GLHCKAPI int glhckBoneInsertWeights(glhckBone *object, const glhckVertexWeight *weights, unsigned int memb)
 {
    glhckVertexWeight *weightsCopy = NULL;
-   CALL(0, "%p, %p, %zu", object, weights, memb);
+   CALL(0, "%p, %p, %u", object, weights, memb);
    assert(object);
 
    /* copy weights, if they exist */

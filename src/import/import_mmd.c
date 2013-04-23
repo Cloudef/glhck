@@ -44,7 +44,6 @@ int _glhckImportPMD(_glhckObject *object, const char *file, unsigned int flags,
 {
    FILE *f;
    char *texturePath;
-   size_t i, i2, ix, start, numFaces, numIndices;
    mmd_header header;
    mmd_data *mmd = NULL;
    _glhckAtlas *atlas = NULL;
@@ -52,6 +51,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, unsigned int flags,
    glhckImportVertexData *vertexData = NULL;
    glhckImportIndexData *indices = NULL, *stripIndices = NULL;
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
+   unsigned int i, i2, ix, start, numFaces, numIndices = 0;
    CALL(0, "%p, %s, %d", object, file, flags);
 
    if (!(f = fopen(file, "rb")))

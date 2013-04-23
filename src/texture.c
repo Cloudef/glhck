@@ -32,6 +32,7 @@ nothing:
 inline void _glhckTextureInsertToQueue(glhckTexture *object)
 {
    __GLHCKtextureQueue *textures;
+   glhckTexture **queue;
    unsigned int i;
 
    textures = &GLHCKRD()->textures;
@@ -42,13 +43,14 @@ inline void _glhckTextureInsertToQueue(glhckTexture *object)
 
    /* need alloc dynamically more? */
    if (textures->allocated <= textures->count+1) {
-      textures->queue = _glhckRealloc(textures->queue,
+      queue = _glhckRealloc(textures->queue,
             textures->allocated,
             textures->allocated + GLHCK_QUEUE_ALLOC_STEP,
             sizeof(glhckTexture*));
 
       /* epic fail here */
-      if (!textures->queue) return;
+      if (!queue) return;
+      textures->queue = queue;
       textures->allocated += GLHCK_QUEUE_ALLOC_STEP;
    }
 
@@ -342,7 +344,7 @@ GLHCKAPI unsigned int glhckTextureFree(glhckTexture *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
+   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
    return object?object->refCounter:0;
 }
 

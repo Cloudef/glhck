@@ -55,13 +55,13 @@ void stubHwBufferBindBase(glhckHwBufferTarget target, unsigned int index, unsign
    CALL(2, "%d, %u, %u", target, index, object);
 }
 void stubHwBufferBindRange(glhckHwBufferTarget target, unsigned int index, unsigned int object, ptrdiff_t offset, ptrdiff_t size) {
-   CALL(2, "%d, %u, %u, %zu, %zu", target, index, object, offset, size);
+   CALL(2, "%d, %u, %u, %td, %td", target, index, object, offset, size);
 }
 void stubHwBufferCreate(glhckHwBufferTarget target, ptrdiff_t size, const void *data, glhckHwBufferStoreType usage) {
-   CALL(2, "%d, %zu, %p, %d", target, size, data, usage);
+   CALL(2, "%d, %td, %p, %d", target, size, data, usage);
 }
 void stubHwBufferFill(glhckHwBufferTarget target, ptrdiff_t offset, ptrdiff_t size, const void *data) {
-   CALL(2, "%d, %zu, %zu, %p", target, offset, size, data);
+   CALL(2, "%d, %td, %td, %p", target, offset, size, data);
 }
 void* stubHwBufferMap(glhckHwBufferTarget target, glhckHwBufferAccessType access) {
    CALL(2, "%d, %d", target, access);

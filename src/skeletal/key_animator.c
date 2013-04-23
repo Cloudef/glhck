@@ -116,7 +116,7 @@ GLHCKAPI unsigned int glhckKeyAnimatorFree(glhckKeyAnimator *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);
+   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
    return object?object->refCounter:0;
 }
 
