@@ -5,7 +5,7 @@
 /* \brief allocate new light object */
 GLHCKAPI glhckLight* glhckLightNew(void)
 {
-   _glhckLight *object;
+   glhckLight *object;
    TRACE(0);
 
    /* allocate light */

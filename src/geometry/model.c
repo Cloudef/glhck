@@ -17,7 +17,7 @@ GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, unsigned in
  * you can specify the index and vertex precision here */
 GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned int importFlags, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
-   _glhckObject *object;
+   glhckObject *object;
    CALL(0, "%s, %f, %u, %d, %d", file, size, importFlags, itype, vtype);
 
    /* create new object */

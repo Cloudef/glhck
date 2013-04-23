@@ -146,8 +146,8 @@ glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl
    return texture;
 }
 
-static int processModel(const char *file, _glhckObject *object,
-      _glhckObject *current, const struct aiScene *sc, const struct aiNode *nd,
+static int processModel(const char *file, glhckObject *object,
+      glhckObject *current, const struct aiScene *sc, const struct aiNode *nd,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype, unsigned int flags)
 {
    unsigned int m, f;
@@ -328,7 +328,7 @@ int _glhckFormatAssimp(const char *file)
 }
 
 /* \brief import Assimp file */
-int _glhckImportAssimp(_glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportAssimp(glhckObject *object, const char *file, unsigned int flags,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    const struct aiScene *scene;

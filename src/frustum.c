@@ -8,17 +8,17 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_FRUSTUM
 
 /* \brief build frustum from modelview projection matrix */
-GLHCKAPI void glhckFrustumBuild(glhckFrustum *frustum, const kmMat4 *mvp)
+GLHCKAPI void glhckFrustumBuild(glhckFrustum *object, const kmMat4 *mvp)
 {
    kmPlane *planes;
    kmVec3 *nearCorners, *farCorners;
 
-   CALL(0, "%p, %p", frustum, mvp);
-   assert(frustum && mvp);
+   CALL(0, "%p, %p", object, mvp);
+   assert(object && mvp);
 
-   planes      = frustum->planes;
-   nearCorners = frustum->nearCorners;
-   farCorners  = frustum->farCorners;
+   planes      = object->planes;
+   nearCorners = object->nearCorners;
+   farCorners  = object->farCorners;
 
    kmPlaneExtractFromMat4(&planes[GLHCK_FRUSTUM_PLANE_LEFT],   mvp,  1);
    kmPlaneExtractFromMat4(&planes[GLHCK_FRUSTUM_PLANE_RIGHT],  mvp, -1);
@@ -85,22 +85,22 @@ GLHCKAPI void glhckFrustumBuild(glhckFrustum *frustum, const kmMat4 *mvp)
 }
 
 /* \brief draw frustum immediatly */
-GLHCKAPI void glhckFrustumRender(glhckFrustum *frustum)
+GLHCKAPI void glhckFrustumRender(glhckFrustum *object)
 {
-   CALL(2, "%p", frustum);
-   assert(frustum);
-   GLHCKRA()->frustumRender(frustum);
+   CALL(2, "%p", object);
+   assert(object);
+   GLHCKRA()->frustumRender(object);
 }
 
 /* \brief point inside frustum? */
-GLHCKAPI int glhckFrustumContainsPoint(const glhckFrustum *frustum, const kmVec3 *point)
+GLHCKAPI int glhckFrustumContainsPoint(const glhckFrustum *object, const kmVec3 *point)
 {
    unsigned int i;
    for (i = 0; i != GLHCK_FRUSTUM_PLANE_LAST; ++i) {
-      if (frustum->planes[i].a * point->x +
-          frustum->planes[i].b * point->y +
-          frustum->planes[i].c * point->z +
-          frustum->planes[i].d < 0) return 0;
+      if (object->planes[i].a * point->x +
+          object->planes[i].b * point->y +
+          object->planes[i].c * point->z +
+          object->planes[i].d < 0) return 0;
       /* <= treat points that are right on the plane as outside.
        * <  for inverse behaviour */
    }
@@ -108,29 +108,29 @@ GLHCKAPI int glhckFrustumContainsPoint(const glhckFrustum *frustum, const kmVec3
 }
 
 /* \brief sphere inside frustum? */
-GLHCKAPI kmScalar glhckFrustumContainsSphere(const glhckFrustum *frustum, const kmVec3 *point, kmScalar radius)
+GLHCKAPI kmScalar glhckFrustumContainsSphere(const glhckFrustum *object, const kmVec3 *point, kmScalar radius)
 {
    unsigned int i;
    kmScalar d;
    for (i = 0; i != GLHCK_FRUSTUM_PLANE_LAST; ++i) {
-      d = frustum->planes[i].a * point->x +
-          frustum->planes[i].b * point->y +
-          frustum->planes[i].c * point->z +
-          frustum->planes[i].d;
+      d = object->planes[i].a * point->x +
+          object->planes[i].b * point->y +
+          object->planes[i].c * point->z +
+          object->planes[i].d;
       if (d < -radius) return 0;
    }
    return d + radius;
 }
 
 /* \brief aabb inside frustum? */
-GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *frustum, const kmAABB *aabb)
+GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *object, const kmAABB *aabb)
 {
    unsigned int i;
    for (i = 0; i != GLHCK_FRUSTUM_PLANE_LAST; ++i) {
-      if (max(frustum->planes[i].a * aabb->min.x, frustum->planes[i].a * aabb->max.x) +
-          max(frustum->planes[i].b * aabb->min.y, frustum->planes[i].b * aabb->max.y) +
-          max(frustum->planes[i].c * aabb->min.z, frustum->planes[i].c * aabb->max.z) +
-          frustum->planes[i].d < 0) return 0;
+      if (max(object->planes[i].a * aabb->min.x, object->planes[i].a * aabb->max.x) +
+          max(object->planes[i].b * aabb->min.y, object->planes[i].b * aabb->max.y) +
+          max(object->planes[i].c * aabb->min.z, object->planes[i].c * aabb->max.z) +
+          object->planes[i].d < 0) return 0;
    }
    return 1;
 }

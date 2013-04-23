@@ -50,7 +50,7 @@ fail:
 }
 
 /* \brief import BMP images */
-int _glhckImportBMP(_glhckTexture *texture, const char *file, unsigned int flags)
+int _glhckImportBMP(glhckTexture *texture, const char *file, unsigned int flags)
 {
    FILE *f;
    int i, i2, w, h, dataSize;

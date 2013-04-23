@@ -97,7 +97,7 @@ fail:
 }
 
 /* \brief import TGA images */
-int _glhckImportTGA(_glhckTexture *texture, const char *file, const unsigned int flags)
+int _glhckImportTGA(glhckTexture *texture, const char *file, const unsigned int flags)
 {
    FILE *f;
    void *seg = NULL, *data;

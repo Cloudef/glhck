@@ -91,7 +91,7 @@ fail:
 }
 
 /* \brief import JPEG images */
-int _glhckImportJPEG(_glhckTexture *texture, const char *file, unsigned int flags)
+int _glhckImportJPEG(glhckTexture *texture, const char *file, unsigned int flags)
 {
    FILE *f;
    char decompress = 0;

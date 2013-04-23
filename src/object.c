@@ -10,7 +10,7 @@
       function(parent->childs[_cbc_], ##__VA_ARGS__); }
 
 /* \brief assign object to draw list */
-inline void _glhckObjectInsertToQueue(_glhckObject *object)
+inline void _glhckObjectInsertToQueue(glhckObject *object)
 {
    __GLHCKobjectQueue *objects;
    unsigned int i;
@@ -26,7 +26,7 @@ inline void _glhckObjectInsertToQueue(_glhckObject *object)
       objects->queue = _glhckRealloc(objects->queue,
             objects->allocated,
             objects->allocated + GLHCK_QUEUE_ALLOC_STEP,
-            sizeof(_glhckObject*));
+            sizeof(glhckObject*));
 
       /* epic fail here */
       if (!objects->queue) return;
@@ -39,7 +39,7 @@ inline void _glhckObjectInsertToQueue(_glhckObject *object)
 }
 
 /* update target from rotation */
-static inline void _glhckObjectUpdateTargetFromRotation(_glhckObject *object)
+static inline void _glhckObjectUpdateTargetFromRotation(glhckObject *object)
 {
    kmVec3 rotToDir;
    const kmVec3 forwards = { 0, 0, 1 };
@@ -52,7 +52,7 @@ static inline void _glhckObjectUpdateTargetFromRotation(_glhckObject *object)
 }
 
 /* update rotation from target */
-static inline void _glhckObjectUpdateRotationFromTarget(_glhckObject *object)
+static inline void _glhckObjectUpdateRotationFromTarget(glhckObject *object)
 {
    kmVec3 toTarget;
    CALL(2, "%p", object);
@@ -64,7 +64,7 @@ static inline void _glhckObjectUpdateRotationFromTarget(_glhckObject *object)
 }
 
 /* stub draw function */
-static inline void _glhckObjectStubDraw(const struct _glhckObject *object)
+static inline void _glhckObjectStubDraw(const glhckObject *object)
 {
    if (object->geometry && object->geometry->vertexType != GLHCK_VERTEX_NONE) {
       DEBUG(GLHCK_DBG_WARNING, "Stub draw function called for object which actually has vertexdata!");
@@ -73,7 +73,7 @@ static inline void _glhckObjectStubDraw(const struct _glhckObject *object)
 }
 
 /* \brief build translation matrix for object */
-static void _glhckObjectBuildTranslation(_glhckObject *object, kmMat4 *translation)
+static void _glhckObjectBuildTranslation(glhckObject *object, kmMat4 *translation)
 {
    kmVec3 bias;
    bias.x = bias.y = bias.z = 0.0f;
@@ -92,7 +92,7 @@ static void _glhckObjectBuildTranslation(_glhckObject *object, kmMat4 *translati
 }
 
 /* \brief build rotation matrix for object */
-static void _glhckObjectBuildRotation(_glhckObject *object, kmMat4 *rotation)
+static void _glhckObjectBuildRotation(glhckObject *object, kmMat4 *rotation)
 {
    kmMat4 tmp;
 
@@ -108,7 +108,7 @@ static void _glhckObjectBuildRotation(_glhckObject *object, kmMat4 *rotation)
 }
 
 /* \brief build scaling matrix for object */
-static void _glhckObjectBuildScaling(_glhckObject *object, kmMat4 *scaling)
+static void _glhckObjectBuildScaling(glhckObject *object, kmMat4 *scaling)
 {
    kmVec3 scale;
    scale.x = scale.y = scale.z = 1.0f;
@@ -127,7 +127,7 @@ static void _glhckObjectBuildScaling(_glhckObject *object, kmMat4 *scaling)
 }
 
 /* \brief update view matrix of object */
-void _glhckObjectUpdateMatrix(_glhckObject *object)
+void _glhckObjectUpdateMatrix(glhckObject *object)
 {
    unsigned int i;
    kmVec3 min, max;
@@ -231,7 +231,7 @@ void _glhckObjectUpdateMatrix(_glhckObject *object)
 }
 
 /* set object's filename */
-void _glhckObjectSetFile(_glhckObject *object, const char *file)
+void _glhckObjectSetFile(glhckObject *object, const char *file)
 {
    CALL(1, "%p, %s", object, file);
    assert(object);
@@ -246,10 +246,10 @@ void _glhckObjectSetFile(_glhckObject *object, const char *file)
 /* \brief new object */
 GLHCKAPI glhckObject *glhckObjectNew(void)
 {
-   _glhckObject *object;
+   glhckObject *object;
    TRACE(0);
 
-   if (!(object = _glhckCalloc(1, sizeof(_glhckObject))))
+   if (!(object = _glhckCalloc(1, sizeof(glhckObject))))
       goto fail;
 
    /* increase reference */
@@ -275,7 +275,7 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    object->drawFunc = _glhckObjectStubDraw;
 
    /* insert to world */
-   _glhckWorldInsert(object, object, _glhckObject*);
+   _glhckWorldInsert(object, object, glhckObject*);
 
    RET(0, "%p", object);
    return object;
@@ -288,11 +288,11 @@ fail:
 /* \brief copy object */
 GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
 {
-   _glhckObject *object;
+   glhckObject *object;
    CALL(0, "%p", src);
    assert(src);
 
-   if (!(object = _glhckCalloc(1, sizeof(_glhckObject))))
+   if (!(object = _glhckCalloc(1, sizeof(glhckObject))))
       goto fail;
 
    /* copy static data */
@@ -320,7 +320,7 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    object->refCounter = 1;
 
    /* insert to world */
-   _glhckWorldInsert(object, object, _glhckObject*);
+   _glhckWorldInsert(object, object, glhckObject*);
 
    RET(0, "%p", object);
    return object;
@@ -372,7 +372,7 @@ GLHCKAPI size_t glhckObjectFree(glhckObject *object)
    glhckObjectShader(object, NULL);
 
    /* remove from world */
-   _glhckWorldRemove(object, object, _glhckObject*);
+   _glhckWorldRemove(object, object, glhckObject*);
 
    /* free */
    NULLDO(_glhckFree, object);

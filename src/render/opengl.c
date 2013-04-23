@@ -287,7 +287,7 @@ fail:
 #define GL_STATE_CHANGED(x) ((GLPOINTER()->state.flags & x) != (old.flags & x))
 
 /* \brief set needed state from object data */
-static inline void rMaterialState(const _glhckObject *object)
+static inline void rMaterialState(const glhckObject *object)
 {
    GLuint i;
    __OpenGLstate old   = GLPOINTER()->state;
@@ -569,7 +569,7 @@ static inline void rFrustumRender(glhckFrustum *frustum)
 
 
 /* \brief render object's oriented bounding box */
-static inline void rOBBRender(const _glhckObject *object)
+static inline void rOBBRender(const glhckObject *object)
 {
    GLuint i = 0;
    kmVec3 min = object->view.bounding.min;
@@ -622,7 +622,7 @@ static inline void rOBBRender(const _glhckObject *object)
 }
 
 /* \brief render object's axis-aligned bounding box */
-static inline void rAABBRender(const _glhckObject *object)
+static inline void rAABBRender(const glhckObject *object)
 {
    GLuint i = 0;
    kmVec3 min = object->view.aabb.min;
@@ -677,7 +677,7 @@ static inline void rAABBRender(const _glhckObject *object)
 }
 
 /* \brief begin object render */
-static inline void rObjectStart(const _glhckObject *object)
+static inline void rObjectStart(const glhckObject *object)
 {
    rMaterialState(object);
 
@@ -712,7 +712,7 @@ static inline void rObjectStart(const _glhckObject *object)
 }
 
 /* \brief end object render */
-static inline void rObjectEnd(const _glhckObject *object)
+static inline void rObjectEnd(const glhckObject *object)
 {
    glhckGeometryType type = object->geometry->type;
 
@@ -741,7 +741,7 @@ static inline void rObjectEnd(const _glhckObject *object)
 }
 
 /* \brief render single 3d object */
-static inline void rObjectRender(const _glhckObject *object)
+static inline void rObjectRender(const glhckObject *object)
 {
    CALL(2, "%p", object);
 
@@ -756,7 +756,7 @@ static inline void rObjectRender(const _glhckObject *object)
 }
 
 /* \brief render text */
-static inline void rTextRender(const _glhckText *text)
+static inline void rTextRender(const glhckText *text)
 {
    __GLHCKtextTexture *texture;
    CALL(2, "%p", text);

@@ -31,9 +31,9 @@ typedef enum _glhckFormat
 } _glhckFormat;
 
 /* Function typedefs */
-typedef int (*_glhckModelImportFunc)(_glhckObject *object, const char *file, unsigned int flags,
+typedef int (*_glhckModelImportFunc)(glhckObject *object, const char *file, unsigned int flags,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
-typedef int (*_glhckImageImportFunc)(_glhckTexture *texture, const char *file, unsigned int flags);
+typedef int (*_glhckImageImportFunc)(glhckTexture *texture, const char *file, unsigned int flags);
 typedef int (*_glhckFormatFunc)(const char *file);
 
 /* Model importer struct */
@@ -148,7 +148,7 @@ static _glhckModelImporter* _glhckGetModelImporter(const char *file)
  */
 
 /* \brief import model file */
-int _glhckImportModel(_glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportModel(glhckObject *object, const char *file, unsigned int flags,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    _glhckModelImporter *importer;
@@ -199,7 +199,7 @@ static _glhckImageImporter* _glhckGetImageImporter(const char *file)
  */
 
 /* \brief import image file */
-int _glhckImportImage(_glhckTexture *texture, const char *file, unsigned int flags)
+int _glhckImportImage(glhckTexture *texture, const char *file, unsigned int flags)
 {
    _glhckImageImporter *importer;
    int importReturn;
@@ -293,7 +293,7 @@ fail:
 }
 
 /* post-processing of image data */
-int _glhckImagePostProcess(_glhckTexture *texture, _glhckImagePostProcessStruct *data)
+int _glhckImagePostProcess(glhckTexture *texture, _glhckImagePostProcessStruct *data)
 {
    CALL(0, "%p, %p", texture, data);
 

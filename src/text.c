@@ -275,7 +275,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font,
 }
 
 /* \brief get quad for text drawing */
-static int _getQuad(_glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph *glyph,
+static int _getQuad(glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph *glyph,
       short isize, float *x, float *y, __GLHCKtextQuad *q)
 {
    glhckVector2f v1, v2, t1, t2;
@@ -326,11 +326,11 @@ static int _getQuad(_glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph 
 /* \brief create new text stack */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
 {
-   _glhckText *object;
+   glhckText *object;
    CALL(0, "%d, %d", cachew, cacheh);
 
    /* allocate text stack */
-   if (!(object = _glhckCalloc(1, sizeof(_glhckText))))
+   if (!(object = _glhckCalloc(1, sizeof(glhckText))))
       goto fail;
 
    object->tw  = cachew;
@@ -355,7 +355,7 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
    object->refCounter = 1;
 
    /* insert to world */
-   _glhckWorldInsert(text, object, _glhckText*);
+   _glhckWorldInsert(text, object, glhckText*);
 
    RET(0, "%p", object);
    return object;
@@ -410,7 +410,7 @@ GLHCKAPI size_t glhckTextFree(glhckText *object)
    glhckTextShader(object, NULL);
 
    /* remove text */
-   _glhckWorldRemove(text, object, _glhckText*);
+   _glhckWorldRemove(text, object, glhckText*);
 
    /* free this */
    _glhckFree(object);
@@ -595,7 +595,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object,
       const char *file, int ascent, int descent, int line_gap)
 {
    int fh;
-   _glhckTexture *temp = NULL;
+   glhckTexture *temp = NULL;
    unsigned int id;
    __GLHCKtextFont *font, *f;
    CALL(0, "%p, %s, %d, %d, %d", object, file, ascent, descent, line_gap);

@@ -65,7 +65,7 @@ fail:
 }
 
 /* \brief import OpenCTM file */
-int _glhckImportOpenCTM(_glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportOpenCTM(glhckObject *object, const char *file, unsigned int flags,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    FILE *f;

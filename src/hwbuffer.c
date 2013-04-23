@@ -4,7 +4,7 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_HWBUFFER
 
 /* \brief free current list of uniform buffer's uniforms */
-static void _glhckHwBufferFreeUniforms(_glhckHwBuffer *object)
+static void _glhckHwBufferFreeUniforms(glhckHwBuffer *object)
 {
    _glhckHwBufferShaderUniform *u, *un;
    assert(object);

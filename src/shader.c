@@ -4,7 +4,7 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_SHADER
 
 /* \brief free current list of shader attributes */
-static void _glhckShaderFreeAttributes(_glhckShader *object)
+static void _glhckShaderFreeAttributes(glhckShader *object)
 {
    _glhckShaderAttribute *a, *an;
    assert(object);
@@ -17,7 +17,7 @@ static void _glhckShaderFreeAttributes(_glhckShader *object)
 }
 
 /* \brief free current list of shader uniforms */
-static void _glhckShaderFreeUniforms(_glhckShader *object)
+static void _glhckShaderFreeUniforms(glhckShader *object)
 {
    _glhckShaderUniform *u, *un;
    assert(object);

@@ -346,8 +346,8 @@ GLHCKAPI void glhckRender(void)
 {
    unsigned int ti, oi, ts, os, tc, oc;
    char kt;
-   _glhckTexture *t;
-   _glhckObject *o;
+   glhckTexture *t;
+   glhckObject *o;
    __GLHCKobjectQueue *objects;
    __GLHCKtextureQueue *textures;
    GLHCK_INITIALIZED();
@@ -457,7 +457,7 @@ GLHCKAPI void glhckRender(void)
    if (objects->count) {
       /* something was left un-drawn :o? */
       for (oi = 0; oi != objects->count; ++oi) glhckObjectFree(objects->queue[oi]);
-      memset(objects->queue, 0, objects->count * sizeof(_glhckObject*));
+      memset(objects->queue, 0, objects->count * sizeof(glhckObject*));
       objects->count = 0;
    }
 
@@ -465,7 +465,7 @@ GLHCKAPI void glhckRender(void)
       /* something was left un-drawn :o? */
       DEBUG(GLHCK_DBG_CRAP, "COUNT UNLEFT %u", textures->count);
       for (ti = 0; ti != textures->count; ++ti) glhckTextureFree(textures->queue[ti]);
-      memset(textures->queue, 0, textures->count * sizeof(_glhckTexture*));
+      memset(textures->queue, 0, textures->count * sizeof(glhckTexture*));
       textures->count = 0;
    }
 }

@@ -119,13 +119,13 @@ void stubFrustumRender(glhckFrustum *frustum)
 }
 
 /* \brief render single 3d object */
-void stubObjectRender(const _glhckObject *object)
+void stubObjectRender(const glhckObject *object)
 {
    CALL(2, "%p", object);
 }
 
 /* \brief render text */
-void stubTextRender(const _glhckText *text)
+void stubTextRender(const glhckText *text)
 {
    CALL(2, "%p", text);
 }
