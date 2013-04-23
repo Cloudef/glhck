@@ -194,17 +194,21 @@ typedef enum _glhckShaderVariableType {
    GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER,
 } _glhckShaderVariableType;
 
-#define REFERENCE_COUNTED() unsigned int refCounter
+/* mark internal type reference counted.
+ * takes variable names refCounter and next in struct.
+ * all reference counted objects should be defined in __GLHCKworld world as well. */
+#define REFERENCE_COUNTED(type) \
+   struct type *next;           \
+   unsigned int refCounter
 
 /* texture container */
 typedef struct _glhckTexture {
    glhckTextureParameters params;
-   struct _glhckTexture *next;
    void *data;
    char *file;
+   REFERENCE_COUNTED(_glhckTexture);
    unsigned int object;
    unsigned int flags, importFlags;
-   REFERENCE_COUNTED();
    int width, height, depth, size;
    glhckTextureTarget target;
    glhckTextureFormat format;
@@ -234,10 +238,9 @@ typedef struct _glhckAtlasRect {
 
 /* atlas container */
 typedef struct _glhckAtlas {
-   struct _glhckAtlas *next;
    struct _glhckAtlasRect *rect;
    struct _glhckTexture *texture;
-   REFERENCE_COUNTED();
+   REFERENCE_COUNTED(_glhckAtlas);
 } _glhckAtlas;
 
 /* object's view container */
@@ -269,14 +272,13 @@ typedef void (*__GLHCKobjectDraw) (const struct _glhckObject *object);
 typedef struct _glhckObject {
    struct __GLHCKobjectView view;
    struct __GLHCKobjectMaterial material;
-   struct _glhckObject *next;
    struct _glhckObject *parent;
    struct _glhckObject **childs;
-   char *file, *name;
    struct glhckGeometry *geometry;
    __GLHCKobjectDraw drawFunc;
+   char *file, *name;
+   REFERENCE_COUNTED(_glhckObject);
    unsigned int numChilds;
-   REFERENCE_COUNTED();
    unsigned char affectionFlags; /* flags how parent affects us */
    unsigned char flags;
 } _glhckObject;
@@ -287,35 +289,32 @@ typedef struct _glhckBone {
    kmMat4 transformationMatrix;
    kmMat4 transformedMatrix;
    struct glhckVertexWeight *weights;
-   struct _glhckBone *next;
    struct _glhckBone *parent;
+   REFERENCE_COUNTED(_glhckBone);
    unsigned int numWeights;
-   REFERENCE_COUNTED();
 } _glhckBone;
 
 /* animation node container
  * contains keys for each bone (translation, rotation, scaling) */
 typedef struct _glhckKeyAnimationNode {
-   struct _glhckKeyAnimationNode *next;
    glhckKeyAnimationQuaternion *rotations;
    glhckKeyAnimationVector *translations;
    glhckKeyAnimationVector *scalings;
+   REFERENCE_COUNTED(_glhckKeyAnimationNode);
    unsigned int numTranslations;
    unsigned int numRotations;
    unsigned int numScalings;
    unsigned int boneIndex;
-   REFERENCE_COUNTED();
 } _glhckKeyAnimationNode;
 
 /* animation container
  * stores information for single animation */
 typedef struct _glhckKeyAnimation {
-   struct _glhckKeyAnimation *next;
    struct _glhckKeyAnimationNode **nodes;
+   REFERENCE_COUNTED(_glhckKeyAnimation);
    float ticksPerSecond;
    float duration;
    unsigned int numNodes;
-   REFERENCE_COUNTED();
 } _glhckKeyAnimation;
 
 /* stores history of glhcKKeyAnimatioNode timings */
@@ -328,14 +327,13 @@ typedef struct _glhckKeyAnimatorState {
 /* animator object
  * animates glhckObject, using glhckBones and glhckKeyAnimation */
 typedef struct _glhckKeyAnimator {
-   struct _glhckKeyAnimator *next;
    struct _glhckKeyAnimation *animation;
    struct _glhckKeyAnimatorState *previousNodes;
    struct _glhckBone **bones;
    struct _glhckObject *object;
+   REFERENCE_COUNTED(_glhckKeyAnimator);
    float lastTime;
    unsigned int numBones;
-   REFERENCE_COUNTED();
 } _glhckKeyAnimator;
 
 #define GLHCK_TEXT_MAX_ROWS   128
@@ -367,14 +365,13 @@ typedef struct __GLHCKtextTexture {
 
 /* text container */
 typedef struct _glhckText {
-   struct _glhckText *next;
    struct _glhckShader *shader;
    struct __GLHCKtextFont *fcache;
    struct __GLHCKtextTexture *tcache;
+   REFERENCE_COUNTED(_glhckText);
    float itw, ith;
    unsigned int textureRange;
    int tw, th;
-   REFERENCE_COUNTED();
    struct glhckColorb color;
 } _glhckText;
 
@@ -392,9 +389,8 @@ typedef struct __GLHCKcameraView {
 typedef struct _glhckCamera {
    struct __GLHCKcameraView view;
    struct glhckFrustum frustum;
-   struct _glhckCamera *next;
    struct _glhckObject *object;
-   REFERENCE_COUNTED();
+   REFERENCE_COUNTED(_glhckCamera);
 } _glhckCamera;
 
 /* \brief light's internal camera && object state */
@@ -415,16 +411,14 @@ typedef struct _glhckLight {
    struct __GLHCKlightState old;
    struct __GLHCKlightState current;
    struct __GLHCKlightOptions options;
-   struct _glhckLight *next;
    struct _glhckObject *object;
-   REFERENCE_COUNTED();
+   REFERENCE_COUNTED(_glhckLight);
 } _glhckLight;
 
 /* renderbuffer object */
 typedef struct _glhckRenderbuffer {
-   struct _glhckRenderbuffer *next;
+   REFERENCE_COUNTED(_glhckRenderbuffer);
    unsigned int object;
-   REFERENCE_COUNTED();
    int width, height;
    glhckTextureFormat format;
 } _glhckRenderbuffer;
@@ -432,9 +426,8 @@ typedef struct _glhckRenderbuffer {
 /* framebuffer object */
 typedef struct _glhckFramebuffer {
    glhckRect rect;
-   struct _glhckFramebuffer *next;
+   REFERENCE_COUNTED(_glhckFramebuffer);
    unsigned int object;
-   REFERENCE_COUNTED();
    glhckFramebufferTarget target;
 } _glhckFramebuffer;
 
@@ -449,11 +442,10 @@ typedef struct _glhckHwBufferShaderUniform {
 
 /* glhck hw buffer object type */
 typedef struct _glhckHwBuffer {
-   struct _glhckHwBuffer *next;
    struct _glhckHwBufferShaderUniform *uniforms;
    char *name;
+   REFERENCE_COUNTED(_glhckHwBuffer);
    unsigned int object;
-   REFERENCE_COUNTED();
    int size;
    glhckHwBufferTarget target;
    glhckHwBufferStoreType storeType;
@@ -482,11 +474,10 @@ typedef struct _glhckShaderUniform {
 
 /* glhck shader type */
 typedef struct _glhckShader {
-   struct _glhckShader *next;
    struct _glhckShaderAttribute *attributes;
    struct _glhckShaderUniform *uniforms;
+   REFERENCE_COUNTED(_glhckShader);
    unsigned int program;
-   REFERENCE_COUNTED();
 } _glhckShader;
 
 #undef REFERENCE_COUNTED

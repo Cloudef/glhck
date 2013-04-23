@@ -40,7 +40,7 @@ GLHCKAPI glhckBone* glhckBoneRef(glhckBone *object)
 }
 
 /* \brief free bone object */
-GLHCKAPI size_t glhckBoneFree(glhckBone *object)
+GLHCKAPI unsigned int glhckBoneFree(glhckBone *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
@@ -64,7 +64,7 @@ success:
 }
 
 /* \brief set weights to bone */
-GLHCKAPI int glhckBoneSetWeights(glhckBone *object, const glhckVertexWeight *weights, size_t memb)
+GLHCKAPI int glhckBoneSetWeights(glhckBone *object, const glhckVertexWeight *weights, unsigned int memb)
 {
    glhckVertexWeight *weightsCopy = NULL;
    CALL(0, "%p, %p, %zu", object, weights, memb);
@@ -84,7 +84,7 @@ fail:
 }
 
 /* \brief get weights from bone */
-GLHCKAPI const glhckVertexWeight* glhckBoneGetWeights(glhckBone *object, size_t *memb)
+GLHCKAPI const glhckVertexWeight* glhckBoneGetWeights(glhckBone *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
    if (memb) *memb = object->numWeights;

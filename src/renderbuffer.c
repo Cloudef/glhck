@@ -55,7 +55,7 @@ GLHCKAPI glhckRenderbuffer* glhckRenderbufferRef(glhckRenderbuffer *object)
 }
 
 /* \brief free renderbuffer object */
-GLHCKAPI size_t glhckRenderbufferFree(glhckRenderbuffer *object)
+GLHCKAPI unsigned int glhckRenderbufferFree(glhckRenderbuffer *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);

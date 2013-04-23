@@ -140,7 +140,7 @@ GLHCKAPI glhckShader* glhckShaderRef(glhckShader *object)
 }
 
 /* \brief free shader object */
-GLHCKAPI size_t glhckShaderFree(glhckShader *object)
+GLHCKAPI unsigned int glhckShaderFree(glhckShader *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);

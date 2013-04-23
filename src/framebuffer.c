@@ -49,7 +49,7 @@ GLHCKAPI glhckFramebuffer* glhckFramebufferRef(glhckFramebuffer *object)
 }
 
 /* \brief free framebuffer object */
-GLHCKAPI size_t glhckFramebufferFree(glhckFramebuffer *object)
+GLHCKAPI unsigned int glhckFramebufferFree(glhckFramebuffer *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);

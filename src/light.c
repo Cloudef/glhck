@@ -50,7 +50,7 @@ GLHCKAPI glhckLight* glhckLightRef(glhckLight *object)
 }
 
 /* \brief free light object */
-GLHCKAPI size_t glhckLightFree(glhckLight *object)
+GLHCKAPI unsigned int glhckLightFree(glhckLight *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);

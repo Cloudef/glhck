@@ -345,7 +345,7 @@ GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object)
 }
 
 /* \brief free object */
-GLHCKAPI size_t glhckObjectFree(glhckObject *object)
+GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
@@ -432,7 +432,7 @@ GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object)
 }
 
 /* \brief get object's children */
-GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, size_t *num_children)
+GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, unsigned int *num_children)
 {
    CALL(3, "%p, %p", object, num_children);
    assert(object);

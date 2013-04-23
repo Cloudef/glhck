@@ -91,7 +91,7 @@ GLHCKAPI glhckKeyAnimator* glhckKeyAnimatorRef(glhckKeyAnimator *object)
 }
 
 /* \brief free key animator object */
-GLHCKAPI size_t glhckKeyAnimatorFree(glhckKeyAnimator *object)
+GLHCKAPI unsigned int glhckKeyAnimatorFree(glhckKeyAnimator *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);

@@ -40,7 +40,7 @@ GLHCKAPI glhckKeyAnimationNode* glhckKeyAnimationNodeRef(glhckKeyAnimationNode *
 }
 
 /* \brief free key animation node object */
-GLHCKAPI size_t glhckKeyAnimationNodeFree(glhckKeyAnimationNode *object)
+GLHCKAPI unsigned int glhckKeyAnimationNodeFree(glhckKeyAnimationNode *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
@@ -197,7 +197,7 @@ GLHCKAPI glhckKeyAnimation* glhckKeyAnimationRef(glhckKeyAnimation *object)
 }
 
 /* \brief free key animation object */
-GLHCKAPI size_t glhckKeyAnimationFree(glhckKeyAnimation *object)
+GLHCKAPI unsigned int glhckKeyAnimationFree(glhckKeyAnimation *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);

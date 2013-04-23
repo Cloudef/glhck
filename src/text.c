@@ -380,7 +380,7 @@ GLHCKAPI glhckText* glhckTextRef(glhckText *object)
 }
 
 /* \brief free text stack */
-GLHCKAPI size_t glhckTextFree(glhckText *object)
+GLHCKAPI unsigned int glhckTextFree(glhckText *object)
 {
    __GLHCKtextFont *f, *fn;
    __GLHCKtextTexture *t, *tn;
@@ -412,8 +412,8 @@ GLHCKAPI size_t glhckTextFree(glhckText *object)
    /* remove text */
    _glhckWorldRemove(text, object, glhckText*);
 
-   /* free this */
-   _glhckFree(object);
+   /* free */
+   NULLDO(_glhckFree, object);
 
 success:
    RET(FREE_RET_PRIO(object), "%d", object?object->refCounter:0);

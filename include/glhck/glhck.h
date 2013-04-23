@@ -700,7 +700,7 @@ GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *frustum, const kmAABB 
 /* cameras */
 GLHCKAPI glhckCamera* glhckCameraNew(void);
 GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *camera);
-GLHCKAPI size_t glhckCameraFree(glhckCamera *camera);
+GLHCKAPI unsigned int glhckCameraFree(glhckCamera *camera);
 GLHCKAPI void glhckCameraUpdate(glhckCamera *camera);
 GLHCKAPI void glhckCameraReset(glhckCamera *camera);
 GLHCKAPI void glhckCameraProjection(glhckCamera *camera, const glhckProjectionType projectionType);
@@ -719,14 +719,14 @@ GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *camera);
 GLHCKAPI glhckObject* glhckObjectNew(void);
 GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src);
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object);
-GLHCKAPI size_t glhckObjectFree(glhckObject *object);
+GLHCKAPI unsigned int glhckObjectFree(glhckObject *object);
 
 GLHCKAPI int glhckObjectIsRoot(const glhckObject *object);
 GLHCKAPI void glhckObjectMakeRoot(glhckObject *object, int root);
 GLHCKAPI unsigned char glhckObjectGetParentAffection(const glhckObject *object);
 GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned char affectionFlags);
 GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object);
-GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, size_t *memb);
+GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, unsigned int *memb);
 GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child);
 GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child);
 GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object);
@@ -788,9 +788,9 @@ GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, k
 /* bones */
 GLHCKAPI glhckBone* glhckBoneNew(void);
 GLHCKAPI glhckBone* glhckBoneRef(glhckBone *object);
-GLHCKAPI size_t glhckBoneFree(glhckBone *object);
-GLHCKAPI int glhckBoneSetWeights(glhckBone *object, const glhckVertexWeight *weights, size_t memb);
-GLHCKAPI const glhckVertexWeight* glhckBoneGetWeights(glhckBone *object, size_t *memb);
+GLHCKAPI unsigned int glhckBoneFree(glhckBone *object);
+GLHCKAPI int glhckBoneSetWeights(glhckBone *object, const glhckVertexWeight *weights, unsigned int memb);
+GLHCKAPI const glhckVertexWeight* glhckBoneGetWeights(glhckBone *object, unsigned int *memb);
 GLHCKAPI void glhckBoneAddChildren(glhckBone *object, glhckBone *child);
 GLHCKAPI glhckBone* glhckBoneParent(glhckBone *object);
 GLHCKAPI void glhckBoneOffsetMatrix(glhckBone *object, const kmMat4 *offsetMatrix);
@@ -802,7 +802,7 @@ GLHCKAPI const kmMat4* glhckBoneGetTransformedMatrix(glhckBone *object);
 /* animation nodes */
 GLHCKAPI glhckKeyAnimationNode* glhckKeyAnimationNodeNew(void);
 GLHCKAPI glhckKeyAnimationNode* glhckKeyAnimationNodeRef(glhckKeyAnimationNode *object);
-GLHCKAPI size_t glhckKeyAnimationNodeFree(glhckKeyAnimationNode *object);
+GLHCKAPI unsigned int glhckKeyAnimationNodeFree(glhckKeyAnimationNode *object);
 GLHCKAPI int glhckKeyAnimationNodeSetTranslations(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb);
 GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeGetTranslations(glhckKeyAnimationNode *object, unsigned int *memb);
 GLHCKAPI int glhckKeyAnimationNodeSetRotations(glhckKeyAnimationNode *object, const glhckKeyAnimationQuaternion *keys, unsigned int memb);
@@ -813,14 +813,14 @@ GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeGetScalings(glhckKe
 /* animations */
 GLHCKAPI glhckKeyAnimation* glhckKeyAnimationNew(void);
 GLHCKAPI glhckKeyAnimation* glhckKeyAnimationRef(glhckKeyAnimation *object);
-GLHCKAPI size_t glhckKeyAnimationFree(glhckKeyAnimation *object);
+GLHCKAPI unsigned int glhckKeyAnimationFree(glhckKeyAnimation *object);
 GLHCKAPI int glhckKeyAnimationSetNodes(glhckKeyAnimation *object, const glhckKeyAnimationNode **nodes, unsigned int memb);
 GLHCKAPI glhckKeyAnimationNode** glhckKeyAnimationGetNodes(glhckKeyAnimation *object, unsigned int *memb);
 
 /* key animator */
 GLHCKAPI glhckKeyAnimator* glhckKeyAnimatorNew(void);
 GLHCKAPI glhckKeyAnimator* glhckKeyAnimatorRef(glhckKeyAnimator *object);
-GLHCKAPI size_t glhckKeyAnimatorFree(glhckKeyAnimator *object);
+GLHCKAPI unsigned int glhckKeyAnimatorFree(glhckKeyAnimator *object);
 GLHCKAPI void glhckKeyAnimatorAnimation(glhckKeyAnimator *object, glhckKeyAnimation *animation);
 GLHCKAPI int glhckKeyAnimatorSetBones(glhckKeyAnimator *object, const glhckBone **bones, unsigned int memb);
 GLHCKAPI glhckBone** glhckKeyAnimatorGetBones(glhckKeyAnimator *object, unsigned int *memb);
@@ -828,7 +828,7 @@ GLHCKAPI void glhckKeyAnimatorUpdate(glhckKeyAnimator *object, float playTime);
 
 /* text */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
-GLHCKAPI size_t glhckTextFree(glhckText *text);
+GLHCKAPI unsigned int glhckTextFree(glhckText *text);
 GLHCKAPI void glhckTextGetMetrics(glhckText *text, unsigned int font_id, float size, float *ascender, float *descender, float *lineh);
 GLHCKAPI void glhckTextGetMinMax(glhckText *text, unsigned int font_id, float size, const char *s, kmVec2 *min, kmVec2 *max);
 GLHCKAPI void glhckTextColor(glhckText *text, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
@@ -850,7 +850,7 @@ GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id, floa
 GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int importFlags, const glhckTextureParameters *params);
 GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
-GLHCKAPI size_t glhckTextureFree(glhckTexture *texture);
+GLHCKAPI unsigned int glhckTextureFree(glhckTexture *texture);
 GLHCKAPI const void* glhckTextureGetData(glhckTexture *texture, int *size);
 GLHCKAPI void glhckTextureGetInformation(glhckTexture *texture, glhckTextureTarget *target, int *width, int *height, int *depth, int *border, glhckTextureFormat *format, glhckDataType *type);
 GLHCKAPI int glhckTextureCreate(glhckTexture *texture, glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, glhckDataType type, int size, const void *data);
@@ -866,7 +866,7 @@ GLHCKAPI void glhckTextureUnbind(glhckTextureTarget target);
 
 /* texture atlases */
 GLHCKAPI glhckAtlas* glhckAtlasNew(void);
-GLHCKAPI size_t glhckAtlasFree(glhckAtlas *atlas);
+GLHCKAPI unsigned int glhckAtlasFree(glhckAtlas *atlas);
 GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *atlas, glhckTexture *texture);
 GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *atlas);
 GLHCKAPI int glhckAtlasPack(glhckAtlas *atlas, const int power_of_two, const int border);
@@ -877,7 +877,7 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *atlas, glhckTextur
 /* light objects */
 GLHCKAPI glhckLight* glhckLightNew(void);
 GLHCKAPI glhckLight* glhckLightRef(glhckLight *object);
-GLHCKAPI size_t glhckLightFree(glhckLight *object);
+GLHCKAPI unsigned int glhckLightFree(glhckLight *object);
 GLHCKAPI glhckObject* glhckLightGetObject(const glhckLight *object);
 GLHCKAPI void glhckLightBind(glhckLight *object);
 GLHCKAPI void glhckLightBeginProjectionWithCamera(glhckLight *object, glhckCamera *camera);
@@ -896,13 +896,13 @@ GLHCKAPI const kmVec2* glhckLightGetCutout(glhckLight *object);
 /* renderbuffer objects */
 GLHCKAPI glhckRenderbuffer* glhckRenderbufferNew(int width, int height, glhckTextureFormat format);
 GLHCKAPI glhckRenderbuffer* glhckRenderbufferRef(glhckRenderbuffer *object);
-GLHCKAPI size_t glhckRenderbufferFree(glhckRenderbuffer *object);
+GLHCKAPI unsigned int glhckRenderbufferFree(glhckRenderbuffer *object);
 GLHCKAPI void glhckRenderbufferBind(glhckRenderbuffer *object);
 
 /* framebuffer objects */
 GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferTarget target);
 GLHCKAPI glhckFramebuffer* glhckFramebufferRef(glhckFramebuffer *object);
-GLHCKAPI size_t glhckFramebufferFree(glhckFramebuffer *object);
+GLHCKAPI unsigned int glhckFramebufferFree(glhckFramebuffer *object);
 GLHCKAPI glhckFramebuffer* glhckFramebufferCurrentForTarget(glhckFramebufferTarget target);
 GLHCKAPI void glhckFramebufferBind(glhckFramebuffer *object);
 GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferTarget target);
@@ -918,7 +918,7 @@ GLHCKAPI int glhckFramebufferAttachRenderbuffer(glhckFramebuffer *object, glhckR
 /* hardware buffer objects */
 GLHCKAPI glhckHwBuffer* glhckHwBufferNew(void);
 GLHCKAPI glhckHwBuffer* glhckHwBufferRef(glhckHwBuffer *object);
-GLHCKAPI size_t glhckHwBufferFree(glhckHwBuffer *object);
+GLHCKAPI unsigned int glhckHwBufferFree(glhckHwBuffer *object);
 GLHCKAPI glhckHwBuffer* glhckHwBufferCurrentForTarget(glhckHwBufferTarget target);
 GLHCKAPI void glhckHwBufferBind(glhckHwBuffer *object);
 GLHCKAPI void glhckHwBufferUnbind(glhckHwBufferTarget target);
@@ -942,7 +942,7 @@ GLHCKAPI void glhckDeleteShaderObject(unsigned int shaderObject);
 GLHCKAPI glhckShader* glhckShaderNew(const char *vertexEffect, const char *fragmentEffect, const char *contentsFromMemory);
 GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(unsigned int vertexShader, unsigned int fragmentShader);
 GLHCKAPI glhckShader* glhckShaderRef(glhckShader *object);
-GLHCKAPI size_t glhckShaderFree(glhckShader *object);
+GLHCKAPI unsigned int glhckShaderFree(glhckShader *object);
 GLHCKAPI void glhckShaderBind(glhckShader *object);
 GLHCKAPI void glhckShaderSetUniform(glhckShader *object, const char *uniform, int count, void *value);
 GLHCKAPI int glhckShaderAttachHwBuffer(glhckShader *object, glhckHwBuffer *buffer, const char *name, unsigned int index);

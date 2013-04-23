@@ -306,7 +306,7 @@ GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *object)
 }
 
 /* \brief free texture */
-GLHCKAPI size_t glhckTextureFree(glhckTexture *object)
+GLHCKAPI unsigned int glhckTextureFree(glhckTexture *object)
 {
    unsigned int i;
    if (!glhckInitialized()) return 0;

@@ -156,7 +156,7 @@ GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *object)
 }
 
 /* \brief free camera */
-GLHCKAPI size_t glhckCameraFree(glhckCamera *object)
+GLHCKAPI unsigned int glhckCameraFree(glhckCamera *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);

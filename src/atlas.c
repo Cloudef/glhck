@@ -73,7 +73,7 @@ fail:
 }
 
 /* \brief free atlas */
-GLHCKAPI size_t glhckAtlasFree(glhckAtlas *object)
+GLHCKAPI unsigned int glhckAtlasFree(glhckAtlas *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);

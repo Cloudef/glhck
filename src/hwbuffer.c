@@ -61,7 +61,7 @@ GLHCKAPI glhckHwBuffer* glhckHwBufferRef(glhckHwBuffer *object)
 }
 
 /* \brief free hardware buffer object */
-GLHCKAPI size_t glhckHwBufferFree(glhckHwBuffer *object)
+GLHCKAPI unsigned int glhckHwBufferFree(glhckHwBuffer *object)
 {
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
