@@ -4,9 +4,6 @@ TODO
 ---
 Skeletal animation to assimp import
 ---
-Rename glhckTextDraw to glhckTextStash
-Give glhckText a StashClear function (don't clear after render)
----
 Track sub texture data uploads
 ---
 Use 2_10_10_10_REV for color && normals
