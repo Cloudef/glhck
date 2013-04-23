@@ -50,9 +50,9 @@ GLHCKAPI unsigned int glhckKeyAnimationNodeFree(glhckKeyAnimationNode *object)
    if (--object->refCounter != 0) goto success;
 
    /* free keys from node */
-   glhckKeyAnimationNodeSetTranslations(object, NULL, 0);
-   glhckKeyAnimationNodeSetRotations(object, NULL, 0);
-   glhckKeyAnimationNodeSetScalings(object, NULL, 0);
+   glhckKeyAnimationNodeInsertTranslations(object, NULL, 0);
+   glhckKeyAnimationNodeInsertRotations(object, NULL, 0);
+   glhckKeyAnimationNodeInsertScalings(object, NULL, 0);
 
    /* remove from world */
    _glhckWorldRemove(keyAnimationNode, object, glhckKeyAnimationNode*);
@@ -73,8 +73,17 @@ GLHCKAPI void glhckKeyAnimationNodeBoneIndex(glhckKeyAnimationNode *object, unsi
    object->boneIndex = boneIndex;
 }
 
+/* \brief return bone index from animation node */
+GLHCKAPI unsigned int glhckKeyAnimationNodeGetBoneIndex(glhckKeyAnimationNode *object)
+{
+   CALL(2, "%p", object);
+   assert(object);
+   RET(2, "%d", object->boneIndex);
+   return object->boneIndex;
+}
+
 /* \brief set translations to key animation node */
-GLHCKAPI int glhckKeyAnimationNodeSetTranslations(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb)
+GLHCKAPI int glhckKeyAnimationNodeInsertTranslations(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb)
 {
    glhckKeyAnimationVector *keysCopy = NULL;
    CALL(0, "%p, %p, %zu", object, keys, memb);
@@ -94,7 +103,7 @@ fail:
 }
 
 /* \brief return animation's translation keys */
-GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeGetTranslations(glhckKeyAnimationNode *object, unsigned int *memb)
+GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeTranslations(glhckKeyAnimationNode *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
    if (memb) *memb = object->numTranslations;
@@ -103,7 +112,7 @@ GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeGetTranslations(glh
 }
 
 /* \brief set scalings to key animation node */
-GLHCKAPI int glhckKeyAnimationNodeSetScalings(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb)
+GLHCKAPI int glhckKeyAnimationNodeInsertScalings(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb)
 {
    glhckKeyAnimationVector *keysCopy = NULL;
    CALL(0, "%p, %p, %zu", object, keys, memb);
@@ -123,7 +132,7 @@ fail:
 }
 
 /* \brief return animation's scaling keys */
-GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeGetScalings(glhckKeyAnimationNode *object, unsigned int *memb)
+GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeScalings(glhckKeyAnimationNode *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
    if (memb) *memb = object->numScalings;
@@ -132,7 +141,7 @@ GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeGetScalings(glhckKe
 }
 
 /* \brief set rotations to key animation node */
-GLHCKAPI int glhckKeyAnimationNodeSetRotations(glhckKeyAnimationNode *object, const glhckKeyAnimationQuaternion *keys, unsigned int memb)
+GLHCKAPI int glhckKeyAnimationNodeInsertRotations(glhckKeyAnimationNode *object, const glhckKeyAnimationQuaternion *keys, unsigned int memb)
 {
    glhckKeyAnimationQuaternion *keysCopy = NULL;
    CALL(0, "%p, %p, %zu", object, keys, memb);
@@ -152,7 +161,7 @@ fail:
 }
 
 /* \brief return animation's rotation keys */
-GLHCKAPI const glhckKeyAnimationQuaternion* glhckKeyAnimationNodeGetRotations(glhckKeyAnimationNode *object, unsigned int *memb)
+GLHCKAPI const glhckKeyAnimationQuaternion* glhckKeyAnimationNodeRotations(glhckKeyAnimationNode *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
    if (memb) *memb = object->numRotations;
@@ -206,6 +215,9 @@ GLHCKAPI unsigned int glhckKeyAnimationFree(glhckKeyAnimation *object)
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
+   /* free nodes */
+   glhckKeyAnimationInsertNodes(object, NULL, 0);
+
    /* remove from world */
    _glhckWorldRemove(keyAnimation, object, glhckKeyAnimation*);
 
@@ -218,7 +230,7 @@ success:
 }
 
 /* \brief set nodes to animation */
-GLHCKAPI int glhckKeyAnimationSetNodes(glhckKeyAnimation *object, const glhckKeyAnimationNode **nodes, unsigned int memb)
+GLHCKAPI int glhckKeyAnimationInsertNodes(glhckKeyAnimation *object, glhckKeyAnimationNode **nodes, unsigned int memb)
 {
    unsigned int i;
    glhckKeyAnimationNode **nodesCopy = NULL;
@@ -252,7 +264,7 @@ fail:
 }
 
 /* \brief return animation's nodes */
-GLHCKAPI glhckKeyAnimationNode** glhckKeyAnimationGetNodes(glhckKeyAnimation *object, unsigned int *memb)
+GLHCKAPI glhckKeyAnimationNode** glhckKeyAnimationNodes(glhckKeyAnimation *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
    if (memb) *memb = object->numNodes;

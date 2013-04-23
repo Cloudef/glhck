@@ -147,7 +147,7 @@ GLuint glhProgramAttachUniformBuffer(GLuint program, const GLchar *uboName, GLui
 _glhckHwBufferShaderUniform* glhProgramUniformBufferList(GLuint program, const GLchar *uboName, GLsizei *size);
 _glhckShaderAttribute* glhProgramAttributeList(GLuint obj);
 _glhckShaderUniform* glhProgramUniformList(GLuint obj);
-void glhProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, const GLvoid *value);
+void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, const GLvoid *value);
 void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type);
 
 /*** misc ***/

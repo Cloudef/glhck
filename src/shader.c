@@ -181,7 +181,7 @@ GLHCKAPI void glhckShaderBind(glhckShader *object)
 }
 
 /* \brief set uniform to shader */
-GLHCKAPI void glhckShaderSetUniform(glhckShader *object, const char *uniform, int count, void *value)
+GLHCKAPI void glhckShaderUniform(glhckShader *object, const char *uniform, int count, void *value)
 {
    glhckShader *old;
    _glhckShaderUniform *u;
@@ -204,7 +204,7 @@ GLHCKAPI void glhckShaderSetUniform(glhckShader *object, const char *uniform, in
    // printf("SET UNIFORM %s(%s), %d, %p\n", u->name, u->typeName, count, value);
 
    /* set the uniform to program */
-   GLHCKRA()->programSetUniform(object->program, u, count, value);
+   GLHCKRA()->programUniform(object->program, u, count, value);
 
    /* restore old bind */
    if (old) glhckShaderBind(old);

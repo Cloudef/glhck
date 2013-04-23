@@ -553,8 +553,8 @@ static inline void rFrustumRender(glhckFrustum *frustum)
    kmMat4 identity;
    kmMat4Identity(&identity);
    glhckShaderBind(GLPOINTER()->shader[GL_SHADER_COLOR]);
-   glhckShaderSetUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&identity);
-   glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){255,0,0,255}));
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&identity);
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){255,0,0,255}));
 
    GL_CALL(glLineWidth(4));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
@@ -610,8 +610,8 @@ static inline void rOBBRender(const glhckObject *object)
       }
 
    glhckShaderBind(GLPOINTER()->shader[GL_SHADER_COLOR]);
-   glhckShaderSetUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
-   glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){0,255,0,255}));
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){0,255,0,255}));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
 
@@ -665,8 +665,8 @@ static inline void rAABBRender(const glhckObject *object)
    kmMat4 identity;
    kmMat4Identity(&identity);
    glhckShaderBind(GLPOINTER()->shader[GL_SHADER_COLOR]);
-   glhckShaderSetUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&identity);
-   glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){0,0,255,255}));
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&identity);
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){0,0,255,255}));
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
 
@@ -702,8 +702,8 @@ static inline void rObjectStart(const glhckObject *object)
       }
    }
 
-   glhckShaderSetUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
-   glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
          &((GLfloat[]){
             object->material.diffuse.r,
             object->material.diffuse.g,
@@ -811,7 +811,7 @@ static inline void rTextRender(const glhckText *text)
 
    if (text->shader) glhckShaderBind(text->shader);
    else glhckShaderBind(GLPOINTER()->shader[GL_SHADER_TEXT]);
-   glhckShaderSetUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
          &((GLfloat[]){text->color.r, text->color.g, text->color.b, text->color.a}));
 
    for (texture = text->tcache; texture;
@@ -1172,7 +1172,7 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(programBind, glUseProgram);
    GLHCK_RENDER_FUNC(programLink, rProgramLink);
    GLHCK_RENDER_FUNC(programDelete, glDeleteProgram);
-   GLHCK_RENDER_FUNC(programSetUniform, glhProgramSetUniform);
+   GLHCK_RENDER_FUNC(programUniform, glhProgramUniform);
    GLHCK_RENDER_FUNC(programUniformBufferList, glhProgramUniformBufferList);
    GLHCK_RENDER_FUNC(programAttributeList, glhProgramAttributeList);
    GLHCK_RENDER_FUNC(programUniformList, glhProgramUniformList);

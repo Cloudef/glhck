@@ -241,7 +241,7 @@ void _glhckTexturePackerFree(_glhckTexturePacker *tp)
    free(tp);
 }
 
-void _glhckTexturePackerSetCount(_glhckTexturePacker *tp, short texture_count)
+void _glhckTexturePackerCount(_glhckTexturePacker *tp, short texture_count)
 {
    glhckTexturePackerReset(tp);
    tp->texture_count = texture_count;

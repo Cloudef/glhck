@@ -789,8 +789,10 @@ GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, k
 GLHCKAPI glhckBone* glhckBoneNew(void);
 GLHCKAPI glhckBone* glhckBoneRef(glhckBone *object);
 GLHCKAPI unsigned int glhckBoneFree(glhckBone *object);
-GLHCKAPI int glhckBoneSetWeights(glhckBone *object, const glhckVertexWeight *weights, unsigned int memb);
-GLHCKAPI const glhckVertexWeight* glhckBoneGetWeights(glhckBone *object, unsigned int *memb);
+GLHCKAPI void glhckBoneName(glhckBone *object, const char *name);
+GLHCKAPI const char* glhckBoneGetName(glhckBone *object);
+GLHCKAPI int glhckBoneInsertWeights(glhckBone *object, const glhckVertexWeight *weights, unsigned int memb);
+GLHCKAPI const glhckVertexWeight* glhckBoneWeights(glhckBone *object, unsigned int *memb);
 GLHCKAPI void glhckBoneAddChildren(glhckBone *object, glhckBone *child);
 GLHCKAPI glhckBone* glhckBoneParent(glhckBone *object);
 GLHCKAPI void glhckBoneOffsetMatrix(glhckBone *object, const kmMat4 *offsetMatrix);
@@ -803,27 +805,29 @@ GLHCKAPI const kmMat4* glhckBoneGetTransformedMatrix(glhckBone *object);
 GLHCKAPI glhckKeyAnimationNode* glhckKeyAnimationNodeNew(void);
 GLHCKAPI glhckKeyAnimationNode* glhckKeyAnimationNodeRef(glhckKeyAnimationNode *object);
 GLHCKAPI unsigned int glhckKeyAnimationNodeFree(glhckKeyAnimationNode *object);
-GLHCKAPI int glhckKeyAnimationNodeSetTranslations(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb);
-GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeGetTranslations(glhckKeyAnimationNode *object, unsigned int *memb);
-GLHCKAPI int glhckKeyAnimationNodeSetRotations(glhckKeyAnimationNode *object, const glhckKeyAnimationQuaternion *keys, unsigned int memb);
-GLHCKAPI const glhckKeyAnimationQuaternion* glhckKeyAnimationNodeGetRotations(glhckKeyAnimationNode *object, unsigned int *memb);
-GLHCKAPI int glhckKeyAnimationNodeSetScalings(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb);
-GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeGetScalings(glhckKeyAnimationNode *object, unsigned int *memb);
+GLHCKAPI int glhckKeyAnimationNodeInsertTranslations(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb);
+GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeTranslations(glhckKeyAnimationNode *object, unsigned int *memb);
+GLHCKAPI int glhckKeyAnimationNodeInsertRotations(glhckKeyAnimationNode *object, const glhckKeyAnimationQuaternion *keys, unsigned int memb);
+GLHCKAPI const glhckKeyAnimationQuaternion* glhckKeyAnimationNodeRotations(glhckKeyAnimationNode *object, unsigned int *memb);
+GLHCKAPI int glhckKeyAnimationNodeInsertScalings(glhckKeyAnimationNode *object, const glhckKeyAnimationVector *keys, unsigned int memb);
+GLHCKAPI const glhckKeyAnimationVector* glhckKeyAnimationNodeScalings(glhckKeyAnimationNode *object, unsigned int *memb);
 
 /* animations */
 GLHCKAPI glhckKeyAnimation* glhckKeyAnimationNew(void);
 GLHCKAPI glhckKeyAnimation* glhckKeyAnimationRef(glhckKeyAnimation *object);
 GLHCKAPI unsigned int glhckKeyAnimationFree(glhckKeyAnimation *object);
-GLHCKAPI int glhckKeyAnimationSetNodes(glhckKeyAnimation *object, const glhckKeyAnimationNode **nodes, unsigned int memb);
-GLHCKAPI glhckKeyAnimationNode** glhckKeyAnimationGetNodes(glhckKeyAnimation *object, unsigned int *memb);
+GLHCKAPI void glhckAnimationName(glhckKeyAnimation *object, const char *name);
+GLHCKAPI const char* glhckAnimationGetName(glhckKeyAnimation *object);
+GLHCKAPI int glhckKeyAnimationInsertNodes(glhckKeyAnimation *object, glhckKeyAnimationNode **nodes, unsigned int memb);
+GLHCKAPI glhckKeyAnimationNode** glhckKeyAnimationNodes(glhckKeyAnimation *object, unsigned int *memb);
 
 /* key animator */
 GLHCKAPI glhckKeyAnimator* glhckKeyAnimatorNew(void);
 GLHCKAPI glhckKeyAnimator* glhckKeyAnimatorRef(glhckKeyAnimator *object);
 GLHCKAPI unsigned int glhckKeyAnimatorFree(glhckKeyAnimator *object);
 GLHCKAPI void glhckKeyAnimatorAnimation(glhckKeyAnimator *object, glhckKeyAnimation *animation);
-GLHCKAPI int glhckKeyAnimatorSetBones(glhckKeyAnimator *object, const glhckBone **bones, unsigned int memb);
-GLHCKAPI glhckBone** glhckKeyAnimatorGetBones(glhckKeyAnimator *object, unsigned int *memb);
+GLHCKAPI int glhckKeyAnimatorInsertBones(glhckKeyAnimator *object, glhckBone **bones, unsigned int memb);
+GLHCKAPI glhckBone** glhckKeyAnimatorBones(glhckKeyAnimator *object, unsigned int *memb);
 GLHCKAPI void glhckKeyAnimatorUpdate(glhckKeyAnimator *object, float playTime);
 
 /* text */
@@ -944,7 +948,7 @@ GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(unsigned int vertexShader,
 GLHCKAPI glhckShader* glhckShaderRef(glhckShader *object);
 GLHCKAPI unsigned int glhckShaderFree(glhckShader *object);
 GLHCKAPI void glhckShaderBind(glhckShader *object);
-GLHCKAPI void glhckShaderSetUniform(glhckShader *object, const char *uniform, int count, void *value);
+GLHCKAPI void glhckShaderUniform(glhckShader *object, const char *uniform, int count, void *value);
 GLHCKAPI int glhckShaderAttachHwBuffer(glhckShader *object, glhckHwBuffer *buffer, const char *name, unsigned int index);
 
 /* trace && debug */
@@ -969,20 +973,20 @@ GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(kmScalar width, kmScalar
 GLHCKAPI int glhckVertexTypeHasNormal(glhckGeometryVertexType type);
 GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type);
 
-GLHCKAPI glhckIndexi glhckGeometryVertexIndexForIndex(glhckGeometry *geometry, glhckIndexi ix);
-GLHCKAPI void glhckGeometryVertexDataForIndex(
+GLHCKAPI glhckIndexi glhckGeometryGetVertexIndexForIndex(glhckGeometry *geometry, glhckIndexi ix);
+GLHCKAPI void glhckGeometrySetVertexIndexForIndex(glhckGeometry *object, glhckIndexi ix, glhckIndexi vertexIndex);
+GLHCKAPI void glhckGeometryGetVertexDataForIndex(
       glhckGeometry *geometry, glhckIndexi ix,
       glhckVector3f *vertex, glhckVector3f *normal,
-      glhckVector2f *coord, glhckColorb *color,
-      unsigned int *vmagic);
+      glhckVector2f *coord, glhckColorb *color);
 GLHCKAPI void glhckGeometrySetVertexDataForIndex(
       glhckGeometry *geometry, glhckIndexi ix,
       glhckVector3f *vertex, glhckVector3f *normal,
       glhckVector2f *coord, glhckColorb *color);
 GLHCKAPI void glhckGeometryTransformCoordinates(glhckGeometry *geometry, const glhckRect *transformed, short degrees);
 GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb);
-GLHCKAPI int glhckGeometrySetVertices(glhckGeometry *geometry, glhckGeometryVertexType type, void *data, int memb);
-GLHCKAPI int glhckGeometrySetIndices(glhckGeometry *geometry, glhckGeometryIndexType type, void *data, int memb);
+GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *geometry, glhckGeometryVertexType type, void *data, int memb);
+GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *geometry, glhckGeometryIndexType type, void *data, int memb);
 
 /* define cleanup */
 #ifdef GLHCK_WINGDIAPI_DEFINED

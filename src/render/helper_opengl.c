@@ -1538,7 +1538,7 @@ no_uniforms:
 }
 
 /* \brief set shader uniform */
-void glhProgramSetUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, const GLvoid *value)
+void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, const GLvoid *value)
 {
    CALL(2, "%u, %p, %d, %p", obj, uniform, count, value);
 

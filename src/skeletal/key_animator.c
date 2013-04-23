@@ -104,7 +104,7 @@ GLHCKAPI unsigned int glhckKeyAnimatorFree(glhckKeyAnimator *object)
    glhckKeyAnimatorAnimation(object, NULL);
 
    /* release bones */
-   glhckKeyAnimatorSetBones(object, NULL, 0);
+   glhckKeyAnimatorInsertBones(object, NULL, 0);
 
    /* free the animating object */
    IFDO(_glhckFree, object->object);
@@ -143,11 +143,11 @@ GLHCKAPI glhckKeyAnimation* glhckKeyAnimatorGetAnimation(glhckKeyAnimator *objec
 }
 
 /* \brief set bones to animator */
-GLHCKAPI int glhckKeyAnimatorSetBones(glhckKeyAnimator *object, const glhckBone **bones, unsigned int memb)
+GLHCKAPI int glhckKeyAnimatorInsertBones(glhckKeyAnimator *object, glhckBone **bones, unsigned int memb)
 {
    unsigned int i;
    glhckBone **bonesCopy = NULL;
-   CALL(0, "%p, %p, %zu", object, bones, memb);
+   CALL(0, "%p, %p, %u", object, bones, memb);
    assert(object);
 
    /* copy bones, if they exist */
@@ -179,7 +179,7 @@ fail:
 }
 
 /* \brief get bones assigned to this animator */
-GLHCKAPI glhckBone** glhckKeyAnimatorGetBones(glhckKeyAnimator *object, unsigned int *memb)
+GLHCKAPI glhckBone** glhckKeyAnimatorBones(glhckKeyAnimator *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
    if (memb) *memb = object->numBones;

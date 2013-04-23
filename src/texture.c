@@ -59,7 +59,7 @@ inline void _glhckTextureInsertToQueue(glhckTexture *object)
 
 /* \brief set texture data.
  * NOTE: internal function, so data isn't copied. */
-static void _glhckTextureSetData(glhckTexture *object, void *data)
+static void _glhckTextureData(glhckTexture *object, void *data)
 {
    CALL(1, "%p, %p", object, data);
    assert(object);
@@ -333,7 +333,7 @@ GLHCKAPI unsigned int glhckTextureFree(glhckTexture *object)
 
    /* free */
    IFDO(_glhckFree, object->file);
-   _glhckTextureSetData(object, NULL);
+   _glhckTextureData(object, NULL);
 
    /* remove from world */
    _glhckWorldRemove(texture, object, glhckTexture*);
@@ -455,7 +455,7 @@ GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target,
    }
 
    /* set the copied data */
-   _glhckTextureSetData(object, copied);
+   _glhckTextureData(object, copied);
 
    /* set rest */
    object->width  = width;

@@ -153,7 +153,7 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmSc
    glhckObjectTexture(object, texture);
 
    /* set filename of object */
-   _glhckObjectSetFile(object, texture->file);
+   _glhckObjectFile(object, texture->file);
 
    RET(0, "%p", object);
    return object;

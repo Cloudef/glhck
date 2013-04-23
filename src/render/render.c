@@ -62,7 +62,7 @@ void _glhckRenderCheckApi(void)
    GLHCK_API_CHECK(programUniformBufferList);
    GLHCK_API_CHECK(programAttributeList);
    GLHCK_API_CHECK(programUniformList);
-   GLHCK_API_CHECK(programSetUniform);
+   GLHCK_API_CHECK(programUniform);
    GLHCK_API_CHECK(programAttachUniformBuffer);
    GLHCK_API_CHECK(shaderCompile);
    GLHCK_API_CHECK(shaderDelete);

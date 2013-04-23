@@ -208,7 +208,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    if (!(tp = _glhckTexturePackerNew()))
       goto fail;
 
-   _glhckTexturePackerSetCount(tp, count);
+   _glhckTexturePackerCount(tp, count);
 
    /* add textures to packer */
    for (rect = object->rect;

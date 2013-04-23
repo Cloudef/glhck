@@ -879,7 +879,7 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(programBind, stubProgramBind);
    GLHCK_RENDER_FUNC(programLink, stubProgramLink);
    GLHCK_RENDER_FUNC(programDelete, stubProgramDelete);
-   GLHCK_RENDER_FUNC(programSetUniform, stubProgramSetUniform);
+   GLHCK_RENDER_FUNC(programUniform, stubProgramUniform);
    GLHCK_RENDER_FUNC(programUniformBufferList, stubProgramUniformBufferList);
    GLHCK_RENDER_FUNC(programAttributeList, stubProgramAttributeList);
    GLHCK_RENDER_FUNC(programUniformList, stubProgramUniformList);

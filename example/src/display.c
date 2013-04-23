@@ -170,7 +170,8 @@ int main(int argc, char **argv)
 #  define ASSIMP_PATH ""
 #else
 //#  define ASSIMP_PATH "example/media/chaosgate/chaosgate.obj"
-#  define ASSIMP_PATH "example/media/room/room.obj"
+//#  define ASSIMP_PATH "example/media/room/room.obj"
+#  define ASSIMP_PATH "example/media/player.x"
 #endif
 
    if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
@@ -180,7 +181,7 @@ int main(int argc, char **argv)
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
       glhckObjectPositionf(cube, 0.0f, 5.0f, 0.0f);
-   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 2.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 2.0f, GLHCK_MODEL_ANIMATED, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {
@@ -359,7 +360,7 @@ int main(int argc, char **argv)
          glhckRenderPassShader(shader);
 #else
          glhckLightBeginProjectionWithCamera(light[li], camera);
-         glhckLightBind(light[li]);
+         //glhckLightBind(light[li]);
          glhckLightEndProjectionWithCamera(light[li], camera);
 #endif
 

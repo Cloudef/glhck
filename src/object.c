@@ -231,12 +231,17 @@ void _glhckObjectUpdateMatrix(glhckObject *object)
 }
 
 /* set object's filename */
-void _glhckObjectSetFile(glhckObject *object, const char *file)
+void _glhckObjectFile(glhckObject *object, const char *file)
 {
+   char *fileCopy = NULL;
    CALL(1, "%p, %s", object, file);
    assert(object);
+
+   if (file && !(fileCopy = _glhckStrdup(file)))
+      return;
+
    IFDO(_glhckFree, object->file);
-   if (file) object->file = _glhckStrdup(file);
+   object->file = fileCopy;
 }
 
 /***
@@ -303,10 +308,7 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    memcpy(&object->material, &src->material, sizeof(__GLHCKobjectMaterial));
 
    /* copy metadata */
-   if (src->file) {
-      if (!(object->file = _glhckStrdup(src->file)))
-         goto fail;
-   }
+   _glhckObjectFile(object, src->file);
 
    /* copy geometry */
    // object->geometry = _glhckGeometryCopy(src->geometry);
@@ -362,7 +364,7 @@ GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
    glhckObjectRemoveAllChildren(object);
 
    /* free metadata */
-   IFDO(_glhckFree, object->file);
+   _glhckObjectFile(object, NULL);
 
    /* free geometry */
    IFDO(_glhckGeometryFree, object->geometry);
@@ -923,6 +925,42 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object,
    glhckObjectScale(object, &scaling);
 }
 
+/* \brief insert bones to object */
+GLHCKAPI int glhckObjectInsertBones(glhckObject *object, glhckBone **bones, unsigned int memb)
+{
+   unsigned int i;
+   glhckBone **bonesCopy = NULL;
+   CALL(0, "%p, %p, %u", object, bones, memb);
+   assert(object);
+
+   /* copy bones, if they exist */
+   if (bones && !(bonesCopy = _glhckCopy(bones, memb)))
+      goto fail;
+
+   /* free old bones */
+   if (object->bones) {
+      for (i = 0; i != object->numBones; ++i)
+         glhckBoneFree(object->bones[i]);
+      _glhckFree(object->bones);
+   }
+
+   object->bones = bonesCopy;
+   object->numBones = (bonesCopy?memb:0);
+
+   /* reference new bones */
+   if (object->bones) {
+      for (i = 0; i != object->numBones; ++i)
+         glhckBoneRef(object->bones[i]);
+   }
+
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
+
+fail:
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
+}
+
 /* \brief create new geometry for object, replacing existing one. */
 GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object)
 {
@@ -1013,7 +1051,7 @@ GLHCKAPI void glhckObjectUpdate(glhckObject *object)
    _glhckObjectUpdateMatrix(object);
    object->drawFunc = GLHCKRA()->objectRender;
 
-   /* perform update on all the childs */
+
    if (object->flags & GLHCK_OBJECT_ROOT) {
       PERFORM_ON_CHILDS(object, glhckObjectUpdate);
    }

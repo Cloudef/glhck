@@ -274,11 +274,16 @@ typedef struct _glhckObject {
    struct __GLHCKobjectMaterial material;
    struct _glhckObject *parent;
    struct _glhckObject **childs;
+   struct _glhckBone **bones;
+   struct _glhckKeyAnimation **animations;
+   struct _glhckKeyAnimator *animator;
    struct glhckGeometry *geometry;
    __GLHCKobjectDraw drawFunc;
    char *file, *name;
    REFERENCE_COUNTED(_glhckObject);
    unsigned int numChilds;
+   unsigned int numBones;
+   unsigned int numAnimations;
    unsigned char affectionFlags; /* flags how parent affects us */
    unsigned char flags;
 } _glhckObject;
@@ -290,6 +295,7 @@ typedef struct _glhckBone {
    kmMat4 transformedMatrix;
    struct glhckVertexWeight *weights;
    struct _glhckBone *parent;
+   char *name;
    REFERENCE_COUNTED(_glhckBone);
    unsigned int numWeights;
 } _glhckBone;
@@ -311,6 +317,7 @@ typedef struct _glhckKeyAnimationNode {
  * stores information for single animation */
 typedef struct _glhckKeyAnimation {
    struct _glhckKeyAnimationNode **nodes;
+   char *name;
    REFERENCE_COUNTED(_glhckKeyAnimation);
    float ticksPerSecond;
    float duration;
@@ -549,7 +556,7 @@ typedef void (*__GLHCKrenderAPIshaderDelete) (unsigned int shader);
 typedef _glhckHwBufferShaderUniform* (*__GLHCKrenderAPIprogramUniformBufferList) (unsigned int program, const char *uboName, int *size);
 typedef _glhckShaderAttribute* (*__GLHCKrenderAPIprogramAttributeList) (unsigned int program);
 typedef _glhckShaderUniform* (*__GLHCKrenderAPIprogramUniformList) (unsigned int program);
-typedef void (*__GLHCKrenderAPIprogramSetUniform) (unsigned int program, _glhckShaderUniform *uniform, int count, const void *value);
+typedef void (*__GLHCKrenderAPIprogramUniform) (unsigned int program, _glhckShaderUniform *uniform, int count, const void *value);
 typedef unsigned int (*__GLHCKrenderAPIprogramAttachUniformBuffer) (unsigned int program, const char *name, unsigned int location);
 typedef int (*__GLHCKrenderAPIshadersPath) (const char *pathPrefix, const char *pathSuffix);
 typedef int (*__GLHCKrenderAPIshadersDirectiveToken) (const char* token, const char *directive);
@@ -615,7 +622,7 @@ typedef struct __GLHCKrenderAPI {
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniformBufferList);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programAttributeList);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniformList);
-   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programSetUniform);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniform);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programAttachUniformBuffer);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderCompile);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderDelete);
@@ -814,7 +821,7 @@ int _glhckStrupcmp(const char *hay, const char *needle);
 int _glhckStrnupcmp(const char *hay, const char *needle, size_t len);
 
 /* texture packing functions */
-void _glhckTexturePackerSetCount(_glhckTexturePacker *tp, short textureCount);
+void _glhckTexturePackerCount(_glhckTexturePacker *tp, short textureCount);
 short _glhckTexturePackerAdd(_glhckTexturePacker *tp, int width, int height);
 int _glhckTexturePackerPack(_glhckTexturePacker *tp, int *width, int *height, const int forcePowerOfTwo, const int onePixelBorder);
 int _glhckTexturePackerGetLocation(const _glhckTexturePacker *tp, int index, int *x, int *y, int *width, int *height);
@@ -827,7 +834,7 @@ void _glhckRenderDefaultProjection(int width, int height);
 void _glhckRenderCheckApi(void);
 
 /* objects */
-void _glhckObjectSetFile(_glhckObject *object, const char *file);
+void _glhckObjectFile(_glhckObject *object, const char *file);
 void _glhckObjectInsertToQueue(_glhckObject *object);
 void _glhckObjectUpdateMatrix(_glhckObject *object);
 

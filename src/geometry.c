@@ -915,7 +915,7 @@ GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type)
 }
 
 /* \brief retieve vertex index from index array */
-GLHCKAPI glhckIndexi glhckGeometryVertexIndexForIndex(glhckGeometry *object, glhckIndexi ix)
+GLHCKAPI glhckIndexi glhckGeometryGetVertexIndexForIndex(glhckGeometry *object, glhckIndexi ix)
 {
    assert(object && ix < (glhckIndexi)object->indexCount);
    switch (object->indexType) {
@@ -931,19 +931,33 @@ GLHCKAPI glhckIndexi glhckGeometryVertexIndexForIndex(glhckGeometry *object, glh
    return 0;
 }
 
+/* \brief set vertex index for index */
+GLHCKAPI void glhckGeometrySetVertexIndexForIndex(glhckGeometry *object, glhckIndexi ix, glhckIndexi vertexIndex)
+{
+   assert(object && ix < (glhckIndexi)object->indexCount);
+   switch (object->indexType) {
+      case GLHCK_INDEX_BYTE:
+         object->indices.ivb[ix] = vertexIndex;
+      case GLHCK_INDEX_SHORT:
+         object->indices.ivs[ix] = vertexIndex;
+      case GLHCK_INDEX_INTEGER:
+         object->indices.ivi[ix] = vertexIndex;
+      default:
+         break;
+   }
+}
+
 /* \brief retieve internal vertex data for index */
-GLHCKAPI void glhckGeometryVertexDataForIndex(
+GLHCKAPI void glhckGeometryGetVertexDataForIndex(
       glhckGeometry *object, glhckIndexi ix,
       glhckVector3f *vertex, glhckVector3f *normal,
-      glhckVector2f *coord, glhckColorb *color,
-      unsigned int *vmagic)
+      glhckVector2f *coord, glhckColorb *color)
 {
    assert(object && ix < (glhckIndexi)object->vertexCount);
    if (vertex) memset(vertex, 0, sizeof(glhckVector3f));
    if (normal) memset(normal, 0, sizeof(glhckVector3f));
    if (coord)  memset(coord,  0, sizeof(glhckVector2f));
    if (color)  memset(color,  0, sizeof(glhckColorb));
-   if (vmagic) *vmagic = 1;
 
    switch (object->vertexType) {
       case GLHCK_VERTEX_V3B:
@@ -951,7 +965,6 @@ GLHCKAPI void glhckGeometryVertexDataForIndex(
          if (normal) { glhckSetV3(normal, &object->vertices.v3b[ix].normal); }
          if (coord)  { glhckSetV2(coord, &object->vertices.v3b[ix].coord); }
          if (color)  { memcpy(color, &object->vertices.v3b[ix].color, sizeof(glhckColorb)); }
-         if (vmagic) *vmagic = GLHCK_BYTE_VMAGIC;
          break;
 
       case GLHCK_VERTEX_V2B:
@@ -959,7 +972,6 @@ GLHCKAPI void glhckGeometryVertexDataForIndex(
          if (normal) { glhckSetV3(normal, &object->vertices.v2b[ix].normal); }
          if (coord)  { glhckSetV2(coord, &object->vertices.v2b[ix].coord); }
          if (color)  { memcpy(color, &object->vertices.v2b[ix].color, sizeof(glhckColorb)); }
-         if (vmagic) *vmagic = GLHCK_BYTE_VMAGIC;
          break;
 
       case GLHCK_VERTEX_V3S:
@@ -967,7 +979,6 @@ GLHCKAPI void glhckGeometryVertexDataForIndex(
          if (normal) { glhckSetV3(normal, &object->vertices.v3s[ix].normal); }
          if (coord)  { glhckSetV2(coord, &object->vertices.v3s[ix].coord); }
          if (color)  { memcpy(color, &object->vertices.v3s[ix].color, sizeof(glhckColorb)); }
-         if (vmagic) *vmagic = GLHCK_SHORT_VMAGIC;
          break;
 
       case GLHCK_VERTEX_V2S:
@@ -975,7 +986,6 @@ GLHCKAPI void glhckGeometryVertexDataForIndex(
          if (normal) { glhckSetV3(normal, &object->vertices.v2s[ix].normal); }
          if (coord)  { glhckSetV2(coord, &object->vertices.v2s[ix].coord); }
          if (color)  { memcpy(color, &object->vertices.v2s[ix].color, sizeof(glhckColorb)); }
-         if (vmagic) *vmagic = GLHCK_SHORT_VMAGIC;
          break;
 
       case GLHCK_VERTEX_V3FS:
@@ -1099,8 +1109,7 @@ GLHCKAPI void glhckGeometryTransformCoordinates(
 
    /* transform coordinates */
    for (i = 0; i != object->vertexCount; ++i) {
-      glhckGeometryVertexDataForIndex(object, i,
-            NULL, NULL, &coord, NULL, NULL);
+      glhckGeometryGetVertexDataForIndex(object, i, NULL, NULL, &coord, NULL);
       out.x = coord.x/(float)object->textureRange;
       out.y = coord.y/(float)object->textureRange;
 
@@ -1122,8 +1131,7 @@ GLHCKAPI void glhckGeometryTransformCoordinates(
 
       coord.x = out.x*object->textureRange;
       coord.y = out.y*object->textureRange;
-      glhckGeometrySetVertexDataForIndex(object, i,
-            NULL, NULL, &coord, NULL);
+      glhckGeometrySetVertexDataForIndex(object, i, NULL, NULL, &coord, NULL);
    }
 
    /* assign to geometry */
@@ -1142,15 +1150,13 @@ GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *object, kmAABB *bb)
    CALL(2, "%p, %p", object, bb);
    assert(object && bb);
 
-   glhckGeometryVertexDataForIndex(object, 0,
-         &vertex, NULL, NULL, NULL, NULL);
+   glhckGeometryGetVertexDataForIndex(object, 0, &vertex, NULL, NULL, NULL);
    glhckSetV3(&max, &vertex);
    glhckSetV3(&min, &vertex);
 
    /* find min and max vertices */
    for(i = 1; i != object->vertexCount; ++i) {
-      glhckGeometryVertexDataForIndex(object, i,
-            &vertex, NULL, NULL, NULL, NULL);
+      glhckGeometryGetVertexDataForIndex(object, i, &vertex, NULL, NULL, NULL);
       glhckMaxV3(&max, &vertex);
       glhckMinV3(&min, &vertex);
    }
@@ -1160,7 +1166,7 @@ GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *object, kmAABB *bb)
 }
 
 /* \brief assign indices to object */
-GLHCKAPI int glhckGeometrySetIndices(glhckGeometry *object,
+GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *object,
       glhckGeometryIndexType type, void *data, int memb)
 {
    void *idata;
@@ -1187,7 +1193,7 @@ fail:
 }
 
 /* \brief assign vertices to object */
-GLHCKAPI int glhckGeometrySetVertices(glhckGeometry *object,
+GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *object,
       glhckGeometryVertexType type, void *data, int memb)
 {
    void *vdata;

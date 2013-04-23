@@ -21,6 +21,121 @@ static const char* getExt(const char *file)
    return ext + 1;
 }
 
+const struct aiNode* findNode(const struct aiNode *nd, const char *name)
+{
+   unsigned int i;
+   const struct aiNode *child;
+   for (i = 0; i != nd->mNumChildren; ++i) {
+      if (!strcmp(nd->mChildren[i]->mName.data, name))
+         return nd->mChildren[i];
+      if ((child = findNode(nd->mChildren[i], name)))
+         return child;
+   }
+   return NULL;
+}
+
+const struct aiBone* findBone(const struct aiMesh *mesh, const char *name)
+{
+   unsigned int i;
+   for (i = 0; i != mesh->mNumBones; ++i)
+      if (!strcmp(mesh->mBones[i]->mName.data, name)) return mesh->mBones[i];
+   return NULL;
+}
+
+static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode *nd, const struct aiMesh *mesh,
+      glhckBone **bones, unsigned int boneIndex)
+{
+   glhckBone *bone, *child;
+   const struct aiBone *assimpBone;
+   kmMat4 offsetMatrix, transformationMatrix;
+   unsigned int i;
+   assert(boneNd && nd);
+   assert(mesh);
+
+   /* too much bones */
+   if (boneIndex+1>mesh->mNumBones)
+      return NULL;
+
+   /* create new bone */
+   if (!(bone = glhckBoneNew()))
+      return NULL;
+
+   glhckBoneName(bone, boneNd->mName.data);
+   printf(":: BONE: %s\n", glhckBoneGetName(bone));
+
+   /* skip this part by creating dummy bone, if this information is not found */
+   assimpBone = findBone(mesh, boneNd->mName.data);
+   if (assimpBone) {
+      /* get offset matrix */
+      offsetMatrix.mat[0]  = assimpBone->mOffsetMatrix.a1;
+      offsetMatrix.mat[1]  = assimpBone->mOffsetMatrix.a2;
+      offsetMatrix.mat[2]  = assimpBone->mOffsetMatrix.a3;
+      offsetMatrix.mat[3]  = assimpBone->mOffsetMatrix.a4;
+
+      offsetMatrix.mat[4]  = assimpBone->mOffsetMatrix.b1;
+      offsetMatrix.mat[5]  = assimpBone->mOffsetMatrix.b2;
+      offsetMatrix.mat[6]  = assimpBone->mOffsetMatrix.b3;
+      offsetMatrix.mat[7]  = assimpBone->mOffsetMatrix.b4;
+
+      offsetMatrix.mat[8]  = assimpBone->mOffsetMatrix.c1;
+      offsetMatrix.mat[9]  = assimpBone->mOffsetMatrix.c2;
+      offsetMatrix.mat[10] = assimpBone->mOffsetMatrix.c3;
+      offsetMatrix.mat[11] = assimpBone->mOffsetMatrix.c4;
+
+      offsetMatrix.mat[12] = assimpBone->mOffsetMatrix.d1;
+      offsetMatrix.mat[13] = assimpBone->mOffsetMatrix.d2;
+      offsetMatrix.mat[14] = assimpBone->mOffsetMatrix.d3;
+      offsetMatrix.mat[15] = assimpBone->mOffsetMatrix.d4;
+
+      /* get weights */
+      glhckVertexWeight weights[assimpBone->mNumWeights];
+      memset(weights, 0, sizeof(weights));
+      for (i = 0; i != assimpBone->mNumWeights; ++i) {
+         weights[i].vertexIndex = assimpBone->mWeights[i].mVertexId;
+         weights[i].weight = assimpBone->mWeights[i].mWeight;
+      }
+
+      glhckBoneInsertWeights(bone, weights, assimpBone->mNumWeights);
+      glhckBoneOffsetMatrix(bone, &offsetMatrix);
+   }
+
+   /* get transformation matrix */
+   transformationMatrix.mat[0]  = boneNd->mTransformation.a1;
+   transformationMatrix.mat[1]  = boneNd->mTransformation.a2;
+   transformationMatrix.mat[2]  = boneNd->mTransformation.a3;
+   transformationMatrix.mat[3]  = boneNd->mTransformation.a4;
+
+   transformationMatrix.mat[4]  = boneNd->mTransformation.b1;
+   transformationMatrix.mat[5]  = boneNd->mTransformation.b2;
+   transformationMatrix.mat[6]  = boneNd->mTransformation.b3;
+   transformationMatrix.mat[7]  = boneNd->mTransformation.b4;
+
+   transformationMatrix.mat[8]  = boneNd->mTransformation.c1;
+   transformationMatrix.mat[9]  = boneNd->mTransformation.c2;
+   transformationMatrix.mat[10] = boneNd->mTransformation.c3;
+   transformationMatrix.mat[11] = boneNd->mTransformation.c4;
+
+   transformationMatrix.mat[12] = boneNd->mTransformation.d1;
+   transformationMatrix.mat[13] = boneNd->mTransformation.d2;
+   transformationMatrix.mat[14] = boneNd->mTransformation.d3;
+   transformationMatrix.mat[15] = boneNd->mTransformation.d4;
+
+   glhckBoneTransformationMatrix(bone, &transformationMatrix);
+
+   for (i = 0; i != boneNd->mNumChildren; ++i) {
+      child = processBones(findNode(nd, boneNd->mChildren[i]->mName.data), nd, mesh, bones, boneIndex++);
+      if (child) glhckBoneAddChildren(bone, child);
+   }
+
+   return bone;
+}
+
+static int processAnimations(const struct aiScene *sc)
+{
+   (void)sc;
+   return RETURN_OK;
+}
+
 static int buildModel(glhckObject *object, size_t numIndices, size_t numVertices,
       const glhckImportIndexData *indices, const glhckImportVertexData *vertexData,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype, unsigned int flags)
@@ -55,6 +170,7 @@ static void joinMesh(const struct aiMesh *mesh, size_t indexOffset,
    unsigned int f, i, skip;
    glhckImportIndexData index;
    const struct aiFace *face;
+   assert(mesh);
 
    for (f = 0, skip = 0; f != mesh->mNumFaces; ++f) {
       face = &mesh->mFaces[f];
@@ -112,6 +228,7 @@ glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl
    float blend;
    char *texturePath;
    glhckTextureParameters params;
+   assert(file && mtl);
 
    if (!aiGetMaterialTextureCount(mtl, aiTextureType_DIFFUSE))
       return NULL;
@@ -161,6 +278,9 @@ static int processModel(const char *file, glhckObject *object,
    const struct aiFace *face;
    int canFreeCurrent = 0;
    int hasTexture = 0;
+   assert(file);
+   assert(object && current);
+   assert(sc && nd);
 
    /* combine && atlas loading path */
    if (flags & GLHCK_MODEL_JOIN) {
@@ -246,6 +366,16 @@ static int processModel(const char *file, glhckObject *object,
       for (m = 0, ioffset = 0, voffset = 0; m != nd->mNumMeshes; ++m) {
          mesh = sc->mMeshes[nd->mMeshes[m]];
          if (!mesh->mVertices) continue;
+
+         /* import bones */
+         if (flags & GLHCK_MODEL_ANIMATED) {
+            if (mesh->mNumBones) {
+               glhckBone *bones[mesh->mNumBones];
+               if (processBones(sc->mRootNode, sc->mRootNode, mesh, bones, 0)) {
+                  /* set bones to current object */
+               }
+            }
+         }
 
          /* gather statistics */
          numIndices = 0;
@@ -357,6 +487,12 @@ int _glhckImportAssimp(glhckObject *object, const char *file, unsigned int flags
    if (processModel(file, object, first, scene, scene->mRootNode,
             itype, vtype, flags) != RETURN_OK)
       goto fail;
+
+   /* process the animations */
+   if (flags & GLHCK_MODEL_ANIMATED && scene->mNumAnimations) {
+      if (processAnimations(scene) != RETURN_OK)
+         goto fail;
+   }
 
    /* close file */
    NULLDO(aiReleaseImport, scene);

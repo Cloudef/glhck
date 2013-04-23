@@ -32,7 +32,7 @@ GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned 
    glhckObjectScalef(object, size, size, size);
 
    /* set object's filename */
-   _glhckObjectSetFile(object, file);
+   _glhckObjectFile(object, file);
 
    RET(0, "%p", object);
    return object;

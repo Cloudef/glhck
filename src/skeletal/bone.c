@@ -49,8 +49,11 @@ GLHCKAPI unsigned int glhckBoneFree(glhckBone *object)
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
+   /* free the name */
+   IFDO(_glhckFree, object->name);
+
    /* free the weights */
-   glhckBoneSetWeights(object, NULL, 0);
+   glhckBoneInsertWeights(object, NULL, 0);
 
    /* remove from world */
    _glhckWorldRemove(bone, object, glhckBone*);
@@ -63,8 +66,29 @@ success:
    return object?object->refCounter:0;
 }
 
+/* \brief set bone name */
+GLHCKAPI void glhckBoneName(glhckBone *object, const char *name)
+{
+   char *nameCopy = NULL;
+   CALL(2, "%p, %s", object, name);
+
+   if (name && !(nameCopy = _glhckStrdup(name)))
+      return;
+
+   IFDO(_glhckFree, object->name);
+   object->name = nameCopy;
+}
+
+/* \brief get bone name */
+GLHCKAPI const char* glhckBoneGetName(glhckBone *object)
+{
+   CALL(2, "%p", object);
+   RET(2, "%s", object->name);
+   return object->name;
+}
+
 /* \brief set weights to bone */
-GLHCKAPI int glhckBoneSetWeights(glhckBone *object, const glhckVertexWeight *weights, unsigned int memb)
+GLHCKAPI int glhckBoneInsertWeights(glhckBone *object, const glhckVertexWeight *weights, unsigned int memb)
 {
    glhckVertexWeight *weightsCopy = NULL;
    CALL(0, "%p, %p, %zu", object, weights, memb);
@@ -84,7 +108,7 @@ fail:
 }
 
 /* \brief get weights from bone */
-GLHCKAPI const glhckVertexWeight* glhckBoneGetWeights(glhckBone *object, unsigned int *memb)
+GLHCKAPI const glhckVertexWeight* glhckBoneWeights(glhckBone *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
    if (memb) *memb = object->numWeights;

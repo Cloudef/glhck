@@ -7,11 +7,6 @@ Skeletal animation to assimp import
 Rename glhckTextDraw to glhckTextStash
 Give glhckText a StashClear function (don't clear after render)
 ---
-Rename glhck<Object>Set<Foo> to glhck<Object><Foo>
-While getters are glhck<Object>Get<Foo>
-Exceptions are methods where single property is not set
-for example the children stuff in glhckObject (you add/remove childrens instead)
----
 Track sub texture data uploads
 ---
 Use 2_10_10_10_REV for color && normals

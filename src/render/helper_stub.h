@@ -51,6 +51,6 @@ unsigned int stubProgramAttachUniformBuffer(unsigned int program, const char *ub
 _glhckHwBufferShaderUniform* stubProgramUniformBufferList(unsigned int program, const char *uboName, int *size);
 _glhckShaderAttribute* stubProgramAttributeList(unsigned int obj);
 _glhckShaderUniform* stubProgramUniformList(unsigned int obj);
-void stubProgramSetUniform(unsigned int obj, _glhckShaderUniform *uniform, int count, const void *value);
+void stubProgramUniform(unsigned int obj, _glhckShaderUniform *uniform, int count, const void *value);
 
 #endif /* __glhck_stub_helper_h__ */

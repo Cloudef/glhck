@@ -261,7 +261,7 @@ _glhckShaderUniform* stubProgramUniformList(unsigned int obj)
 }
 
 /* \brief set shader uniform */
-void stubProgramSetUniform(unsigned int obj, _glhckShaderUniform *uniform, int count, const void *value)
+void stubProgramUniform(unsigned int obj, _glhckShaderUniform *uniform, int count, const void *value)
 {
    CALL(2, "%u, %p, %d, %p", obj, uniform, count, value);
 }
