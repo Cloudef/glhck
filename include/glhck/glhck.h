@@ -739,6 +739,7 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
 GLHCKAPI int glhckObjectInsertVertices(glhckObject *object, glhckGeometryVertexType type, const glhckImportVertexData *vertices, int memb);
 GLHCKAPI int glhckObjectInsertIndices(glhckObject *object, glhckGeometryIndexType type, const glhckImportIndexData *indices, int memb);
+GLHCKAPI int glhckObjectInsertBones(glhckObject *object, glhckBone **bones, unsigned int memb);
 GLHCKAPI void glhckObjectUpdate(glhckObject *object);
 
 /* material */

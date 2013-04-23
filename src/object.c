@@ -368,6 +368,9 @@ GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
    /* free metadata */
    _glhckObjectFile(object, NULL);
 
+   /* free bones */
+   glhckObjectInsertBones(object, NULL, 0);
+
    /* free geometry */
    IFDO(_glhckGeometryFree, object->geometry);
 
@@ -936,7 +939,7 @@ GLHCKAPI int glhckObjectInsertBones(glhckObject *object, glhckBone **bones, unsi
    assert(object);
 
    /* copy bones, if they exist */
-   if (bones && !(bonesCopy = _glhckCopy(bones, memb)))
+   if (bones && !(bonesCopy = _glhckCopy(bones, memb * sizeof(glhckBone*))))
       goto fail;
 
    /* free old bones */

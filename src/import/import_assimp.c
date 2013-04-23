@@ -43,7 +43,7 @@ const struct aiBone* findBone(const struct aiMesh *mesh, const char *name)
 }
 
 static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode *nd, const struct aiMesh *mesh,
-      glhckBone **bones, unsigned int boneIndex)
+      glhckBone **bones, unsigned int *numBones)
 {
    glhckBone *bone, *child;
    const struct aiBone *assimpBone;
@@ -51,15 +51,18 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
    unsigned int i;
    assert(boneNd && nd);
    assert(mesh);
+   assert(numBones);
 
    /* too much bones */
-   if (boneIndex+1>mesh->mNumBones)
+   if (!numBones || *numBones+1>mesh->mNumBones)
       return NULL;
 
    /* create new bone */
    if (!(bone = glhckBoneNew()))
       return NULL;
 
+   bones[*numBones] = bone;
+   *numBones = *numBones+1;
    glhckBoneName(bone, boneNd->mName.data);
    printf(":: BONE: %s\n", glhckBoneGetName(bone));
 
@@ -123,10 +126,9 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
    glhckBoneTransformationMatrix(bone, &transformationMatrix);
 
    for (i = 0; i != boneNd->mNumChildren; ++i) {
-      child = processBones(findNode(nd, boneNd->mChildren[i]->mName.data), nd, mesh, bones, boneIndex++);
+      child = processBones(findNode(nd, boneNd->mChildren[i]->mName.data), nd, mesh, bones, numBones);
       if (child) glhckBoneAddChildren(bone, child);
    }
-
    return bone;
 }
 
@@ -267,8 +269,8 @@ static int processModel(const char *file, glhckObject *object,
       glhckObject *current, const struct aiScene *sc, const struct aiNode *nd,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype, unsigned int flags)
 {
-   unsigned int m, f;
-   unsigned int numVertices = 0, numIndices = 0;
+   unsigned int m, f, b;
+   unsigned int numVertices = 0, numIndices = 0, numBones = 0;
    unsigned int ioffset, voffset;
    glhckImportIndexData *indices = NULL;
    glhckImportVertexData *vertexData = NULL;
@@ -370,10 +372,12 @@ static int processModel(const char *file, glhckObject *object,
          /* import bones */
          if (flags & GLHCK_MODEL_ANIMATED) {
             if (mesh->mNumBones) {
-               glhckBone *bones[mesh->mNumBones];
-               if (processBones(sc->mRootNode, sc->mRootNode, mesh, bones, 0)) {
+               glhckBone *bones[mesh->mNumBones]; numBones = 0;
+               if (processBones(sc->mRootNode, sc->mRootNode, mesh, bones, &numBones)) {
                   /* set bones to current object */
+                  glhckObjectInsertBones(current, bones, numBones);
                }
+               for (b = 0; b != numBones; ++b) glhckBoneFree(bones[b]);
             }
          }
 
