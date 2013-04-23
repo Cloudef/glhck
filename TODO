@@ -1,0 +1,17 @@
+TODO
+====
+
+---
+Skeletal animation to assimp import
+---
+Rename glhckTextDraw to glhckTextStash
+Give glhckText a StashClear function (don't clear after render)
+---
+Track sub texture data uploads
+---
+Use 2_10_10_10_REV for color && normals
+Better precision, same size
+---
+
+Reason for this file is that I keep forgetting things \o/
+Feel free add more items.
