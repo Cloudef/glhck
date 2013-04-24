@@ -838,6 +838,7 @@ GLHCKAPI unsigned int glhckAnimatorFree(glhckAnimator *object);
 GLHCKAPI void glhckAnimatorAnimation(glhckAnimator *object, glhckAnimation *animation);
 GLHCKAPI int glhckAnimatorInsertBones(glhckAnimator *object, glhckBone **bones, unsigned int memb);
 GLHCKAPI glhckBone** glhckAnimatorBones(glhckAnimator *object, unsigned int *memb);
+GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject);
 GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime);
 
 /* text */
