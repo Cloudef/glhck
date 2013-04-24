@@ -31,7 +31,7 @@ static inline void _glhckAnimatorInterpolateQuaternionKeys(kmQuaternion *out, fl
    assert(out);
 
    if (diffTime < 0.0f) diffTime += duration;
-   if (diffTime > 0.0f) {
+   if (0 && diffTime > 0.0f) {
       interp = (time - current->time)/diffTime;
       kmQuaternionSlerp(out, &current->quaternion, &next->quaternion, interp);
    } else {
@@ -143,8 +143,8 @@ GLHCKAPI void glhckAnimatorAnimation(glhckAnimator *object, glhckAnimation *anim
    CALL(2, "%p, %p", object, animation);
    assert(object);
 
-   IFDO(_glhckFree, object->animation);
-   object->animation = (animation?NULL:glhckAnimationRef(animation));
+   IFDO(glhckAnimationFree, object->animation);
+   object->animation = (animation?glhckAnimationRef(animation):NULL);
    IFDO(_glhckFree, object->previousNodes);
 
    if (animation) {
@@ -210,6 +210,12 @@ GLHCKAPI glhckBone** glhckAnimatorBones(glhckAnimator *object, unsigned int *mem
    return object->bones;
 }
 
+/* \brief transform object with the animation */
+GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject)
+{
+   // FIXME: IMPLEMENT
+}
+
 /* \brief update the skeletal animation to next tick */
 GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
 {
@@ -226,6 +232,8 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
 
    /* not enough memory(?) */
    if (!object->previousNodes) return;
+   if (!object->animation) return;
+   if (!object->bones) return;
 
    animation = object->animation;
    duration = animation->duration;
@@ -247,10 +255,8 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
       /* translate using translation keys */
       if (node->translations) {
          frame = (time >= object->lastTime?lastNode->translationFrame:0);
-         for (frame = frame+1; frame != node->numTranslations; ++frame) {
-            if (time < node->translations[frame].time)
-               break;
-         }
+         for (frame = frame+1; frame != node->numTranslations; ++frame)
+            if (time < node->translations[frame].time) break;
 
          nextFrame = (frame+1)%node->numTranslations;
          _glhckAnimatorInterpolateVectorKeys(&currentTranslation, time, duration,
@@ -261,10 +267,8 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
       /* scale using scaling keys */
       if (node->scalings) {
          frame = (time >= object->lastTime?lastNode->scalingFrame:0);
-         for (frame = frame+1; frame != node->numScalings; ++frame) {
-            if (time < node->scalings[frame].time)
-               break;
-         }
+         for (frame = frame+1; frame != node->numScalings; ++frame)
+            if (time < node->scalings[frame].time) break;
 
          nextFrame = (frame+1)%node->numScalings;
          _glhckAnimatorInterpolateVectorKeys(&currentScaling, time, duration,
@@ -275,10 +279,8 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
       /* rotate using rotation keys */
       if (node->rotations) {
          frame = (time >= object->lastTime?lastNode->rotationFrame:0);
-         for (frame = frame+1; frame != node->numRotations; ++frame) {
-            if (time < node->rotations[frame].time)
-               break;
-         }
+         for (frame = frame+1; frame != node->numRotations; ++frame)
+            if (time < node->rotations[frame].time) break;
 
          nextFrame = (frame+1)%node->numRotations;
          _glhckAnimatorInterpolateQuaternionKeys(&currentRotation, time, duration,
