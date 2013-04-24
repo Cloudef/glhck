@@ -324,9 +324,9 @@ GLHCKAPI void glhckMassacreWorld(void)
    _massacre(light, glhckLightFree);
    _massacre(object, glhckObjectFree);
    _massacre(bone, glhckBoneFree);
-   _massacre(keyAnimation, glhckKeyAnimationFree);
-   _massacre(keyAnimationNode, glhckKeyAnimationNodeFree);
-   _massacre(keyAnimator, glhckKeyAnimatorFree);
+   _massacre(animation, glhckAnimationFree);
+   _massacre(animationNode, glhckAnimationNodeFree);
+   _massacre(animator, glhckAnimatorFree);
    _massacre(renderbuffer, glhckRenderbufferFree);
    _massacre(shader,  glhckShaderFree);
    _massacre(text, glhckTextFree);

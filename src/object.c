@@ -966,6 +966,60 @@ fail:
    return RETURN_FAIL;
 }
 
+/* \brief get bones assigned to this object */
+GLHCKAPI glhckBone** glhckObjectBones(glhckObject *object, unsigned int *memb)
+{
+   CALL(2, "%p, %p", object, memb);
+   if (memb) *memb = object->numBones;
+   RET(2, "%p", object->bones);
+   return object->bones;
+}
+
+/* \brief insert animations to object */
+GLHCKAPI int glhckObjectInsertAnimations(glhckObject *object, glhckAnimation **animations, unsigned int memb)
+{
+   unsigned int i;
+   glhckAnimation **animationsCopy = NULL;
+   CALL(0, "%p, %p, %u", object, animations, memb);
+   assert(object);
+
+   /* copy animations, if they exist */
+   if (animations && !(animationsCopy = _glhckCopy(animations, memb * sizeof(glhckAnimation*))))
+      goto fail;
+
+   /* free old animations */
+   if (object->animations) {
+      for (i = 0; i != object->numAnimations; ++i)
+         glhckAnimationFree(object->animations[i]);
+      _glhckFree(object->animations);
+   }
+
+   object->animations = animationsCopy;
+   object->numAnimations = (animationsCopy?memb:0);
+
+   /* reference new animations */
+   if (object->animations) {
+      for (i = 0; i != object->numAnimations; ++i)
+         glhckAnimationRef(object->animations[i]);
+   }
+
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
+
+fail:
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
+}
+
+/* \brief get animations assigned to this object */
+GLHCKAPI glhckAnimation** glhckObjectAnimations(glhckObject *object, unsigned int *memb)
+{
+   CALL(2, "%p, %p", object, memb);
+   if (memb) *memb = object->numAnimations;
+   RET(2, "%p", object->animations);
+   return object->animations;
+}
+
 /* \brief create new geometry for object, replacing existing one. */
 GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object)
 {

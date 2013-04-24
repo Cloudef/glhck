@@ -20,8 +20,8 @@ SET(GLHCK_SRC
    geometry/plane.c
    geometry/model.c
    skeletal/bone.c
-   skeletal/key_animation.c
-   skeletal/key_animator.c
+   skeletal/animation.c
+   skeletal/animator.c
    render/render.c
    render/helper_opengl.c
    render/helper_stub.c

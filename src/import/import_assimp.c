@@ -61,8 +61,11 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
    if (!(bone = glhckBoneNew()))
       return NULL;
 
+   /* set bone to list */
    bones[*numBones] = bone;
    *numBones = *numBones+1;
+
+   /* store bone name */
    glhckBoneName(bone, boneNd->mName.data);
    printf(":: BONE: %s\n", glhckBoneGetName(bone));
 
@@ -125,6 +128,7 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
 
    glhckBoneTransformationMatrix(bone, &transformationMatrix);
 
+   /* process children bones */
    for (i = 0; i != boneNd->mNumChildren; ++i) {
       child = processBones(findNode(nd, boneNd->mChildren[i]->mName.data), nd, mesh, bones, numBones);
       if (child) glhckBoneAddChildren(bone, child);
@@ -132,9 +136,82 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
    return bone;
 }
 
-static int processAnimations(const struct aiScene *sc)
+static int processAnimations(glhckObject *object, const struct aiScene *sc)
 {
-   (void)sc;
+   unsigned int i, n, k, numAnimations, numNodes;
+   glhckAnimation *animation;
+   glhckAnimationNode *node;
+   const struct aiNodeAnim *assimpNode;
+   const struct aiAnimation *assimpAnimation;
+
+   glhckAnimation *animations[sc->mNumAnimations];
+   for (i = 0, numAnimations = 0; i != sc->mNumAnimations; ++i) {
+      assimpAnimation = sc->mAnimations[i];
+
+      /* allocate new animation */
+      if (!(animation = glhckAnimationNew()))
+         continue;
+
+      /* set animation properties */
+      glhckAnimationTicksPerSecond(animation, assimpAnimation->mTicksPerSecond);
+      glhckAnimationDuration(animation, assimpAnimation->mDuration);
+      glhckAnimationName(animation, assimpAnimation->mName.data);
+
+      glhckAnimationNode *nodes[assimpAnimation->mNumChannels];
+      for (n = 0, numNodes = 0; n != assimpAnimation->mNumChannels; ++n) {
+         assimpNode = assimpAnimation->mChannels[n];
+
+         /* allocate new animation node */
+         if (!(node = glhckAnimationNodeNew()))
+            continue;
+
+         /* set bone name for this node */
+         glhckAnimationNodeBoneName(node, assimpNode->mNodeName.data);
+
+         /* translation keys */
+         glhckAnimationVectorKey translations[assimpNode->mNumPositionKeys];
+         for (k = 0; k != assimpNode->mNumPositionKeys; ++k) {
+            translations[k].vector.x = assimpNode->mPositionKeys[k].mValue.x;
+            translations[k].vector.y = assimpNode->mPositionKeys[k].mValue.y;
+            translations[k].vector.z = assimpNode->mPositionKeys[k].mValue.z;
+            translations[k].time = assimpNode->mPositionKeys[k].mTime;
+         }
+         glhckAnimationNodeInsertTranslations(node, translations, assimpNode->mNumPositionKeys);
+
+         /* scaling keys */
+         glhckAnimationVectorKey scalings[assimpNode->mNumScalingKeys];
+         for (k = 0; k != assimpNode->mNumScalingKeys; ++k) {
+            scalings[k].vector.x = assimpNode->mScalingKeys[k].mValue.x;
+            scalings[k].vector.y = assimpNode->mScalingKeys[k].mValue.y;
+            scalings[k].vector.z = assimpNode->mScalingKeys[k].mValue.z;
+            scalings[k].time = assimpNode->mScalingKeys[k].mTime;
+         }
+         glhckAnimationNodeInsertScalings(node, scalings, assimpNode->mNumScalingKeys);
+
+         /* rotation keys */
+         glhckAnimationQuaternionKey rotations[assimpNode->mNumRotationKeys];
+         for (k = 0; k != assimpNode->mNumRotationKeys; ++k) {
+            rotations[k].quaternion.x = assimpNode->mRotationKeys[k].mValue.x;
+            rotations[k].quaternion.y = assimpNode->mRotationKeys[k].mValue.y;
+            rotations[k].quaternion.z = assimpNode->mRotationKeys[k].mValue.z;
+            rotations[k].quaternion.w = assimpNode->mRotationKeys[k].mValue.w;
+            rotations[k].time = assimpNode->mRotationKeys[k].mTime;
+         }
+         glhckAnimationNodeInsertRotations(node, rotations, assimpNode->mNumRotationKeys);
+
+         /* increase imported nodes count */
+         nodes[numNodes++] = node;
+      }
+
+      /* set nodes to animation */
+      if (numNodes) glhckAnimationInsertNodes(animation, nodes, numNodes);
+
+      /* increase imported animations count */
+      animations[numAnimations++] = animation;
+   }
+
+   /* insert animations to object */
+   if (numAnimations) glhckObjectInsertAnimations(object, animations, numAnimations);
    return RETURN_OK;
 }
 
@@ -375,7 +452,7 @@ static int processModel(const char *file, glhckObject *object,
                glhckBone *bones[mesh->mNumBones]; numBones = 0;
                if (processBones(sc->mRootNode, sc->mRootNode, mesh, bones, &numBones)) {
                   /* set bones to current object */
-                  glhckObjectInsertBones(current, bones, numBones);
+                  if (numBones) glhckObjectInsertBones(current, bones, numBones);
                }
                for (b = 0; b != numBones; ++b) glhckBoneFree(bones[b]);
             }
@@ -494,7 +571,7 @@ int _glhckImportAssimp(glhckObject *object, const char *file, unsigned int flags
 
    /* process the animations */
    if (flags & GLHCK_MODEL_ANIMATED && scene->mNumAnimations) {
-      if (processAnimations(scene) != RETURN_OK)
+      if (processAnimations(object, scene) != RETURN_OK)
          goto fail;
    }
 

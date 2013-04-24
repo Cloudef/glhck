@@ -16,6 +16,11 @@ GLHCKAPI glhckBone* glhckBoneNew(void)
    /* increase reference */
    object->refCounter++;
 
+   /* identity matrices */
+   kmMat4Identity(&object->offsetMatrix);
+   kmMat4Identity(&object->transformedMatrix);
+   kmMat4Identity(&object->transformationMatrix);
+
    /* insert to world */
    _glhckWorldInsert(bone, object, glhckBone*);
 
