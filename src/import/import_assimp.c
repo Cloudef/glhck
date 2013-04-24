@@ -138,9 +138,10 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
 
 static int processAnimations(glhckObject *object, const struct aiScene *sc)
 {
-   unsigned int i, n, k, numAnimations, numNodes;
+   unsigned int i, n, k, numAnimations, numNodes, numChildren;
    glhckAnimation *animation;
    glhckAnimationNode *node;
+   glhckObject **children;
    const struct aiNodeAnim *assimpNode;
    const struct aiAnimation *assimpAnimation;
 
@@ -156,6 +157,7 @@ static int processAnimations(glhckObject *object, const struct aiScene *sc)
       glhckAnimationTicksPerSecond(animation, assimpAnimation->mTicksPerSecond);
       glhckAnimationDuration(animation, assimpAnimation->mDuration);
       glhckAnimationName(animation, assimpAnimation->mName.data);
+      printf(":: ANIMATION: %s\n", glhckAnimationGetName(animation));
 
       glhckAnimationNode *nodes[assimpAnimation->mNumChannels];
       for (n = 0, numNodes = 0; n != assimpAnimation->mNumChannels; ++n) {
@@ -211,7 +213,13 @@ static int processAnimations(glhckObject *object, const struct aiScene *sc)
    }
 
    /* insert animations to object */
-   if (numAnimations) glhckObjectInsertAnimations(object, animations, numAnimations);
+   if (numAnimations) {
+      glhckObjectInsertAnimations(object, animations, numAnimations);
+      children = glhckObjectChildren(object, &numChildren);
+      for (i = 0; i != numChildren; ++i) {
+         glhckObjectInsertAnimations(children[i], animations, numAnimations);
+      }
+   }
    return RETURN_OK;
 }
 
