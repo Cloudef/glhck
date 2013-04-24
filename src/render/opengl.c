@@ -753,6 +753,35 @@ static inline void rObjectRender(const glhckObject *object)
    rObjectStart(object);
    rGeometryPointer(object->geometry);
    rObjectEnd(object);
+
+#if 0
+   if (!object->bones || !object->animations) return;
+   glhckAnimator *animator = glhckAnimatorNew();
+   glhckAnimatorInsertBones(animator, object->bones, object->numBones);
+   glhckAnimatorAnimation(animator, glhckObjectAnimations(object, NULL)[0]);
+
+   static float time = 0.0f;
+   glhckAnimatorUpdate(animator, time+=0.0001f);
+
+   glhckBone *b;
+   unsigned int i;
+   for (i = 0; i != animator->numBones; ++i) {
+      b = animator->bones[i];
+      kmMat4 mat;
+      kmVec3 pos = {1,1,1};
+      memcpy(&mat, &object->view.matrix, sizeof(kmMat4));
+      kmMat4Multiply(&mat, &mat, &b->transformedMatrix);
+      kmVec3Transform(&pos, &pos, &mat);
+      glhckObject *c = glhckCubeNew(2.0);
+      //glhckObjectAddChildren(object, c);
+      glhckObjectPosition(c, &pos);
+      glhckObjectRender(c);
+      //glhckObjectRemoveFromParent(c);
+      glhckObjectFree(c);
+   }
+
+   glhckAnimatorFree(animator);
+#endif
 }
 
 /* \brief render text */
