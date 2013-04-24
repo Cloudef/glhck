@@ -833,6 +833,7 @@ GLHCKAPI void glhckKeyAnimatorUpdate(glhckKeyAnimator *object, float playTime);
 
 /* text */
 GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
+GLHCKAPI glhckText* glhckTextRef(glhckText *text);
 GLHCKAPI unsigned int glhckTextFree(glhckText *text);
 GLHCKAPI void glhckTextGetMetrics(glhckText *text, unsigned int font_id, float size, float *ascender, float *descender, float *lineh);
 GLHCKAPI void glhckTextGetMinMax(glhckText *text, unsigned int font_id, float size, const char *s, kmVec2 *min, kmVec2 *max);
