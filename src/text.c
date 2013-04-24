@@ -844,6 +844,9 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id,
    nparams.mipmap = 0;
    /* FIXME: do a function that checks, if filter contains mipmaps, and then replace */
    nparams.minFilter = GLHCK_FILTER_NEAREST;
+   nparams.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
+   nparams.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
+   nparams.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
    glhckTextureParameter(texture, &nparams);
 
    if (!(fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER)))
