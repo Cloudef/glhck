@@ -1091,8 +1091,7 @@ GLHCKAPI void glhckGeometrySetVertexDataForIndex(
 }
 
 /* \brief transform coordinates with vec4 (off x, off y, width, height) and rotation */
-GLHCKAPI void glhckGeometryTransformCoordinates(
-      glhckGeometry *object, const glhckRect *transformed, short degrees)
+GLHCKAPI void glhckGeometryTransformCoordinates(glhckGeometry *object, const glhckRect *transformed, short degrees)
 {
    int i;
    kmVec2 out, center = { 0.5f, 0.5f };
