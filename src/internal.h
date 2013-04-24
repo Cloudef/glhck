@@ -337,7 +337,6 @@ typedef struct _glhckAnimator {
    struct _glhckAnimation *animation;
    struct _glhckAnimatorState *previousNodes;
    struct _glhckBone **bones;
-   struct _glhckObject *object;
    REFERENCE_COUNTED(_glhckAnimator);
    float lastTime;
    unsigned int numBones;

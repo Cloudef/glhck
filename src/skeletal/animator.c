@@ -126,9 +126,6 @@ GLHCKAPI unsigned int glhckAnimatorFree(glhckAnimator *object)
    /* release bones */
    glhckAnimatorInsertBones(object, NULL, 0);
 
-   /* free the animating object */
-   IFDO(_glhckFree, object->object);
-
    /* remove from world */
    _glhckWorldRemove(animator, object, glhckAnimator*);
 
