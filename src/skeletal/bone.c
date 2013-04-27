@@ -57,6 +57,9 @@ GLHCKAPI unsigned int glhckBoneFree(glhckBone *object)
    /* free the name */
    IFDO(_glhckFree, object->name);
 
+   /* unref parent bone */
+   glhckBoneParentBone(object, NULL);
+
    /* free the weights */
    glhckBoneInsertWeights(object, NULL, 0);
 
@@ -121,17 +124,17 @@ GLHCKAPI const glhckVertexWeight* glhckBoneWeights(glhckBone *object, unsigned i
    return object->weights;
 }
 
-/* \brief add children to this bone */
-GLHCKAPI void glhckBoneAddChildren(glhckBone *object, glhckBone *child)
+/* \brief set parent bone to this bone */
+GLHCKAPI void glhckBoneParentBone(glhckBone *object, glhckBone *parentBone)
 {
-   CALL(0, "%p, %p", object, child);
-   assert(object && child);
-   assert(object != child);
-   child->parent = object;
+   CALL(0, "%p, %p", object, parentBone);
+   assert(object);
+   IFDO(glhckBoneFree, object->parent);
+   object->parent = (parentBone?glhckBoneRef(parentBone):NULL);
 }
 
-/* \brief return parent of this bone */
-GLHCKAPI glhckBone* glhckBoneParent(glhckBone *object)
+/* \brief return parent bone index of this bone */
+GLHCKAPI glhckBone* glhckBoneGetParentBone(glhckBone *object)
 {
    CALL(2, "%p", object);
    assert(object);

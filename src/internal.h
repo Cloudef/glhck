@@ -203,7 +203,7 @@ typedef enum _glhckShaderVariableType {
 
 /* texture container */
 typedef struct _glhckTexture {
-   glhckTextureParameters params;
+   struct glhckTextureParameters params;
    void *data;
    char *file;
    REFERENCE_COUNTED(_glhckTexture);
@@ -277,6 +277,7 @@ typedef struct _glhckObject {
    struct _glhckBone **bones;
    struct _glhckAnimation **animations;
    struct glhckGeometry *geometry;
+   struct glhckGeometry *transformedGeometry;
    __GLHCKobjectDraw drawFunc;
    char *file, *name;
    REFERENCE_COUNTED(_glhckObject);
@@ -289,9 +290,9 @@ typedef struct _glhckObject {
 
 /* bone container */
 typedef struct _glhckBone {
-   kmMat4 offsetMatrix;
-   kmMat4 transformationMatrix;
-   kmMat4 transformedMatrix;
+   kmMat4 offsetMatrix; /* bone -> mesh space transformation */
+   kmMat4 transformationMatrix; /* local transformation of bone  */
+   kmMat4 transformedMatrix; /* final bone space transformation */
    struct glhckVertexWeight *weights;
    struct _glhckBone *parent;
    char *name;
@@ -302,9 +303,9 @@ typedef struct _glhckBone {
 /* animation node container
  * contains keys for each bone (translation, rotation, scaling) */
 typedef struct _glhckAnimationNode {
-   glhckAnimationQuaternionKey *rotations;
-   glhckAnimationVectorKey *translations;
-   glhckAnimationVectorKey *scalings;
+   struct glhckAnimationQuaternionKey *rotations;
+   struct glhckAnimationVectorKey *translations;
+   struct glhckAnimationVectorKey *scalings;
    char *boneName;
    REFERENCE_COUNTED(_glhckAnimationNode);
    unsigned int numTranslations;
@@ -325,10 +326,10 @@ typedef struct _glhckAnimation {
 
 /* stores history of glhckAnimatioNode */
 typedef struct _glhckAnimatorState {
+   struct _glhckBone *bone;
    unsigned int translationFrame;
    unsigned int rotationFrame;
    unsigned int scalingFrame;
-   struct _glhckBone *bone;
 } _glhckAnimatorState;
 
 /* animator object

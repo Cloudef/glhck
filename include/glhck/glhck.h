@@ -530,14 +530,15 @@ typedef struct glhckVertexData2f {
 typedef glhckVertexData3f glhckImportVertexData;
 
 typedef union glhckVertexData {
-      glhckVertexData3b * v3b;
-      glhckVertexData2b * v2b;
-      glhckVertexData3s * v3s;
-      glhckVertexData2s * v2s;
-      glhckVertexData3fs * v3fs;
-      glhckVertexData2fs * v2fs;
-      glhckVertexData3f * v3f;
-      glhckVertexData2f * v2f;
+      glhckVertexData3b *v3b;
+      glhckVertexData2b *v2b;
+      glhckVertexData3s *v3s;
+      glhckVertexData2s *v2s;
+      glhckVertexData3fs *v3fs;
+      glhckVertexData2fs *v2fs;
+      glhckVertexData3f *v3f;
+      glhckVertexData2f *v2f;
+      void *any;
 } glhckVertexData;
 
 typedef unsigned char glhckIndexb;
@@ -548,9 +549,10 @@ typedef unsigned int glhckIndexi;
 typedef glhckIndexi glhckImportIndexData;
 
 typedef union glhckIndexData {
-      glhckIndexb * ivb;
-      glhckIndexs * ivs;
-      glhckIndexi * ivi;
+      glhckIndexb *ivb;
+      glhckIndexs *ivs;
+      glhckIndexi *ivi;
+      void *any;
 } glhckIndexData;
 
 /* geometry type enums */
@@ -727,9 +729,9 @@ GLHCKAPI unsigned char glhckObjectGetParentAffection(const glhckObject *object);
 GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned char affectionFlags);
 GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object);
 GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, unsigned int *memb);
-GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child);
-GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child);
-GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object);
+GLHCKAPI void glhckObjectAddChild(glhckObject *object, glhckObject *child);
+GLHCKAPI void glhckObjectRemoveChild(glhckObject *object, glhckObject *child);
+GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object);
 GLHCKAPI void glhckObjectRemoveFromParent(glhckObject *object);
 GLHCKAPI void glhckObjectTexture(glhckObject *object, glhckTexture *texture);
 GLHCKAPI glhckTexture* glhckObjectGetTexture(const glhckObject *object);
@@ -797,8 +799,8 @@ GLHCKAPI void glhckBoneName(glhckBone *object, const char *name);
 GLHCKAPI const char* glhckBoneGetName(glhckBone *object);
 GLHCKAPI int glhckBoneInsertWeights(glhckBone *object, const glhckVertexWeight *weights, unsigned int memb);
 GLHCKAPI const glhckVertexWeight* glhckBoneWeights(glhckBone *object, unsigned int *memb);
-GLHCKAPI void glhckBoneAddChildren(glhckBone *object, glhckBone *child);
-GLHCKAPI glhckBone* glhckBoneParent(glhckBone *object);
+GLHCKAPI void glhckBoneParentBone(glhckBone *object, glhckBone *parentBone);
+GLHCKAPI glhckBone* glhckBoneGetParentBone(glhckBone *object);
 GLHCKAPI void glhckBoneOffsetMatrix(glhckBone *object, const kmMat4 *offsetMatrix);
 GLHCKAPI const kmMat4* glhckBoneGetOffsetMatrix(glhckBone *object);
 GLHCKAPI void glhckBoneTransformationMatrix(glhckBone *object, const kmMat4 *transformationMatrix);
@@ -998,8 +1000,8 @@ GLHCKAPI void glhckGeometrySetVertexDataForIndex(
       glhckVector2f *coord, glhckColorb *color);
 GLHCKAPI void glhckGeometryTransformCoordinates(glhckGeometry *geometry, const glhckRect *transformed, short degrees);
 GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb);
-GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *geometry, glhckGeometryVertexType type, void *data, int memb);
-GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *geometry, glhckGeometryIndexType type, void *data, int memb);
+GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *geometry, glhckGeometryVertexType type, const void *data, int memb);
+GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *geometry, glhckGeometryIndexType type, const void *data, int memb);
 
 /* define cleanup */
 #ifdef GLHCK_WINGDIAPI_DEFINED

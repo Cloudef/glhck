@@ -624,6 +624,7 @@ glhckGeometry* _glhckGeometryNew(void)
    return object;
 }
 
+/* \brief copy geometry object */
 glhckGeometry* _glhckGeometryCopy(glhckGeometry *src)
 {
    glhckGeometry *object;
@@ -632,7 +633,10 @@ glhckGeometry* _glhckGeometryCopy(glhckGeometry *src)
    if (!(object = _glhckCopy(src, sizeof(glhckGeometry))))
       return NULL;
 
-   /* FIXME: copy indices and vertices */
+   if (src->vertices.any)
+      object->vertices.any =_glhckCopy(src->vertices.any, src->vertexCount * glhckVertexTypeElementSize(src->vertexType));
+   if (src->indices.any)
+      object->indices.any = _glhckCopy(src->indices.any, src->indexCount * glhckIndexTypeElementSize(src->indexType));
 
    return object;
 }
@@ -1166,7 +1170,7 @@ GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *object, kmAABB *bb)
 
 /* \brief assign indices to object */
 GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *object,
-      glhckGeometryIndexType type, void *data, int memb)
+      glhckGeometryIndexType type, const void *data, int memb)
 {
    void *idata;
    int size;
@@ -1175,12 +1179,10 @@ GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *object,
 
    /* check index type */
    type = _glhckGeometryCheckIndexType(data, memb, type);
-
    size = memb * glhckIndexTypeElementSize(type);
-   if (!(idata = _glhckMalloc(size)))
+   if (!(idata = _glhckCopy(data, size)))
       goto fail;
 
-   memcpy(idata, data, size);
    _glhckGeometrySetIndices(object, type, idata, memb);
 
    RET(0, "%d", RETURN_OK);
@@ -1193,7 +1195,7 @@ fail:
 
 /* \brief assign vertices to object */
 GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *object,
-      glhckGeometryVertexType type, void *data, int memb)
+      glhckGeometryVertexType type, const void *data, int memb)
 {
    void *vdata;
    int size;
@@ -1202,12 +1204,10 @@ GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *object,
 
    /* check vertex type */
    type = _glhckGeometryCheckVertexType(type);
-
    size = memb * glhckVertexTypeElementSize(type);
-   if (!(vdata = _glhckMalloc(size)))
+   if (!(vdata = _glhckCopy(data, size)))
       goto fail;
 
-   memcpy(vdata, data, size);
    _glhckGeometrySetVertices(object, type, vdata, memb);
 
    RET(0, "%d", RETURN_OK);

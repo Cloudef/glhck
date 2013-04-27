@@ -676,6 +676,25 @@ static inline void rAABBRender(const glhckObject *object)
       }
 }
 
+/* \brief render object's bones */
+static inline void rBonesRender(const glhckObject *object)
+{
+   unsigned int i;
+   const kmVec3 zero = {0,0,0};
+   kmVec3 points[object->numBones];
+   for (i = 0; i != object->numBones; ++i)
+      kmVec3Transform(&points[i], &zero, &object->bones[i]->transformedMatrix);
+
+   GL_CALL(glPointSize(5.0f));
+   GL_CALL(glDisable(GL_DEPTH_TEST));
+   glhckShaderBind(GLPOINTER()->shader[GL_SHADER_COLOR]);
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){255,0,0,255}));
+   GL_CALL(glDrawArrays(GL_POINTS, 0, object->numBones))
+   GL_CALL(glEnable(GL_DEPTH_TEST));
+}
+
 /* \brief begin object render */
 static inline void rObjectStart(const glhckObject *object)
 {
@@ -753,35 +772,6 @@ static inline void rObjectRender(const glhckObject *object)
    rObjectStart(object);
    rGeometryPointer(object->geometry);
    rObjectEnd(object);
-
-#if 0
-   if (!object->bones || !object->animations) return;
-   glhckAnimator *animator = glhckAnimatorNew();
-   glhckAnimatorInsertBones(animator, object->bones, object->numBones);
-   glhckAnimatorAnimation(animator, glhckObjectAnimations(object, NULL)[0]);
-
-   static float time = 0.0f;
-   glhckAnimatorUpdate(animator, time+=0.0001f);
-
-   glhckBone *b;
-   unsigned int i;
-   for (i = 0; i != animator->numBones; ++i) {
-      b = animator->bones[i];
-      kmMat4 mat;
-      kmVec3 pos = {1,1,1};
-      memcpy(&mat, &object->view.matrix, sizeof(kmMat4));
-      kmMat4Multiply(&mat, &mat, &b->transformedMatrix);
-      kmVec3Transform(&pos, &pos, &mat);
-      glhckObject *c = glhckCubeNew(2.0);
-      //glhckObjectAddChildren(object, c);
-      glhckObjectPosition(c, &pos);
-      glhckObjectRender(c);
-      //glhckObjectRemoveFromParent(c);
-      glhckObjectFree(c);
-   }
-
-   glhckAnimatorFree(animator);
-#endif
 }
 
 /* \brief render text */

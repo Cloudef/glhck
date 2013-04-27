@@ -224,6 +224,9 @@ GLHCKAPI unsigned int glhckAnimationFree(glhckAnimation *object)
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
+   /* free name */
+   glhckAnimationName(object, NULL);
+
    /* free nodes */
    glhckAnimationInsertNodes(object, NULL, 0);
 

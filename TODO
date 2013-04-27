@@ -2,12 +2,20 @@ TODO
 ====
 
 ---
-Skeletal animation to assimp import
+GPU bone transformation
+---
+Make animations work with different vertex formats
+---
+Cleanup and tidy the recently added animation code
 ---
 Track sub texture data uploads
 ---
 Use 2_10_10_10_REV for color && normals
 Better precision, same size
+---
+Write more examples.
+---
+Write unit tests
 ---
 
 Reason for this file is that I keep forgetting things \o/

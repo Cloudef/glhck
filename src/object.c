@@ -362,11 +362,14 @@ GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
    if (object->parent)
       glhckObjectRemoveFromParent(glhckObjectRef(object));
 
-   /* remove all children objects */
-   glhckObjectRemoveAllChildren(object);
+   /* remove children objects */
+   glhckObjectRemoveChildren(object);
 
    /* free metadata */
    _glhckObjectFile(object, NULL);
+
+   /* free animations */
+   glhckObjectInsertAnimations(object, NULL, 0);
 
    /* free bones */
    glhckObjectInsertBones(object, NULL, 0);
@@ -448,8 +451,8 @@ GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, unsigned int *nu
    return object->childs;
 }
 
-/* \brief add children object */
-GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child)
+/* \brief add child object */
+GLHCKAPI void glhckObjectAddChild(glhckObject *object, glhckObject *child)
 {
    size_t i;
    glhckObject **newChilds = NULL;
@@ -458,7 +461,7 @@ GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child)
 
    /* already added? */
    if (child->parent == object) return;
-   if (child->parent) glhckObjectRemoveChildren(child->parent, child);
+   if (child->parent) glhckObjectRemoveChild(child->parent, child);
 
    /* add child */
    if (!(newChilds = _glhckMalloc((object->numChilds+1) * sizeof(glhckObject*))))
@@ -473,8 +476,8 @@ GLHCKAPI void glhckObjectAddChildren(glhckObject *object, glhckObject *child)
    object->numChilds++;
 }
 
-/* \brief remove children object */
-GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child)
+/* \brief remove child object */
+GLHCKAPI void glhckObjectRemoveChild(glhckObject *object, glhckObject *child)
 {
    size_t i, newCount;
    glhckObject **newChilds = NULL;
@@ -501,8 +504,8 @@ GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object, glhckObject *child)
    object->numChilds = newCount;
 }
 
-/* \brief remove all children objects */
-GLHCKAPI void glhckObjectRemoveAllChildren(glhckObject *object)
+/* \brief remove children objects */
+GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object)
 {
    size_t i;
    CALL(0, "%p", object);
@@ -524,7 +527,7 @@ GLHCKAPI void glhckObjectRemoveFromParent(glhckObject *object)
    CALL(0, "%p", object);
    assert(object);
    if (!object->parent) return;
-   glhckObjectRemoveChildren(object->parent, object);
+   glhckObjectRemoveChild(object->parent, object);
 }
 
 /* \brief set object's texture */

@@ -181,9 +181,9 @@ int main(int argc, char **argv)
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
       glhckObjectPositionf(cube, 0.0f, 5.0f, 0.0f);
-   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, GLHCK_MODEL_ANIMATED, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, GLHCK_MODEL_ANIMATED, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3F))) {
       glhckObjectTexture(cube, glhckTextureNew("example/media/texture-b.png", 0, NULL));
-      glhckObjectRotatef(cube, -90, 0, 0);
+      glhckObjectMovef(cube, 0, 15, 0);
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {
@@ -233,7 +233,7 @@ int main(int argc, char **argv)
    if ((rttText = glhckTextPlane(text, font2, 42, "RTT Text", NULL))) {
       glhckObjectScalef(rttText, 0.05f, 0.05f, 1.0f); /* scale to fit our 3d world */
       glhckObjectPositionf(rttText, 0, 2, 0);
-      glhckObjectAddChildren(cube2, rttText);
+      glhckObjectAddChild(cube2, rttText);
 
       /* ignore lighting */
       glhckObjectMaterialFlags(rttText, GLHCK_MATERIAL_CULL | GLHCK_MATERIAL_DEPTH);
@@ -262,9 +262,10 @@ int main(int argc, char **argv)
       light[li] = glhckLightNew();
       glhckLightCutoutf(light[li], 45.0f, 0.0f);
       glhckLightPointLightFactor(light[li], 0.0f);
+      glhckLightAttenf(light[li], 0.0, 0.0, 0.01);
       glhckLightColorb(light[li], rand()%255, rand()%255, rand()%255, 255);
       glhckObject *c = glhckCubeNew(1.0f);
-      glhckObjectAddChildren(glhckLightGetObject(light[li]), c);
+      glhckObjectAddChild(glhckLightGetObject(light[li]), c);
       glhckObjectTexture(c, texture);
       glhckObjectFree(c);
    }
@@ -272,6 +273,19 @@ int main(int argc, char **argv)
    glhckMemoryGraph();
 
    float xspin = 0.0f;
+   unsigned int numBones = 0;
+   glhckAnimator *animator = NULL;
+   glhckBone **bones = glhckObjectBones(cube, &numBones);
+
+   if (bones) {
+      if ((animator = glhckAnimatorNew())) {
+         glhckAnimatorAnimation(animator, glhckObjectAnimations(cube, NULL)[0]);
+         glhckAnimatorInsertBones(animator, bones, numBones);
+         glhckAnimatorUpdate(animator, xspin);
+         glhckAnimatorTransform(animator, cube);
+      }
+   }
+
    while (RUNNING && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
       last  =  now;
       now   =  glfwGetTime();
@@ -325,6 +339,11 @@ int main(int argc, char **argv)
             spinRadius*sin(xspin/40));
       glhckObjectTarget(cube2, glhckObjectGetPosition(cube));
       glhckObjectTarget(sprite3, glhckObjectGetPosition(camObj));
+
+      if (animator) {
+         glhckAnimatorUpdate(animator, xspin*0.05);
+         glhckAnimatorTransform(animator, cube);
+      }
 
       for (li = 0; li != numLights; ++li) {
 #if 1
@@ -442,6 +461,7 @@ int main(int argc, char **argv)
    if (rttText)  glhckObjectFree(rttText);
    if (rttText2) glhckObjectFree(rttText2);
    if (texture)  glhckTextureFree(texture);
+   if (animator) glhckAnimatorFree(animator);
    glhckCameraFree(camera);
    glhckTextFree(text);
 
