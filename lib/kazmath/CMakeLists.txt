@@ -6,6 +6,7 @@ SET(KAZMATH_SRC
    src/kazmath/plane.c
    src/kazmath/quaternion.c
    src/kazmath/ray2.c
+   src/kazmath/ray3.c
    src/kazmath/utility.c
    src/kazmath/vec2.c
    src/kazmath/vec3.c
