@@ -983,6 +983,8 @@ GLHCKAPI size_t glhckVertexTypeElementSize(glhckGeometryVertexType type);
 GLHCKAPI float glhckVertexTypeMaxPrecision(glhckGeometryVertexType type);
 GLHCKAPI const char* glhckVertexTypeString(glhckGeometryVertexType type);
 GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV2Counterpart(glhckGeometryVertexType type);
+GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV3Counterpart(glhckGeometryVertexType type);
+GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetFloatingPointCounterpart(glhckGeometryVertexType type);
 GLHCKAPI int glhckVertexTypeWithinRange(float value, glhckGeometryVertexType type);
 GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(kmScalar width, kmScalar height);
 GLHCKAPI int glhckVertexTypeHasNormal(glhckGeometryVertexType type);

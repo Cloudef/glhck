@@ -884,6 +884,30 @@ GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV3Counterpart(glhckGeometryVe
    return type;
 }
 
+/* \brief get high precision counterpart of the vertexdata */
+GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetFloatingPointCounterpart(glhckGeometryVertexType type)
+{
+   switch (type) {
+      case GLHCK_VERTEX_V3S:
+      case GLHCK_VERTEX_V3B:
+         return GLHCK_VERTEX_V3F;
+
+      case GLHCK_VERTEX_V2S:
+      case GLHCK_VERTEX_V2B:
+         return GLHCK_VERTEX_V2F;
+
+      case GLHCK_VERTEX_V3FS:
+      case GLHCK_VERTEX_V2FS:
+      case GLHCK_VERTEX_V3F:
+      case GLHCK_VERTEX_V2F:
+      default:
+         break;
+   }
+
+   /* default */
+   return type;
+}
+
 /* \brief is value withing precision range? */
 GLHCKAPI int glhckVertexTypeWithinRange(float value, glhckGeometryVertexType type)
 {
