@@ -681,9 +681,17 @@ static inline void rBonesRender(const glhckObject *object)
 {
    unsigned int i;
    const kmVec3 zero = {0,0,0};
+   if (!object->bones || !object->geometry) return;
    kmVec3 points[object->numBones];
-   for (i = 0; i != object->numBones; ++i)
-      kmVec3Transform(&points[i], &zero, &object->bones[i]->transformedMatrix);
+
+   kmMat4 bias, scale, transform;
+   kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
+   kmMat4Scaling(&transform, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
+   kmMat4Inverse(&scale, &transform);
+   for (i = 0; i != object->numBones; ++i) {
+      kmMat4Multiply(&transform, &scale, &object->bones[i]->transformedMatrix);
+      kmVec3Transform(&points[i], &zero, &transform);
+   }
 
    GL_CALL(glPointSize(5.0f));
    GL_CALL(glDisable(GL_DEPTH_TEST));
@@ -750,6 +758,9 @@ static inline void rObjectEnd(const glhckObject *object)
    /* draw oriented bounding box, if requested */
    if (GL_HAS_STATE(GL_STATE_DRAW_OBB))
       rOBBRender(object);
+
+   /* draw bones, if requested */
+   // rBonesRender(object);
 
    /* enable the culling back
     * NOTE: this is a hack */
