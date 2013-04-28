@@ -12,6 +12,10 @@ Cleanup and tidy the recently added animation code
 ---
 Track sub texture data uploads
 ---
+Make material a object
+Move flags that does not make sense in material to glhckObject
+(draw obb, aabb, etc..)
+---
 Fix shader lighting on ATI (wrong usage of UBO?)
 ---
 Use 2_10_10_10_REV for color && normals
