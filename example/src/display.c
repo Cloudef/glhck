@@ -12,13 +12,12 @@
 
 static int RUNNING = 0;
 static int WIDTH = 800, HEIGHT = 480;
-static int MOUSEX = 0, MOUSEY = 0;
-static int LASTMOUSEX = 0, LASTMOUSEY = 0;
-static int close_callback(GLFWwindow* window)
+static double MOUSEX = 0, MOUSEY = 0;
+static double LASTMOUSEX = 0, LASTMOUSEY = 0;
+static void close_callback(GLFWwindow* window)
 {
    (void)window;
    RUNNING = 0;
-   return 1;
 }
 
 static void resize_callback(GLFWwindow* window, int width, int height)
@@ -28,7 +27,7 @@ static void resize_callback(GLFWwindow* window, int width, int height)
    glhckDisplayResize(width, height);
 }
 
-static void mousepos_callback(GLFWwindow* window, int mousex, int mousey)
+static void mousepos_callback(GLFWwindow* window, double mousex, double mousey)
 {
    (void)window;
    MOUSEX = mousex;
