@@ -181,8 +181,10 @@ int main(int argc, char **argv)
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
       glhckObjectPositionf(cube, 0.0f, 5.0f, 0.0f);
-   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, GLHCK_MODEL_ANIMATED, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3F))) {
-      glhckObjectTexture(cube, glhckTextureNew("example/media/texture-b.png", 0, NULL));
+   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, GLHCK_MODEL_ANIMATED, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+      glhckTexture *tex = glhckTextureNew("example/media/texture-b.png", 0, NULL);
+      glhckObjectTexture(cube, tex);
+      glhckTextureFree(tex);
       glhckObjectMovef(cube, 0, 15, 0);
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
