@@ -24,6 +24,12 @@ GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned 
    if (!(object = glhckObjectNew()))
       goto fail;
 
+   /* currently animated objects only work
+    * with floating point precision */
+   if (importFlags & GLHCK_MODEL_ANIMATED) {
+      vtype = glhckVertexTypeGetFloatingPointCounterpart(vtype);
+   }
+
    /* import model */
    if (_glhckImportModel(object, file, importFlags, itype, vtype) != RETURN_OK)
       goto fail;
