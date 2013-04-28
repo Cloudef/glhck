@@ -128,6 +128,36 @@ static void _glhckObjectBuildScaling(glhckObject *object, kmMat4 *scaling)
          scale.z * object->view.scaling.z);
 }
 
+/* \brief build parent affection matrix for object */
+static void _glhckObjectBuildParent(glhckObject *object, kmMat4 *parentMatrix)
+{
+   kmMat4 matrix, tmp;
+   glhckObject *parent, *child;
+
+   kmMat4Identity(parentMatrix);
+   for (parent = object->parent, child = object; parent;
+        parent = parent->parent, child = child->parent) {
+      kmMat4Identity(&matrix);
+
+      if (child->affectionFlags & GLHCK_AFFECT_ROTATION) {
+         _glhckObjectBuildRotation(parent, &tmp);
+         kmMat4Multiply(&matrix, &tmp, &matrix);
+      }
+
+      if (child->affectionFlags & GLHCK_AFFECT_SCALING) {
+         _glhckObjectBuildScaling(parent, &tmp);
+         kmMat4Multiply(&matrix, &tmp, &matrix);
+      }
+
+      if (child->affectionFlags & GLHCK_AFFECT_TRANSLATION) {
+         _glhckObjectBuildTranslation(parent, &tmp);
+         kmMat4Multiply(&matrix, &tmp, &matrix);
+      }
+
+      kmMat4Multiply(parentMatrix, &matrix, parentMatrix);
+   }
+}
+
 /* \brief update view matrix of object */
 void _glhckObjectUpdateMatrix(glhckObject *object)
 {
@@ -135,35 +165,21 @@ void _glhckObjectUpdateMatrix(glhckObject *object)
    kmVec3 min, max;
    kmVec3 mixxyz, mixyyz, mixyzz;
    kmVec3 maxxyz, maxyyz, maxyzz;
-   kmMat4 translation, rotation, scaling;
+   kmMat4 translation, rotation, scaling, parentMatrix;
    CALL(2, "%p", object);
 
    /* build affection matrices */
+   _glhckObjectBuildParent(object, &parentMatrix);
    _glhckObjectBuildTranslation(object, &translation);
    _glhckObjectBuildRotation(object, &rotation);
    _glhckObjectBuildScaling(object, &scaling);
 
-   /* build view matrix */
-   kmMat4Multiply(&translation, &translation, &rotation);
+   /* affection of parent matrix */
+   kmMat4Multiply(&translation, &parentMatrix, &translation);
+
+   /* build model matrix */
+   kmMat4Multiply(&scaling, &rotation, &scaling);
    kmMat4Multiply(&object->view.matrix, &translation, &scaling);
-
-   /* parent matrix affects us! */
-   if (object->parent) {
-      if (object->affectionFlags & GLHCK_AFFECT_SCALING) {
-         _glhckObjectBuildScaling(object->parent, &scaling);
-         kmMat4Multiply(&object->view.matrix, &scaling, &object->view.matrix);
-      }
-
-      if (object->affectionFlags & GLHCK_AFFECT_ROTATION) {
-         _glhckObjectBuildRotation(object->parent, &rotation);
-         kmMat4Multiply(&object->view.matrix, &rotation, &object->view.matrix);
-      }
-
-      if (object->affectionFlags & GLHCK_AFFECT_TRANSLATION) {
-         _glhckObjectBuildTranslation(object->parent, &translation);
-         kmMat4Multiply(&object->view.matrix, &translation, &object->view.matrix);
-      }
-   }
 
    /* update transformed obb */
    kmVec3Transform(&object->view.obb.min, &object->view.bounding.min, &object->view.matrix);
