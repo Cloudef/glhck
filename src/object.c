@@ -1071,15 +1071,22 @@ GLHCKAPI int glhckObjectInsertIndices(
    CALL(0, "%p, %d, %d, %p", object, memb, type, indices);
    assert(object);
 
-   /* create new geometry for object, if not one already */
-   if (!object->geometry) {
-      if (!(object->geometry = _glhckGeometryNew()))
-         goto fail;
-   }
+   if (indices) {
+      /* create new geometry for object, if not one already */
+      if (!object->geometry) {
+         if (!(object->geometry = _glhckGeometryNew()))
+            goto fail;
+      }
 
-   /* do the work (tm) */
-   if (!_glhckGeometryInsertIndices(object->geometry, memb, type, indices))
-      goto fail;
+      /* do the work (tm) */
+      if (!_glhckGeometryInsertIndices(object->geometry, memb, type, indices))
+         goto fail;
+   } else {
+      glhckGeometryInsertIndices(object->geometry, 0, NULL, 0);
+      if (!object->geometry->vertices.any) {
+         IFDO(_glhckGeometryFree, object->geometry);
+      }
+   }
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -1097,15 +1104,22 @@ GLHCKAPI int glhckObjectInsertVertices(
    CALL(0, "%p, %d, %d, %p", object, memb, type, vertices);
    assert(object);
 
-   /* create new geometry for object, if not one already */
-   if (!object->geometry) {
-      if (!(object->geometry = _glhckGeometryNew()))
-         goto fail;
-   }
+   if (vertices) {
+      /* create new geometry for object, if not one already */
+      if (!object->geometry) {
+         if (!(object->geometry = _glhckGeometryNew()))
+            goto fail;
+      }
 
-   /* do the work (tm) */
-   if (!_glhckGeometryInsertVertices(object->geometry, memb, type, vertices))
-      goto fail;
+      /* do the work (tm) */
+      if (!_glhckGeometryInsertVertices(object->geometry, memb, type, vertices))
+         goto fail;
+   } else {
+      glhckGeometryInsertVertices(object->geometry, 0, NULL, 0);
+      if (!object->geometry->indices.any) {
+         IFDO(_glhckGeometryFree, object->geometry);
+      }
+   }
 
    glhckObjectUpdate(object);
    RET(0, "%d", RETURN_OK);
