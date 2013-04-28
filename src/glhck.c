@@ -184,9 +184,13 @@ GLHCKAPI void glhckContextTerminate(void)
    _glhckFree(GLHCKRD()->objects.queue);
    _glhckFree(GLHCKRD()->textures.queue);
 
+   /* terminate allocation tracking */
 #ifndef NDEBUG
    _glhckTrackTerminate();
 #endif
+
+   /* terminate trace system */
+   _glhckTraceTerminate();
 
    /* close display */
    glhckDisplayClose();
