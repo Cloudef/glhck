@@ -1148,13 +1148,17 @@ GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *object,
    CALL(0, "%p, %d, %p, %d", object, type, data, memb);
    assert(object);
 
-   /* check index type */
-   type = _glhckGeometryCheckIndexType(data, memb, type);
-   size = memb * glhckIndexTypeElementSize(type);
-   if (!(idata = _glhckCopy(data, size)))
-      goto fail;
+   if (data) {
+      /* check index type */
+      type = _glhckGeometryCheckIndexType(data, memb, type);
+      size = memb * glhckIndexTypeElementSize(type);
+      if (!(idata = _glhckCopy(data, size)))
+         goto fail;
 
-   _glhckGeometrySetIndices(object, type, idata, memb);
+      _glhckGeometrySetIndices(object, type, idata, memb);
+   } else {
+      _glhckGeometryFreeIndices(object);
+   }
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -1173,13 +1177,17 @@ GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *object,
    CALL(0, "%p, %d, %p, %d", object, type, data, memb);
    assert(object);
 
-   /* check vertex type */
-   type = _glhckGeometryCheckVertexType(type);
-   size = memb * glhckVertexTypeElementSize(type);
-   if (!(vdata = _glhckCopy(data, size)))
-      goto fail;
+   if (data) {
+      /* check vertex type */
+      type = _glhckGeometryCheckVertexType(type);
+      size = memb * glhckVertexTypeElementSize(type);
+      if (!(vdata = _glhckCopy(data, size)))
+         goto fail;
 
-   _glhckGeometrySetVertices(object, type, vdata, memb);
+      _glhckGeometrySetVertices(object, type, vdata, memb);
+   } else {
+      _glhckGeometryFreeVertices(object);
+   }
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
