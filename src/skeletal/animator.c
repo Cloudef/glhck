@@ -224,7 +224,7 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
 {
    glhckBone *bone;
    glhckVertexWeight *weight;
-   glhckVector3f zero, tstance, current;
+   glhckVector3f zero, tstancev, tstancen, currentv, currentn;
    unsigned int i, w;
    CALL(3, "%p, %p", object, gobject);
    assert(object && gobject);
@@ -245,7 +245,7 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
    memset(&zero, 0, sizeof(glhckVector3f));
    if (!gobject->transformedGeometry) gobject->transformedGeometry = _glhckGeometryCopy(gobject->geometry);
    for (i = 0; i != (unsigned int)gobject->geometry->vertexCount; ++i) {
-      glhckGeometrySetVertexDataForIndex(gobject->geometry, i, &zero, NULL, NULL, NULL);
+      glhckGeometrySetVertexDataForIndex(gobject->geometry, i, &zero, &zero, NULL, NULL);
    }
 
    kmMat4 bias, scale, transformed;
@@ -257,17 +257,21 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
       kmMat4Multiply(&transformed, &transformed, &scale);
       for (w = 0; w != bone->numWeights; ++w) {
          weight = &bone->weights[w];
-         glhckGeometryGetVertexDataForIndex(gobject->transformedGeometry, weight->vertexIndex, &tstance,
-               NULL, NULL, NULL);
-         glhckGeometryGetVertexDataForIndex(gobject->geometry, weight->vertexIndex, &current,
-               NULL, NULL, NULL);
-         kmVec3Transform((kmVec3*)&tstance, (kmVec3*)&tstance, &transformed);
+         glhckGeometryGetVertexDataForIndex(gobject->transformedGeometry, weight->vertexIndex, &tstancev,
+               &tstancen, NULL, NULL);
+         glhckGeometryGetVertexDataForIndex(gobject->geometry, weight->vertexIndex, &currentv,
+               &currentn, NULL, NULL);
+         kmVec3Transform((kmVec3*)&tstancev, (kmVec3*)&tstancev, &transformed);
+         kmVec3Transform((kmVec3*)&tstancen, (kmVec3*)&tstancen, &transformed);
 
-         current.x += tstance.x * weight->weight;
-         current.y += tstance.y * weight->weight;
-         current.z += tstance.z * weight->weight;
-         glhckGeometrySetVertexDataForIndex(gobject->geometry, weight->vertexIndex, &current,
-               NULL, NULL, NULL);
+         currentv.x += tstancev.x * weight->weight;
+         currentv.y += tstancev.y * weight->weight;
+         currentv.z += tstancev.z * weight->weight;
+         currentn.x += tstancen.x * weight->weight;
+         currentn.y += tstancen.y * weight->weight;
+         currentn.z += tstancen.z * weight->weight;
+         glhckGeometrySetVertexDataForIndex(gobject->geometry, weight->vertexIndex, &currentv,
+               &currentn, NULL, NULL);
 
       }
    }
