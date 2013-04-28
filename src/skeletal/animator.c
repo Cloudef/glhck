@@ -16,6 +16,7 @@ static void _glhckAnimatorInterpolateVectorKeys(kmVec3 *out, float time, float d
    float diffTime = next->time - current->time;
    assert(out);
 
+   /* TODO: fix interpolation */
    if (diffTime < 0.0f) diffTime += duration;
    if (0 && diffTime > 0.0f) {
       interp = (time - current->time)/diffTime;
@@ -35,6 +36,7 @@ static inline void _glhckAnimatorInterpolateQuaternionKeys(kmQuaternion *out, fl
    float diffTime = next->time - current->time;
    assert(out);
 
+   /* TODO: fix interpolation */
    if (diffTime < 0.0f) diffTime += duration;
    if (0 && diffTime > 0.0f) {
       interp = (time - current->time)/diffTime;
@@ -81,6 +83,7 @@ static void _glhckAnimatorSetupAnimation(glhckAnimator *object)
    for (i = 0; i != object->animation->numNodes; ++i) {
       object->previousNodes[i].bone = _glhckAnimatorLookupBone(object, object->animation->nodes[i]->boneName);
    }
+   object->lastTime = FLT_MAX;
 }
 
 /* \brief allocate new key animator object */
@@ -223,56 +226,65 @@ GLHCKAPI glhckBone** glhckAnimatorBones(glhckAnimator *object, unsigned int *mem
 GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject)
 {
    glhckBone *bone;
-   glhckVertexWeight *weight;
-   glhckVector3f zero, tstancev, tstancen, currentv, currentn;
    unsigned int i, w;
+   glhckVertexWeight *weight;
+   kmMat4 bias, scale, transformedVertex;
+   kmMat3 transformedNormal;
+   glhckVector3f zero, bindVertex, bindNormal, currentVertex, currentNormal;
    CALL(3, "%p, %p", object, gobject);
    assert(object && gobject);
 
+   /* we are root, perform this transform on childs as well */
    if (gobject->flags & GLHCK_OBJECT_ROOT) {
       PERFORM_ON_CHILDS(object, gobject, glhckAnimatorTransform);
    }
 
+   /* ah, we can't do this ;_; */
    if (!gobject->geometry || !gobject->bones) return;
 
    /* update bone transformations */
-   _glhckAnimatorUpdateBones(object);
+   if (object->dirty) {
+      _glhckAnimatorUpdateBones(object);
+      object->dirty = 0;
+   }
 
    /* CPU transformation path.
     * Since glhck supports multiple vertex formats, this path is bit more expensive than usual.
     * GPU transformation should be cheaper. */
 
+   /* NOTE: at the moment CPU transformation only works with floating point vertex types */
+
    memset(&zero, 0, sizeof(glhckVector3f));
-   if (!gobject->transformedGeometry) gobject->transformedGeometry = _glhckGeometryCopy(gobject->geometry);
+   if (!gobject->bindGeometry) gobject->bindGeometry = _glhckGeometryCopy(gobject->geometry);
    for (i = 0; i != (unsigned int)gobject->geometry->vertexCount; ++i) {
       glhckGeometrySetVertexDataForIndex(gobject->geometry, i, &zero, &zero, NULL, NULL);
    }
 
-   kmMat4 bias, scale, transformed;
    kmMat4Translation(&bias, gobject->geometry->bias.x, gobject->geometry->bias.y, gobject->geometry->bias.z);
    kmMat4Scaling(&scale, gobject->geometry->scale.x, gobject->geometry->scale.y, gobject->geometry->scale.z);
    for (i = 0; i != gobject->numBones; ++i) {
       bone = gobject->bones[i];
-      kmMat4Multiply(&transformed, &bone->transformedMatrix, &bias);
-      kmMat4Multiply(&transformed, &transformed, &scale);
+      kmMat4Multiply(&transformedVertex, &scale, &bone->transformedMatrix);
+      kmMat4Multiply(&transformedVertex, &transformedVertex, &bias);
+      kmMat3AssignMat4(&transformedNormal, &transformedVertex);
       for (w = 0; w != bone->numWeights; ++w) {
          weight = &bone->weights[w];
-         glhckGeometryGetVertexDataForIndex(gobject->transformedGeometry, weight->vertexIndex, &tstancev,
-               &tstancen, NULL, NULL);
-         glhckGeometryGetVertexDataForIndex(gobject->geometry, weight->vertexIndex, &currentv,
-               &currentn, NULL, NULL);
-         kmVec3Transform((kmVec3*)&tstancev, (kmVec3*)&tstancev, &transformed);
-         kmVec3Transform((kmVec3*)&tstancen, (kmVec3*)&tstancen, &transformed);
+         glhckGeometryGetVertexDataForIndex(gobject->bindGeometry, weight->vertexIndex, &bindVertex,
+               &bindNormal, NULL, NULL);
+         glhckGeometryGetVertexDataForIndex(gobject->geometry, weight->vertexIndex, &currentVertex,
+               &currentNormal, NULL, NULL);
+         kmVec3MultiplyMat4((kmVec3*)&bindVertex, (kmVec3*)&bindVertex, &transformedVertex);
+         kmVec3MultiplyMat3((kmVec3*)&bindNormal, (kmVec3*)&bindNormal, &transformedNormal);
 
-         currentv.x += tstancev.x * weight->weight;
-         currentv.y += tstancev.y * weight->weight;
-         currentv.z += tstancev.z * weight->weight;
-         currentn.x += tstancen.x * weight->weight;
-         currentn.y += tstancen.y * weight->weight;
-         currentn.z += tstancen.z * weight->weight;
-         glhckGeometrySetVertexDataForIndex(gobject->geometry, weight->vertexIndex, &currentv,
-               &currentn, NULL, NULL);
+         currentVertex.x += bindVertex.x * weight->weight;
+         currentVertex.y += bindVertex.y * weight->weight;
+         currentVertex.z += bindVertex.z * weight->weight;
+         currentNormal.x += bindNormal.x * weight->weight;
+         currentNormal.y += bindNormal.y * weight->weight;
+         currentNormal.z += bindNormal.z * weight->weight;
 
+         glhckGeometrySetVertexDataForIndex(gobject->geometry, weight->vertexIndex, &currentVertex,
+               &currentNormal, NULL, NULL);
       }
    }
 }
@@ -304,6 +316,7 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
    ticksPerSecond = (animation->ticksPerSecond!=0.0f?animation->ticksPerSecond:25.0f);
    playTime *= ticksPerSecond;
    time = fmod(playTime, duration);
+   if (time == object->lastTime) return;
 
    for (n = 0; n != animation->numNodes; ++n) {
       node = animation->nodes[n];
@@ -365,8 +378,9 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
       bone->transformationMatrix = matrix;
    }
 
-   /* store last time */
+   /* store last time and mark dirty */
    object->lastTime = time;
+   object->dirty = 1;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

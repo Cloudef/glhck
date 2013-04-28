@@ -391,6 +391,7 @@ GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
    glhckObjectInsertBones(object, NULL, 0);
 
    /* free geometry */
+   IFDO(_glhckGeometryFree, object->bindGeometry);
    IFDO(_glhckGeometryFree, object->geometry);
 
    /* free material */

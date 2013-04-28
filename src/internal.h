@@ -277,7 +277,7 @@ typedef struct _glhckObject {
    struct _glhckBone **bones;
    struct _glhckAnimation **animations;
    struct glhckGeometry *geometry;
-   struct glhckGeometry *transformedGeometry;
+   struct glhckGeometry *bindGeometry; /* used on CPU transformation path, has the original geometry copied */
    __GLHCKobjectDraw drawFunc;
    char *file, *name;
    REFERENCE_COUNTED(_glhckObject);
@@ -341,6 +341,7 @@ typedef struct _glhckAnimator {
    REFERENCE_COUNTED(_glhckAnimator);
    float lastTime;
    unsigned int numBones;
+   char dirty;
 } _glhckAnimator;
 
 #define GLHCK_TEXT_MAX_ROWS   128
