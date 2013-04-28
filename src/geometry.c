@@ -318,44 +318,7 @@ static void _glhckConvertIndexData(
 /* \brief free geometry's vertex data */
 static void _glhckGeometryFreeVertices(glhckGeometry *object)
 {
-   /* free vertices depending on type */
-   switch (object->vertexType) {
-      case GLHCK_VERTEX_V3B:
-         IFDO(_glhckFree, object->vertices.v3b);
-         break;
-
-      case GLHCK_VERTEX_V2B:
-         IFDO(_glhckFree, object->vertices.v2b);
-         break;
-
-      case GLHCK_VERTEX_V3S:
-         IFDO(_glhckFree, object->vertices.v3s);
-         break;
-
-      case GLHCK_VERTEX_V2S:
-         IFDO(_glhckFree, object->vertices.v2s);
-         break;
-
-      case GLHCK_VERTEX_V3FS:
-         IFDO(_glhckFree, object->vertices.v3fs);
-         break;
-
-      case GLHCK_VERTEX_V2FS:
-         IFDO(_glhckFree, object->vertices.v2fs);
-         break;
-
-      case GLHCK_VERTEX_V3F:
-         IFDO(_glhckFree, object->vertices.v3f);
-         break;
-
-      case GLHCK_VERTEX_V2F:
-         IFDO(_glhckFree, object->vertices.v2f);
-         break;
-
-      default:break;
-   }
-
-   /* set vertex type to none */
+   IFDO(_glhckFree, object->vertices.any);
    object->vertexType   = GLHCK_VERTEX_NONE;
    object->vertexCount  = 0;
    object->textureRange = 1;
@@ -424,24 +387,8 @@ static void _glhckGeometrySetVertices(glhckGeometry *object,
 /* \brief free indices from object */
 static void _glhckGeometryFreeIndices(glhckGeometry *object)
 {
-   /* free indices depending on type */
-   switch (object->indexType) {
-      case GLHCK_INDEX_BYTE:
-         IFDO(_glhckFree, object->indices.ivb);
-         break;
-
-      case GLHCK_INDEX_SHORT:
-         IFDO(_glhckFree, object->indices.ivs);
-         break;
-
-      case GLHCK_INDEX_INTEGER:
-         IFDO(_glhckFree, object->indices.ivi);
-         break;
-
-      default:break;
-   }
-
    /* set index type to none */
+   IFDO(_glhckFree, object->indices.any);
    object->indexType  = GLHCK_INDEX_NONE;
    object->indexCount = 0;
 }

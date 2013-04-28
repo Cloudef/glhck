@@ -62,29 +62,29 @@
  * of datatype */
 #define glhckSetV2(v1, v2) \
    (v1)->x = (v2)->x;      \
-   (v1)->y = (v2)->y;
+   (v1)->y = (v2)->y
 
 /* assign 3D v2 vector to v1 vector regardless
  * of datatype */
 #define glhckSetV3(v1, v2) \
    glhckSetV2(v1, v2);     \
-   (v1)->z = (v2)->z;
+   (v1)->z = (v2)->z
 
 /* assign the max units from vectors to v1 */
 #define glhckMaxV2(v1, v2) \
    if ((v1)->x < (v2)->x) (v1)->x = (v2)->x; \
-   if ((v1)->y < (v2)->y) (v1)->y = (v2)->y;
+   if ((v1)->y < (v2)->y) (v1)->y = (v2)->y
 #define glhckMaxV3(v1, v2) \
    glhckMaxV2(v1, v2);     \
-   if ((v1)->z < (v2)->z) (v1)->z = (v2)->z;
+   if ((v1)->z < (v2)->z) (v1)->z = (v2)->z
 
 /* assign the min units from vectors to v1 */
 #define glhckMinV2(v1, v2) \
    if ((v1)->x > (v2)->x) (v1)->x = (v2)->x; \
-   if ((v1)->y > (v2)->y) (v1)->y = (v2)->y;
+   if ((v1)->y > (v2)->y) (v1)->y = (v2)->y
 #define glhckMinV3(v1, v2) \
    glhckMinV2(v1, v2);     \
-   if ((v1)->z > (v2)->z) (v1)->z = (v2)->z;
+   if ((v1)->z > (v2)->z) (v1)->z = (v2)->z
 
 #endif /* __glhck_common_h__ */
 
