@@ -6,9 +6,13 @@ GPU bone transformation
 ---
 Make animations work with different vertex formats
 ---
+Fix key interpolations
+---
 Cleanup and tidy the recently added animation code
 ---
 Track sub texture data uploads
+---
+Fix shader lighting on ATI (wrong usage of UBO?)
 ---
 Use 2_10_10_10_REV for color && normals
 Better precision, same size
@@ -16,6 +20,8 @@ Better precision, same size
 Write more examples.
 ---
 Write unit tests
+---
+Fix fixed pipeline lighting
 ---
 
 Reason for this file is that I keep forgetting things \o/
