@@ -47,29 +47,27 @@ static void trackAlloc(const char *channel, void *ptr, size_t size)
 static void trackRealloc(const void *ptr, void *ptr2, size_t size)
 {
    __GLHCKalloc *data = glhckContextGet()->alloc;
-
-   /* find */
-   for (; data; data = data->next)
-      if (data->ptr == ptr) {
-         data->ptr  = ptr2;
-         data->size = size;
-      }
+   for (; data && data->ptr != ptr; data = data->next);
+   if (data) {
+      data->ptr  = ptr2;
+      data->size = size;
+   }
 }
 
 /* \brief internal free hook */
 static void trackFree(const void *ptr)
 {
    __GLHCKalloc *found, *data = glhckContextGet()->alloc;
+   if (!data) return;
 
-   /* find */
-   for (; data && data->next &&
-          data->next->ptr != ptr;
-          data = data->next);
-
-   /* free */
-   if (data && (found = data->next)) {
+   for (; data && data->next && data->next->ptr != ptr; data = data->next);
+   if (data && data->next) {
+      found = data->next;
       data->next = found->next;
       free(found);
+   } else {
+      free(glhckContextGet()->alloc);
+      glhckContextGet()->alloc = NULL;
    }
 }
 
@@ -104,10 +102,8 @@ void __glhckTrackSteal(const char *channel, void *ptr)
 {
 #ifndef NDEBUG
    __GLHCKalloc *data = glhckContextGet()->alloc;
-
-   /* find */
-   for (; data; data = data->next)
-      if (data->ptr == ptr) data->channel = channel;
+   for (; data && data->ptr != ptr; data = data->next);
+   if (data) data->channel = channel;
 #endif /* NDEBUG */
 }
 
@@ -261,6 +257,7 @@ GLHCKAPI void glhckMemoryGraph(void)
    for (i = 0;;++i) {
       allocChannel = 0;
 
+      if (!glhckContextGet()->alloc) break;
       if (trace[i].name) {
          for (data = glhckContextGet()->alloc;
               data; data = data->next)
