@@ -106,10 +106,14 @@ GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(
 
    _glhckShaderAttribute *a;
    _glhckShaderUniform *u;
-   for (a = object->attributes; a; a = a->next)
+   for (a = object->attributes; a; a = a->next) {
+      _glhckTrackSteal(a);
       printf("(%s:%u) %d : %d [%s]\n", a->name, a->location, a->type, a->size, a->typeName);
-   for (u = object->uniforms; u; u = u->next)
+   }
+   for (u = object->uniforms; u; u = u->next) {
+      _glhckTrackSteal(u);
       printf("(%s:%u) %d : %d [%s]\n", u->name, u->location, u->type, u->size, u->typeName);
+   }
 
    /* insert to world */
    _glhckWorldInsert(shader, object, glhckShader*);

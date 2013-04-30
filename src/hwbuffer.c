@@ -257,8 +257,10 @@ GLHCKAPI int glhckHwBufferCreateUniformBufferFromShader(glhckHwBuffer *object, g
    object->name = bufferName;
    object->uniforms = uniforms;
 
-   for (u = object->uniforms; u; u = u->next)
+   for (u = object->uniforms; u; u = u->next) {
+      _glhckTrackSteal(u);
       printf("UBO: (%s:%u) %d : %d [%s]\n", u->name, u->offset, u->type, u->size, u->typeName);
+   }
 
    return RETURN_OK;
 
@@ -308,8 +310,10 @@ GLHCKAPI int glhckHwBufferAppendInformationFromShader(glhckHwBuffer *object, glh
    if (u) u->next = uniforms;
    else object->uniforms = uniforms;
 
-   for (u = uniforms; u; u = u->next)
+   for (u = uniforms; u; u = u->next) {
+      _glhckTrackSteal(u);
       printf("UBO: (%s:%u) %d : %d [%s]\n", u->name, u->offset, u->type, u->size, u->typeName);
+   }
 
    return RETURN_OK;
 

@@ -97,6 +97,20 @@ void _glhckTrackTerminate(void)
 }
 #endif /* NDEBUG */
 
+/* \brief steal the pointer to current tracking channel
+ * useful when internal api function returns allocated object,
+ * which is then handled by other object. */
+void __glhckTrackSteal(const char *channel, void *ptr)
+{
+#ifndef NDEBUG
+   __GLHCKalloc *data = glhckContextGet()->alloc;
+
+   /* find */
+   for (; data; data = data->next)
+      if (data->ptr == ptr) data->channel = channel;
+#endif /* NDEBUG */
+}
+
 /* Use _glhckMalloc and _glhckCalloc and _glhckCopy macros instead
  * of __glhckMalloc and __glhckCalloc and _glhckCopy.
  * They will assign GLCHK_CHANNEL automatically.

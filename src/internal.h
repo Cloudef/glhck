@@ -770,10 +770,11 @@ typedef struct __GLHCKcontext {
 #define GLHCKM() (&glhckContextGet()->misc)
 
 /* tracking allocation macros */
-#define _glhckMalloc(x)    __glhckMalloc(GLHCK_CHANNEL, x)
-#define _glhckCalloc(x,y)  __glhckCalloc(GLHCK_CHANNEL, x, y)
-#define _glhckStrdup(x)    __glhckStrdup(GLHCK_CHANNEL, x)
-#define _glhckCopy(x,y)    __glhckCopy(GLHCK_CHANNEL, x, y)
+#define _glhckMalloc(x)       __glhckMalloc(GLHCK_CHANNEL, x)
+#define _glhckCalloc(x,y)     __glhckCalloc(GLHCK_CHANNEL, x, y)
+#define _glhckStrdup(x)       __glhckStrdup(GLHCK_CHANNEL, x)
+#define _glhckCopy(x,y)       __glhckCopy(GLHCK_CHANNEL, x, y)
+#define _glhckTrackSteal(x)   __glhckTrackSteal(GLHCK_CHANNEL, x)
 
 /* tracing && debug macros */
 #define THIS_FILE ((strrchr(__FILE__, '/') ?: __FILE__ - 1) + 1)
@@ -797,6 +798,7 @@ char* __glhckStrdup(const char *channel, const char *s);
 void* __glhckCopy(const char *channel, const void *ptr, size_t nmemb);
 void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size);
 void _glhckFree(void *ptr);
+void __glhckTrackSteal(const char *channel, void *ptr);
 
 #ifndef NDEBUG
 /* tracking functions */
