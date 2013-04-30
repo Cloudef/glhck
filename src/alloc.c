@@ -66,8 +66,9 @@ static void trackFree(const void *ptr)
       data->next = found->next;
       free(found);
    } else {
-      free(glhckContextGet()->alloc);
-      glhckContextGet()->alloc = NULL;
+      found = glhckContextGet()->alloc;
+      glhckContextGet()->alloc = (found->next?found->next:NULL);
+      free(found);
    }
 }
 
