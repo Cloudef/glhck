@@ -470,10 +470,6 @@ int main(int argc, char **argv)
    glhckCameraFree(camera);
    glhckTextFree(text);
 
-   puts("GLHCK channel should have few bytes for queue list,\n"
-        "which is freed on glhckTerminate");
-   glhckMemoryGraph();
-
    /* should cleanup all
     * objects as well */
    glhckContextTerminate();

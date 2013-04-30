@@ -1,7 +1,7 @@
 #define _glhck_c_
 #include "internal.h"
 #include "render/render.h"
-#include <stdlib.h> /* for atexit */
+#include <stdlib.h> /* for abort */
 #include <stdio.h>  /* for sprintf */
 #include <assert.h> /* for assert */
 #include <signal.h> /* for signal */
@@ -140,12 +140,6 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
    oldCtx = glhckContextGet();
    glhckContextSet(ctx);
 
-   /* pre-allocate render queues */
-   GLHCKRD()->objects.queue = _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckObject*));
-   GLHCKRD()->objects.allocated += GLHCK_QUEUE_ALLOC_STEP;
-   GLHCKRD()->textures.queue = _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckTexture*));
-   GLHCKRD()->textures.allocated += GLHCK_QUEUE_ALLOC_STEP;
-
    /* enable color by default */
    glhckLogColor(1);
 
@@ -166,6 +160,12 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
     * NOTE: _NONE means that glhck and importers choose the best precision. */
    glhckSetGlobalPrecision(GLHCK_INDEX_NONE, GLHCK_VERTEX_NONE);
 
+   /* pre-allocate render queues */
+   GLHCKRD()->objects.queue = _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckObject*));
+   GLHCKRD()->objects.allocated += GLHCK_QUEUE_ALLOC_STEP;
+   GLHCKRD()->textures.queue = _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckTexture*));
+   GLHCKRD()->textures.allocated += GLHCK_QUEUE_ALLOC_STEP;
+
    /* switch back to old context, if there was one */
    if (oldCtx) glhckContextSet(oldCtx);
    return ctx;
@@ -177,23 +177,25 @@ GLHCKAPI void glhckContextTerminate(void)
    if (!glhckInitialized()) return;
    TRACE(0);
 
-   /* destroy world */
-   glhckMassacreWorld();
-
    /* destroy queues */
    _glhckFree(GLHCKRD()->objects.queue);
    _glhckFree(GLHCKRD()->textures.queue);
 
+   /* destroy world */
+   glhckMassacreWorld();
+
+   /* close display */
+   glhckDisplayClose();
+
    /* terminate allocation tracking */
 #ifndef NDEBUG
+   puts("\nExit graph, this should be empty.");
+   glhckMemoryGraph();
    _glhckTrackTerminate();
 #endif
 
    /* terminate trace system */
    _glhckTraceTerminate();
-
-   /* close display */
-   glhckDisplayClose();
 
    /* finally remove the context */
    free(_glhckContext);
