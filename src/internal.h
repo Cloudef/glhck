@@ -13,7 +13,6 @@
 
 #include "glhck/glhck.h"
 #include "helper/common.h" /* for macros, etc */
-#include <float.h>  /* for float   */
 #include <string.h> /* for strrchr */
 
 /* tracing channels */

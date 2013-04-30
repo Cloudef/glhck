@@ -1,4 +1,5 @@
 #include "../internal.h"
+#include <float.h>  /* for float */
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_ANIMATOR
