@@ -35,12 +35,12 @@ fail:
 /* \brief reference bone object */
 GLHCKAPI glhckBone* glhckBoneRef(glhckBone *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 

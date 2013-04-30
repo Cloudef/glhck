@@ -16,7 +16,8 @@
 /* Tracing levels:
  * 0: Non frequent calls (creation, freeing, etc..)
  * 1: Average call (setters, getters)
- * 2: Spam call (render, draw, transformation, ref/deref, etc..) */
+ * 2: Spam call (render, draw, transformation, ref/deref, etc..)
+ * 3: Alloc.c allocations */
 
 /* list all debug channels */
 static __GLHCKtraceChannel _traceChannels[] =

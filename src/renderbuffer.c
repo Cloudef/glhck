@@ -44,13 +44,13 @@ fail:
 /* \brief reference renderbuffer object */
 GLHCKAPI glhckRenderbuffer* glhckRenderbufferRef(glhckRenderbuffer *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 
@@ -81,7 +81,7 @@ success:
 /* \brief bind/unbind renderbuffer */
 GLHCKAPI void glhckRenderbufferBind(glhckRenderbuffer *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    GLHCKRA()->renderbufferBind((object?object->object:0));
 }
 

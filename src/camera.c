@@ -108,7 +108,7 @@ void _glhckCameraWorldUpdate(int width, int height)
 GLHCKAPI glhckCamera* glhckCameraNew(void)
 {
    glhckCamera *object;
-   TRACE(0);
+
 
    /* allocate camera */
    if (!(object = _glhckCalloc(1, sizeof(glhckCamera))))
@@ -145,13 +145,13 @@ fail:
 /* \brief reference camera */
 GLHCKAPI glhckCamera* glhckCameraRef(glhckCamera *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* increase reference */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 
@@ -236,7 +236,7 @@ GLHCKAPI void glhckCameraReset(glhckCamera *object)
 /* \brief set camera's projection type */
 GLHCKAPI void glhckCameraProjection(glhckCamera *object, const glhckProjectionType projectionType)
 {
-   CALL(1, "%p, %d", object, projectionType);
+   CALL(2, "%p, %d", object, projectionType);
    assert(object);
    object->view.projectionType = projectionType;
    _glhckCameraProjectionMatrix(object);
@@ -245,36 +245,36 @@ GLHCKAPI void glhckCameraProjection(glhckCamera *object, const glhckProjectionTy
 /* \brief get camera's frustum */
 GLHCKAPI glhckFrustum* glhckCameraGetFrustum(glhckCamera *object)
 {
-   CALL(1, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
-   RET(1, "%p", &object->frustum);
+   RET(2, "%p", &object->frustum);
    return &object->frustum;
 }
 
 /* \brief get camera's view matrix */
 GLHCKAPI const kmMat4* glhckCameraGetViewMatrix(const glhckCamera *object)
 {
-   CALL(1, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
-   RET(1, "%p", &object->view.view);
+   RET(2, "%p", &object->view.view);
    return &object->view.view;
 }
 
 /* \brief get camera's projection matrix */
 GLHCKAPI const kmMat4* glhckCameraGetProjectionMatrix(const glhckCamera *object)
 {
-   CALL(1, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
-   RET(1, "%p", &object->view.projection);
+   RET(2, "%p", &object->view.projection);
    return &object->view.projection;
 }
 
 /* \brief get camera's model view projection matrix */
 GLHCKAPI const kmMat4* glhckCameraGetVPMatrix(const glhckCamera *object)
 {
-   CALL(1, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
-   RET(1, "%p", &object->view.viewProj);
+   RET(2, "%p", &object->view.viewProj);
    return &object->view.viewProj;
 }
 
@@ -339,8 +339,8 @@ GLHCKAPI void glhckCameraViewportf(glhckCamera *object,
 /* \brief get camera's object */
 GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *object)
 {
-   CALL(1, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
-   RET(1, "%p", object->object);
+   RET(2, "%p", object->object);
    return object->object;
 }

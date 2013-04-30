@@ -354,13 +354,13 @@ fail:
 /* \brief reference object */
 GLHCKAPI glhckObject* glhckObjectRef(glhckObject *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 
@@ -412,16 +412,16 @@ success:
 /* \brief is object treated as root? */
 GLHCKAPI int glhckObjectIsRoot(const glhckObject *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
-   RET(3, "%d", object->flags & GLHCK_OBJECT_ROOT);
+   RET(2, "%d", object->flags & GLHCK_OBJECT_ROOT);
    return object->flags & GLHCK_OBJECT_ROOT;
 }
 
 /* \brief make object as root, or demote it */
 GLHCKAPI void glhckObjectMakeRoot(glhckObject *object, int root)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
    if (root) object->flags |= GLHCK_OBJECT_ROOT;
    else object->flags &= ~GLHCK_OBJECT_ROOT;
@@ -430,16 +430,16 @@ GLHCKAPI void glhckObjectMakeRoot(glhckObject *object, int root)
 /* \brief get object's affection flags */
 GLHCKAPI unsigned char glhckObjectGetParentAffection(const glhckObject *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
-   RET(3, "%u", object->affectionFlags);
+   RET(2, "%u", object->affectionFlags);
    return object->affectionFlags;
 }
 
 /* \brief set object's affection flags */
 GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned char affectionFlags)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* we need to update matrix on next draw */
@@ -452,19 +452,19 @@ GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned char affe
 /* \brief get object's parent */
 GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
-   RET(3, "%p", object->parent);
+   RET(2, "%p", object->parent);
    return object->parent;
 }
 
 /* \brief get object's children */
 GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, unsigned int *num_children)
 {
-   CALL(3, "%p, %p", object, num_children);
+   CALL(2, "%p, %p", object, num_children);
    assert(object);
    if (num_children) *num_children = object->numChilds;
-   RET(3, "%p", object->childs);
+   RET(2, "%p", object->childs);
    return object->childs;
 }
 
@@ -762,7 +762,7 @@ GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object)
 {
    const kmAABB *aabb;
    unsigned int i;
-   CALL(1, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* if performed on root, get the largest aabb */
@@ -775,7 +775,7 @@ GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object)
       }
    }
 
-   RET(1, "%p", aabb);
+   RET(2, "%p", aabb);
    return aabb;
 }
 
@@ -796,10 +796,10 @@ GLHCKAPI const kmMat4* glhckObjectGetMatrix(glhckObject *object)
 /* \brief get object position */
 GLHCKAPI const kmVec3* glhckObjectGetPosition(const glhckObject *object)
 {
-   CALL(1, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
-   RET(1, VEC3S, VEC3(&object->view.translation));
+   RET(2, VEC3S, VEC3(&object->view.translation));
    return &object->view.translation;
 }
 

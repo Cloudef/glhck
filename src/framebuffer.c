@@ -42,13 +42,13 @@ fail:
 /* \brief reference framebuffer object */
 GLHCKAPI glhckFramebuffer* glhckFramebufferRef(glhckFramebuffer *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 
@@ -91,7 +91,7 @@ GLHCKAPI glhckFramebuffer* glhckFramebufferCurrentForTarget(glhckFramebufferTarg
 /* \brief bind hardware buffer */
 GLHCKAPI void glhckFramebufferBind(glhckFramebuffer *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
    if (GLHCKRD()->framebuffer[object->target] == object) return;
    GLHCKRA()->framebufferBind(object->target, object->object);
@@ -101,7 +101,7 @@ GLHCKAPI void glhckFramebufferBind(glhckFramebuffer *object)
 /* \brief unbind hardware buffer from target type slot */
 GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferTarget target)
 {
-   CALL(3, "%d", target);
+   CALL(2, "%d", target);
    if (!GLHCKRD()->framebuffer[target]) return;
    GLHCKRA()->framebufferBind(target, 0);
    GLHCKRD()->framebuffer[target] = NULL;
@@ -110,7 +110,7 @@ GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferTarget target)
 /* \brief begin render with the fbo */
 GLHCKAPI void glhckFramebufferBegin(glhckFramebuffer *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
    glhckFramebufferBind(object);
    glhckRenderViewport(object->rect.x, object->rect.y, object->rect.w, object->rect.h);
@@ -119,7 +119,7 @@ GLHCKAPI void glhckFramebufferBegin(glhckFramebuffer *object)
 /* \brief end rendering with the fbo */
 GLHCKAPI void glhckFramebufferEnd(glhckFramebuffer *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
    glhckFramebufferUnbind(object->target);
    if (GLHCKRD()->camera) {

@@ -30,12 +30,12 @@ fail:
 /* \brief reference key animation node object */
 GLHCKAPI glhckAnimationNode* glhckAnimationNodeRef(glhckAnimationNode *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 
@@ -205,12 +205,12 @@ fail:
 /* \brief reference key animation object */
 GLHCKAPI glhckAnimation* glhckAnimationRef(glhckAnimation *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 

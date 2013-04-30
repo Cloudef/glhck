@@ -52,13 +52,13 @@ fail:
 /* \brief reference hardware buffer object */
 GLHCKAPI glhckHwBuffer* glhckHwBufferRef(glhckHwBuffer *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 
@@ -97,15 +97,15 @@ success:
 /* \brief get current bound hardware buffer for target */
 GLHCKAPI glhckHwBuffer* glhckHwBufferCurrentForTarget(glhckHwBufferTarget target)
 {
-   CALL(1, "%d", target);
-   RET(1, "%p", GLHCKRD()->hwBuffer[target]);
+   CALL(2, "%d", target);
+   RET(2, "%p", GLHCKRD()->hwBuffer[target]);
    return GLHCKRD()->hwBuffer[target];
 }
 
 /* \brief bind hardware buffer object */
 GLHCKAPI void glhckHwBufferBind(glhckHwBuffer *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
    if (GLHCKRD()->hwBuffer[object->target] == object) return;
    GLHCKRA()->hwBufferBind(object->target, object->object);
@@ -115,7 +115,7 @@ GLHCKAPI void glhckHwBufferBind(glhckHwBuffer *object)
 /* \brief bind hardware buffer from target type slot */
 GLHCKAPI void glhckHwBufferUnbind(glhckHwBufferTarget target)
 {
-   CALL(3, "%d", target);
+   CALL(2, "%d", target);
    if (!GLHCKRD()->hwBuffer[target]) return;
    GLHCKRA()->hwBufferBind(target, 0);
    GLHCKRD()->hwBuffer[target] = NULL;
@@ -143,7 +143,7 @@ GLHCKAPI glhckHwBufferStoreType glhckHwBufferGetStoreType(glhckHwBuffer *object)
 GLHCKAPI void glhckHwBufferCreate(glhckHwBuffer *object, glhckHwBufferTarget target, int size, const void *data, glhckHwBufferStoreType usage)
 {
    glhckHwBuffer *old;
-   CALL(3, "%p, %d, %p, %d", object, size, data, usage);
+   CALL(2, "%p, %d, %p, %d", object, size, data, usage);
    assert(object);
 
    /* store old buffer */
@@ -187,7 +187,7 @@ GLHCKAPI void glhckHwBufferBindRange(glhckHwBuffer *object, unsigned int index, 
 GLHCKAPI void glhckHwBufferFill(glhckHwBuffer *object, int offset, int size, const void *data)
 {
    glhckHwBuffer *old;
-   CALL(3, "%p, %p, %p, %p", object, offset, size, data);
+   CALL(2, "%p, %p, %p, %p", object, offset, size, data);
    assert(object && object->created);
 
    old = glhckHwBufferCurrentForTarget(object->target);
@@ -202,7 +202,7 @@ GLHCKAPI void* glhckHwBufferMap(glhckHwBuffer *object, glhckHwBufferAccessType a
 {
    void *data;
    glhckHwBuffer *old;
-   CALL(3, "%p, %d", object, access);
+   CALL(2, "%p, %d", object, access);
    assert(object && object->created);
 
    old = glhckHwBufferCurrentForTarget(object->target);
@@ -211,7 +211,7 @@ GLHCKAPI void* glhckHwBufferMap(glhckHwBuffer *object, glhckHwBufferAccessType a
    if (old) glhckHwBufferBind(old);
    else glhckHwBufferUnbind(object->target);
 
-   RET(3, "%p", data);
+   RET(2, "%p", data);
    return data;
 }
 
@@ -219,7 +219,7 @@ GLHCKAPI void* glhckHwBufferMap(glhckHwBuffer *object, glhckHwBufferAccessType a
 GLHCKAPI void glhckHwBufferUnmap(glhckHwBuffer *object)
 {
    glhckHwBuffer *old;
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object && object->created);
 
    old = glhckHwBufferCurrentForTarget(object->target);

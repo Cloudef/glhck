@@ -133,13 +133,13 @@ fail:
 /* \brief reference shader object */
 GLHCKAPI glhckShader* glhckShaderRef(glhckShader *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 

@@ -114,12 +114,12 @@ fail:
 /* \brief reference key animator object */
 GLHCKAPI glhckAnimator* glhckAnimatorRef(glhckAnimator *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 
@@ -232,7 +232,7 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
    kmMat4 bias, scale, transformedVertex;
    kmMat3 transformedNormal;
    glhckVector3f zero, bindVertex, bindNormal, currentVertex, currentNormal;
-   CALL(3, "%p, %p", object, gobject);
+   CALL(2, "%p, %p", object, gobject);
    assert(object && gobject);
 
    /* we are root, perform this transform on childs as well */
@@ -302,7 +302,7 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
    kmMat4 matrix, tmp;
    float ticksPerSecond, duration, time;
    unsigned int n, frame, nextFrame;
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* not enough memory(?) */

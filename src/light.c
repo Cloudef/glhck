@@ -39,13 +39,13 @@ fail:
 /* \brief reference light */
 GLHCKAPI glhckLight* glhckLightRef(glhckLight *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* increase reference */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 

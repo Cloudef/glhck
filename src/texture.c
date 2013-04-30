@@ -204,14 +204,14 @@ fail:
 /* \brief reference texture */
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* increase ref counter */
    object->refCounter++;
 
    /* return reference */
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 

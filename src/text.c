@@ -369,13 +369,13 @@ fail:
 /* \brief reference text stack */
 GLHCKAPI glhckText* glhckTextRef(glhckText *object)
 {
-   CALL(3, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
 
    /* increase ref counter */
    object->refCounter++;
 
-   RET(3, "%p", object);
+   RET(2, "%p", object);
    return object;
 }
 
@@ -487,7 +487,7 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float 
 GLHCKAPI void glhckTextColor(glhckText *object,
       unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-   CALL(1 ,"%p, %d, %d, %d", object, r, g, b, a);
+   CALL(2 ,"%p, %d, %d, %d", object, r, g, b, a);
    assert(object);
    object->color.r = r;
    object->color.g = g;
