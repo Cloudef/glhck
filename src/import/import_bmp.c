@@ -50,13 +50,13 @@ fail:
 }
 
 /* \brief import BMP images */
-int _glhckImportBMP(glhckTexture *texture, const char *file, unsigned int flags)
+int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
 {
    FILE *f;
    int i, i2, w, h, dataSize;
    unsigned short bpp;
-   unsigned char bgr[3], *import = NULL;
-   CALL(0, "%p, %s, %u", texture, file, flags);
+   unsigned char bgr[3], *importData = NULL;
+   CALL(0, "%s, %p", file, import);
 
    /* open BMP */
    if (!(f = fopen(file, "rb")))
@@ -78,7 +78,7 @@ int _glhckImportBMP(glhckTexture *texture, const char *file, unsigned int flags)
    if (!IMAGE_DIMENSIONS_OK(w, h))
       goto bad_dimensions;
 
-   if (!(import = _glhckMalloc(w*h*4)))
+   if (!(importData = _glhckMalloc(w*h*4)))
       goto out_of_memory;
 
    /* read 24 bpp BMP data */
@@ -86,10 +86,10 @@ int _glhckImportBMP(glhckTexture *texture, const char *file, unsigned int flags)
       if (fread(bgr, 1, 3, f) != 3)
          goto not_possible;
 
-      import[i2+0] = bgr[2];
-      import[i2+1] = bgr[1];
-      import[i2+2] = bgr[0];
-      import[i2+3] = 255;
+      importData[i2+0] = bgr[2];
+      importData[i2+1] = bgr[1];
+      importData[i2+2] = bgr[0];
+      importData[i2+3] = 255;
       i2+=4;
    }
 
@@ -99,9 +99,9 @@ int _glhckImportBMP(glhckTexture *texture, const char *file, unsigned int flags)
       int index1 = i*w*4;
       int index2 = (h-1-i)*w*4;
       for (i2 = w*4; i2 != 0; --i2) {
-         unsigned char temp = import[index1];
-         import[index1] = import[index2];
-         import[index2] = temp;
+         unsigned char temp = importData[index1];
+         importData[index1] = importData[index2];
+         importData[index2] = temp;
          ++index1; ++index2;
       }
    }
@@ -110,18 +110,11 @@ int _glhckImportBMP(glhckTexture *texture, const char *file, unsigned int flags)
    /* close file */
    NULLDO(fclose, f);
 
-   /* do post processing to imported data, and assign to texture */
-   _glhckImagePostProcessStruct importData;
-   memset(&importData, 0, sizeof(_glhckImagePostProcessStruct));
-   importData.width  = w;
-   importData.height = h;
-   importData.data   = import;
-   importData.format = GLHCK_RGBA;
-   importData.type   = GLHCK_DATA_UNSIGNED_BYTE;
-   if (_glhckImagePostProcess(texture, &importData) != RETURN_OK)
-      goto fail;
-
-   NULLDO(_glhckFree, import);
+   import->width  = w;
+   import->height = h;
+   import->data   = import;
+   import->format = GLHCK_RGBA;
+   import->type   = GLHCK_DATA_UNSIGNED_BYTE;
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 

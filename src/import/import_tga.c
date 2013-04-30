@@ -97,7 +97,7 @@ fail:
 }
 
 /* \brief import TGA images */
-int _glhckImportTGA(glhckTexture *texture, const char *file, const unsigned int flags)
+int _glhckImportTGA(const char *file, _glhckImportImageStruct *import)
 {
    FILE *f;
    void *seg = NULL, *data;
@@ -107,10 +107,8 @@ int _glhckImportTGA(glhckTexture *texture, const char *file, const unsigned int 
    unsigned short i, i2, w, h;
    tga_header *header;
    tga_footer *footer;
-
-   /* import data */
-   unsigned char *bufptr, *bufend, *import = NULL;
-   CALL(0, "%p, %s, %d", texture, file, flags);
+   unsigned char *bufptr, *bufend, *importData = NULL;
+   CALL(0, "%s, %p", file, import);
 
    if (!(f = fopen(file, "rb")))
       goto read_fail;
@@ -174,7 +172,7 @@ int _glhckImportTGA(glhckTexture *texture, const char *file, const unsigned int 
       goto bad_dimensions;
 
    /* allocate destination buffer */
-   if (!(import = _glhckMalloc(w*h*4)))
+   if (!(importData = _glhckMalloc(w*h*4)))
       goto out_of_memory;
 
    /* find out how much data to be read from file
@@ -192,28 +190,28 @@ int _glhckImportTGA(glhckTexture *texture, const char *file, const unsigned int 
          switch (bpp) {
             /* 32-bit BGRA */
             case 32:
-               import[i*4+0] = bufptr[2];
-               import[i*4+1] = bufptr[1];
-               import[i*4+2] = bufptr[0];
-               import[i*4+3] = bufptr[3];
+               importData[i*4+0] = bufptr[2];
+               importData[i*4+1] = bufptr[1];
+               importData[i*4+2] = bufptr[0];
+               importData[i*4+3] = bufptr[3];
                bufptr += 4;
             break;
 
             /* 24-bit BGR */
             case 24:
-               import[i*4+0] = bufptr[2];
-               import[i*4+1] = bufptr[1];
-               import[i*4+2] = bufptr[0];
-               import[i*4+3] = 255;
+               importData[i*4+0] = bufptr[2];
+               importData[i*4+1] = bufptr[1];
+               importData[i*4+2] = bufptr[0];
+               importData[i*4+3] = 255;
                bufptr += 3;
             break;
 
             /* 8-bit grayscale */
             case 8:
-               import[i*4+0] = bufptr[0];
-               import[i*4+1] = bufptr[0];
-               import[i*4+2] = bufptr[0];
-               import[i*4+3] = 255;
+               importData[i*4+0] = bufptr[0];
+               importData[i*4+1] = bufptr[0];
+               importData[i*4+2] = bufptr[0];
+               importData[i*4+3] = 255;
                bufptr += 1;
             break;
          }
@@ -232,33 +230,24 @@ int _glhckImportTGA(glhckTexture *texture, const char *file, const unsigned int 
          int index1 = i*w*4;
          int index2 = (h-1-i)*w*4;
          for (i2 = w*4; i2 != 0; --i2) {
-            unsigned char temp = import[index1];
-            import[index1] = import[index2];
-            import[index2] = temp;
+            unsigned char temp = importData[index1];
+            importData[index1] = importData[index2];
+            importData[index2] = temp;
             ++index1; ++index2;
          }
       }
    }
 
-   /* set internal texture flags */
-   texture->importFlags |= (bpp==32?GLHCK_TEXTURE_IMPORT_ALPHA:0);
-
-   /* do post processing to imported data, and assign to texture */
-   _glhckImagePostProcessStruct importData;
-   memset(&importData, 0, sizeof(_glhckImagePostProcessStruct));
-   importData.width  = w;
-   importData.height = h;
-   importData.data   = import;
-   importData.format = GLHCK_RGBA;
-   importData.type   = GLHCK_DATA_UNSIGNED_BYTE;
-   if (_glhckImagePostProcess(texture, &importData) != RETURN_OK)
-      goto fail;
-
-   /* dealloc */
+   /* free */
    NULLDO(_glhckFree, seg);
-   NULLDO(_glhckFree, import);
 
-   /* load image data here */
+   /* fill import struct */
+   import->width  = w;
+   import->height = h;
+   import->data   = import;
+   import->format = GLHCK_RGBA;
+   import->type   = GLHCK_DATA_UNSIGNED_BYTE;
+   import->flags |= (bpp==32?GLHCK_TEXTURE_IMPORT_ALPHA:0);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 

@@ -3,12 +3,6 @@
 #include <stdio.h>
 #include <mmd.h>
 
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
-
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
 /* FIXME: add generic loading
@@ -39,7 +33,7 @@ fail:
 }
 
 /* \brief import MikuMikuDance PMD file */
-int _glhckImportPMD(_glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportModelParameters *params,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    FILE *f;
@@ -52,7 +46,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, unsigned int flags,
    glhckImportIndexData *indices = NULL, *stripIndices = NULL;
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
    unsigned int i, i2, ix, start, numFaces, numIndices = 0;
-   CALL(0, "%p, %s, %d", object, file, flags);
+   CALL(0, "%p, %s, %p", object, file, params);
 
    if (!(f = fopen(file, "rb")))
       goto read_fail;
@@ -95,13 +89,13 @@ int _glhckImportPMD(_glhckObject *object, const char *file, unsigned int flags,
       if (!(texturePath = _glhckImportTexturePath(mmd->texture[i].file, file)))
          continue;
 
-      if ((texture = glhckTextureNew(texturePath, 0, NULL))) {
+      if ((texture = glhckTextureNew(texturePath, NULL, NULL))) {
          glhckAtlasInsertTexture(atlas, texture);
          glhckTextureFree(texture);
          textureList[i] = texture;
       }
 
-      free(texturePath);
+      _glhckFree(texturePath);
    }
 
    /* pack textures */

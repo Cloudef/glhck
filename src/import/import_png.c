@@ -46,7 +46,7 @@ fail:
 }
 
 /* \brief import PNG images */
-int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags)
+int _glhckImportPNG(const char *file, _glhckImportImageStruct *import)
 {
    FILE *f;
    char hasa = 0;
@@ -54,8 +54,8 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
    png_uint_32 w32, h32;
    png_structp png = NULL;
    png_infop info = NULL;
-   unsigned char buf[PNG_BYTES_TO_CHECK], **lines = NULL, *import = NULL;
-   CALL(0, "%p, %s, %u", texture, file, flags);
+   unsigned char buf[PNG_BYTES_TO_CHECK], **lines = NULL, *importData = NULL;
+   CALL(0, "%s, %p", file, import);
 
    /* open PNG */
    if (!(f = fopen(file, "rb")))
@@ -134,14 +134,14 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
    if (!hasa) png_set_filler(png, 0xff, PNG_FILLER_AFTER);
 #endif
 
-   if (!(import = _glhckMalloc(w*h*4)))
+   if (!(importData = _glhckMalloc(w*h*4)))
       goto out_of_memory;
 
    if (!(lines = _glhckMalloc(h*sizeof(unsigned char*))))
       goto out_of_memory;
 
    for (i = 0; i != h; ++i)
-      lines[h-i-1] = (unsigned char*)import+i*w*4;
+      lines[h-i-1] = (unsigned char*)importData+i*w*4;
 
    png_read_image(png, lines);
 
@@ -152,23 +152,13 @@ int _glhckImportPNG(_glhckTexture *texture, const char *file, unsigned int flags
    /* close file */
    NULLDO(fclose, f);
 
-   /* set internal texture flags */
-   texture->importFlags |= (hasa==1?GLHCK_TEXTURE_IMPORT_ALPHA:0);
-
-   /* do post processing to imported data, and assign to texture */
-   _glhckImagePostProcessStruct importData;
-   memset(&importData, 0, sizeof(_glhckImagePostProcessStruct));
-   importData.width  = w;
-   importData.height = h;
-   importData.data   = import;
-   importData.format = GLHCK_RGBA;
-   importData.type   = GLHCK_DATA_UNSIGNED_BYTE;
-   if (_glhckImagePostProcess(texture, &importData) != RETURN_OK)
-      goto fail;
-
-   /* free */
-   NULLDO(_glhckFree, import);
-
+   /* fill import struct */
+   import->width  = w;
+   import->height = h;
+   import->data   = importData;
+   import->format = GLHCK_RGBA;
+   import->type   = GLHCK_DATA_UNSIGNED_BYTE;
+   import->flags |= (hasa==1?GLHCK_TEXTURE_IMPORT_ALPHA:0);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
@@ -187,7 +177,7 @@ fail:
    if (png && info) png_read_end(png, info);
    if (png)         png_destroy_read_struct(&png, &info, (png_infopp)NULL);
    IFDO(_glhckFree, lines);
-   IFDO(_glhckFree, import);
+   IFDO(_glhckFree, importData);
    IFDO(fclose, f);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;

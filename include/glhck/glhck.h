@@ -425,12 +425,16 @@ typedef enum glhckBlendingMode
    GLHCK_ONE_MINUS_CONSTANT_ALPHA,
 } glhckBlendingMode;
 
-/* model import flags */
-typedef enum glhckModelFlags {
-   GLHCK_MODEL_NONE     = 0,
-   GLHCK_MODEL_ANIMATED = 1,
-   GLHCK_MODEL_JOIN     = 2,
-} glhckModelFlags;
+/* model import parameters */
+typedef struct glhckImportModelParameters {
+   char animated; /* tells importer that model with animation data was requested */
+   char flatten; /* tells importer to join all mesh nodes into one */
+} glhckImportModelParameters;
+
+/* texture import parameters */
+typedef struct glhckImportImageParameters {
+   glhckTextureCompression compression;
+} glhckImportImageParameters;
 
 /* common datatypes */
 typedef struct glhckRect {
@@ -661,6 +665,10 @@ GLHCKAPI void glhckLogColor(char color);
 GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI void glhckGetGlobalPrecision(glhckGeometryIndexType *itype, glhckGeometryVertexType *vtype);
 
+/* import */
+GLHCKAPI const glhckImportModelParameters* glhckImportDefaultModelParameters(void);
+GLHCKAPI const glhckImportImageParameters* glhckImportDefaultImageParameters(void);
+
 /* display */
 GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderType);
 GLHCKAPI void glhckDisplayClose(void);
@@ -780,15 +788,15 @@ GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object);
 GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object);
 
 /* pre-defined geometry */
-GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, unsigned int importFlags);
-GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned int importFlags,
+GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, glhckImportModelParameters *importParams);
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, glhckImportModelParameters *importParams,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
 GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height);
 GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, kmScalar width, kmScalar height);
-GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, kmScalar height, unsigned int importFlags, const glhckTextureParameters *params);
+GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, kmScalar height, const glhckImportImageParameters *importParams, const glhckTextureParameters *params);
 
 /* bones */
 GLHCKAPI glhckBone* glhckBoneNew(void);
@@ -865,7 +873,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *text, unsigned int font_id, float
 GLHCKAPI glhckObject* glhckTextPlane(glhckText *text, unsigned int font_id, float size, const char *s, const glhckTextureParameters *params);
 
 /* textures */
-GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int importFlags, const glhckTextureParameters *params);
+GLHCKAPI glhckTexture* glhckTextureNew(const char *file, const glhckImportImageParameters *importParams, const glhckTextureParameters *params);
 GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
 GLHCKAPI unsigned int glhckTextureFree(glhckTexture *texture);
@@ -880,7 +888,7 @@ GLHCKAPI glhckTexture* glhckTextureCurrentForTarget(glhckTextureTarget target);
 GLHCKAPI void glhckTextureActive(unsigned int index);
 GLHCKAPI void glhckTextureBind(glhckTexture *texture);
 GLHCKAPI void glhckTextureUnbind(glhckTextureTarget target);
-GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, const void *data, int *size, glhckTextureFormat *outFormat);
+GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int width, int height, glhckTextureFormat format, glhckDataType type, const void *data, int *size, glhckTextureFormat *outFormat, glhckDataType *outType);
 
 /* texture atlases */
 GLHCKAPI glhckAtlas* glhckAtlasNew(void);

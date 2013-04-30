@@ -91,16 +91,16 @@ fail:
 }
 
 /* \brief import JPEG images */
-int _glhckImportJPEG(glhckTexture *texture, const char *file, unsigned int flags)
+int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
 {
    FILE *f;
    char decompress = 0;
    unsigned int w = 0, h = 0, loc = 0, i, i2;
-   unsigned char *import = NULL;
+   unsigned char *importData = NULL;
    JSAMPROW row_pointer = NULL;
    jpegErrorStruct jerr;
    struct jpeg_decompress_struct cinfo;
-   CALL(0, "%p, %s, %u", texture, file, flags);
+   CALL(0, "%s, %u", file, import);
 
    /* JPEG error handlers, uh... */
    cinfo.err = jpeg_std_error(&(jerr.pub));
@@ -140,7 +140,7 @@ int _glhckImportJPEG(glhckTexture *texture, const char *file, unsigned int flags
       goto bad_jpeg;
 
    /* allocate import buffer */
-   if (!(import = _glhckMalloc(w * h * cinfo.output_components)))
+   if (!(importData = _glhckMalloc(w * h * cinfo.output_components)))
       goto out_of_memory;
 
    /* allocate row pointer */
@@ -151,7 +151,7 @@ int _glhckImportJPEG(glhckTexture *texture, const char *file, unsigned int flags
    while (cinfo.output_scanline != cinfo.output_height)  {
       jpeg_read_scanlines(&cinfo, &row_pointer, 1);
       for (i = 0; i != (w * cinfo.output_components); ++i) {
-         import[loc++] = row_pointer[i];
+         importData[loc++] = row_pointer[i];
       }
    }
 
@@ -160,9 +160,9 @@ int _glhckImportJPEG(glhckTexture *texture, const char *file, unsigned int flags
       int index1 = i*w*cinfo.output_components;
       int index2 = (h-1-i)*w*cinfo.output_components;
       for (i2 = w*cinfo.output_components; i2 != 0; --i2) {
-         unsigned char temp = import[index1];
-         import[index1] = import[index2];
-         import[index2] = temp;
+         unsigned char temp = importData[index1];
+         importData[index1] = importData[index2];
+         importData[index2] = temp;
          ++index1; ++index2;
       }
    }
@@ -175,21 +175,15 @@ int _glhckImportJPEG(glhckTexture *texture, const char *file, unsigned int flags
    /* close file */
    NULLDO(fclose, f);
 
-   /* do post processing to imported data, and assign to texture */
-   _glhckImagePostProcessStruct importData;
-   memset(&importData, 0, sizeof(_glhckImagePostProcessStruct));
-   importData.width  = w;
-   importData.height = h;
-   importData.data   = import;
-   importData.format = GLHCK_RGB;
-   importData.type   = GLHCK_DATA_UNSIGNED_BYTE;
-   if (_glhckImagePostProcess(texture, &importData) != RETURN_OK)
-      goto fail;
-
    /* free */
    NULLDO(_glhckFree, row_pointer);
-   NULLDO(_glhckFree, import);
 
+   /* fill import struct */
+   import->width  = w;
+   import->height = h;
+   import->data   = importData;
+   import->format = GLHCK_RGB;
+   import->type   = GLHCK_DATA_UNSIGNED_BYTE;
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 

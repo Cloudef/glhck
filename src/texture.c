@@ -4,6 +4,12 @@
 #include <stdio.h>            /* for file io */
 #include <assert.h>           /* for assert */
 
+#ifdef __APPLE__
+#   include <malloc/malloc.h>
+#else
+#   include <malloc.h>
+#endif
+
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_TEXTURE
 
@@ -149,10 +155,10 @@ inline int _glhckIsCompressedFormat(glhckTextureFormat format)
 
 /* \brief Allocate texture
  * Takes filename as argument, pass NULL to use user data */
-GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int importFlags, const glhckTextureParameters *params)
+GLHCKAPI glhckTexture* glhckTextureNew(const char *file, const glhckImportImageParameters *importParams, const glhckTextureParameters *params)
 {
    glhckTexture *object;
-   CALL(0, "%s, %u, %p", file, importFlags, params);
+   CALL(0, "%s, %p, %p", file, importParams, params);
 
    /* check if texture is in cache */
    if ((object = _glhckTextureCacheCheck(file)))
@@ -175,7 +181,7 @@ GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int importFlag
          goto fail;
 
       /* import image */
-      if (_glhckImportImage(object, file, importFlags) != RETURN_OK)
+      if (_glhckImportImage(object, file, importParams) != RETURN_OK)
          goto fail;
 
       /* apply texture parameters */
@@ -326,6 +332,9 @@ GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target,
    object->depth  = depth;
    object->border = border;
 
+   /* make aprox texture sizes show up in memory graph, even if not allocated */
+   _glhckTrackFake(object, sizeof(glhckTexture) + size);
+
    DEBUG(GLHCK_DBG_CRAP, "NEW(%p) %dx%dx%d %.2f MiB", object, object->width, object->height, object->depth, (float)size/1048576);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -448,11 +457,11 @@ GLHCKAPI void glhckTextureUnbind(glhckTextureTarget target)
 }
 
 /* \brief compress image data, this is public function which return data you must free! */
-GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, const void *data, int *size, glhckTextureFormat *outFormat)
+GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int width, int height, glhckTextureFormat format, glhckDataType type, const void *data, int *size, glhckTextureFormat *outFormat, glhckDataType *outType)
 {
    void *compressed = NULL;
-   CALL(0, "%d, %d, %d, %d, %d, %d, %p, %p, %p", compression, width, height, depth, format, type, data, size, outFormat);
-   assert(type != GLHCK_DATA_UNSIGNED_BYTE && "Only GLHCK_DATA_UNSIGNED_BYTE is supported atm");
+   CALL(0, "%d, %d, %d, %d, %d, %p, %p, %p", compression, width, height, format, type, data, size, outFormat);
+   assert(type == GLHCK_DATA_UNSIGNED_BYTE && "Only GLHCK_DATA_UNSIGNED_BYTE is supported atm");
    if (size)      *size = 0;
    if (outFormat) *outFormat = 0;
 
@@ -467,21 +476,23 @@ GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int wid
    if (compression == GLHCK_COMPRESSION_DXT) {
       if ((_glhckNumChannels(format) & 1) == 1) {
          /* RGB */
-         if (!(compressed = _glhckMalloc(imghckSizeForDXT1(width, height))))
+         if (!(compressed = malloc(imghckSizeForDXT1(width, height))))
             goto out_of_memory;
 
          imghckConvertToDXT1(compressed, data, width, height, _glhckNumChannels(format));
          if (size)      *size      = imghckSizeForDXT1(width, height);
          if (outFormat) *outFormat = GLHCK_COMPRESSED_RGB_DXT1;
+         if (outType)   *outType   = GLHCK_DATA_UNSIGNED_BYTE;
          DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT1");
       } else {
          /* RGBA */
-         if (!(compressed = _glhckMalloc(imghckSizeForDXT5(width, height))))
+         if (!(compressed = malloc(imghckSizeForDXT5(width, height))))
             goto out_of_memory;
 
          imghckConvertToDXT5(compressed, data, width, height, _glhckNumChannels(format));
          if (size)      *size      = imghckSizeForDXT5(width, height);
          if (outFormat) *outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
+         if (outType)   *outType   = GLHCK_DATA_UNSIGNED_BYTE;
          DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT5");
       }
    } else {

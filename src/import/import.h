@@ -1,15 +1,15 @@
 #ifndef __glhck_import_h__
 #define __glhck_import_h__
 
-/* Import struct for post processing */
-typedef struct _glhckImagePostProcessStruct
+/* Import struct for image data */
+typedef struct _glhckImportImageStruct
 {
    void *data;
    unsigned int flags;
    int width, height;
    glhckTextureFormat format;
    glhckDataType type;
-} _glhckImagePostProcessStruct;
+} _glhckImportImageStruct;
 
 /* Load and unload functions when importers are configured
  * to be loaded dynamically */
@@ -23,28 +23,28 @@ int _glhckUnloadImporters(void);
  * 2. filename
  * 3. 1 = import animation data, 0 = don't import
  */
-int _glhckImportModel(glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportModel(glhckObject *object, const char *file, const glhckImportModelParameters *params,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 
 #if !GLHCK_IMPORT_DYNAMIC
 
 #if GLHCK_IMPORT_OPENCTM
 /* OpenCTM http://openctm.sourceforge.net/ */
-int _glhckImportOpenCTM(glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImportModelParameters *params,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 int _glhckFormatOpenCTM(const char *file);
 #endif
 
 #if GLHCK_IMPORT_MMD
 /* MikuMikuDance PMD */
-int _glhckImportPMD(glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportPMD(glhckObject *object, const char *file, const glhckImportModelParameters *params,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 int _glhckFormatPMD(const char *file);
 #endif
 
 #if GLHCK_IMPORT_ASSIMP
 /* Assimp Wrapper http://assimp.sourceforge.net/ */
-int _glhckImportAssimp(glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportAssimp(glhckObject *object, const char *file, const glhckImportModelParameters *params,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 int _glhckFormatAssimp(const char *file);
 #endif
@@ -55,34 +55,31 @@ int _glhckFormatAssimp(const char *file);
  * 1. pointer to texture object
  * 2. filename
  */
-int _glhckImportImage(glhckTexture *texture, const char *file, unsigned int flags);
-
-/* Post-process the image data */
-int _glhckImagePostProcess(glhckTexture *texture, _glhckImagePostProcessStruct *data);
+int _glhckImportImage(glhckTexture *texture, const char *file, const glhckImportImageParameters *params);
 
 #if !GLHCK_IMPORT_DYNAMIC
 
 #if GLHCK_IMPORT_PNG
 /* PNG */
-int _glhckImportPNG(glhckTexture *texture, const char *file, unsigned int flags);
+int _glhckImportPNG(const char *file, _glhckImportImageStruct *import);
 int _glhckFormatPNG(const char *file);
 #endif
 
 #if GLHCK_IMPORT_JPEG
 /* JPEG */
-int _glhckImportJPEG(glhckTexture *texture, const char *file, unsigned int flags);
+int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import);
 int _glhckFormatJPEG(const char *file);
 #endif
 
 #if GLHCK_IMPORT_TGA
 /* TGA */
-int _glhckImportTGA(glhckTexture *texture, const char *file, unsigned int flags);
+int _glhckImportTGA(const char *file, _glhckImportImageStruct *import);
 int _glhckFormatTGA(const char *file);
 #endif
 
 #if GLHCK_IMPORT_BMP
 /* BMP */
-int _glhckImportBMP(glhckTexture *texture, const char *file, unsigned int flags);
+int _glhckImportBMP(const char *file, _glhckImportImageStruct *import);
 int _glhckFormatBMP(const char *file);
 #endif
 

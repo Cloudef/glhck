@@ -71,14 +71,14 @@ fail:
 }
 
 /* \brief create new sprite */
-GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, kmScalar height, unsigned int importFlags, const glhckTextureParameters *params)
+GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, kmScalar height, const glhckImportImageParameters *importParams, const glhckTextureParameters *params)
 {
    glhckObject *object;
    glhckTexture *texture;
-   CALL(0, "%s, %f, %f, %u, %p", file, width, height, importFlags, params);
+   CALL(0, "%s, %f, %f, %p, %p", file, width, height, importParams, params);
 
    /* load texture */
-   if (!(texture = glhckTextureNew(file, importFlags, params))) {
+   if (!(texture = glhckTextureNew(file, importParams, params))) {
       RET(0, "%p", NULL);
       return NULL;
    }

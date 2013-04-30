@@ -3,12 +3,6 @@
 #include <limits.h>
 #include <stdio.h>   /* for sscanf */
 
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
-
 #if GLHCK_USE_GLES2
 #  error "OpenGL Fixed Pipeline renderer doesn't support GLES 2.x!"
 #endif
@@ -759,13 +753,13 @@ static int renderInfo(void)
    extensions = (char*)GL_CALL(glGetString(GL_EXTENSIONS));
 
    if (extensions) {
-      extcpy = strdup(extensions);
+      extcpy = _glhckStrdup(extensions);
       s = strtok(extcpy, " ");
       while (s) {
          DEBUG(3, "%s", s);
          s = strtok(NULL, " ");
       }
-      free(extcpy);
+      _glhckFree(extcpy);
    }
 
    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTex);

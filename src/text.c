@@ -109,7 +109,7 @@ static int _glhckTextNewTexture(glhckText *object, glhckTextureFormat format, gl
    if (!(texture = _glhckCalloc(1, sizeof(__GLHCKtextTexture))))
       goto fail;
 
-   if (!(texture->texture = glhckTextureNew(NULL, 0, NULL)))
+   if (!(texture->texture = glhckTextureNew(NULL, NULL, NULL)))
       goto fail;
 
    if (glhckTextureCreate(texture->texture, GLHCK_TEXTURE_2D, 0, object->tw, object->th,
@@ -614,7 +614,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object,
       goto fail;
 
    /* load image */
-   if (!(texture->texture = glhckTextureNew(file, 0, NULL)))
+   if (!(texture->texture = glhckTextureNew(file, NULL, NULL)))
       goto fail;
 
    /* make sure mipmap is disabled from the parameters */
@@ -842,7 +842,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id,
    float linew;
    CALL(2, "%p, %u, %f, %s", object, font_id, size, s);
 
-   if (!(texture = glhckTextureNew(NULL, 0, params)))
+   if (!(texture = glhckTextureNew(NULL, NULL, params)))
       goto fail;
 
    glhckTextStash(object, font_id, size, 0, size*0.82f, s, &linew);

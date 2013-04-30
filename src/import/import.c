@@ -6,18 +6,11 @@
 #include <libgen.h> /* for dirname  */
 #include "tc.h"
 
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
-
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
 /* File format enumeration here */
-typedef enum _glhckFormat
-{
+typedef enum _glhckFormat {
    /* models */
    FORMAT_OCTM,
    FORMAT_PMD,
@@ -31,9 +24,9 @@ typedef enum _glhckFormat
 } _glhckFormat;
 
 /* Function typedefs */
-typedef int (*_glhckModelImportFunc)(glhckObject *object, const char *file, unsigned int flags,
+typedef int (*_glhckModelImportFunc)(glhckObject *object, const char *file, const glhckImportModelParameters *params,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
-typedef int (*_glhckImageImportFunc)(glhckTexture *texture, const char *file, unsigned int flags);
+typedef int (*_glhckImageImportFunc)(const char *file, _glhckImportImageStruct *import);
 typedef int (*_glhckFormatFunc)(const char *file);
 
 /* Model importer struct */
@@ -141,6 +134,16 @@ static _glhckModelImporter* _glhckGetModelImporter(const char *file)
    return NULL;
 }
 
+/* \brief default model import parameters */
+GLHCKAPI const glhckImportModelParameters* glhckImportDefaultModelParameters(void)
+{
+   static glhckImportModelParameters defaultParameters = {
+      .animated   = 0,
+      .flatten    = 0,
+   };
+   return &defaultParameters;
+}
+
 /* Figure out the file type
  * Call the right importer
  * And let it fill the object structure
@@ -148,12 +151,12 @@ static _glhckModelImporter* _glhckGetModelImporter(const char *file)
  */
 
 /* \brief import model file */
-int _glhckImportModel(glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportModel(glhckObject *object, const char *file, const glhckImportModelParameters *params,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    _glhckModelImporter *importer;
    int importReturn;
-   CALL(0, "%p, %s, %d", object, file, flags);
+   CALL(0, "%p, %s, %p", object, file, params);
    DEBUG(GLHCK_DBG_CRAP, "Model: %s", file);
 
    /* figure out the model format */
@@ -163,7 +166,8 @@ int _glhckImportModel(glhckObject *object, const char *file, unsigned int flags,
    }
 
    /* import */
-   importReturn = importer->importFunc(object, file, flags, itype, vtype);
+   if (!params) params = glhckImportDefaultModelParameters();
+   importReturn = importer->importFunc(object, file, params, itype, vtype);
    RET(0, "%d", importReturn);
    return importReturn;
 }
@@ -192,19 +196,71 @@ static _glhckImageImporter* _glhckGetImageImporter(const char *file)
    return NULL;
 }
 
+/* \brief default image import parameters */
+GLHCKAPI const glhckImportImageParameters* glhckImportDefaultImageParameters(void)
+{
+   static glhckImportImageParameters defaultParameters = {
+      .compression = GLHCK_COMPRESSION_DXT,
+   };
+   return &defaultParameters;
+}
+
+/* post-processing of image data */
+int _glhckImagePostProcess(glhckTexture *texture, const glhckImportImageParameters *params, const _glhckImportImageStruct *import)
+{
+   int size = 0;
+   void *data = NULL, *compressed = NULL;
+   glhckTextureFormat format;
+   glhckDataType type;
+   CALL(0, "%p, %p, %p", texture, params, import);
+   assert(texture);
+   assert(import);
+
+   /* use default parameters */
+   if (!params) params = glhckImportDefaultImageParameters();
+
+   /* try to compress the data if requested */
+   if (params->compression != GLHCK_COMPRESSION_NONE) {
+      compressed = glhckTextureCompress(params->compression, import->width, import->height,
+            import->format, import->type, import->data, &size, &format, &type);
+   }
+
+   /* compression not done/failed */
+   if (!(data = compressed)) {
+      data = import->data;
+      format = import->format;
+      type = import->type;
+   }
+
+   /* upload texture */
+   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, import->width, import->height,
+            0, 0, format, type, size, data) != RETURN_OK)
+      goto fail;
+
+   IFDO(_glhckFree, compressed);
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
+
+fail:
+   IFDO(_glhckFree, compressed);
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
+}
+
 /* Figure out the file type
  * Call the right importer
- * And let it fill the texture structure
- * Return the texture
+ * And let it fill the import structure
+ * Postprocess the texture
  */
 
 /* \brief import image file */
-int _glhckImportImage(glhckTexture *texture, const char *file, unsigned int flags)
+int _glhckImportImage(glhckTexture *texture, const char *file, const glhckImportImageParameters *params)
 {
    _glhckImageImporter *importer;
-   int importReturn;
-   CALL(0, "%p, %s, %u", texture, file, flags);
+   _glhckImportImageStruct import;
+   CALL(0, "%p, %s, %p", texture, file, params);
    DEBUG(GLHCK_DBG_CRAP, "Image: %s", file);
+   memset(&import, 0, sizeof(_glhckImportImageStruct));
 
    /* figure out the image format */
    if (!(importer = _glhckGetImageImporter(file))) {
@@ -213,9 +269,21 @@ int _glhckImportImage(glhckTexture *texture, const char *file, unsigned int flag
    }
 
    /* import */
-   importReturn = importer->importFunc(texture, file, flags);
-   RET(0, "%d", importReturn);
-   return importReturn;
+   if (importer->importFunc(file, &import) != RETURN_OK)
+      goto fail;
+
+   /* post process */
+   if (_glhckImagePostProcess(texture, params, &import) != RETURN_OK)
+      goto fail;
+
+   IFDO(_glhckFree, import.data);
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
+
+fail:
+   IFDO(_glhckFree, import.data);
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
 }
 
 /* ------------------ PORTABILTY ------------------ */
@@ -253,7 +321,7 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
       textureFile = gnu_basename((char*)odd_texture_path);
    else {
       RET(0, "%s", textureFile);
-      return strdup(textureFile);
+      return _glhckStrdup(textureFile);
    }
 
    /* hrmm, we could not even basename it?
@@ -266,18 +334,17 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
       goto fail;
 
    /* copy original path */
-   if (!(modelPath = strndup(model_path, PATH_MAX-1)))
+   if (!(modelPath = _glhckStrdup(model_path)))
       goto fail;
 
    /* grab the folder where model resides */
    modelFolder = dirname(modelPath);
 
    /* ok, maybe the texture is in same folder as the model? */
-   snprintf(textureInModelFolder, PATH_MAX-1, "%s/%s",
-            modelFolder, textureFile );
+   snprintf(textureInModelFolder, PATH_MAX-1, "%s/%s", modelFolder, textureFile);
 
    /* free this */
-   free(modelPath);
+   _glhckFree(modelPath);
 
    /* gah, don't give me missing textures damnit!! */
    if (access(textureInModelFolder, F_OK) != 0)
@@ -285,29 +352,11 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
 
    /* return, remember to free */
    RET(0, "%s", textureInModelFolder);
-   return strdup(textureInModelFolder);
+   return _glhckStrdup(textureInModelFolder);
 
 fail:
    RET(0, "%p", NULL);
    return NULL;
-}
-
-/* post-processing of image data */
-int _glhckImagePostProcess(glhckTexture *texture, _glhckImagePostProcessStruct *data)
-{
-   CALL(0, "%p, %p", texture, data);
-
-   /* upload texture */
-   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, data->width, data->height, 0, 0,
-            data->format, data->type, 0, data->data) != RETURN_OK)
-      goto fail;
-
-   RET(0, "%d", RETURN_OK);
-   return RETURN_OK;
-
-fail:
-   RET(0, "%d", RETURN_FAIL);
-   return RETURN_FAIL;
 }
 
 #define ACTC_CHECK_SYNTAX  "%d: "__STRING(func)" returned unexpected "__STRING(c)"\n"

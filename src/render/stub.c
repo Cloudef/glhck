@@ -1,12 +1,6 @@
 #include "../internal.h"
 #include "render.h"
 
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
-
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #define RENDER_NAME "NULL Renderer"
 #include "helper_stub.h"

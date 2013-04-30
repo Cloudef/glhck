@@ -132,11 +132,11 @@ int main(int argc, char **argv)
    glhckCameraRange(camera, 1.0f, 1000.0f);
    camObj = glhckCameraGetObject(camera);
 
-   if (!(texture = glhckTextureNew("example/media/glhck.png", 0, NULL)))
+   if (!(texture = glhckTextureNew("example/media/glhck.png", NULL, NULL)))
       return EXIT_FAILURE;
 
    sprite  = glhckSpriteNew(texture, 0, 0);
-   sprite3 = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, 0, NULL);
+   sprite3 = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, NULL, NULL);
    cube2   = glhckCubeNew(1.0f);
    glhckObjectMaterialFlags(cube2, glhckObjectGetMaterialFlags(cube2)|
          GLHCK_MATERIAL_DRAW_OBB|GLHCK_MATERIAL_DRAW_AABB);
@@ -173,15 +173,19 @@ int main(int argc, char **argv)
 #  define ASSIMP_PATH "example/media/player.x"
 #endif
 
-   if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   glhckImportModelParameters animatedParams;
+   memcpy(&animatedParams, glhckImportDefaultModelParameters(), sizeof(glhckImportModelParameters));
+   animatedParams.animated = 1;
+
+   if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, NULL, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
-   } else if ((cube = glhckModelNewEx(OCTM_PATH, 5.0f, 0, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(OCTM_PATH, 5.0f, NULL, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
       glhckObjectPositionf(cube, 0.0f, 5.0f, 0.0f);
-   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, GLHCK_MODEL_ANIMATED, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
-      glhckTexture *tex = glhckTextureNew("example/media/texture-b.png", 0, NULL);
+   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, &animatedParams, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+      glhckTexture *tex = glhckTextureNew("example/media/texture-b.png", NULL, NULL);
       glhckObjectTexture(cube, tex);
       glhckTextureFree(tex);
       glhckObjectMovef(cube, 0, 15, 0);
@@ -201,7 +205,7 @@ int main(int argc, char **argv)
 
    int sW = 1024, sH = 1024;
    glhckRenderbuffer *depthBuffer = glhckRenderbufferNew(sW, sH, GLHCK_DEPTH_COMPONENT16);
-   glhckTexture *depthColorMap = glhckTextureNew(NULL, 0, NULL);
+   glhckTexture *depthColorMap = glhckTextureNew(NULL, NULL, NULL);
    glhckTextureCreate(depthColorMap, GLHCK_TEXTURE_2D, 0, sW, sH, 0, 0, GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL);
    glhckFramebuffer *fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER);
    glhckFramebufferAttachTexture(fbo, depthColorMap, GLHCK_COLOR_ATTACHMENT0);

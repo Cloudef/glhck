@@ -3,12 +3,6 @@
 #include <openctm.h>
 #include <stdio.h>
 
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
-
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
 #ifdef NDEBUG
@@ -65,7 +59,7 @@ fail:
 }
 
 /* \brief import OpenCTM file */
-int _glhckImportOpenCTM(glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImportModelParameters *params,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    FILE *f;
@@ -79,7 +73,7 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, unsigned int flag
    glhckImportVertexData *vertexData = NULL;
    _glhckTexture *texture;
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
-   CALL(0, "%p, %s, %d", object, file, flags);
+   CALL(0, "%p, %s, %p", object, file, params);
 
    if (!(f = fopen(file, "rb")))
       goto read_fail;
@@ -116,12 +110,12 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, unsigned int flag
       }
 
       if ((texturePath = _glhckImportTexturePath(textureFilename, file))) {
-         if ((texture = glhckTextureNew(texturePath, 0, NULL))) {
+         if ((texture = glhckTextureNew(texturePath, NULL, NULL))) {
             coords = CTM_CALL(context, ctmGetFloatArray(context, CTM_UV_MAP_1));
             glhckObjectTexture(object, texture);
             glhckTextureFree(texture);
          }
-         free(texturePath);
+         _glhckFree(texturePath);
       }
    }
 

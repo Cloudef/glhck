@@ -3,12 +3,6 @@
 #include <string.h>  /* for strdup */
 #include <stdio.h>   /* for sscanf */
 
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
-
 #if GLHCK_USE_GLES1
 #  error "OpenGL renderer doesn't support GLES 1.x!"
 #endif
@@ -216,19 +210,19 @@ static GLuint rProgramLink(GLuint vertexShader, GLuint fragmentShader)
    /* dump the log incase of error */
    GL_CALL(glGetProgramiv(obj, GL_INFO_LOG_LENGTH, &logSize));
    if (logSize > 1) {
-      log = malloc(logSize);
+      log = _glhckMalloc(logSize);
       GL_CALL(glGetProgramInfoLog(obj, logSize, NULL, log));
       printf("-- %u,%u --\n%s^^ %u,%u ^^\n",
             vertexShader, fragmentShader, log, vertexShader, fragmentShader);
       if (_glhckStrupstr(log, "error")) goto fail;
-      free(log);
+      _glhckFree(log);
    }
 
    RET(0, "%u", obj);
    return obj;
 
 fail:
-   IFDO(free, log);
+   IFDO(_glhckFree, log);
    if (obj) GL_CALL(glDeleteProgram(obj));
    RET(0, "%d", 0);
    return 0;
@@ -266,18 +260,18 @@ static GLuint rShaderCompile(glhckShaderType type, const GLchar *effectKey, cons
    /* dump the log incase of error */
    GL_CALL(glGetShaderiv(obj, GL_INFO_LOG_LENGTH, &logSize));
    if (logSize > 1) {
-      log = malloc(logSize);
+      log = _glhckMalloc(logSize);
       GL_CALL(glGetShaderInfoLog(obj, logSize, NULL, log));
       printf("-- %s --\n%s^^ %s ^^\n", effectKey, log, effectKey);
       if (_glhckStrupstr(log, "error")) goto fail;
-      free(log);
+      _glhckFree(log);
    }
 
    RET(0, "%u", obj);
    return obj;
 
 fail:
-   IFDO(free, log);
+   IFDO(_glhckFree, log);
    if (obj) GL_CALL(glDeleteShader(obj));
    RET(0, "%d", 0);
    return 0;
@@ -903,13 +897,13 @@ static int renderInfo(void)
    extensions = (char*)GL_CALL(glGetString(GL_EXTENSIONS));
 
    if (extensions) {
-      extcpy = strdup(extensions);
+      extcpy = _glhckStrdup(extensions);
       s = strtok(extcpy, " ");
       while (s) {
          DEBUG(3, "%s", s);
          s = strtok(NULL, " ");
       }
-      free(extcpy);
+      _glhckFree(extcpy);
    }
 
    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTex);

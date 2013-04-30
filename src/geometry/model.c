@@ -5,20 +5,20 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
 
 /* \brief create new object from supported model files */
-GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, unsigned int importFlags)
+GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, glhckImportModelParameters *importParams)
 {
    glhckGeometryIndexType itype;
    glhckGeometryVertexType vtype;
    glhckGetGlobalPrecision(&itype, &vtype);
-   return glhckModelNewEx(file, size, importFlags, itype, vtype);
+   return glhckModelNewEx(file, size, importParams, itype, vtype);
 }
 
 /* \brief create new object from supported model files
  * you can specify the index and vertex precision here */
-GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned int importFlags, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, glhckImportModelParameters *importParams, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    glhckObject *object;
-   CALL(0, "%s, %f, %u, %d, %d", file, size, importFlags, itype, vtype);
+   CALL(0, "%s, %f, %p, %d, %d", file, size, importParams, itype, vtype);
 
    /* create new object */
    if (!(object = glhckObjectNew()))
@@ -26,12 +26,12 @@ GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, unsigned 
 
    /* currently animated objects only work
     * with floating point precision */
-   if (importFlags & GLHCK_MODEL_ANIMATED) {
+   if (importParams && importParams->animated) {
       vtype = glhckVertexTypeGetFloatingPointCounterpart(vtype);
    }
 
    /* import model */
-   if (_glhckImportModel(object, file, importFlags, itype, vtype) != RETURN_OK)
+   if (_glhckImportModel(object, file, importParams, itype, vtype) != RETURN_OK)
       goto fail;
 
    /* scale the cube */

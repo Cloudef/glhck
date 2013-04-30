@@ -5,12 +5,6 @@
 #include <assimp/scene.h>
 #include <stdio.h>
 
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
-
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
 #define ASSIMP_BONES_MAX 256
@@ -296,12 +290,11 @@ fail:
 
 static int buildModel(glhckObject *object, unsigned int numIndices, unsigned int numVertices,
       const glhckImportIndexData *indices, const glhckImportVertexData *vertexData,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype, unsigned int flags)
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
    unsigned int numStrippedIndices = 0;
    glhckImportIndexData *stripIndices = NULL;
-   (void)flags;
 
    if (!numVertices)
       return RETURN_OK;
@@ -416,14 +409,14 @@ glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl
       return NULL;
 
    DEBUG(0, "%s", texturePath);
-   texture = glhckTextureNew(texturePath, 0, &params);
-   free(texturePath);
+   texture = glhckTextureNew(texturePath, NULL, &params);
+   _glhckFree(texturePath);
    return texture;
 }
 
 static int processModel(const char *file, glhckObject *object,
       glhckObject *current, const struct aiScene *sc, const struct aiNode *nd,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype, unsigned int flags)
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype, const glhckImportModelParameters *params)
 {
    unsigned int m, f;
    unsigned int numVertices = 0, numIndices = 0;
@@ -441,7 +434,7 @@ static int processModel(const char *file, glhckObject *object,
    assert(sc && nd);
 
    /* combine && atlas loading path */
-   if (flags & GLHCK_MODEL_JOIN) {
+   if (params->flatten) {
       /* prepare atlas for texture combining */
       if (!(atlas = glhckAtlasNew()))
          goto assimp_no_memory;
@@ -506,7 +499,7 @@ static int processModel(const char *file, glhckObject *object,
 
       /* finally build the model */
       if (buildModel(current, numIndices,  numVertices,
-               indices, vertexData, itype, vtype, flags) == RETURN_OK) {
+               indices, vertexData, itype, vtype)  == RETURN_OK) {
          _glhckObjectFile(current, nd->mName.data);
          if (hasTexture) glhckObjectTexture(current, glhckAtlasGetTexture(atlas));
          if (!(current = glhckObjectNew())) goto fail;
@@ -554,7 +547,7 @@ static int processModel(const char *file, glhckObject *object,
 
          /* build model */
          if (buildModel(current, numIndices,  numVertices,
-                  indices, vertexData, itype, vtype, flags) == RETURN_OK) {
+                  indices, vertexData, itype, vtype) == RETURN_OK) {
             _glhckObjectFile(current, mesh->mName.data);
             if (hasTexture) glhckObjectTexture(current, texture);
             if (!(current = glhckObjectNew())) goto fail;
@@ -573,7 +566,7 @@ static int processModel(const char *file, glhckObject *object,
    /* process childrens */
    for (m = 0; m != nd->mNumChildren; ++m) {
       if (processModel(file, object, current, sc, nd->mChildren[m],
-               itype, vtype, flags) == RETURN_OK) {
+               itype, vtype, params) == RETURN_OK) {
          if (!(current = glhckObjectNew())) goto fail;
          glhckObjectAddChild(object, current);
          glhckObjectFree(current);
@@ -608,18 +601,19 @@ int _glhckFormatAssimp(const char *file)
 }
 
 /* \brief import Assimp file */
-int _glhckImportAssimp(glhckObject *object, const char *file, unsigned int flags,
+int _glhckImportAssimp(glhckObject *object, const char *file, const glhckImportModelParameters *params,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    const struct aiScene *scene;
    glhckObject *first = NULL;
    unsigned int aflags;
-   CALL(0, "%p, %s, %d", object, file, flags);
+   CALL(0, "%p, %s, %p", object, file, params);
 
    /* import the model using assimp
     * TODO: make import hints tunable?
     * Needs changes to import protocol! */
    aflags = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_OptimizeGraph | aiProcess_MakeLeftHanded;
+   if (!params->animated) aflags |= aiProcess_PreTransformVertices;
    scene = aiImportFile(file, aflags);
    if (!scene) goto assimp_fail;
 
@@ -635,11 +629,11 @@ int _glhckImportAssimp(glhckObject *object, const char *file, unsigned int flags
 
    /* process the model */
    if (processModel(file, object, first, scene, scene->mRootNode,
-            itype, vtype, flags) != RETURN_OK)
+            itype, vtype, params) != RETURN_OK)
       goto fail;
 
    /* process the animated model part */
-   if (flags & GLHCK_MODEL_ANIMATED && processBonesAndAnimations(object, scene) != RETURN_OK)
+   if (params->animated && processBonesAndAnimations(object, scene) != RETURN_OK)
       goto fail;
 
    /* close file */
