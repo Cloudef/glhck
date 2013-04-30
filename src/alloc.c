@@ -295,6 +295,11 @@ GLHCKAPI void glhckMemoryGraph(void)
       allocTotal += allocChannel;
    }
 
+   for (i = 0, data = glhckContextGet()->alloc; data; data = data->next, ++i);
+   _glhckGreen();
+   printf( "%-13s : %u\n", "Allocations", i);
+   _glhckNormal();
+
    puts("--------------------");
    puts("");
    return;
