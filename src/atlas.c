@@ -245,16 +245,14 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    if (!(plane = glhckPlaneNewEx(1, 1, GLHCK_INDEX_NONE, GLHCK_VERTEX_V2F)))
       goto fail;
 
+   memcpy(&oldClear, glhckRenderGetClearColor(), sizeof(glhckColorb));
+   memcpy(&oldProjection, glhckRenderGetProjection(), sizeof(kmMat4));
+   memcpy(&oldView, glhckRenderGetView(), sizeof(kmMat4));
+
    /* create projection for drawing */
    kmMat4OrthographicProjection(&ortho, 0, width, 0, height, -1.0f, 1.0f);
    kmMat4Translation(&ortho, -1, -1, 0);
-
-   memcpy(&oldProjection, glhckRenderGetProjection(), sizeof(kmMat4));
-   memcpy(&oldView, glhckRenderGetView(), sizeof(kmMat4));
    glhckRenderProjectionOnly(&ortho);
-
-   /* set clear color */
-   memcpy(&oldClear, glhckRenderGetClearColor(), sizeof(glhckColorb));
    glhckRenderClearColorb(0,0,0,0);
 
    glhckFramebufferRecti(fbo, 0, 0, width, height);

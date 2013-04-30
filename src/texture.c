@@ -59,16 +59,6 @@ inline void _glhckTextureInsertToQueue(glhckTexture *object)
    textures->count++;
 }
 
-/* \brief set texture data.
- * NOTE: internal function, so data isn't copied. */
-static void _glhckTextureData(glhckTexture *object, void *data)
-{
-   CALL(1, "%p, %p", object, data);
-   assert(object);
-   IFDO(_glhckFree, object->data);
-   object->data = data;
-}
-
 /* \brief guess size for texture */
 inline int _glhckSizeForTexture(glhckTextureTarget target, int width, int height, int depth, glhckTextureFormat format, glhckDataType type)
 {
@@ -155,60 +145,6 @@ inline int _glhckIsCompressedFormat(glhckTextureFormat format)
    return 0;
 }
 
-/* \brief compress image data internally */
-static void* _glhckTextureCompress(glhckTextureCompression compression, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, const void *data, int *size, glhckTextureFormat *outFormat)
-{
-   void *compressed = NULL;
-   CALL(0, "%d, %d, %d, %d, %d, %d, %p, %p, %p", compression, width, height, depth, format, type, data, size, outFormat);
-   if (size)      *size = 0;
-   if (outFormat) *outFormat = 0;
-
-   /* NULL data, just return */
-   if (!data) goto fail;
-
-   /* check if already compressed */
-   if (_glhckIsCompressedFormat(format))
-      goto already_compressed;
-
-   /* DXT compression requested */
-   if (compression == GLHCK_COMPRESSION_DXT) {
-      if ((_glhckNumChannels(format) & 1) == 1) {
-         /* RGB */
-         if (!(compressed = _glhckMalloc(imghckSizeForDXT1(width, height))))
-            goto out_of_memory;
-
-         imghckConvertToDXT1(compressed, data, width, height, _glhckNumChannels(format));
-         if (size)      *size      = imghckSizeForDXT1(width, height);
-         if (outFormat) *outFormat = GLHCK_COMPRESSED_RGB_DXT1;
-         DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT1");
-      } else {
-         /* RGBA */
-         if (!(compressed = _glhckMalloc(imghckSizeForDXT5(width, height))))
-            goto out_of_memory;
-
-         imghckConvertToDXT5(compressed, data, width, height, _glhckNumChannels(format));
-         if (size)      *size      = imghckSizeForDXT5(width, height);
-         if (outFormat) *outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
-         DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT5");
-      }
-   } else {
-      DEBUG(GLHCK_DBG_WARNING, "Compression type not implemented or supported for the texture format/datatype combination.");
-   }
-
-   RET(0, "%p", compressed);
-   return compressed;
-
-already_compressed:
-   DEBUG(GLHCK_DBG_WARNING, "Image data is already compressed");
-   goto fail;
-out_of_memory:
-   DEBUG(GLHCK_DBG_ERROR, "Out of memory");
-fail:
-   IFDO(_glhckFree, compressed);
-   RET(0, "%p", NULL);
-   return NULL;
-}
-
 /* ---- PUBLIC API ---- */
 
 /* \brief Allocate texture
@@ -259,42 +195,6 @@ fail:
    return NULL;
 }
 
-/* \brief copy texture */
-GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src)
-{
-   glhckTexture *object;
-   CALL(0, "%p", src);
-   assert(src);
-
-   /* allocate texture */
-   if (!(object = _glhckCalloc(1, sizeof(glhckTexture))))
-      goto fail;
-
-   /* increase reference */
-   object->refCounter++;
-
-   /* copy */
-   GLHCKRA()->textureGenerate(1, &object->object);
-
-   if (src->file)
-      object->file = _glhckStrdup(src->file);
-
-   glhckTextureCreate(object, src->target, 0, src->width, src->height, src->depth, 0,
-         src->format, src->type, src->size, src->data);
-
-   /* insert to world */
-   _glhckWorldInsert(texture, object, glhckTexture*);
-
-   /* return texture */
-   RET(0, "%p", object);
-   return object;
-
-fail:
-   IFDO(glhckTextureFree, object);
-   RET(0, "%p", NULL);
-   return NULL;
-}
-
 /* \brief reference texture */
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *object)
 {
@@ -320,8 +220,7 @@ GLHCKAPI unsigned int glhckTextureFree(glhckTexture *object)
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
-   DEBUG(GLHCK_DBG_CRAP, "FREE(%p) %dx%d %.2f MiB", object,
-         object->width, object->height, (float)object->size / 1048576);
+   DEBUG(GLHCK_DBG_CRAP, "FREE(%p) %dx%dx%d", object, object->width, object->height, object->depth);
 
    /* unbind from active slot */
    for (i = 0; i != GLHCK_MAX_ACTIVE_TEXTURE; ++i) {
@@ -335,7 +234,6 @@ GLHCKAPI unsigned int glhckTextureFree(glhckTexture *object)
 
    /* free */
    IFDO(_glhckFree, object->file);
-   _glhckTextureData(object, NULL);
 
    /* remove from world */
    _glhckWorldRemove(texture, object, glhckTexture*);
@@ -351,23 +249,11 @@ success:
 /* \brief apply texture parameters. */
 GLHCKAPI void glhckTextureParameter(glhckTexture *object, const glhckTextureParameters *params)
 {
-   int size;
-   void *data = NULL;
    glhckTexture *old = NULL;
-   glhckTextureFormat outFormat;
 
    /* copy texture parameters over */
    memcpy(&object->params, (params?params:glhckTextureDefaultParameters()), sizeof(glhckTextureParameters));
    params = &object->params;
-
-   /* will do compression if requested */
-   if (params->compression != GLHCK_COMPRESSION_NONE) {
-      if ((data = _glhckTextureCompress(params->compression, object->width, object->height, object->depth, object->format,
-                  object->type, object->data, &size, &outFormat))) {
-         glhckTextureRecreate(object, outFormat, GLHCK_DATA_UNSIGNED_BYTE, size, data);
-         _glhckFree(data);
-      }
-   }
 
    /* push texture parameters to renderer */
    old = glhckTextureCurrentForTarget(object->target);
@@ -393,20 +279,9 @@ GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void)
       .magFilter   = GLHCK_FILTER_LINEAR,
       .compareMode = GLHCK_COMPARE_NONE,
       .compareFunc = GLHCK_COMPARE_LEQUAL,
-      .compression = GLHCK_COMPRESSION_NONE,
       .mipmap      = 1,
    };
    return &defaultParameters;
-}
-
-/* \brief get texture's data */
-GLHCKAPI const void* glhckTextureGetData(glhckTexture *object, int *size)
-{
-   CALL(0, "%p, %p", object, size);
-   assert(object);
-   if (size) *size = object->size;
-   RET(0, "%p", object->data);
-   return object->data;
 }
 
 /* \brief get texture's information */
@@ -418,25 +293,19 @@ GLHCKAPI void glhckTextureGetInformation(glhckTexture *object, glhckTextureTarge
    if (width) *width = object->width;
    if (height) *height = object->height;
    if (depth) *depth = object->depth;
-   if (border) *border = 0;
-   if (format) *format = object->format;
-   if (type) *type = object->type;
+   if (border) *border = object->border;
 }
 
 /* \brief create texture manually. */
 GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, glhckDataType type, int size, const void *data)
 {
-   void *copied = NULL;
    glhckTexture *old = NULL;
    CALL(0, "%p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p", object, target, level, width, height, depth, border, format, type, size, data);
    assert(object);
-   assert(level == 0 && "For now the level parameter must be 0!");
-   assert(border == 0 && "For now the border parameter must be 0!");
+   assert(level >= 0);
 
    /* check the true data size, if not provided */
-   if (!size) {
-      size = _glhckSizeForTexture(target, width, height, depth, format, type);
-   }
+   if (!size) size = _glhckSizeForTexture(target, width, height, depth, format, type);
 
    /* create texture */
    if (!object->object) GLHCKRA()->textureGenerate(1, &object->object);
@@ -450,26 +319,14 @@ GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target,
    GLHCKRA()->textureImage(target, level, width, height, depth, border, format, type, size, data);
    if (old) glhckTextureBind(old);
 
-   /* copy data */
-   if (data) {
-      if (!(copied = _glhckCopy(data, size)))
-         goto fail;
-   }
-
-   /* set the copied data */
-   _glhckTextureData(object, copied);
-
    /* set rest */
+   object->target = target;
    object->width  = width;
    object->height = height;
    object->depth  = depth;
-   object->format = format;
-   object->type   = type;
-   object->size   = size;
+   object->border = border;
 
-   DEBUG(GLHCK_DBG_CRAP, "NEW(%p) %dx%dx%d %.2f MiB", object,
-         object->width, object->height, object->depth, (float)object->size / 1048576);
-
+   DEBUG(GLHCK_DBG_CRAP, "NEW(%p) %dx%dx%d %.2f MiB", object, object->width, object->height, object->depth, (float)size/1048576);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
@@ -497,6 +354,21 @@ GLHCKAPI void glhckTextureFill(glhckTexture *object, int level, int x, int y, in
    glhckTexture *old;
    CALL(2, "%p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p", object, level, x, y, z, width, height, depth, format, type, size, data);
    assert(object);
+   assert(level >= 0);
+
+   if (x + width > object->width) {
+      DEBUG(GLHCK_DBG_ERROR, "x + width > texture width!");
+      return;
+   }
+   if (y + height > object->height) {
+      DEBUG(GLHCK_DBG_ERROR, "h + height > texture height!");
+      return;
+   }
+   if (z + depth > object->depth) {
+      DEBUG(GLHCK_DBG_ERROR, "z + depth > texture depth!");
+      return;
+   }
+
    old = glhckTextureCurrentForTarget(object->target);
    glhckTextureBind(object);
    GLHCKRA()->textureFill(object->target, level, x, y, z, width, height, depth, format, type, size, data);
@@ -510,18 +382,13 @@ GLHCKAPI int glhckTextureSave(glhckTexture *object, const char *path)
    CALL(0, "%p, %s", object, path);
    assert(object);
 
-   /* not correct texture format for saving */
-   if (object->format != GLHCK_RGBA)
-      goto format_fail;
-
    DEBUG(GLHCK_DBG_CRAP,
          "\2Save \3%d\5x\3%d \5[\4%s, \3%d\5]",
-         object->width, object->height,
-         object->format==GLHCK_RGBA?"RGBA":
-         object->format==GLHCK_RGB?"RGB":
-         object->format==GLHCK_LUMINANCE_ALPHA?
-         "LUMINANCE ALPHA":"LUMINANCE",
-         _glhckNumChannels(object->format));
+         object->width, object->height);
+
+
+   /* TODO: Render to FBO to get the image
+    * Or use glGetTexImage if it's available (not in GLES) */
 
 #if 0
    /* open for read */
@@ -536,8 +403,6 @@ GLHCKAPI int glhckTextureSave(glhckTexture *object, const char *path)
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
-format_fail:
-   _glhckPuts("\1Err.. Sorry only RGBA texture save for now.");
 //fail:
    IFDO(fclose, f);
    RET(0, "%d", RETURN_FAIL);
@@ -580,6 +445,61 @@ GLHCKAPI void glhckTextureUnbind(glhckTextureTarget target)
    if (!GLHCKRD()->texture[GLHCKRD()->activeTexture][target]) return;
    GLHCKRA()->textureBind(target, 0);
    GLHCKRD()->texture[GLHCKRD()->activeTexture][target] = NULL;
+}
+
+/* \brief compress image data, this is public function which return data you must free! */
+GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, const void *data, int *size, glhckTextureFormat *outFormat)
+{
+   void *compressed = NULL;
+   CALL(0, "%d, %d, %d, %d, %d, %d, %p, %p, %p", compression, width, height, depth, format, type, data, size, outFormat);
+   assert(type != GLHCK_DATA_UNSIGNED_BYTE && "Only GLHCK_DATA_UNSIGNED_BYTE is supported atm");
+   if (size)      *size = 0;
+   if (outFormat) *outFormat = 0;
+
+   /* NULL data, just return */
+   if (!data) goto fail;
+
+   /* check if already compressed */
+   if (_glhckIsCompressedFormat(format))
+      goto already_compressed;
+
+   /* DXT compression requested */
+   if (compression == GLHCK_COMPRESSION_DXT) {
+      if ((_glhckNumChannels(format) & 1) == 1) {
+         /* RGB */
+         if (!(compressed = _glhckMalloc(imghckSizeForDXT1(width, height))))
+            goto out_of_memory;
+
+         imghckConvertToDXT1(compressed, data, width, height, _glhckNumChannels(format));
+         if (size)      *size      = imghckSizeForDXT1(width, height);
+         if (outFormat) *outFormat = GLHCK_COMPRESSED_RGB_DXT1;
+         DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT1");
+      } else {
+         /* RGBA */
+         if (!(compressed = _glhckMalloc(imghckSizeForDXT5(width, height))))
+            goto out_of_memory;
+
+         imghckConvertToDXT5(compressed, data, width, height, _glhckNumChannels(format));
+         if (size)      *size      = imghckSizeForDXT5(width, height);
+         if (outFormat) *outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
+         DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT5");
+      }
+   } else {
+      DEBUG(GLHCK_DBG_WARNING, "Compression type not implemented or supported for the texture format/datatype combination.");
+   }
+
+   RET(0, "%p", compressed);
+   return compressed;
+
+already_compressed:
+   DEBUG(GLHCK_DBG_WARNING, "Image data is already compressed");
+   goto fail;
+out_of_memory:
+   DEBUG(GLHCK_DBG_ERROR, "Out of memory");
+fail:
+   IFDO(_glhckFree, compressed);
+   RET(0, "%p", NULL);
+   return NULL;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

@@ -1096,11 +1096,11 @@ void glhCullFace(glhckCullFaceType face)
 
 /* \brief get pixels from OpenGL */
 void glhBufferGetPixels(GLint x, GLint y, GLsizei width, GLsizei height,
-      glhckTextureFormat format, GLvoid *data)
+      glhckTextureFormat format, glhckDataType type, GLvoid *data)
 {
-   CALL(1, "%d, %d, %d, %d, %d, %p", x, y, width, height, format, data);
+   CALL(1, "%d, %d, %d, %d, %d, %d, %p", x, y, width, height, format, type, data);
    GL_CALL(glReadPixels(x, y, width, height,
-            glhTextureFormatForGlhckFormat(format), GL_UNSIGNED_BYTE, data));
+            glhTextureFormatForGlhckFormat(format), glhDataTypeForGlhckType(type), data));
 }
 
 /* \brief blend func wrapper */

@@ -134,7 +134,7 @@ const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type);
 void glhClear(GLuint bufferBits);
 void glhClearColor(const glhckColorb *color);
 void glhCullFace(glhckCullFaceType face);
-void glhBufferGetPixels(GLint x, GLint y, GLsizei width, GLsizei height, glhckTextureFormat format, GLvoid *data);
+void glhBufferGetPixels(GLint x, GLint y, GLsizei width, GLsizei height, glhckTextureFormat format, glhckDataType type, GLvoid *data);
 void glhBlendFunc(GLenum blenda, GLenum blendb);
 void glhTextureFill(glhckTextureTarget target, GLint level, GLint x, GLint y, GLint z, GLsizei width, GLsizei height, GLsizei depth, glhckTextureFormat format, GLint datatype, GLsizei size, const GLvoid *data);
 void glhTextureImage(glhckTextureTarget target, GLint level, GLsizei width, GLsizei height, GLsizei depth, GLint border, glhckTextureFormat format, GLint datatype, GLsizei size, const GLvoid *data);

@@ -204,15 +204,13 @@ typedef enum _glhckShaderVariableType {
 /* texture container */
 typedef struct _glhckTexture {
    struct glhckTextureParameters params;
-   void *data;
    char *file;
    REFERENCE_COUNTED(_glhckTexture);
    unsigned int object;
    unsigned int flags, importFlags;
-   int width, height, depth, size;
+   int width, height, depth;
+   char border;
    glhckTextureTarget target;
-   glhckTextureFormat format;
-   glhckDataType type;
 } _glhckTexture;
 
 /* texture packer container */
@@ -509,7 +507,7 @@ typedef void (*__GLHCKrenderAPItextRender) (const _glhckText *text);
 typedef void (*__GLHCKrenderAPIfrustumRender) (glhckFrustum *frustum);
 
 /* screen control */
-typedef void (*__GLHCKrenderAPIbufferGetPixels) (int x, int y, int width, int height, glhckTextureFormat format, void *data);
+typedef void (*__GLHCKrenderAPIbufferGetPixels) (int x, int y, int width, int height, glhckTextureFormat format, glhckDataType type, void *data);
 
 /* textures */
 typedef void (*__GLHCKrenderAPItextureGenerate) (int count, unsigned int *objects);

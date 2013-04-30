@@ -391,7 +391,6 @@ typedef struct glhckTextureParameters {
    glhckTextureFilter minFilter, magFilter;
    glhckTextureCompareMode compareMode;
    glhckCompareFunc compareFunc;
-   glhckTextureCompression compression;
    char mipmap;
 } glhckTextureParameters;
 
@@ -870,7 +869,6 @@ GLHCKAPI glhckTexture* glhckTextureNew(const char *file, unsigned int importFlag
 GLHCKAPI glhckTexture* glhckTextureCopy(glhckTexture *src);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *texture);
 GLHCKAPI unsigned int glhckTextureFree(glhckTexture *texture);
-GLHCKAPI const void* glhckTextureGetData(glhckTexture *texture, int *size);
 GLHCKAPI void glhckTextureGetInformation(glhckTexture *texture, glhckTextureTarget *target, int *width, int *height, int *depth, int *border, glhckTextureFormat *format, glhckDataType *type);
 GLHCKAPI int glhckTextureCreate(glhckTexture *texture, glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, glhckDataType type, int size, const void *data);
 GLHCKAPI int glhckTextureRecreate(glhckTexture *texture, glhckTextureFormat format, glhckDataType type, int size, const void *data);
@@ -882,6 +880,7 @@ GLHCKAPI glhckTexture* glhckTextureCurrentForTarget(glhckTextureTarget target);
 GLHCKAPI void glhckTextureActive(unsigned int index);
 GLHCKAPI void glhckTextureBind(glhckTexture *texture);
 GLHCKAPI void glhckTextureUnbind(glhckTextureTarget target);
+GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, const void *data, int *size, glhckTextureFormat *outFormat);
 
 /* texture atlases */
 GLHCKAPI glhckAtlas* glhckAtlasNew(void);
@@ -930,7 +929,6 @@ GLHCKAPI void glhckFramebufferEnd(glhckFramebuffer *object);
 GLHCKAPI void glhckFramebufferRect(glhckFramebuffer *object, glhckRect *rect);
 GLHCKAPI void glhckFramebufferRecti(glhckFramebuffer *object, int x, int y, int w, int h);
 GLHCKAPI int glhckFramebufferAttachTexture(glhckFramebuffer *object, glhckTexture *texture, glhckFramebufferAttachmentType attachment);
-GLHCKAPI int glhckFramebufferFillTexture(glhckFramebuffer *object, glhckTexture *texture);
 GLHCKAPI int glhckFramebufferAttachRenderbuffer(glhckFramebuffer *object, glhckRenderbuffer *buffer,
       glhckFramebufferAttachmentType attachment);
 

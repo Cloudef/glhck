@@ -3,6 +3,8 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_FRAMEBUFFER
 
+/* ---- PUBLIC API ---- */
+
 /* \brief create new framebuffer */
 GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferTarget target)
 {
@@ -178,54 +180,6 @@ GLHCKAPI int glhckFramebufferAttachRenderbuffer(glhckFramebuffer *object, glhckR
 
    RET(1, "%d", ret);
    return ret;
-}
-
-/* \brief fill texture with framebuffer's pixels */
-GLHCKAPI int glhckFramebufferFillTexture(glhckFramebuffer *object, glhckTexture *texture)
-{
-   glhckFramebuffer *old;
-   unsigned char *data = NULL;
-   int size;
-   CALL(1, "%p", object);
-   assert(object);
-
-   /* get texture size */
-   size = _glhckSizeForTexture(texture->target, texture->width, texture->height, texture->depth,
-         texture->format, GLHCK_DATA_UNSIGNED_BYTE);
-
-   /* remember old framebuffer */
-   old = glhckFramebufferCurrentForTarget(object->target);
-   glhckFramebufferBind(object);
-
-   /* allocate data for getPixels */
-   data = _glhckMalloc(size);
-
-   if (!data)
-      goto fail;
-
-   /* fill the texture */
-   GLHCKRA()->bufferGetPixels(0, 0, texture->width, texture->height, texture->format, data);
-   glhckTextureRecreate(texture, texture->format, GLHCK_DATA_UNSIGNED_BYTE, size, data);
-
-   /* apply internal flags for texture */
-   if (texture->format == GLHCK_RGBA) texture->importFlags |= GLHCK_TEXTURE_IMPORT_ALPHA;
-
-   /* free data */
-   NULLDO(_glhckFree, data);
-
-   /* restore old framebuffer */
-   if (old) glhckFramebufferBind(old);
-   else glhckFramebufferUnbind(object->target);
-
-   RET(1, "%d", RETURN_OK);
-   return RETURN_OK;
-
-fail:
-   if (old) glhckFramebufferBind(old);
-   else glhckFramebufferUnbind(object->target);
-   IFDO(_glhckFree, data);
-   RET(1, "%d", RETURN_FAIL);
-   return RETURN_FAIL;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

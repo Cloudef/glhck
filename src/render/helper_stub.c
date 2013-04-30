@@ -150,9 +150,9 @@ void stubCullFace(glhckCullFaceType face)
 
 /* \brief get pixels from OpenGL */
 void stubBufferGetPixels(int x, int y, int width, int height,
-      glhckTextureFormat format, void *data)
+      glhckTextureFormat format, glhckDataType type, void *data)
 {
-   CALL(1, "%d, %d, %d, %d, %d, %p", x, y, width, height, format, data);
+   CALL(1, "%d, %d, %d, %d, %d, %d, %p", x, y, width, height, format, type, data);
 }
 
 /* \brief blend func wrapper */

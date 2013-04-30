@@ -35,7 +35,7 @@ void stubTextRender(const glhckText *text);
 void stubClear(unsigned int bufferBits);
 void stubClearColor(const glhckColorb *color);
 void stubCullFace(glhckCullFaceType face);
-void stubBufferGetPixels(int x, int y, int width, int height, glhckTextureFormat format, void *data);
+void stubBufferGetPixels(int x, int y, int width, int height, glhckTextureFormat format, glhckDataType type, void *data);
 void stubBlendFunc(unsigned int blenda, unsigned int blendb);
 void stubTextureFill(glhckTextureTarget target, int level, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, int datatype, int size, const void *data);
 void stubTextureImage(glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, int datatype, int size, const void *data);
