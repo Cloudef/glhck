@@ -8,10 +8,6 @@ Make animations work with different vertex formats
 ---
 Fix key interpolations
 ---
-Cleanup and tidy the recently added animation code
----
-Track sub texture data uploads
----
 Make material a object
 Move flags that does not make sense in material to glhckObject
 (draw obb, aabb, etc..)
