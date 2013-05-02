@@ -200,7 +200,7 @@ static _glhckImageImporter* _glhckGetImageImporter(const char *file)
 GLHCKAPI const glhckImportImageParameters* glhckImportDefaultImageParameters(void)
 {
    static glhckImportImageParameters defaultParameters = {
-      .compression = GLHCK_COMPRESSION_DXT,
+      .compression = GLHCK_COMPRESSION_NONE,
    };
    return &defaultParameters;
 }
