@@ -255,7 +255,9 @@ success:
 /* \brief apply texture parameters. */
 GLHCKAPI void glhckTextureParameter(glhckTexture *object, const glhckTextureParameters *params)
 {
-   glhckTexture *old = NULL;
+   glhckTexture *old;
+   CALL(2, "%p, %p", object, params);
+   assert(object);
 
    /* copy texture parameters over */
    memcpy(&object->params, (params?params:glhckTextureDefaultParameters()), sizeof(glhckTextureParameters));
