@@ -5,7 +5,7 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
 
 /* \brief create new object from supported model files */
-GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, glhckImportModelParameters *importParams)
+GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, const glhckImportModelParameters *importParams)
 {
    glhckGeometryIndexType itype;
    glhckGeometryVertexType vtype;
@@ -15,7 +15,7 @@ GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, glhckImport
 
 /* \brief create new object from supported model files
  * you can specify the index and vertex precision here */
-GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, glhckImportModelParameters *importParams, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, const glhckImportModelParameters *importParams, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
    glhckObject *object;
    CALL(0, "%s, %f, %p, %d, %d", file, size, importParams, itype, vtype);

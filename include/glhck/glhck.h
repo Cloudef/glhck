@@ -788,8 +788,8 @@ GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object);
 GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object);
 
 /* pre-defined geometry */
-GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, glhckImportModelParameters *importParams);
-GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, glhckImportModelParameters *importParams,
+GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, const glhckImportModelParameters *importParams);
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, const glhckImportModelParameters *importParams,
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
 GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
