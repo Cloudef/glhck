@@ -112,7 +112,8 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImport
       if ((texturePath = _glhckImportTexturePath(textureFilename, file))) {
          if ((texture = glhckTextureNew(texturePath, NULL, NULL))) {
             coords = CTM_CALL(context, ctmGetFloatArray(context, CTM_UV_MAP_1));
-            glhckObjectTexture(object, texture);
+            // FIXME: Create material and texture
+            // glhckObjectTexture(object, texture);
             glhckTextureFree(texture);
          }
          _glhckFree(texturePath);
@@ -168,7 +169,7 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImport
    }
 
    /* this object has colors */
-   if (colors) object->material.flags |= GLHCK_MATERIAL_COLOR;
+   if (colors) object->flags |= GLHCK_OBJECT_VERTEX_COLOR;
 
    /* set geometry */
    glhckObjectInsertIndices(object, itype, stripIndices?stripIndices:indices, numIndices);

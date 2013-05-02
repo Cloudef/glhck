@@ -501,7 +501,8 @@ static int processModel(const char *file, glhckObject *object,
       if (buildModel(current, numIndices,  numVertices,
                indices, vertexData, itype, vtype)  == RETURN_OK) {
          _glhckObjectFile(current, nd->mName.data);
-         if (hasTexture) glhckObjectTexture(current, glhckAtlasGetTexture(atlas));
+         // if (hasTexture) glhckObjectTexture(current, glhckAtlasGetTexture(atlas));
+         // FIXME: Create material and texture
          if (!(current = glhckObjectNew())) goto fail;
          glhckObjectAddChild(object, current);
          glhckObjectFree(current);
@@ -549,7 +550,8 @@ static int processModel(const char *file, glhckObject *object,
          if (buildModel(current, numIndices,  numVertices,
                   indices, vertexData, itype, vtype) == RETURN_OK) {
             _glhckObjectFile(current, mesh->mName.data);
-            if (hasTexture) glhckObjectTexture(current, texture);
+            // if (hasTexture) glhckObjectTexture(current, texture);
+            // FIXME: Create material and texture
             if (!(current = glhckObjectNew())) goto fail;
             glhckObjectAddChild(object, current);
             glhckObjectFree(current);

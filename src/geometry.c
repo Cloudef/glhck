@@ -999,8 +999,8 @@ GLHCKAPI void glhckGeometryGetVertexDataForIndex(
 /* \brief set vertexdata for index */
 GLHCKAPI void glhckGeometrySetVertexDataForIndex(
       glhckGeometry *object, glhckIndexi ix,
-      glhckVector3f *vertex, glhckVector3f *normal,
-      glhckVector2f *coord, glhckColorb *color)
+      const glhckVector3f *vertex, const glhckVector3f *normal,
+      const glhckVector2f *coord, const glhckColorb *color)
 {
    assert(ix < (glhckIndexi)object->vertexCount);
    switch (object->vertexType) {

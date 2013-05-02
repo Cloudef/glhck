@@ -138,13 +138,13 @@ int main(int argc, char **argv)
    sprite  = glhckSpriteNew(texture, 0, 0);
    sprite3 = glhckSpriteNewFromFile("example/media/glhck.png", 0, 0, NULL, NULL);
    cube2   = glhckCubeNew(1.0f);
-   glhckObjectMaterialFlags(cube2, glhckObjectGetMaterialFlags(cube2)|
-         GLHCK_MATERIAL_DRAW_OBB|GLHCK_MATERIAL_DRAW_AABB);
+   glhckObjectDrawAABB(cube2, 1);
+   glhckObjectDrawOBB(cube2, 1);
    glhckObjectScalef(cube2, 1.0f, 1.0f, 2.0f);
-   glhckObjectTexture(cube2, texture);
+   // glhckObjectTexture(cube2, texture);
 
    // FIXME: copy is broken again \o/
-   //sprite3 = glhckObjectCopy(sprite);
+   // sprite3 = glhckObjectCopy(sprite);
    glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
@@ -186,13 +186,13 @@ int main(int argc, char **argv)
       glhckObjectPositionf(cube, 0.0f, 5.0f, 0.0f);
    } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, &animatedParams, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       glhckTexture *tex = glhckTextureNew("example/media/texture-b.png", NULL, NULL);
-      glhckObjectTexture(cube, tex);
+      // glhckObjectTexture(cube, tex);
       glhckTextureFree(tex);
       glhckObjectMovef(cube, 0, 15, 0);
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
    } else if ((cube = glhckCubeNew(1.0f))) {
-      glhckObjectTexture(cube, texture);
+      // glhckObjectTexture(cube, texture);
       cameraPos.z = -20.0f;
    } else return EXIT_FAILURE;
 
@@ -218,14 +218,13 @@ int main(int argc, char **argv)
 #endif
 
    glhckObject *plane = glhckPlaneNew(200.0f, 200.0f);
-   glhckObjectTexture(plane, texture);
+   // glhckObjectTexture(plane, texture);
    glhckObjectPositionf(plane, 0.0f, -0.1f, 0.0f);
    glhckObjectRotationf(plane, 90.0f, 0.0f, 0.0f);
 
-   unsigned int flags = glhckObjectGetMaterialFlags(cube);
-   flags |= GLHCK_MATERIAL_DRAW_AABB;
-   flags |= GLHCK_MATERIAL_DRAW_OBB;
-   //glhckObjectMaterialFlags(cube, flags);
+   glhckObjectDrawAABB(cube, 1);
+   glhckObjectDrawOBB(cube, 1);
+   glhckObjectDrawSkeleton(cube, 1);
 
    glhckText *text = glhckTextNew(512, 512);
    if (!text) return EXIT_FAILURE;
@@ -241,7 +240,7 @@ int main(int argc, char **argv)
       glhckObjectAddChild(cube2, rttText);
 
       /* ignore lighting */
-      glhckObjectMaterialFlags(rttText, GLHCK_MATERIAL_CULL | GLHCK_MATERIAL_DEPTH);
+      // glhckObjectMaterialFlags(rttText, GLHCK_MATERIAL_CULL | GLHCK_MATERIAL_DEPTH);
    }
    glhckTextClear(text);
 
@@ -250,7 +249,7 @@ int main(int argc, char **argv)
       glhckObjectPositionf(rttText2, 200, 0, 500);
 
       /* ignore lighting */
-      glhckObjectMaterialFlags(rttText2, GLHCK_MATERIAL_CULL | GLHCK_MATERIAL_DEPTH);
+      // glhckObjectMaterialFlags(rttText2, GLHCK_MATERIAL_CULL | GLHCK_MATERIAL_DEPTH);
    }
    glhckTextClear(text);
 
@@ -271,7 +270,7 @@ int main(int argc, char **argv)
       glhckLightColorb(light[li], rand()%255, rand()%255, rand()%255, 255);
       glhckObject *c = glhckCubeNew(1.0f);
       glhckObjectAddChild(glhckLightGetObject(light[li]), c);
-      glhckObjectTexture(c, texture);
+      // glhckObjectTexture(c, texture);
       glhckObjectFree(c);
    }
 

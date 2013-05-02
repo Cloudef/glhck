@@ -282,17 +282,13 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
    glhckObjectScalef(object, 1.0f, 1.0f, 1.0f);
    _glhckObjectUpdateMatrix(object);
 
-   /* default material flags */
-   glhckObjectMaterialFlags(object, GLHCK_MATERIAL_DEPTH |
-                                    GLHCK_MATERIAL_CULL  |
-                                    GLHCK_MATERIAL_LIGHTING);
+   /* default object settings */
+   glhckObjectCull(object, 1);
+   glhckObjectDepth(object, 1);
 
    /* default affection flags */
    glhckObjectParentAffection(object, GLHCK_AFFECT_TRANSLATION |
                                       GLHCK_AFFECT_ROTATION);
-
-   /* default color */
-   glhckObjectColorb(object, 255, 255, 255, 255);
 
    /* set stub draw function */
    object->drawFunc = _glhckObjectStubDraw;
@@ -315,29 +311,24 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    CALL(0, "%p", src);
    assert(src);
 
-   if (!(object = _glhckCalloc(1, sizeof(glhckObject))))
+   if (!(object = _glhckCopy(src, sizeof(glhckObject))))
       goto fail;
 
    /* increase reference */
-   object->refCounter++;
+   object->refCounter = 1;
 
-   /* copy static data */
-   memcpy(&object->view, &src->view, sizeof(__GLHCKobjectView));
-   memcpy(&object->material, &src->material, sizeof(__GLHCKobjectMaterial));
+#if 0
+   /* reference material */
+   if (src->material)
+      glhckObjectMaterial(object, glhckMaterialRef(src->material));
+#endif
 
    /* copy metadata */
    _glhckObjectFile(object, src->file);
 
    /* copy geometry */
-   // object->geometry = _glhckGeometryCopy(src->geometry);
-   object->geometry = NULL;
-
-   /* copy texture */
-   object->material.texture = NULL; /* make sure we don't free reference */
-   glhckObjectTexture(object, src->material.texture);
-
-   /* assign stub draw to copy */
-   object->drawFunc = _glhckObjectStubDraw;
+   if (src->geometry)
+      object->geometry = _glhckGeometryCopy(src->geometry);
 
    /* insert to world */
    _glhckWorldInsert(object, object, glhckObject*);
@@ -390,13 +381,12 @@ GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
    /* free bones */
    glhckObjectInsertBones(object, NULL, 0);
 
+   /* free material */
+   glhckObjectMaterial(object, NULL);
+
    /* free geometry */
    IFDO(_glhckGeometryFree, object->bindGeometry);
    IFDO(_glhckGeometryFree, object->geometry);
-
-   /* free material */
-   glhckObjectTexture(object, NULL);
-   glhckObjectShader(object, NULL);
 
    /* remove from world */
    _glhckWorldRemove(object, object, glhckObject*);
@@ -547,80 +537,24 @@ GLHCKAPI void glhckObjectRemoveFromParent(glhckObject *object)
    glhckObjectRemoveChild(object->parent, object);
 }
 
-/* \brief set object's texture */
-GLHCKAPI void glhckObjectTexture(glhckObject *object, glhckTexture *texture)
+/* \brief set material to object */
+GLHCKAPI void glhckObjectMaterial(glhckObject *object, glhckMaterial *material)
 {
-   CALL(1, "%p, %p", object, texture);
+   CALL(2, "%p, %p", object, material);
    assert(object);
-
-   /* already applied */
-   if (object->material.texture == texture)
-      return;
-
-   /* sanity warning */
-   if (texture && object->geometry && object->geometry->textureRange > 1) {
-      if ((texture->width  > object->geometry->textureRange) ||
-          (texture->height > object->geometry->textureRange)) {
-         DEBUG(GLHCK_DBG_WARNING, "Texture dimensions are above the maximum precision of object's vertexdata (%s:%u)",
-               glhckVertexTypeString(object->geometry->vertexType), object->geometry->textureRange);
-      }
-   }
-
-   /* free old texture */
-   IFDO(glhckTextureFree, object->material.texture);
-
-   /* assign new texture */
-   if (texture) {
-      object->material.texture = glhckTextureRef(texture);
-      if (texture->importFlags & GLHCK_TEXTURE_IMPORT_TEXT) {
-         glhckObjectMaterialBlend(object, GLHCK_ONE, GLHCK_ONE_MINUS_SRC_ALPHA);
-      } else if (texture->importFlags & GLHCK_TEXTURE_IMPORT_ALPHA) {
-         glhckObjectMaterialBlend(object, GLHCK_SRC_ALPHA, GLHCK_ONE_MINUS_SRC_ALPHA);
-      } else {
-         glhckObjectMaterialBlend(object, 0, 0);
-      }
-   }
-
-   /* set texture on all the childs */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectTexture, texture);
-   }
+#if 0
+   IFDO(glhckMaterialFree, object->material);
+   object->material = (material?glhckMaterialRef(material):NULL);
+#endif
 }
 
-/* \brief get object's texture */
-GLHCKAPI glhckTexture* glhckObjectGetTexture(const glhckObject *object)
+/* \brief get material from object */
+GLHCKAPI glhckMaterial* glhckObjectGetMaterial(const glhckObject *object)
 {
-   CALL(1, "%p", object);
+   CALL(2, "%p", object);
    assert(object);
-
-   RET(1, "%p", object->material.texture);
-   return object->material.texture;
-}
-
-/* \brief set shader to object */
-GLHCKAPI void glhckObjectShader(glhckObject *object, glhckShader *shader)
-{
-   CALL(1, "%p, %p", object, shader);
-   assert(object);
-
-   if (object->material.shader == shader) return;
-   if (object->material.shader) glhckShaderFree(object->material.shader);
-   object->material.shader = (shader?glhckShaderRef(shader):NULL);
-
-   /* set shader on all the childs */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectShader, shader);
-   }
-}
-
-/* \brief get object's shader */
-GLHCKAPI glhckShader* glhckObjectGetShader(const glhckObject *object)
-{
-   CALL(1, "%p", object);
-   assert(object);
-
-   RET(1, "%p", object->material.shader);
-   return object->material.shader;
+   RET(2, "%p", object->material);
+   return object->material;
 }
 
 /* \brief add object to draw queue */
@@ -633,9 +567,9 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
    _glhckObjectInsertToQueue(object);
 
    /* insert texture to drawing queue? */
-   if (object->material.texture) {
+   if (object->material && object->material->texture) {
       /* insert object's texture to textures queue, referenced until glhckRender */
-      _glhckTextureInsertToQueue(object->material.texture);
+      _glhckTextureInsertToQueue(object->material->texture);
    }
 
    /* draw childs as well */
@@ -645,13 +579,8 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
 /* \brief render object */
 GLHCKAPI void glhckObjectRender(glhckObject *object)
 {
-   glhckObject *parent;
    CALL(2, "%p", object);
    assert(object);
-
-   /* lets make sure parents are updated first */
-   for (parent = object->parent; parent; parent = parent->parent)
-      if (parent->view.update) _glhckObjectUpdateMatrix(parent);
 
    /* does view matrix need update? */
    if (object->view.update)
@@ -662,77 +591,112 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
    object->drawFunc(object);
 }
 
-/* \brief get object's material flag s*/
-GLHCKAPI unsigned int glhckObjectGetMaterialFlags(const glhckObject *object)
+/* \brief set whether object should be culled */
+GLHCKAPI void glhckObjectCull(glhckObject *object, int cull)
 {
-   CALL(1, "%p", object);
+   CALL(2, "%p, %d", object, cull);
    assert(object);
-
-   RET(1, "%u", object->material.flags);
-   return object->material.flags;
+   if (cull) object->flags |= GLHCK_OBJECT_CULL;
+   else object->flags &= ~GLHCK_OBJECT_CULL;
 }
 
-/* \brief set object's material flags */
-GLHCKAPI void glhckObjectMaterialFlags(glhckObject *object, unsigned int flags)
-{
-   CALL(1, "%p, %u", object, flags);
-   assert(object);
-
-   object->material.flags = flags;
-
-   /* set material flags on all the childs */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectMaterialFlags, flags);
-   }
-}
-
-/* \brief set object's material blending */
-GLHCKAPI void glhckObjectMaterialBlend(glhckObject *object, glhckBlendingMode blenda, glhckBlendingMode blendb)
-{
-   CALL(1, "%p, %u, %u", object, blenda, blendb);
-   assert(object);
-   object->material.blenda = blenda;
-   object->material.blendb = blendb;
-
-   /* set blending modes on all the childs */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectMaterialBlend, blenda, blendb);
-   }
-}
-
-/* \brief get object's color */
-GLHCKAPI const glhckColorb* glhckObjectGetColor(const glhckObject *object)
+/* \brief get whether object is culled */
+GLHCKAPI int glhckObjectGetCull(const glhckObject *object)
 {
    CALL(2, "%p", object);
    assert(object);
-
-   RET(2, "%p", &object->material.diffuse);
-   return &object->material.diffuse;
+   RET(2, "%d", object->flags & GLHCK_OBJECT_CULL);
+   return object->flags & GLHCK_OBJECT_CULL;
 }
 
-/* \brief set object's color */
-GLHCKAPI void glhckObjectColor(glhckObject *object, const glhckColorb *color)
+/* \brief set wether object should be depth tested */
+GLHCKAPI void glhckObjectDepth(glhckObject *object, int depth)
 {
-   CALL(2, "%p, %p", object, color);
-   assert(object && color);
-
-   object->material.diffuse.r = color->r;
-   object->material.diffuse.g = color->g;
-   object->material.diffuse.b = color->b;
-   object->material.diffuse.a = color->a;
-
-   /* set color on all the childs */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectColor, color);
-   }
+   CALL(2, "%p, %d", object, depth);
+   assert(object);
+   if (depth) object->flags |= GLHCK_OBJECT_DEPTH;
+   else object->flags &= ~GLHCK_OBJECT_DEPTH;
 }
 
-/* \brief set object's color (with unsigned char) */
-GLHCKAPI void glhckObjectColorb(glhckObject *object,
-      unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+/* \brief get wether object should be depth tested */
+GLHCKAPI int glhckObjectGetDepth(const glhckObject *object)
 {
-   glhckColorb color = { r, g, b, a };
-   glhckObjectColor(object, &color);
+   CALL(2, "%p", object);
+   assert(object);
+   RET(2, "%d", object->flags & GLHCK_OBJECT_DEPTH);
+   return object->flags & GLHCK_OBJECT_DEPTH;
+}
+
+/* \brief set object's AABB drawing */
+GLHCKAPI void glhckObjectDrawAABB(glhckObject *object, int drawAABB)
+{
+   CALL(2, "%p, %d", object, drawAABB);
+   assert(object);
+   if (drawAABB) object->flags |= GLHCK_OBJECT_DRAW_AABB;
+   else object->flags &= ~GLHCK_OBJECT_DRAW_AABB;
+}
+
+/* \brief get object's AABB drawing */
+GLHCKAPI int glhckObjectGetDrawAABB(const glhckObject *object)
+{
+   CALL(2, "%p", object);
+   assert(object);
+   RET(2, "%d", object->flags & GLHCK_OBJECT_DRAW_AABB);
+   return object->flags & GLHCK_OBJECT_DRAW_AABB;
+}
+
+/* \brief set object's OBB drawing */
+GLHCKAPI void glhckObjectDrawOBB(glhckObject *object, int drawOBB)
+{
+   CALL(2, "%p, %d", object, drawOBB);
+   assert(object);
+   if (drawOBB) object->flags |= GLHCK_OBJECT_DRAW_OBB;
+   else object->flags &= ~GLHCK_OBJECT_DRAW_OBB;
+}
+
+/* \brief get object's OBB drawing */
+GLHCKAPI int glhckObjectGetDrawOBB(const glhckObject *object)
+{
+   CALL(2, "%p", object);
+   assert(object);
+   RET(2, "%d", object->flags & GLHCK_OBJECT_DRAW_OBB);
+   return object->flags & GLHCK_OBJECT_DRAW_OBB;
+}
+
+/* \brief set object's skeleton drawing */
+GLHCKAPI void glhckObjectDrawSkeleton(glhckObject *object, int drawSkeleton)
+{
+   CALL(2, "%p, %d", object, drawSkeleton);
+   assert(object);
+   if (drawSkeleton) object->flags |= GLHCK_OBJECT_DRAW_SKELETON;
+   else object->flags &= ~GLHCK_OBJECT_DRAW_SKELETON;
+}
+
+/* \brief get object's skeleton drawing */
+GLHCKAPI int glhckObjectGetDrawSkeleton(const glhckObject *object)
+{
+   CALL(2, "%p", object);
+   assert(object);
+   RET(2, "%d", object->flags & GLHCK_OBJECT_DRAW_SKELETON);
+   return object->flags & GLHCK_OBJECT_DRAW_SKELETON;
+}
+
+/* \brief set object's wireframe drawing */
+GLHCKAPI void glhckObjectDrawWireframe(glhckObject *object, int drawWireframe)
+{
+   CALL(2, "%p, %d", object, drawWireframe);
+   assert(object);
+   if (drawWireframe) object->flags |= GLHCK_OBJECT_DRAW_WIREFRAME;
+   else object->flags &= ~GLHCK_OBJECT_DRAW_WIREFRAME;
+}
+
+/* \brief get object's wireframe drawing */
+GLHCKAPI int glhckObjectGetDrawWireframe(const glhckObject *object)
+{
+   CALL(2, "%p", object);
+   assert(object);
+   RET(2, "%d", object->flags & GLHCK_OBJECT_DRAW_WIREFRAME);
+   return object->flags & GLHCK_OBJECT_DRAW_WIREFRAME;
 }
 
 /* \brief get obb bounding box of the object */
@@ -1143,7 +1107,6 @@ GLHCKAPI void glhckObjectUpdate(glhckObject *object)
    glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
    _glhckObjectUpdateMatrix(object);
    object->drawFunc = GLHCKRA()->objectRender;
-
 
    if (object->flags & GLHCK_OBJECT_ROOT) {
       PERFORM_ON_CHILDS(object, glhckObjectUpdate);

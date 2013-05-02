@@ -145,7 +145,7 @@ GLHCKAPI void glhckRenderViewport(int x, int y, int width, int height)
 }
 
 /* \brief set render pass flags */
-GLHCKAPI void glhckRenderPassFlags(unsigned int flags)
+GLHCKAPI void glhckRenderPass(unsigned int flags)
 {
    GLHCK_INITIALIZED();
    CALL(2, "%u", flags);
@@ -154,9 +154,10 @@ GLHCKAPI void glhckRenderPassFlags(unsigned int flags)
       flags |= GLHCK_PASS_CULL;
       flags |= GLHCK_PASS_BLEND;
       flags |= GLHCK_PASS_TEXTURE;
-      flags |= GLHCK_PASS_OBB;
-      flags |= GLHCK_PASS_AABB;
-      flags |= GLHCK_PASS_WIREFRAME;
+      flags |= GLHCK_PASS_DRAW_OBB;
+      flags |= GLHCK_PASS_DRAW_AABB;
+      flags |= GLHCK_PASS_DRAW_SKELETON;
+      flags |= GLHCK_PASS_DRAW_WIREFRAME;
       flags |= GLHCK_PASS_LIGHTING;
    }
    GLHCKRP()->flags = flags;
@@ -377,15 +378,17 @@ GLHCKAPI void glhckRender(void)
       for (oi = 0, os = 0, kt = 0; oi != oc; ++oi) {
          if (!(o = objects->queue[oi])) continue;
 
-         /* don't draw if not same texture or opaque,
-          * opaque objects are drawn last */
-         if (o->material.texture != t ||
-            (o->material.blenda != GLHCK_ZERO || o->material.blendb != GLHCK_ZERO)) {
-            if (o->material.texture == t) kt = 1; /* don't remove texture from queue */
-            if (os != oi) objects->queue[oi] = NULL;
-            objects->queue[os++] = o;
-            continue;
-         }
+         if (o->material) {
+            /* don't draw if not same texture or opaque,
+             * opaque objects are drawn last */
+            if (o->material->texture != t ||
+                  (o->material->blenda != GLHCK_ZERO || o->material->blendb != GLHCK_ZERO)) {
+               if (o->material->texture == t) kt = 1; /* don't remove texture from queue */
+               if (os != oi) objects->queue[oi] = NULL;
+               objects->queue[os++] = o;
+               continue;
+            }
+         } else if (t) continue; /* no material, but texture requested */
 
          /* render object */
          glhckObjectRender(o);
@@ -426,12 +429,14 @@ GLHCKAPI void glhckRender(void)
       for (oi = 0, os = 0; oi != oc; ++oi) {
          if (!(o = objects->queue[oi])) continue;
 
-         /* don't draw if not same texture */
-         if (o->material.texture != t) {
-            if (os != oi) objects->queue[oi] = NULL;
-            objects->queue[os++] = o;
-            continue;
-         }
+         if (o->material) {
+            /* don't draw if not same texture */
+            if (o->material->texture != t) {
+               if (os != oi) objects->queue[oi] = NULL;
+               objects->queue[os++] = o;
+               continue;
+            }
+         } else if (t) continue;
 
          /* render object */
          glhckObjectRender(o);

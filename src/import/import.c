@@ -393,7 +393,15 @@ fail:
 /* \brief return tristripped indecies for triangle index data */
 glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsigned int memb, unsigned int *outMemb)
 {
-#if GLHCK_TRISTRIP
+#if !GLHCK_TRISTRIP
+   (void)indices;
+   (void)memb;
+   (void)outMemb;
+
+   /* stripping is disabled.
+    * importers should fallback to GLHCK_TRIANGLES */
+   return NULL;
+#else
    glhckImportIndexData v1, v2, v3;
    glhckImportIndexData *outIndices = NULL, *newIndices = NULL;
    unsigned int i, primCount, tmp;
@@ -478,10 +486,6 @@ fail:
    IFDO(actcDelete, tc);
    IFDO(_glhckFree, outIndices);
    RET(0, "%p", NULL);
-   return NULL;
-#else
-   /* stripping is disabled.
-    * importers should fallback to GLHCK_TRIANGLES */
    return NULL;
 #endif
 }

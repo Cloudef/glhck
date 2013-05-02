@@ -28,6 +28,7 @@
 #define GLHCK_CHANNEL_CAMERA        "CAMERA"
 #define GLHCK_CHANNEL_GEOMETRY      "GEOMETRY"
 #define GLHCK_CHANNEL_VDATA         "VERTEXDATA"
+#define GLHCK_CHANNEL_MATERIAL      "MATERIAL"
 #define GLHCK_CHANNEL_TEXTURE       "TEXTURE"
 #define GLHCK_CHANNEL_ATLAS         "ATLAS"
 #define GLHCK_CHANNEL_LIGHT         "LIGHT"
@@ -46,7 +47,7 @@
 /* build importers as seperate dynamic libraries? */
 #define GLHCK_IMPORT_DYNAMIC 0
 
-/* disable triangle stripping? */
+/* enable triangle stripping? */
 #define GLHCK_TRISTRIP 1
 
 /* floating point precision text? */
@@ -60,20 +61,25 @@ typedef enum _glhckReturnValue {
    RETURN_FALSE   =  !RETURN_TRUE
 } _glhckReturnValue;
 
-/* internal object flags */
-typedef enum _glhckObjectFlags
-{
-   GLHCK_OBJECT_NONE = 0,
-   GLHCK_OBJECT_ROOT = 1,
-} _glhckObjectFlags;
-
 /* internal texture flags */
-typedef enum _glhckTextureFlags
-{
+typedef enum _glhckTextureFlags {
    GLHCK_TEXTURE_IMPORT_NONE  = 0,
    GLHCK_TEXTURE_IMPORT_ALPHA = 1,
    GLHCK_TEXTURE_IMPORT_TEXT  = 2,
 } _glhckTextureFlags;
+
+/* internal object flags */
+typedef enum _glhckObjectFlags {
+   GLHCK_OBJECT_NONE           = 0,
+   GLHCK_OBJECT_ROOT           = 1,
+   GLHCK_OBJECT_CULL           = 2,
+   GLHCK_OBJECT_DEPTH          = 4,
+   GLHCK_OBJECT_VERTEX_COLOR   = 8,
+   GLHCK_OBJECT_DRAW_AABB      = 16,
+   GLHCK_OBJECT_DRAW_OBB       = 32,
+   GLHCK_OBJECT_DRAW_SKELETON  = 64,
+   GLHCK_OBJECT_DRAW_WIREFRAME = 128,
+} _glhckObjectFlags;
 
 /* shader attrib locations */
 typedef enum _glhckShaderAttrib {
@@ -240,6 +246,21 @@ typedef struct _glhckAtlas {
    REFERENCE_COUNTED(_glhckAtlas);
 } _glhckAtlas;
 
+/* material container */
+typedef struct _glhckMaterial {
+   kmVec2 textureScale;
+   kmVec2 textureOffset;
+   struct _glhckShader *shader;
+   struct _glhckTexture *texture;
+   struct glhckColorb ambient;
+   struct glhckColorb diffuse;
+   struct glhckColorb emissive;
+   struct glhckColorb specular;
+   float shininess;
+   glhckBlendingMode blenda, blendb;
+   unsigned int flags;
+} _glhckMaterial;
+
 /* object's view container */
 typedef struct __GLHCKobjectView {
    kmMat4 matrix; /* model matrix */
@@ -250,25 +271,11 @@ typedef struct __GLHCKobjectView {
    char update; /* does the model matrix need recalculation? */
 } __GLHCKobjectView;
 
-/* material container */
-typedef struct __GLHCKobjectMaterial {
-   kmVec2 textureScale;
-   kmVec2 textureOffset;
-   struct _glhckTexture *texture;
-   struct _glhckShader *shader;
-   float shininess;
-   unsigned int flags;
-   unsigned int blenda, blendb;
-   struct glhckColorb ambient;
-   struct glhckColorb diffuse;
-   struct glhckColorb specular;
-} __GLHCKobjectMaterial;
-
 /* object container */
 typedef void (*__GLHCKobjectDraw) (const struct _glhckObject *object);
 typedef struct _glhckObject {
    struct __GLHCKobjectView view;
-   struct __GLHCKobjectMaterial material;
+   struct _glhckMaterial *material;
    struct _glhckObject *parent;
    struct _glhckObject **childs;
    struct _glhckBone **bones;
@@ -700,6 +707,7 @@ typedef struct __GLHCKworld {
    struct _glhckAtlas            *atlas;
    struct _glhckRenderbuffer     *renderbuffer;
    struct _glhckFramebuffer      *framebuffer;
+   struct _glhckMaterial         *material;
    struct _glhckTexture          *texture;
    struct _glhckText             *text;
    struct _glhckHwBuffer         *hwbuffer;

@@ -144,7 +144,8 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
    }
 
    /* assign texture ot object */
-   glhckObjectTexture(object, glhckAtlasGetTexture(atlas));
+   // glhckObjectTexture(object, glhckAtlasGetTexture(atlas));
+   // FIXME: Create material and texture
 
    /* we don't need atlas packer anymore */
    NULLDO(glhckAtlasFree, atlas);

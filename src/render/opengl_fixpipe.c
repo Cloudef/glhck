@@ -25,14 +25,15 @@ static const GLenum _glhckAttribName[] = {
 
 /* state flags */
 enum {
-   GL_STATE_DEPTH       = 1,
-   GL_STATE_CULL        = 2,
-   GL_STATE_BLEND       = 4,
-   GL_STATE_TEXTURE     = 8,
-   GL_STATE_DRAW_AABB   = 16,
-   GL_STATE_DRAW_OBB    = 32,
-   GL_STATE_WIREFRAME   = 64,
-   GL_STATE_LIGHTING    = 128,
+   GL_STATE_DEPTH          = 1,
+   GL_STATE_CULL           = 2,
+   GL_STATE_BLEND          = 4,
+   GL_STATE_TEXTURE        = 8,
+   GL_STATE_DRAW_AABB      = 16,
+   GL_STATE_DRAW_OBB       = 32,
+   GL_STATE_DRAW_SKELETON  = 64,
+   GL_STATE_DRAW_WIREFRAME = 128,
+   GL_STATE_LIGHTING       = 256,
 };
 
 /* global data */
@@ -125,64 +126,69 @@ static void rViewport(int x, int y, int width, int height)
    GL_CALL(glViewport(x, y, width, height));
 }
 
-/* helper for checking state changes */
-#define GL_STATE_CHANGED(x) (GLPOINTER()->state.flags & x) != (old.flags & x)
-
-/* \brief set needed state from object data */
-static inline void materialState(const glhckObject *object)
+/* \brief set needed starte from object data */
+static inline void rObjectState(const glhckObject *object)
 {
-   GLuint i;
-   __OpenGLstate old   = GLPOINTER()->state;
-   GLPOINTER()->state.flags = 0; /* reset this state */
-
    /* always draw vertices */
-   GLPOINTER()->state.attrib[0] = 1;
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
 
    /* enable normals always for now */
-   GLPOINTER()->state.attrib[2] = glhckVertexTypeHasNormal(object->geometry->vertexType);
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL] = glhckVertexTypeHasNormal(object->geometry->vertexType);
 
    /* need color? */
-   GLPOINTER()->state.attrib[3] = (glhckVertexTypeHasColor(object->geometry->vertexType) &&
-         object->material.flags & GLHCK_MATERIAL_COLOR);
-
-   /* need texture? */
-   GLPOINTER()->state.attrib[1] = object->material.texture?1:0;
-   GLPOINTER()->state.flags |= object->material.texture?GL_STATE_TEXTURE:0;
-
-   /* aabb? */
-   GLPOINTER()->state.flags |=
-      (object->material.flags & GLHCK_MATERIAL_DRAW_AABB)?GL_STATE_DRAW_AABB:0;
-
-   /* obb? */
-   GLPOINTER()->state.flags |=
-      (object->material.flags & GLHCK_MATERIAL_DRAW_OBB)?GL_STATE_DRAW_OBB:0;
-
-   /* wire? */
-   GLPOINTER()->state.flags |=
-      (object->material.flags & GLHCK_MATERIAL_WIREFRAME)?GL_STATE_WIREFRAME:0;
-
-   /* alpha? */
-   GLPOINTER()->state.flags |=
-      (object->material.blenda != GLHCK_ZERO || object->material.blendb != GLHCK_ZERO)?GL_STATE_BLEND:0;
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR] =
+      ((object->flags & GLHCK_OBJECT_VERTEX_COLOR) && glhckVertexTypeHasColor(object->geometry->vertexType));
 
    /* depth? */
    GLPOINTER()->state.flags |=
-      (object->material.flags & GLHCK_MATERIAL_DEPTH)?GL_STATE_DEPTH:0;
+      (object->flags & GLHCK_OBJECT_DEPTH)?GL_STATE_DEPTH:0;
 
    /* cull? */
    GLPOINTER()->state.flags |=
-      (object->material.flags & GLHCK_MATERIAL_CULL)?GL_STATE_CULL:0;
+      (object->flags & GLHCK_OBJECT_CULL)?GL_STATE_CULL:0;
 
-   /* cull face */
-   GLPOINTER()->state.cullFace = GLHCKRP()->cullFace;
+   /* aabb? */
+   GLPOINTER()->state.flags |=
+      (object->flags & GLHCK_OBJECT_DRAW_AABB)?GL_STATE_DRAW_AABB:0;
+
+   /* obb? */
+   GLPOINTER()->state.flags |=
+      (object->flags & GLHCK_OBJECT_DRAW_OBB)?GL_STATE_DRAW_OBB:0;
+
+   /* skeleton? */
+   GLPOINTER()->state.flags |=
+      (object->flags & GLHCK_OBJECT_DRAW_SKELETON)?GL_STATE_DRAW_SKELETON:0;
+
+   /* wire? */
+   GLPOINTER()->state.flags |=
+      (object->flags & GLHCK_OBJECT_DRAW_WIREFRAME)?GL_STATE_DRAW_WIREFRAME:0;
+}
+
+/* \brief set needed state from material data */
+static inline void rMaterialState(const glhckMaterial *material)
+{
+   /* need texture? */
+   GLPOINTER()->state.flags |= (material->texture?GL_STATE_TEXTURE:0);
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = (GLPOINTER()->state.flags & GL_STATE_TEXTURE);
+
+   /* alpha? */
+   GLPOINTER()->state.flags |=
+      (material->blenda != GLHCK_ZERO || material->blendb != GLHCK_ZERO)?GL_STATE_BLEND:0;
 
    /* blending modes */
-   GLPOINTER()->state.blenda = object->material.blenda;
-   GLPOINTER()->state.blendb = object->material.blendb;
+   GLPOINTER()->state.blenda = material->blenda;
+   GLPOINTER()->state.blendb = material->blendb;
 
    /* lighting */
    GLPOINTER()->state.flags |=
-      (object->material.flags & GLHCK_MATERIAL_LIGHTING && GLHCKRD()->light)?GL_STATE_LIGHTING:0;
+      (material->flags & GLHCK_MATERIAL_LIGHTING && GLHCKRD()->light)?GL_STATE_LIGHTING:0;
+}
+
+/* \brief set needed state from pass data */
+static inline void rPassState(void)
+{
+   /* cull face */
+   GLPOINTER()->state.cullFace = GLHCKRP()->cullFace;
 
    /* disabled pass bits override the above.
     * it means that we don't want something for this render pass. */
@@ -194,12 +200,14 @@ static inline void materialState(const glhckObject *object)
       GLPOINTER()->state.flags &= ~GL_STATE_BLEND;
    if (!(GLHCKRP()->flags & GLHCK_PASS_TEXTURE))
       GLPOINTER()->state.flags &= ~GL_STATE_TEXTURE;
-   if (!(GLHCKRP()->flags & GLHCK_PASS_OBB))
+   if (!(GLHCKRP()->flags & GLHCK_PASS_DRAW_OBB))
       GLPOINTER()->state.flags &= ~GL_STATE_DRAW_OBB;
-   if (!(GLHCKRP()->flags & GLHCK_PASS_AABB))
+   if (!(GLHCKRP()->flags & GLHCK_PASS_DRAW_AABB))
       GLPOINTER()->state.flags &= ~GL_STATE_DRAW_AABB;
-   if (!(GLHCKRP()->flags & GLHCK_PASS_WIREFRAME))
-      GLPOINTER()->state.flags &= ~GL_STATE_WIREFRAME;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_DRAW_SKELETON))
+      GLPOINTER()->state.flags &= ~GL_STATE_DRAW_SKELETON;
+   if (!(GLHCKRP()->flags & GLHCK_PASS_DRAW_WIREFRAME))
+      GLPOINTER()->state.flags &= ~GL_STATE_DRAW_WIREFRAME;
    if (!(GLHCKRP()->flags & GLHCK_PASS_LIGHTING))
       GLPOINTER()->state.flags &= ~GL_STATE_LIGHTING;
 
@@ -209,90 +217,7 @@ static inline void materialState(const glhckObject *object)
       GLPOINTER()->state.blenda = GLHCKRP()->blenda;
       GLPOINTER()->state.blendb = GLHCKRP()->blendb;
    }
-
-   /* depth? */
-   if (GL_STATE_CHANGED(GL_STATE_DEPTH)) {
-      if (GL_HAS_STATE(GL_STATE_DEPTH)) {
-         GL_CALL(glEnable(GL_DEPTH_TEST));
-         GL_CALL(glDepthMask(GL_TRUE));
-         GL_CALL(glDepthFunc(GL_LEQUAL));
-      } else {
-         GL_CALL(glDisable(GL_DEPTH_TEST));
-      }
-   }
-
-   /* check culling */
-   if (GL_STATE_CHANGED(GL_STATE_CULL)) {
-      if (GL_HAS_STATE(GL_STATE_CULL)) {
-         GL_CALL(glEnable(GL_CULL_FACE));
-         glhCullFace(GLPOINTER()->state.cullFace);
-      } else {
-         GL_CALL(glDisable(GL_CULL_FACE));
-      }
-   } else if (GL_HAS_STATE(GL_STATE_CULL)) {
-      if (GLPOINTER()->state.cullFace != old.cullFace) {
-         glhCullFace(GLPOINTER()->state.cullFace);
-      }
-   }
-
-   /* disable culling for strip geometry
-    * FIXME: Fix the stripping to get rid of this */
-   if (GL_HAS_STATE(GL_STATE_CULL) &&
-       object->geometry->type == GLHCK_TRIANGLE_STRIP) {
-      GL_CALL(glDisable(GL_CULL_FACE));
-   }
-
-   /* check alpha */
-   if (GL_STATE_CHANGED(GL_STATE_BLEND)) {
-      if (GL_HAS_STATE(GL_STATE_BLEND)) {
-         GL_CALL(glEnable(GL_BLEND));
-         GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
-      } else {
-         GL_CALL(glDisable(GL_BLEND));
-      }
-   } else if (GL_HAS_STATE(GL_STATE_BLEND) &&
-         (GLPOINTER()->state.blenda != old.blenda ||
-          GLPOINTER()->state.blendb != old.blendb)) {
-      GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
-   }
-
-   /* check texture */
-   if (GL_STATE_CHANGED(GL_STATE_TEXTURE)) {
-      if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
-         GL_CALL(glEnable(GL_TEXTURE_2D));
-      } else {
-         GL_CALL(glDisable(GL_TEXTURE_2D));
-      }
-   }
-
-   /* check lighting */
-   if (GL_STATE_CHANGED(GL_STATE_LIGHTING)) {
-      if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
-         GL_CALL(glEnable(GL_LIGHTING));
-         GL_CALL(glEnable(GL_LIGHT0));
-      } else {
-         GL_CALL(glDisable(GL_LIGHT0));
-         GL_CALL(glDisable(GL_LIGHTING));
-      }
-   }
-
-   /* check attribs */
-   for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i) {
-      if (GLPOINTER()->state.attrib[i] != old.attrib[i]) {
-         if (GLPOINTER()->state.attrib[i]) {
-            GL_CALL(glEnableClientState(_glhckAttribName[i]));
-         } else {
-            GL_CALL(glDisableClientState(_glhckAttribName[i]));
-         }
-      }
-   }
-
-   /* bind texture if used */
-   if (GL_HAS_STATE(GL_STATE_TEXTURE))
-      glhckTextureBind(object->material.texture);
 }
-
-#undef GL_STATE_CHANGED
 
 /* helper macro for passing geometry */
 #define geometryV2ToOpenGL(vprec, nprec, tprec, type, tunion)                 \
@@ -552,24 +477,16 @@ static inline void rAABBRender(const glhckObject *object)
       }
 }
 
+/* helper for checking state changes */
+#define GL_STATE_CHANGED(x) (GLPOINTER()->state.flags & x) != (old.flags & x)
+
 /* \brief begin object render */
 static inline void rObjectStart(const glhckObject *object) {
-   /* set texture coords according to how geometry wants them */
-   GL_CALL(glMatrixMode(GL_TEXTURE));
-   GL_CALL(glLoadIdentity());
-   GL_CALL(glScalef((GLfloat)1.0f/object->geometry->textureRange, (GLfloat)1.0f/object->geometry->textureRange, 1.0f));
+   GLuint i;
+   __OpenGLstate old = GLPOINTER()->state;
+   GLPOINTER()->state.flags = 0; /* reset this state */
 
-   /* load view matrix */
-   GL_CALL(glMatrixMode(GL_MODELVIEW));
-   rLoadMatrix(&GLHCKRD()->view.view);
-   rMultMatrix(&object->view.matrix);
-
-   /* reset color */
-   GL_CALL(glColor4ub(object->material.diffuse.r,
-                      object->material.diffuse.g,
-                      object->material.diffuse.b,
-                      object->material.diffuse.a));
-
+#if 0
    /* upload material parameters */
    if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
       GL_CALL(glLightfv(GL_LIGHT0, GL_AMBIENT, ((GLfloat[]){
@@ -588,17 +505,120 @@ static inline void rObjectStart(const glhckObject *object) {
                (GLfloat)object->material.specular.b/255.0f,
                (GLfloat)object->material.specular.a/255.0f})));
    }
+#endif
 
    /* set states and draw */
-   materialState(object);
+   rObjectState(object);
+   if (object->material) rMaterialState(object->material);
+   rPassState();
+
+   /* depth? */
+   if (GL_STATE_CHANGED(GL_STATE_DEPTH)) {
+      if (GL_HAS_STATE(GL_STATE_DEPTH)) {
+         GL_CALL(glEnable(GL_DEPTH_TEST));
+         GL_CALL(glDepthMask(GL_TRUE));
+         GL_CALL(glDepthFunc(GL_LEQUAL));
+      } else {
+         GL_CALL(glDisable(GL_DEPTH_TEST));
+      }
+   }
+
+   /* check culling */
+   if (GL_STATE_CHANGED(GL_STATE_CULL)) {
+      if (GL_HAS_STATE(GL_STATE_CULL)) {
+         GL_CALL(glEnable(GL_CULL_FACE));
+         glhCullFace(GLPOINTER()->state.cullFace);
+      } else {
+         GL_CALL(glDisable(GL_CULL_FACE));
+      }
+   } else if (GL_HAS_STATE(GL_STATE_CULL)) {
+      if (GLPOINTER()->state.cullFace != old.cullFace) {
+         glhCullFace(GLPOINTER()->state.cullFace);
+      }
+   }
+
+   /* disable culling for strip geometry
+    * FIXME: Fix the stripping to get rid of this */
+   if (GL_HAS_STATE(GL_STATE_CULL) &&
+       object->geometry->type == GLHCK_TRIANGLE_STRIP) {
+      GL_CALL(glDisable(GL_CULL_FACE));
+   }
+
+   /* check alpha */
+   if (GL_STATE_CHANGED(GL_STATE_BLEND)) {
+      if (GL_HAS_STATE(GL_STATE_BLEND)) {
+         GL_CALL(glEnable(GL_BLEND));
+         GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
+      } else {
+         GL_CALL(glDisable(GL_BLEND));
+      }
+   } else if (GL_HAS_STATE(GL_STATE_BLEND) &&
+         (GLPOINTER()->state.blenda != old.blenda ||
+          GLPOINTER()->state.blendb != old.blendb)) {
+      GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
+   }
+
+   /* check texture */
+   if (GL_STATE_CHANGED(GL_STATE_TEXTURE)) {
+      if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
+         GL_CALL(glEnable(GL_TEXTURE_2D));
+      } else {
+         GL_CALL(glDisable(GL_TEXTURE_2D));
+      }
+   }
+
+   /* check lighting */
+   if (GL_STATE_CHANGED(GL_STATE_LIGHTING)) {
+      if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
+         GL_CALL(glEnable(GL_LIGHTING));
+         GL_CALL(glEnable(GL_LIGHT0));
+      } else {
+         GL_CALL(glDisable(GL_LIGHT0));
+         GL_CALL(glDisable(GL_LIGHTING));
+      }
+   }
+
+   /* check attribs */
+   for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i) {
+      if (GLPOINTER()->state.attrib[i] != old.attrib[i]) {
+         if (GLPOINTER()->state.attrib[i]) {
+            GL_CALL(glEnableClientState(_glhckAttribName[i]));
+         } else {
+            GL_CALL(glDisableClientState(_glhckAttribName[i]));
+         }
+      }
+   }
+
+   /* bind texture if used */
+   if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
+      /* set texture coords according to how geometry wants them */
+      GL_CALL(glMatrixMode(GL_TEXTURE));
+      GL_CALL(glLoadIdentity());
+      GL_CALL(glScalef((GLfloat)1.0f/object->geometry->textureRange, (GLfloat)1.0f/object->geometry->textureRange, 1.0f));
+      glhckTextureBind(object->material->texture);
+   } else if (GL_STATE_CHANGED(GL_STATE_TEXTURE)) {
+      glhckTextureUnbind(GLHCK_TEXTURE_2D);
+   }
+
+   /* reset color */
+   glhckColorb diffuse = {255,255,255,255};
+   if (object->material) memcpy(&diffuse, &object->material->diffuse, sizeof(glhckColorb));
+   GL_CALL(glColor4ub(diffuse.r, diffuse.g, diffuse.b, diffuse.a));
+
+   /* load view matrix */
+   GL_CALL(glMatrixMode(GL_MODELVIEW));
+   rLoadMatrix(&GLHCKRD()->view.view);
+   rMultMatrix(&object->view.matrix);
 }
+
+#undef GL_STATE_CHANGED
 
 /* \brief end object render */
 static inline void rObjectEnd(const glhckObject *object) {
    glhckGeometryType type = object->geometry->type;
 
    /* switch to wireframe if requested */
-   if (GL_HAS_STATE(GL_STATE_WIREFRAME)) {
+   if (GL_HAS_STATE(GL_STATE_DRAW_WIREFRAME)) {
       type = (object->geometry->type==GLHCK_TRIANGLES ? GLHCK_LINES:GLHCK_LINE_STRIP);
    }
 

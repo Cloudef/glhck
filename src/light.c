@@ -130,7 +130,7 @@ GLHCKAPI void glhckLightColor(glhckLight *object, const glhckColorb *color)
 {
    CALL(2, "%p, "COLBS, object, COLB(color));
    assert(object && color);
-   glhckObjectColor(glhckLightGetObject(object), color);
+   // FIXME: give light a color struct
 }
 
 /* \brief color light (char) */

@@ -277,7 +277,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
             0);
 
       /* draw texture */
-      glhckObjectTexture(plane, rect->texture);
+      // glhckObjectTexture(plane, rect->texture);
+      // FIXME: create material with the texture instead
       glhckObjectRender(plane);
    }
    glhckFramebufferEnd(fbo);

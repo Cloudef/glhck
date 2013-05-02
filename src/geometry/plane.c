@@ -149,8 +149,7 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmSc
    /* scale keeping aspect ratio */
    glhckObjectScalef(object, w, w, w);
 
-   /* pass reference to object */
-   glhckObjectTexture(object, texture);
+   // FIXME: Create material and texture
 
    /* set filename of object */
    _glhckObjectFile(object, texture->file);
