@@ -232,6 +232,9 @@ int _glhckImagePostProcess(glhckTexture *texture, const glhckImportImageParamete
       type = import->type;
    }
 
+   /* pass the import flags */
+   texture->importFlags =  import->flags;
+
    /* upload texture */
    if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, import->width, import->height,
             0, 0, format, type, size, data) != RETURN_OK)
