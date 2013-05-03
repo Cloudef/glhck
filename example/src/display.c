@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 
    glhckObjectDrawAABB(cube, 1);
    glhckObjectDrawOBB(cube, 1);
-   glhckObjectDrawSkeleton(cube, 1);
+   glhckObjectDrawSkeleton(cube, 0);
 
    glhckText *text = glhckTextNew(512, 512);
    if (!text) return EXIT_FAILURE;
