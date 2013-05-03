@@ -8,10 +8,6 @@ Make animations work with different vertex formats
 ---
 Fix key interpolations
 ---
-Make material a object
-Move flags that does not make sense in material to glhckObject
-(draw obb, aabb, etc..)
----
 Fix shader lighting on ATI (wrong usage of UBO?)
 ---
 Use 2_10_10_10_REV for color && normals
