@@ -158,28 +158,12 @@ static void _glhckObjectBuildParent(glhckObject *object, kmMat4 *parentMatrix)
    }
 }
 
-/* \brief update view matrix of object */
-void _glhckObjectUpdateMatrix(glhckObject *object)
+/* \brief update bounding boxes of object */
+inline void _glhckObjectUpdateBoxes(glhckObject *object)
 {
-   unsigned int i;
    kmVec3 min, max;
    kmVec3 mixxyz, mixyyz, mixyzz;
    kmVec3 maxxyz, maxyyz, maxyzz;
-   kmMat4 translation, rotation, scaling, parentMatrix;
-   CALL(2, "%p", object);
-
-   /* build affection matrices */
-   _glhckObjectBuildParent(object, &parentMatrix);
-   _glhckObjectBuildTranslation(object, &translation);
-   _glhckObjectBuildRotation(object, &rotation);
-   _glhckObjectBuildScaling(object, &scaling);
-
-   /* affection of parent matrix */
-   kmMat4Multiply(&translation, &parentMatrix, &translation);
-
-   /* build model matrix */
-   kmMat4Multiply(&scaling, &rotation, &scaling);
-   kmMat4Multiply(&object->view.matrix, &translation, &scaling);
 
    /* update transformed obb */
    kmVec3Transform(&object->view.obb.min, &object->view.bounding.min, &object->view.matrix);
@@ -239,6 +223,30 @@ void _glhckObjectUpdateMatrix(glhckObject *object)
    /* set edges */
    glhckSetV3(&object->view.aabb.max, &max);
    glhckSetV3(&object->view.aabb.min, &min);
+}
+
+/* \brief update view matrix of object */
+static inline void _glhckObjectUpdateMatrix(glhckObject *object)
+{
+   unsigned int i;
+   kmMat4 translation, rotation, scaling, parentMatrix;
+   CALL(2, "%p", object);
+
+   /* build affection matrices */
+   _glhckObjectBuildParent(object, &parentMatrix);
+   _glhckObjectBuildTranslation(object, &translation);
+   _glhckObjectBuildRotation(object, &rotation);
+   _glhckObjectBuildScaling(object, &scaling);
+
+   /* affection of parent matrix */
+   kmMat4Multiply(&translation, &parentMatrix, &translation);
+
+   /* build model matrix */
+   kmMat4Multiply(&scaling, &rotation, &scaling);
+   kmMat4Multiply(&object->view.matrix, &translation, &scaling);
+
+   /* update bounding boxes */
+   _glhckObjectUpdateBoxes(object);
 
    /* update childs on next draw */
    for (i = 0; i != object->numChilds; ++i)
@@ -1158,7 +1166,7 @@ GLHCKAPI void glhckObjectUpdate(glhckObject *object)
       return;
 
    glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
-   _glhckObjectUpdateMatrix(object);
+   _glhckObjectUpdateBoxes(object);
    object->drawFunc = GLHCKRA()->objectRender;
 
    if (object->flags & GLHCK_OBJECT_ROOT) {

@@ -845,7 +845,7 @@ void _glhckRenderCheckApi(void);
 /* objects */
 void _glhckObjectFile(_glhckObject *object, const char *file);
 void _glhckObjectInsertToQueue(_glhckObject *object);
-void _glhckObjectUpdateMatrix(_glhckObject *object);
+void _glhckObjectUpdateBoxes(glhckObject *object);
 
 /* camera */
 void _glhckCameraWorldUpdate(int width, int height);

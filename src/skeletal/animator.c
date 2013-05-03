@@ -288,6 +288,10 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
                &currentNormal, NULL, NULL);
       }
    }
+
+   /* update bounding box for object */
+   glhckGeometryCalculateBB(gobject->geometry, &gobject->view.bounding);
+   _glhckObjectUpdateBoxes(gobject);
 }
 
 /* \brief update the skeletal animation to next tick */
