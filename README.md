@@ -27,9 +27,10 @@ Move on.
     make install                             # - install
 
 ## Projects using GLhck
-*  [glhck-scene][] - QMLON GLhck scene viewer
-*  [2dshooter][] - 2D Shooter
+*  [glhck-scene][] - QMLON GLhck scene arranger
+*  [2dshooter][] - 2D Shooter game
 *  [spacerocks][] - 2D Asteroids clone
+*  [anglhck][] - AngelScript bindings for glhck
 
 ## Thanks to
 *  [GLEW][] - OpenGL Extension Wrangler
@@ -42,6 +43,7 @@ Move on.
 [glhck-scene]: https://github.com/bzar/glhck-scene
 [2dshooter]: https://github.com/bzar/2dshooter
 [spacerocks]: https://github.com/bzar/spacerocks
+[anglhck]: https://github.com/bzar/anglhck
 
 [GLEW]: http://glew.sourceforge.net/
 [GLFW]: http://www.glfw.org/
