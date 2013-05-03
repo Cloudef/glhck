@@ -180,7 +180,7 @@ GLHCKAPI void glhckMaterialTextureOffset(glhckMaterial *object, const kmVec2 *of
 GLHCKAPI void glhckMaterialTextureOffsetf(glhckMaterial *object, kmScalar x, kmScalar y)
 {
    const kmVec2 offset = {x, y};
-   glhckMaterialTextureScale(object, &offset);
+   glhckMaterialTextureOffset(object, &offset);
 }
 
 /* \brief get texture offset from material */

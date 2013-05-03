@@ -323,6 +323,9 @@ int main(int argc, char **argv)
          glhckCameraUpdate(camera);
       }
 
+      //glhckMaterialTextureOffsetf(material, sin(xspin*0.01), 0);
+      //glhckMaterialTextureScalef(material, sin(xspin*0.01), 1);
+
       /* rotate */
       glhckObjectPosition(camObj, &cameraPos);
       glhckObjectTargetf(camObj, cameraPos.x, cameraPos.y, cameraPos.z + 1);
