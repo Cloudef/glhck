@@ -746,11 +746,11 @@ static inline void rObjectStart(const glhckObject *object)
 
    kmVec2 offset = {1,1};
    if (object->material) memcpy(&offset, &object->material->textureOffset, sizeof(kmVec2));
-   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureOffset", 1, &((GLfloat[]){offset.x, offset.y}));
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureOffset", 1, (kmVec2*)&offset);
 
    kmVec2 scale = {1,1};
    if (object->material) memcpy(&scale, &object->material->textureScale, sizeof(kmVec2));
-   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureScale", 1, &((GLfloat[]){scale.x, scale.y}));
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureScale", 1, (kmVec2*)&scale);
 
    glhckShaderUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
 }
