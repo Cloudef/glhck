@@ -8,6 +8,7 @@ SET(GLHCK_SRC
    text.c
    frustum.c
    camera.c
+   material.c
    texture.c
    atlas.c
    light.c

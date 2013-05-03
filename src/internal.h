@@ -256,6 +256,7 @@ typedef struct _glhckMaterial {
    struct glhckColorb diffuse;
    struct glhckColorb emissive;
    struct glhckColorb specular;
+   REFERENCE_COUNTED(_glhckMaterial);
    float shininess;
    glhckBlendingMode blenda, blendb;
    unsigned int flags;

@@ -317,11 +317,9 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    /* increase reference */
    object->refCounter = 1;
 
-#if 0
    /* reference material */
    if (src->material)
       glhckObjectMaterial(object, glhckMaterialRef(src->material));
-#endif
 
    /* copy metadata */
    _glhckObjectFile(object, src->file);
@@ -542,10 +540,8 @@ GLHCKAPI void glhckObjectMaterial(glhckObject *object, glhckMaterial *material)
 {
    CALL(2, "%p, %p", object, material);
    assert(object);
-#if 0
    IFDO(glhckMaterialFree, object->material);
    object->material = (material?glhckMaterialRef(material):NULL);
-#endif
 }
 
 /* \brief get material from object */
