@@ -628,7 +628,7 @@ int _glhckImportAssimp(glhckObject *object, const char *file, const glhckImportM
     * TODO: make import hints tunable?
     * Needs changes to import protocol! */
    aflags = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_OptimizeGraph | aiProcess_MakeLeftHanded;
-   if (!params->animated) aflags |= aiProcess_PreTransformVertices;
+   if (!params->animated && params->flatten) aflags |= aiProcess_PreTransformVertices;
    scene = aiImportFile(file, aflags);
    if (!scene) goto assimp_fail;
 
