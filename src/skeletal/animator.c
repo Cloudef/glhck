@@ -235,6 +235,10 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
    CALL(2, "%p, %p", object, gobject);
    assert(object && gobject);
 
+   /* we don't have to anything! */
+   if (gobject->transformedGeometryTime == object->lastTime)
+      return;
+
    /* we are root, perform this transform on childs as well */
    if (gobject->flags & GLHCK_OBJECT_ROOT) {
       PERFORM_ON_CHILDS(object, gobject, glhckAnimatorTransform);
@@ -292,6 +296,9 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
    /* update bounding box for object */
    glhckGeometryCalculateBB(gobject->geometry, &gobject->view.bounding);
    _glhckObjectUpdateBoxes(gobject);
+
+   /* store the time for transformation */
+   gobject->transformedGeometryTime = object->lastTime;
 }
 
 /* \brief update the skeletal animation to next tick */

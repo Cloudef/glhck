@@ -1,5 +1,6 @@
 #include "internal.h"
 #include <assert.h>  /* for assert */
+#include <float.h>   /* for FLT_MAX */
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
@@ -300,6 +301,9 @@ GLHCKAPI glhckObject *glhckObjectNew(void)
 
    /* set stub draw function */
    object->drawFunc = _glhckObjectStubDraw;
+
+   /* something that isn't zero */
+   object->transformedGeometryTime = FLT_MAX;
 
    /* insert to world */
    _glhckWorldInsert(object, object, glhckObject*);

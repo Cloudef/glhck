@@ -286,6 +286,7 @@ typedef struct _glhckObject {
    __GLHCKobjectDraw drawFunc;
    char *file, *name;
    REFERENCE_COUNTED(_glhckObject);
+   float transformedGeometryTime; /* stores skeletal animated transformation time (to avoid retransform) */
    unsigned int numChilds;
    unsigned int numBones;
    unsigned int numAnimations;
