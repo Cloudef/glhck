@@ -575,7 +575,7 @@ glhckGeometry* _glhckGeometryNew(void)
 glhckGeometry* _glhckGeometryCopy(glhckGeometry *src)
 {
    glhckGeometry *object;
-   if (!src) return NULL;
+   assert(src);
 
    if (!(object = _glhckCopy(src, sizeof(glhckGeometry))))
       return NULL;
@@ -584,6 +584,8 @@ glhckGeometry* _glhckGeometryCopy(glhckGeometry *src)
       object->vertices.any =_glhckCopy(src->vertices.any, src->vertexCount * glhckVertexTypeElementSize(src->vertexType));
    if (src->indices.any)
       object->indices.any = _glhckCopy(src->indices.any, src->indexCount * glhckIndexTypeElementSize(src->indexType));
+   if (src->transformedCoordinates)
+      object->transformedCoordinates = _glhckCopy(src->transformedCoordinates, sizeof(glhckGeometryTransformCoordinates));
 
    return object;
 }

@@ -873,11 +873,13 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
 GLHCKAPI glhckObject* glhckTextPlane(glhckText *object, unsigned int font_id, float size, const char *s, const glhckTextureParameters *params);
 
 /* materials */
-GLHCKAPI glhckMaterial* glhckMaterialNew(void);
+GLHCKAPI glhckMaterial* glhckMaterialNew(glhckTexture *texture);
 GLHCKAPI glhckMaterial* glhckMaterialRef(glhckMaterial *object);
 GLHCKAPI unsigned int glhckMaterialFree(glhckMaterial *object);
 GLHCKAPI void glhckMaterialOptions(glhckMaterial *object, unsigned int flags);
-GLHCKAPI unsigned char glhckMaterialGetOptions(const glhckMaterial *object);
+GLHCKAPI unsigned int glhckMaterialGetOptions(const glhckMaterial *object);
+GLHCKAPI void glhckMaterialShader(glhckMaterial *object, glhckShader *shader);
+GLHCKAPI glhckShader* glhckMaterialGetShader(const glhckMaterial *object);
 GLHCKAPI void glhckMaterialTexture(glhckMaterial *object, glhckTexture *texture);
 GLHCKAPI glhckTexture* glhckMaterialGetTexture(const glhckMaterial *object);
 GLHCKAPI void glhckMaterialTextureScale(glhckMaterial *object, const kmVec2 *scale);

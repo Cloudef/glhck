@@ -71,7 +71,8 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImport
    const char *attribName, *comment, *textureFilename;
    char *texturePath;
    glhckImportVertexData *vertexData = NULL;
-   _glhckTexture *texture;
+   glhckMaterial *material;
+   glhckTexture *texture;
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
    CALL(0, "%p, %s, %p", object, file, params);
 
@@ -112,8 +113,8 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImport
       if ((texturePath = _glhckImportTexturePath(textureFilename, file))) {
          if ((texture = glhckTextureNew(texturePath, NULL, NULL))) {
             coords = CTM_CALL(context, ctmGetFloatArray(context, CTM_UV_MAP_1));
-            // FIXME: Create material and texture
-            // glhckObjectTexture(object, texture);
+            if ((material = glhckMaterialNew(texture)))
+               glhckObjectMaterial(object, material);
             glhckTextureFree(texture);
          }
          _glhckFree(texturePath);

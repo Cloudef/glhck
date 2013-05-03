@@ -423,7 +423,8 @@ static int processModel(const char *file, glhckObject *object,
    unsigned int ioffset, voffset;
    glhckImportIndexData *indices = NULL;
    glhckImportVertexData *vertexData = NULL;
-   glhckTexture **textureList = NULL, *texture;
+   glhckMaterial *material = NULL;
+   glhckTexture **textureList = NULL, *texture = NULL;
    glhckAtlas *atlas = NULL;
    const struct aiMesh *mesh;
    const struct aiFace *face;
@@ -497,12 +498,15 @@ static int processModel(const char *file, glhckObject *object,
          voffset += mesh->mNumVertices;
       }
 
+      /* create material */
+      if (hasTexture && !(material = glhckMaterialNew(texture)))
+         goto assimp_no_memory;
+
       /* finally build the model */
       if (buildModel(current, numIndices,  numVertices,
                indices, vertexData, itype, vtype)  == RETURN_OK) {
          _glhckObjectFile(current, nd->mName.data);
-         // if (hasTexture) glhckObjectTexture(current, glhckAtlasGetTexture(atlas));
-         // FIXME: Create material and texture
+         if (material) glhckObjectMaterial(current, material);
          if (!(current = glhckObjectNew())) goto fail;
          glhckObjectAddChild(object, current);
          glhckObjectFree(current);
@@ -511,6 +515,7 @@ static int processModel(const char *file, glhckObject *object,
 
       /* free stuff */
       IFDO(glhckAtlasFree, atlas);
+      IFDO(glhckMaterialFree, material);
       IFDO(_glhckFree, textureList);
       NULLDO(_glhckFree, vertexData);
       NULLDO(_glhckFree, indices);
@@ -529,11 +534,17 @@ static int processModel(const char *file, glhckObject *object,
          }
          numVertices = mesh->mNumVertices;
 
+         // FIXME: create materialFromAssimpMaterial
+         // that returns glhckMaterial with correct stuff
+
          /* get texture */
          hasTexture = 0;
-         if ((texture = textureFromMaterial(file, sc->mMaterials[mesh->mMaterialIndex]))) {
+         if ((texture = textureFromMaterial(file, sc->mMaterials[mesh->mMaterialIndex])))
             hasTexture = 1;
-         }
+
+         /* create material */
+         if (hasTexture && !(material = glhckMaterialNew(texture)))
+            goto assimp_no_memory;
 
          /* allocate vertices */
          if (!(vertexData = _glhckCalloc(numVertices, sizeof(glhckImportVertexData))))
@@ -550,8 +561,7 @@ static int processModel(const char *file, glhckObject *object,
          if (buildModel(current, numIndices,  numVertices,
                   indices, vertexData, itype, vtype) == RETURN_OK) {
             _glhckObjectFile(current, mesh->mName.data);
-            // if (hasTexture) glhckObjectTexture(current, texture);
-            // FIXME: Create material and texture
+            if (material) glhckObjectMaterial(current, material);
             if (!(current = glhckObjectNew())) goto fail;
             glhckObjectAddChild(object, current);
             glhckObjectFree(current);
@@ -562,6 +572,7 @@ static int processModel(const char *file, glhckObject *object,
          NULLDO(_glhckFree, vertexData);
          NULLDO(_glhckFree, indices);
          IFDO(glhckTextureFree, texture);
+         IFDO(glhckMaterialFree, material);
       }
    }
 
@@ -587,6 +598,8 @@ fail:
    IFDO(_glhckFree, vertexData);
    IFDO(_glhckFree, indices);
    IFDO(_glhckFree, textureList);
+   IFDO(glhckTextureFree, texture);
+   IFDO(glhckMaterialFree, material);
    IFDO(glhckAtlasFree, atlas);
    if (canFreeCurrent) glhckObjectRemoveFromParent(current);
    return RETURN_FAIL;

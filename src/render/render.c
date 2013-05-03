@@ -388,7 +388,12 @@ GLHCKAPI void glhckRender(void)
                objects->queue[os++] = o;
                continue;
             }
-         } else if (t) continue; /* no material, but texture requested */
+         } else if (t) {
+            /* no material, but texture requested */
+            if (os != oi) objects->queue[oi] = NULL;
+            objects->queue[os++] = o;
+            continue;
+         }
 
          /* render object */
          glhckObjectRender(o);
@@ -436,7 +441,11 @@ GLHCKAPI void glhckRender(void)
                objects->queue[os++] = o;
                continue;
             }
-         } else if (t) continue;
+         } else if (t) {
+            if (os != oi) objects->queue[oi] = NULL;
+            objects->queue[os++] = o;
+            continue;
+         }
 
          /* render object */
          glhckObjectRender(o);

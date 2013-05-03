@@ -40,8 +40,9 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
    char *texturePath;
    mmd_header header;
    mmd_data *mmd = NULL;
-   _glhckAtlas *atlas = NULL;
-   _glhckTexture *texture = NULL, **textureList = NULL;
+   glhckAtlas *atlas = NULL;
+   glhckMaterial *material = NULL;
+   glhckTexture *texture = NULL, **textureList = NULL;
    glhckImportVertexData *vertexData = NULL;
    glhckImportIndexData *indices = NULL, *stripIndices = NULL;
    unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
@@ -82,6 +83,9 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
       goto mmd_no_memory;
 
    if (!(atlas = glhckAtlasNew()))
+      goto mmd_no_memory;
+
+   if (!(material = glhckMaterialNew(NULL)))
       goto mmd_no_memory;
 
    /* add all textures to atlas packer */
@@ -143,11 +147,12 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
       start += numFaces;
    }
 
-   /* assign texture ot object */
-   // glhckObjectTexture(object, glhckAtlasGetTexture(atlas));
-   // FIXME: Create material and texture
+   /* assign texture to material */
+   glhckMaterialTexture(material, glhckAtlasGetTexture(atlas));
+   glhckObjectMaterial(object, material);
 
    /* we don't need atlas packer anymore */
+   NULLDO(glhckMaterialFree, material);
    NULLDO(glhckAtlasFree, atlas);
    NULLDO(_glhckFree, textureList);
 

@@ -187,6 +187,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    glhckFramebuffer *fbo = NULL;
    glhckTexture *texture = NULL;
    glhckObject *plane = NULL;
+   glhckMaterial *material = NULL;
    kmMat4 ortho;
    CALL(0, "%p, %d, %d", object, power_of_two, border);
 
@@ -244,6 +245,11 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
       goto fail;
    if (!(plane = glhckPlaneNewEx(1, 1, GLHCK_INDEX_NONE, GLHCK_VERTEX_V2F)))
       goto fail;
+   if (!(material = glhckMaterialNew(NULL)))
+      goto fail;
+
+   /* set material to object */
+   glhckObjectMaterial(plane, material);
 
    memcpy(&oldClear, glhckRenderGetClearColor(), sizeof(glhckColorb));
    memcpy(&oldProjection, glhckRenderGetProjection(), sizeof(kmMat4));
@@ -277,8 +283,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
             0);
 
       /* draw texture */
-      // glhckObjectTexture(plane, rect->texture);
-      // FIXME: create material with the texture instead
+      glhckMaterialTexture(material, rect->texture);
       glhckObjectRender(plane);
    }
    glhckFramebufferEnd(fbo);
@@ -293,6 +298,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    object->texture = texture;
 
    /* cleanup */
+   glhckMaterialFree(material);
    glhckObjectFree(plane);
    glhckFramebufferFree(fbo);
    _glhckTexturePackerFree(tp);
@@ -301,6 +307,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    return RETURN_OK;
 
 fail:
+   IFDO(glhckMaterialFree, material);
    IFDO(glhckObjectFree, plane);
    IFDO(glhckFramebufferFree, fbo);
    IFDO(glhckTextureFree, texture);

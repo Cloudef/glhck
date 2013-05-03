@@ -33,6 +33,7 @@ static __GLHCKtraceChannel _traceChannels[] =
    { GLHCK_CHANNEL_CAMERA,          0 },
    { GLHCK_CHANNEL_GEOMETRY,        0 },
    { GLHCK_CHANNEL_VDATA,           0 },
+   { GLHCK_CHANNEL_MATERIAL,        0 },
    { GLHCK_CHANNEL_TEXTURE,         0 },
    { GLHCK_CHANNEL_ATLAS,           0 },
    { GLHCK_CHANNEL_ALLOC,           0 },

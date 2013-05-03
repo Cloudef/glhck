@@ -97,7 +97,8 @@ GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, k
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmScalar height)
 {
    float w, h;
-   glhckObject *object;
+   glhckObject *object = NULL;
+   glhckMaterial *material = NULL;
    glhckGeometryVertexType vtype;
    CALL(0, "%p, %f, %f", texture, width, height);
 
@@ -131,6 +132,10 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmSc
    if (!(object = glhckObjectNew()))
       goto fail;
 
+   /* create new material */
+   if (!(material = glhckMaterialNew(texture)))
+         goto fail;
+
    /* choose optimal precision */
    glhckGetGlobalPrecision(NULL, &vtype);
    if (vtype == GLHCK_VERTEX_NONE) {
@@ -149,7 +154,9 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmSc
    /* scale keeping aspect ratio */
    glhckObjectScalef(object, w, w, w);
 
-   // FIXME: Create material and texture
+   /* set material to object */
+   glhckObjectMaterial(object, material);
+   glhckMaterialFree(material);
 
    /* set filename of object */
    _glhckObjectFile(object, texture->file);
@@ -158,7 +165,8 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmSc
    return object;
 
 fail:
-   IFDO(glhckTextureFree, texture);
+   IFDO(glhckObjectFree, object);
+   IFDO(glhckMaterialFree, material);
    RET(0, "%p", NULL);
    return NULL;
 }

@@ -311,15 +311,11 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    CALL(0, "%p", src);
    assert(src);
 
-   if (!(object = _glhckCopy(src, sizeof(glhckObject))))
+   if (!(object = _glhckCalloc(1, sizeof(glhckObject))))
       goto fail;
 
    /* increase reference */
-   object->refCounter = 1;
-
-   /* reference material */
-   if (src->material)
-      glhckObjectMaterial(object, glhckMaterialRef(src->material));
+   object->refCounter++;
 
    /* copy metadata */
    _glhckObjectFile(object, src->file);
@@ -327,6 +323,18 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    /* copy geometry */
    if (src->geometry)
       object->geometry = _glhckGeometryCopy(src->geometry);
+
+   /* reference material */
+   if (src->material)
+      glhckObjectMaterial(object, glhckMaterialRef(src->material));
+
+   /* copy properties */
+   memcpy(&object->view, &src->view, sizeof(__GLHCKobjectView));
+   object->affectionFlags = src->affectionFlags;
+   object->flags = src->flags;
+
+   /* update object */
+   glhckObjectUpdate(object);
 
    /* insert to world */
    _glhckWorldInsert(object, object, glhckObject*);
@@ -435,6 +443,11 @@ GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned char affe
       object->view.update = 1;
 
    object->affectionFlags = affectionFlags;
+
+   /* perform on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectParentAffection, affectionFlags);
+   }
 }
 
 /* \brief get object's parent */
@@ -542,6 +555,20 @@ GLHCKAPI void glhckObjectMaterial(glhckObject *object, glhckMaterial *material)
    assert(object);
    IFDO(glhckMaterialFree, object->material);
    object->material = (material?glhckMaterialRef(material):NULL);
+
+   /* sanity warning */
+   if (material && material->texture && object->geometry && object->geometry->textureRange > 1) {
+      if ((material->texture->width  > object->geometry->textureRange) ||
+          (material->texture->height > object->geometry->textureRange)) {
+         DEBUG(GLHCK_DBG_WARNING, "Texture dimensions are above the maximum precision of object's vertexdata (%s:%u)",
+               glhckVertexTypeString(object->geometry->vertexType), object->geometry->textureRange);
+      }
+   }
+
+   /* perform on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectMaterial, material);
+   }
 }
 
 /* \brief get material from object */
@@ -594,6 +621,11 @@ GLHCKAPI void glhckObjectCull(glhckObject *object, int cull)
    assert(object);
    if (cull) object->flags |= GLHCK_OBJECT_CULL;
    else object->flags &= ~GLHCK_OBJECT_CULL;
+
+   /* perform on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectCull, cull);
+   }
 }
 
 /* \brief get whether object is culled */
@@ -612,6 +644,11 @@ GLHCKAPI void glhckObjectDepth(glhckObject *object, int depth)
    assert(object);
    if (depth) object->flags |= GLHCK_OBJECT_DEPTH;
    else object->flags &= ~GLHCK_OBJECT_DEPTH;
+
+   /* perform on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectDepth, depth);
+   }
 }
 
 /* \brief get wether object should be depth tested */
@@ -630,6 +667,11 @@ GLHCKAPI void glhckObjectDrawAABB(glhckObject *object, int drawAABB)
    assert(object);
    if (drawAABB) object->flags |= GLHCK_OBJECT_DRAW_AABB;
    else object->flags &= ~GLHCK_OBJECT_DRAW_AABB;
+
+   /* perform on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectDrawAABB, drawAABB);
+   }
 }
 
 /* \brief get object's AABB drawing */
@@ -648,6 +690,11 @@ GLHCKAPI void glhckObjectDrawOBB(glhckObject *object, int drawOBB)
    assert(object);
    if (drawOBB) object->flags |= GLHCK_OBJECT_DRAW_OBB;
    else object->flags &= ~GLHCK_OBJECT_DRAW_OBB;
+
+   /* perform on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectDrawOBB, drawOBB);
+   }
 }
 
 /* \brief get object's OBB drawing */
@@ -666,6 +713,11 @@ GLHCKAPI void glhckObjectDrawSkeleton(glhckObject *object, int drawSkeleton)
    assert(object);
    if (drawSkeleton) object->flags |= GLHCK_OBJECT_DRAW_SKELETON;
    else object->flags &= ~GLHCK_OBJECT_DRAW_SKELETON;
+
+   /* perform on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectDrawSkeleton, drawSkeleton);
+   }
 }
 
 /* \brief get object's skeleton drawing */
@@ -684,6 +736,11 @@ GLHCKAPI void glhckObjectDrawWireframe(glhckObject *object, int drawWireframe)
    assert(object);
    if (drawWireframe) object->flags |= GLHCK_OBJECT_DRAW_WIREFRAME;
    else object->flags &= ~GLHCK_OBJECT_DRAW_WIREFRAME;
+
+   /* perform on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectDrawWireframe, drawWireframe);
+   }
 }
 
 /* \brief get object's wireframe drawing */

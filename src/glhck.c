@@ -336,6 +336,7 @@ GLHCKAPI void glhckMassacreWorld(void)
    _massacre(renderbuffer, glhckRenderbufferFree);
    _massacre(shader,  glhckShaderFree);
    _massacre(text, glhckTextFree);
+   _massacre(material, glhckMaterialFree);
    _massacre(texture, glhckTextureFree);
 }
 
