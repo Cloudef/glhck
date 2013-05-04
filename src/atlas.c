@@ -249,7 +249,10 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
       goto fail;
 
    /* set material to object */
+   glhckMaterialOptions(material, 0);
    glhckObjectMaterial(plane, material);
+   glhckObjectDepth(plane, 0);
+   glhckObjectCull(plane, 0);
 
    memcpy(&oldClear, glhckRenderGetClearColor(), sizeof(glhckColorb));
    memcpy(&oldProjection, glhckRenderGetProjection(), sizeof(kmMat4));
@@ -259,7 +262,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    kmMat4OrthographicProjection(&ortho, 0, width, 0, height, -1.0f, 1.0f);
    kmMat4Translation(&ortho, -1, -1, 0);
    glhckRenderProjectionOnly(&ortho);
-   glhckRenderClearColorb(0,0,0,0);
+   glhckRenderClearColorb(0,0,255,255);
 
    glhckFramebufferRecti(fbo, 0, 0, width, height);
    glhckFramebufferBegin(fbo);
@@ -295,6 +298,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
 
    /* reference rtt's texture */
    IFDO(glhckTextureFree, object->texture);
+   glhckTextureParameter(texture, NULL);
    object->texture = texture;
 
    /* cleanup */
