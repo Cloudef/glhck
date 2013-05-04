@@ -1163,11 +1163,12 @@ void glhTextureParameter(glhckTextureTarget target, const glhckTextureParameters
    GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MIN_LOD, params->minLod));
    GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MAX_LOD, params->maxLod));
 
-#if 0
-   float max;
-   GL_CALL(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max));
-   if (max > 0.0f) {
-      GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, max));
+#if GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+   if (params->maxAnisotropy) {
+      float max;
+      GL_CALL(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max));
+      if (max > params->maxAnisotropy) max = params->maxAnisotropy;
+      if (max > 0.0f) GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MAX_ANISOTROPY_EXT, max));
    }
 #endif
 }

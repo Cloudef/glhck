@@ -275,19 +275,20 @@ GLHCKAPI void glhckTextureParameter(glhckTexture *object, const glhckTexturePara
 GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void)
 {
    static glhckTextureParameters defaultParameters = {
-      .minLod      = -1000.0f,
-      .maxLod      = 1000.0f,
-      .biasLod     = 0.0f,
-      .baseLevel   = 0,
-      .maxLevel    = 1000,
-      .wrapS       = GLHCK_WRAP_REPEAT,
-      .wrapT       = GLHCK_WRAP_REPEAT,
-      .wrapR       = GLHCK_WRAP_REPEAT,
-      .minFilter   = GLHCK_FILTER_NEAREST_MIPMAP_LINEAR,
-      .magFilter   = GLHCK_FILTER_LINEAR,
-      .compareMode = GLHCK_COMPARE_NONE,
-      .compareFunc = GLHCK_COMPARE_LEQUAL,
-      .mipmap      = 1,
+      .maxAnisotropy = 16.0f,
+      .minLod        = -1000.0f,
+      .maxLod        = 1000.0f,
+      .biasLod       = 0.0f,
+      .baseLevel     = 0,
+      .maxLevel      = 1000,
+      .wrapS         = GLHCK_WRAP_REPEAT,
+      .wrapT         = GLHCK_WRAP_REPEAT,
+      .wrapR         = GLHCK_WRAP_REPEAT,
+      .minFilter     = GLHCK_FILTER_NEAREST_MIPMAP_LINEAR,
+      .magFilter     = GLHCK_FILTER_LINEAR,
+      .compareMode   = GLHCK_COMPARE_NONE,
+      .compareFunc   = GLHCK_COMPARE_LEQUAL,
+      .mipmap        = 1,
    };
    return &defaultParameters;
 }

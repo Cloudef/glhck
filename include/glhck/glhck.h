@@ -392,6 +392,7 @@ typedef enum glhckDataType {
 
 /* texture parameters struct */
 typedef struct glhckTextureParameters {
+   float maxAnisotropy;
    float minLod, maxLod, biasLod;
    int baseLevel, maxLevel;
    glhckTextureWrap wrapS, wrapT, wrapR;
