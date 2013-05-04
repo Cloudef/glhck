@@ -385,10 +385,19 @@ fail:
    }                                      \
 }
 
-/* FIXME: fix winding of strips (allow using backface culling without artifacts)
- * - if the length of the first part of the strip is odd, the strip must be reversed
- * - to reverse the strip, write it in reverse order. If the position of the original face in this new reversed strip is odd, you’re done. Else replicate the first index.
- */
+static void _glhckTriStripReverse(glhckImportIndexData *indices, unsigned int memb)
+{
+   unsigned int i;
+   glhckImportIndexData *original;
+
+   if (!(original = _glhckCopy(indices, memb * sizeof(glhckImportIndexData))))
+      return;
+
+   for (i = 0; i != memb; ++i)
+      indices[i] = original[memb-1-i];
+
+   _glhckFree(original);
+}
 
 /* \brief return tristripped indecies for triangle index data */
 glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsigned int memb, unsigned int *outMemb)
@@ -402,6 +411,7 @@ glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsign
     * importers should fallback to GLHCK_TRIANGLES */
    return NULL;
 #else
+   int prim;
    glhckImportIndexData v1, v2, v3;
    glhckImportIndexData *outIndices = NULL, *newIndices = NULL;
    unsigned int i, primCount, tmp;
@@ -419,37 +429,55 @@ glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsign
       goto actc_fail;
 
    /* parameters */
-   ACTC_CALL(actcParami(tc, ACTC_OUT_MIN_FAN_VERTS, 2147483647));
+   ACTC_CALL(actcParami(tc, ACTC_OUT_MIN_FAN_VERTS, INT_MAX));
+   ACTC_CALL(actcParami(tc, ACTC_OUT_HONOR_WINDING, ACTC_FALSE));
 
    /* input data */
-   i = 0;
    ACTC_CALL(actcBeginInput(tc));
-   while (i != memb) {
+   for (i = 0; i != memb; i+=3) {
       ACTC_CALL(actcAddTriangle(tc,
                indices[i+0],
                indices[i+1],
                indices[i+2]));
-      i+=3;
    }
    ACTC_CALL(actcEndInput(tc));
 
+   /* FIXME: fix the winding of generated stiched strips */
+
    /* output data */
-   tmp = memb; i = 0; primCount = 0;
+   tmp = memb, i = 0, primCount = 0;
+   unsigned int flipStart = 0, length = 0;
    ACTC_CALL(actcBeginOutput(tc));
-   while (actcStartNextPrim(tc, &v1, &v2) != ACTC_DATABASE_EMPTY) {
+   while ((prim = actcStartNextPrim(tc, &v1, &v2)) != ACTC_DATABASE_EMPTY) {
+      assert(prim == ACTC_PRIM_STRIP);
       if (i + (primCount?5:3) > memb)
          goto no_profit;
-      if (primCount) {
-         outIndices[i++] = v3;
-         outIndices[i++] = v1;
+
+      /* degenerate to next strip */
+      if (primCount && v1 != v3) {
+         if (length & 1) {
+            _glhckTriStripReverse(&outIndices[flipStart], i-flipStart);
+            if (flipStart) outIndices[flipStart-1] = outIndices[flipStart];
+         }
+
+         v3 = outIndices[i-1];
+         if (v1 != v3) {
+            outIndices[i++] = v3;
+            outIndices[i++] = v1;
+         }
+         flipStart = i;
       }
+
+      length = 0;
       outIndices[i++] = v1;
       outIndices[i++] = v2;
       while (actcGetNextVert(tc, &v3) != ACTC_PRIM_COMPLETE) {
          if (i + 1 > memb)
             goto no_profit;
          outIndices[i++] = v3;
+         ++length;
       }
+
       primCount++;
    }
    ACTC_CALL(actcEndOutput(tc));
@@ -457,6 +485,16 @@ glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsign
    printf("%u alloc\n", memb);
    if (outMemb) *outMemb = i;
    memb = tmp;
+
+   // for (i = *outMemb-12; i != *outMemb; ++i)
+      // outIndices[i] = 0;
+
+#if 0
+   puts("- INDICES:");
+   for (i = 0; i != *outMemb; ++i)
+      printf("%u%s", outIndices[i], (!((i+1) % 3)?"\n":", "));
+   puts("");
+#endif
 
    if (!(newIndices = _glhckRealloc(outIndices, memb, i, sizeof(glhckImportIndexData))))
       goto out_of_memory;
