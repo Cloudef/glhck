@@ -683,6 +683,7 @@ typedef struct __GLHCKrenderPass {
    unsigned int blenda, blendb;
    unsigned int flags;
    glhckCullFaceType cullFace;
+   glhckFaceOrientation frontFace;
 } __GLHCKrenderPass;
 
 /* context render properties */

@@ -207,6 +207,14 @@ GLHCKAPI void glhckRenderClear(unsigned int bufferBits)
    GLHCKRA()->clear(bufferBits);
 }
 
+/* \brief set render pass front face orientation */
+GLHCKAPI void glhckRenderFrontFace(glhckFaceOrientation orientation)
+{
+   GLHCK_INITIALIZED();
+   CALL(2, "%d", orientation);
+   GLHCKRP()->frontFace = orientation;
+}
+
 /* \brief set render pass cull face side */
 GLHCKAPI void glhckRenderCullFace(glhckCullFaceType face)
 {

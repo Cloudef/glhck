@@ -99,6 +99,7 @@ typedef struct __OpenGLstate {
    GLuint flags;
    glhckBlendingMode blenda, blendb;
    glhckCullFaceType cullFace;
+   glhckFaceOrientation frontFace;
 } __OpenGLstate;
 
 typedef struct __OpenGLrender {
@@ -339,6 +340,9 @@ static inline void rMaterialState(const glhckMaterial *material)
 /* \brief set needed state from pass data */
 static inline void rPassState(void)
 {
+   /* front face */
+   GLPOINTER()->state.frontFace = GLHCKRP()->frontFace;
+
    /* cull face */
    GLPOINTER()->state.cullFace = GLHCKRP()->cullFace;
 
@@ -665,6 +669,11 @@ static inline void rObjectStart(const glhckObject *object)
       }
    }
 
+   /* check winding */
+   if (GLPOINTER()->state.frontFace != old.frontFace) {
+      glhFrontFace(GLPOINTER()->state.frontFace);
+   }
+
    /* check culling */
    if (GL_STATE_CHANGED(GL_STATE_CULL)) {
       if (GL_HAS_STATE(GL_STATE_CULL)) {
@@ -812,13 +821,8 @@ static inline void rTextRender(const glhckText *text)
    CALL(2, "%p", text);
 
    /* set states */
-   if (!GL_HAS_STATE(GL_STATE_CULL)) {
-      GLPOINTER()->state.flags |= GL_STATE_CULL;
-      GLPOINTER()->state.cullFace = GLHCK_CULL_BACK;
-      GL_CALL(glEnable(GL_CULL_FACE));
-      GL_CALL(glCullFace(GL_BACK));
-   } else if (GLPOINTER()->state.cullFace != GLHCK_CULL_BACK) {
-      GL_CALL(glCullFace(GL_BACK));
+   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
+      GL_CALL(glFrontFace(GL_CCW));
    }
 
    if (!GL_HAS_STATE(GL_STATE_BLEND)) {
@@ -884,8 +888,8 @@ static inline void rTextRender(const glhckText *text)
       GL_CALL(glEnable(GL_DEPTH_TEST));
    }
 
-   if (GLPOINTER()->state.cullFace != GLHCK_CULL_BACK) {
-      glhCullFace(GLPOINTER()->state.cullFace);
+   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
+      glhFrontFace(GLPOINTER()->state.frontFace);
    }
 }
 

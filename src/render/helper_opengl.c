@@ -41,6 +41,20 @@ GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property)
    return 0;
 }
 
+/* \brief map glhck face orientation to OpenGL face orientation */
+GLenum glhFaceOrientationForGlhckOrientation(glhckFaceOrientation orientation)
+{
+   switch (orientation) {
+      case GLHCK_FACE_CW:
+         return GL_CW;
+      case GLHCK_FACE_CCW:
+         return GL_CCW;
+      default:break;
+   }
+   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
+   return 0;
+}
+
 /* \brief map glhck face type to OpenGL face type */
 GLenum glhCullFaceTypeForGlhckType(glhckCullFaceType type)
 {
@@ -1086,6 +1100,12 @@ void glhClearColor(const glhckColorb *color)
    float fb = (float)color->b/255;
    float fa = (float)color->a/255;
    GL_CALL(glClearColor(fr, fg, fb, fa));
+}
+
+/* \brief set front face */
+void glhFrontFace(glhckFaceOrientation orientation)
+{
+   GL_CALL(glFrontFace(glhFaceOrientationForGlhckOrientation(orientation)));
 }
 
 /* \brief set cull side */

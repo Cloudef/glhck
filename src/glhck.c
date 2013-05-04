@@ -256,7 +256,10 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    glhckRenderPass(GLHCK_PASS_DEFAULTS);
 
    /* default cull face */
-   glhckRenderCullFace(GLHCK_CULL_FRONT);
+   glhckRenderCullFace(GLHCK_CULL_BACK);
+
+   /* clockwise are front face by default */
+   glhckRenderFrontFace(GLHCK_FACE_CW);
 
    /* resize display */
    glhckDisplayResize(width, height);

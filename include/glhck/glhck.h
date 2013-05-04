@@ -145,9 +145,15 @@ typedef enum glhckClearBufferBits {
 
 /* cull side face */
 typedef enum glhckCullFaceType {
-   GLHCK_CULL_FRONT,
    GLHCK_CULL_BACK,
+   GLHCK_CULL_FRONT,
 } glhckCullFaceType;
+
+/* face orientations */
+typedef enum glhckFaceOrientation {
+   GLHCK_FACE_CCW,
+   GLHCK_FACE_CW,
+} glhckFaceOrientation;
 
 /* render pass bits */
 typedef enum glhckRenderPassFlags {
@@ -682,6 +688,7 @@ GLHCKAPI const glhckColorb* glhckRenderGetClearColor(void);
 GLHCKAPI void glhckRenderClear(unsigned int bufferBits);
 GLHCKAPI void glhckRenderBlendFunc(glhckBlendingMode blenda, glhckBlendingMode blendb);
 GLHCKAPI void glhckRenderGetBlendFunc(glhckBlendingMode *blenda, glhckBlendingMode *blendb);
+GLHCKAPI void glhckRenderFrontFace(glhckFaceOrientation orientation);
 GLHCKAPI void glhckRenderCullFace(glhckCullFaceType face);
 GLHCKAPI glhckCullFaceType glhckRenderGetCullFace(void);
 GLHCKAPI void glhckRenderPassShader(glhckShader *shader);

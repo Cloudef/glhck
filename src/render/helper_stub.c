@@ -142,6 +142,12 @@ void stubClearColor(const glhckColorb *color)
    CALL(2, "%p", color);
 }
 
+/* \brief set front face */
+void stubFrontFace(glhckFaceOrientation orientation)
+{
+   CALL(2, "%d", orientation);
+}
+
 /* \brief set cull side */
 void stubCullFace(glhckCullFaceType face)
 {

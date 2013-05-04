@@ -111,6 +111,7 @@ void glhHwBufferUnmap(glhckHwBufferTarget target);
 
 /*** glhck mapping functions ***/
 GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property);
+GLenum glhFaceOrientationForGlhckOrientation(glhckFaceOrientation orientation);
 GLenum glhCullFaceTypeForGlhckType(glhckCullFaceType type);
 GLenum glhGeometryTypeForGlhckType(glhckGeometryType type);
 GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format);
@@ -133,6 +134,7 @@ const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type);
 /*** shared opengl functions ***/
 void glhClear(GLuint bufferBits);
 void glhClearColor(const glhckColorb *color);
+void glhFrontFace(glhckFaceOrientation orientation);
 void glhCullFace(glhckCullFaceType face);
 void glhBufferGetPixels(GLint x, GLint y, GLsizei width, GLsizei height, glhckTextureFormat format, glhckDataType type, GLvoid *data);
 void glhBlendFunc(GLenum blenda, GLenum blendb);
