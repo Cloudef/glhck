@@ -140,12 +140,12 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImport
       ix = indices[i];
 
       vertexData[ix].vertex.x = vertices[ix*3+0];
-      vertexData[ix].vertex.z = vertices[ix*3+1]*-1; /* flip Z */
+      vertexData[ix].vertex.z = vertices[ix*3+1] * -1;
       vertexData[ix].vertex.y = vertices[ix*3+2];
 
       if (normals) {
          vertexData[ix].normal.x = normals[ix*3+0];
-         vertexData[ix].normal.z = normals[ix*3+1]-1; /* flip Z */
+         vertexData[ix].normal.z = normals[ix*3+1] * -1;
          vertexData[ix].normal.y = normals[ix*3+2];
       }
 
