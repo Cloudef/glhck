@@ -244,7 +244,7 @@ int _glhckImportTGA(const char *file, _glhckImportImageStruct *import)
    /* fill import struct */
    import->width  = w;
    import->height = h;
-   import->data   = import;
+   import->data   = importData;
    import->format = GLHCK_RGBA;
    import->type   = GLHCK_DATA_UNSIGNED_BYTE;
    import->flags |= (bpp==32?GLHCK_TEXTURE_IMPORT_ALPHA:0);

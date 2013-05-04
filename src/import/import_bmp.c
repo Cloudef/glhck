@@ -112,7 +112,7 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
 
    import->width  = w;
    import->height = h;
-   import->data   = import;
+   import->data   = importData;
    import->format = GLHCK_RGBA;
    import->type   = GLHCK_DATA_UNSIGNED_BYTE;
    RET(0, "%d", RETURN_OK);
