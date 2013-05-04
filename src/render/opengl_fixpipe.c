@@ -672,10 +672,6 @@ static inline void rTextRender(const glhckText *text)
    CALL(2, "%p", text);
 
    /* set states */
-   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
-      GL_CALL(glFrontFace(GL_CCW));
-   }
-
    if (GL_HAS_STATE(GL_LIGHTING)) {
       GL_CALL(glDisable(GL_LIGHTING));
    }
@@ -748,10 +744,6 @@ static inline void rTextRender(const glhckText *text)
 
    if (GL_HAS_STATE(GL_LIGHTING)) {
       GL_CALL(glEnable(GL_LIGHTING));
-   }
-
-   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
-      glhFrontFace(GLPOINTER()->state.frontFace);
    }
 
    /* reset projection */

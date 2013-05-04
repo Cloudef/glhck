@@ -688,12 +688,14 @@ static inline void rObjectStart(const glhckObject *object)
       }
    }
 
+#if 1
    /* disable culling for strip geometry
     * FIXME: Fix the stripping to get rid of this */
    if (GL_HAS_STATE(GL_STATE_CULL) &&
        object->geometry->type == GLHCK_TRIANGLE_STRIP) {
       GL_CALL(glDisable(GL_CULL_FACE));
    }
+#endif
 
    /* check alpha */
    if (GL_STATE_CHANGED(GL_STATE_BLEND)) {
@@ -820,11 +822,6 @@ static inline void rTextRender(const glhckText *text)
    __GLHCKtextTexture *texture;
    CALL(2, "%p", text);
 
-   /* set states */
-   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
-      GL_CALL(glFrontFace(GL_CCW));
-   }
-
    if (!GL_HAS_STATE(GL_STATE_BLEND)) {
       GLPOINTER()->state.flags |= GL_STATE_BLEND;
       GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
@@ -886,10 +883,6 @@ static inline void rTextRender(const glhckText *text)
 
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glEnable(GL_DEPTH_TEST));
-   }
-
-   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
-      glhFrontFace(GLPOINTER()->state.frontFace);
    }
 }
 
