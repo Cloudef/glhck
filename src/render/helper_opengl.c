@@ -402,10 +402,14 @@ GLenum glhHwBufferTargetForGlhckType(glhckHwBufferTarget target)
          return GL_TRANSFORM_FEEDBACK_BUFFER;
       case GLHCK_UNIFORM_BUFFER:
          return GL_UNIFORM_BUFFER;
+#if GL_SHADER_STORAGE_BUFFER
       case GLHCK_SHADER_STORAGE_BUFFER:
          return GL_SHADER_STORAGE_BUFFER;
+#endif
+#if GL_ATOMIC_COUNTER_BUFFER
       case GLHCK_ATOMIC_COUNTER_BUFFER:
          return GL_ATOMIC_COUNTER_BUFFER;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
