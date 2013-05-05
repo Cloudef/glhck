@@ -688,7 +688,7 @@ static inline void rObjectStart(const glhckObject *object)
       }
    }
 
-#if 1
+#if GLHCK_TRISTRIP
    /* disable culling for strip geometry
     * FIXME: Fix the stripping to get rid of this */
    if (GL_HAS_STATE(GL_STATE_CULL) &&

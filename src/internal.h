@@ -48,7 +48,7 @@
 #define GLHCK_IMPORT_DYNAMIC 0
 
 /* enable triangle stripping? */
-#define GLHCK_TRISTRIP 1
+#define GLHCK_TRISTRIP 0
 
 /* floating point precision text? */
 #define GLHCK_TEXT_FLOAT_PRECISION 1

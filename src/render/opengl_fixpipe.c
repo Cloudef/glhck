@@ -546,12 +546,14 @@ static inline void rObjectStart(const glhckObject *object) {
       }
    }
 
+#if GLHCK_TRISTRIP
    /* disable culling for strip geometry
     * FIXME: Fix the stripping to get rid of this */
    if (GL_HAS_STATE(GL_STATE_CULL) &&
        object->geometry->type == GLHCK_TRIANGLE_STRIP) {
       GL_CALL(glDisable(GL_CULL_FACE));
    }
+#endif
 
    /* check alpha */
    if (GL_STATE_CHANGED(GL_STATE_BLEND)) {
