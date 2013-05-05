@@ -1805,8 +1805,11 @@ void glhDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 /* \brief setup OpenGL debug output extension */
 void glhSetupDebugOutput(void)
 {
+   /* FIXME: check that this is supported */
+#if 0
    GL_CALL(glDebugMessageCallbackARB(glhDebugCallback, NULL));
    GL_CALL(glEnable(GL_DEBUG_OUTPUT));
+#endif
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/
