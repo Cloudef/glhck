@@ -227,7 +227,7 @@ int main(int argc, char **argv)
    glhckObject *plane = glhckPlaneNew(200.0f, 200.0f);
    glhckObjectMaterial(plane, material);
    glhckObjectPositionf(plane, 0.0f, -0.1f, 0.0f);
-   glhckObjectRotationf(plane, 90.0f, 0.0f, 0.0f);
+   glhckObjectRotationf(plane, -90.0f, 0.0f, 0.0f);
 
    glhckObjectDrawAABB(cube, 1);
    glhckObjectDrawOBB(cube, 1);
