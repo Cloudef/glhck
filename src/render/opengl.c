@@ -189,6 +189,7 @@ static GLuint rProgramLink(GLuint vertexShader, GLuint fragmentShader)
    GLuint obj = 0;
    GLchar *log = NULL;
    GLsizei logSize;
+   GLint status;
    CALL(0, "%u, %u", vertexShader, fragmentShader);
 
    /* create program object */
@@ -219,6 +220,10 @@ static GLuint rProgramLink(GLuint vertexShader, GLuint fragmentShader)
       if (_glhckStrupstr(log, "error")) goto fail;
       _glhckFree(log);
    }
+
+   /* linking failed */
+   GL_CALL(glGetProgramiv(obj, GL_LINK_STATUS, &status));
+   if (status == GL_FALSE) goto fail;
 
    RET(0, "%u", obj);
    return obj;
