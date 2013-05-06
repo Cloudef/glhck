@@ -1247,12 +1247,12 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(viewport, rViewport);
    GLHCK_RENDER_FUNC(terminate, renderTerminate);
 
-   /* init renderer */
-   if (renderInit() != RETURN_OK)
-      goto fail;
-
    /* output information */
    if (renderInfo() != RETURN_OK)
+      goto fail;
+
+   /* init renderer */
+   if (renderInit() != RETURN_OK)
       goto fail;
 
    /* this also tells library that everything went OK, so do it last */

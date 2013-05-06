@@ -935,12 +935,12 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(viewport, rViewport);
    GLHCK_RENDER_FUNC(terminate, renderTerminate);
 
-   /* reset global data */
-   if (renderInit() != RETURN_OK)
-      goto fail;
-
    /* output information */
    if (renderInfo() != RETURN_OK)
+      goto fail;
+
+   /* reset global data */
+   if (renderInit() != RETURN_OK)
       goto fail;
 
    /* this also tells library that everything went OK,
