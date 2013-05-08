@@ -765,20 +765,25 @@ GLHCKAPI int glhckObjectGetDrawWireframe(const glhckObject *object)
 }
 
 /* \brief get obb bounding box of the object */
-GLHCKAPI const kmAABB*  glhckObjectGetOBB(const glhckObject *object)
+GLHCKAPI const kmAABB*  glhckObjectGetOBB(glhckObject *object)
 {
-   const kmAABB *obb;
+   const kmAABB *obb, *cobb;
    unsigned int i;
    CALL(1, "%p", object);
    assert(object);
+
+   /* update matrix first, if needed */
+   if (object->view.update)
+      _glhckObjectUpdateMatrix(object);
 
    /* if performed on root, get the largest obb */
    obb = &object->view.obb;
    if (object->flags & GLHCK_OBJECT_ROOT) {
       for (i = 0; i != object->numChilds; ++i) {
-         if (obb->max.x < object->childs[i]->view.obb.max.x &&
-             obb->max.y < object->childs[i]->view.obb.max.y)
-            obb = & object->childs[i]->view.obb;
+         cobb = glhckObjectGetOBB(object->childs[i]);
+         if (obb->max.x < cobb->max.x &&
+             obb->max.y < cobb->max.y)
+            obb = cobb;
       }
    }
 
@@ -787,20 +792,25 @@ GLHCKAPI const kmAABB*  glhckObjectGetOBB(const glhckObject *object)
 }
 
 /* \brief get aabb bounding box of the object */
-GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object)
+GLHCKAPI const kmAABB* glhckObjectGetAABB(glhckObject *object)
 {
-   const kmAABB *aabb;
+   const kmAABB *aabb, *caabb;
    unsigned int i;
    CALL(2, "%p", object);
    assert(object);
+
+   /* update matrix first, if needed */
+   if (object->view.update)
+      _glhckObjectUpdateMatrix(object);
 
    /* if performed on root, get the largest aabb */
    aabb = &object->view.aabb;
    if (object->flags & GLHCK_OBJECT_ROOT) {
       for (i = 0; i != object->numChilds; ++i) {
-         if (aabb->max.x < object->childs[i]->view.aabb.max.x &&
-             aabb->max.y < object->childs[i]->view.aabb.max.y)
-            aabb = & object->childs[i]->view.aabb;
+         caabb = glhckObjectGetAABB(object->childs[i]);
+         if (aabb->max.x < caabb->max.x &&
+             aabb->max.y < caabb->max.y)
+            aabb = &object->childs[i]->view.aabb;
       }
    }
 

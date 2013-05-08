@@ -768,8 +768,8 @@ GLHCKAPI void glhckObjectDrawWireframe(glhckObject *object, int drawWireframe);
 GLHCKAPI int glhckObjectGetDrawWireframe(const glhckObject *object);
 
 /* object control */
-GLHCKAPI const kmAABB* glhckObjectGetOBB(const glhckObject *object);
-GLHCKAPI const kmAABB* glhckObjectGetAABB(const glhckObject *object);
+GLHCKAPI const kmAABB* glhckObjectGetOBB(glhckObject *object);
+GLHCKAPI const kmAABB* glhckObjectGetAABB(glhckObject *object);
 GLHCKAPI const kmMat4* glhckObjectGetMatrix(glhckObject *object);
 GLHCKAPI const kmVec3* glhckObjectGetPosition(const glhckObject *object);
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
