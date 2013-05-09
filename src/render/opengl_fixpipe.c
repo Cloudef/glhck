@@ -602,10 +602,20 @@ static inline void rObjectStart(const glhckObject *object) {
 
    /* bind texture if used */
    if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
-      /* set texture coords according to how geometry wants them */
       GL_CALL(glMatrixMode(GL_TEXTURE));
       GL_CALL(glLoadIdentity());
+
+      kmVec2 offset = {0,0};
+      if (object->material) memcpy(&offset, &object->material->textureOffset, sizeof(kmVec2));
+      GL_CALL(glTranslatef(offset.x, offset.y, 1.0f));
+
+      /* set texture coords according to how geometry wants them */
       GL_CALL(glScalef((GLfloat)1.0f/object->geometry->textureRange, (GLfloat)1.0f/object->geometry->textureRange, 1.0f));
+
+      kmVec2 scale = {1,1};
+      if (object->material) memcpy(&scale, &object->material->textureScale, sizeof(kmVec2));
+      GL_CALL(glScalef(scale.x, scale.y, 1.0f));
+
       glhckTextureBind(object->material->texture);
    } else if (GL_STATE_CHANGED(GL_STATE_TEXTURE)) {
       glhckTextureUnbind(GLHCK_TEXTURE_2D);
