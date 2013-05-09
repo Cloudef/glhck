@@ -86,6 +86,7 @@ static void rLightBind(glhckLight *light)
       return;
 
    object = glhckLightGetObject(light);
+   kmVec3 diffuse = { 255, 255, 255 }; // FIXME: Get real diffuse
    GL_CALL(glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat*)glhckObjectGetPosition(object)));
    GL_CALL(glLightfv(GL_LIGHT0, GL_CONSTANT_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->x));
    GL_CALL(glLightfv(GL_LIGHT0, GL_LINEAR_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->y));
@@ -95,6 +96,11 @@ static void rLightBind(glhckLight *light)
    GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_EXPONENT, (GLfloat*)&glhckLightGetCutout(light)->y));
    GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, (GLfloat*)glhckObjectGetTarget(object)));
 #endif
+   GL_CALL(glLightfv(GL_LIGHT0, GL_DIFFUSE, ((GLfloat[]){
+               (GLfloat)diffuse.x/255.0f,
+               (GLfloat)diffuse.y/255.0f,
+               (GLfloat)diffuse.z/255.0f,
+               (GLfloat)1.0f})));
 }
 
 /* \brief set projection matrix */
@@ -490,26 +496,28 @@ static inline void rObjectStart(const glhckObject *object) {
    __OpenGLstate old = GLPOINTER()->state;
    GLPOINTER()->state.flags = 0; /* reset this state */
 
-#if 0
    /* upload material parameters */
-   if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
-      GL_CALL(glLightfv(GL_LIGHT0, GL_AMBIENT, ((GLfloat[]){
-               (GLfloat)object->material.ambient.r/255.0f,
-               (GLfloat)object->material.ambient.g/255.0f,
-               (GLfloat)object->material.ambient.b/255.0f,
-               (GLfloat)object->material.ambient.a/255.0f})));
-      GL_CALL(glLightfv(GL_LIGHT0, GL_DIFFUSE, ((GLfloat[]){
-               (GLfloat)object->material.diffuse.r/255.0f,
-               (GLfloat)object->material.diffuse.g/255.0f,
-               (GLfloat)object->material.diffuse.b/255.0f,
-               (GLfloat)object->material.diffuse.a/255.0f})));
-      GL_CALL(glLightfv(GL_LIGHT0, GL_SPECULAR, ((GLfloat[]){
-               (GLfloat)object->material.specular.r/255.0f,
-               (GLfloat)object->material.specular.g/255.0f,
-               (GLfloat)object->material.specular.b/255.0f,
-               (GLfloat)object->material.specular.a/255.0f})));
+   if (GL_HAS_STATE(GL_STATE_LIGHTING) && object->material) {
+      GL_CALL(glMaterialfv(GL_FRONT, GL_AMBIENT, ((GLfloat[]){
+               (GLfloat)object->material->ambient.r/255.0f,
+               (GLfloat)object->material->ambient.g/255.0f,
+               (GLfloat)object->material->ambient.b/255.0f,
+               (GLfloat)object->material->ambient.a/255.0f})));
+
+      GL_CALL(glMaterialfv(GL_FRONT, GL_DIFFUSE, ((GLfloat[]){
+               (GLfloat)object->material->diffuse.r/255.0f,
+               (GLfloat)object->material->diffuse.g/255.0f,
+               (GLfloat)object->material->diffuse.b/255.0f,
+               (GLfloat)object->material->diffuse.a/255.0f})));
+
+      GL_CALL(glMaterialfv(GL_FRONT, GL_SPECULAR, ((GLfloat[]){
+               (GLfloat)object->material->specular.r/255.0f,
+               (GLfloat)object->material->specular.g/255.0f,
+               (GLfloat)object->material->specular.b/255.0f,
+               (GLfloat)object->material->specular.a/255.0f})));
+
+      GL_CALL(glMaterialf(GL_FRONT, GL_SHININESS, object->material->shininess));
    }
-#endif
 
    /* set states and draw */
    rObjectState(object);

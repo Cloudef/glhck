@@ -18,7 +18,10 @@ GLHCKAPI glhckMaterial* glhckMaterialNew(glhckTexture *texture)
 
    /* default material settings */
    glhckMaterialTextureScalef(object, 1, 1);
+   glhckMaterialAmibentb(object, 1, 1, 1, 255);
    glhckMaterialDiffuseb(object, 255, 255, 255, 255);
+   glhckMaterialSpecularb(object, 200, 200, 200, 255);
+   glhckMaterialShininess(object, 0.9);
    glhckMaterialOptions(object, GLHCK_MATERIAL_LIGHTING);
 
    /* assign initial texture */
