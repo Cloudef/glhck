@@ -240,7 +240,7 @@ int main(int argc, char **argv)
    unsigned int font2 = glhckTextNewFont(text, "example/media/DejaVuSans.ttf");
 
    glhckObject *rttText = NULL, *rttText2 = NULL;
-   glhckTextColor(text, 255, 255, 255, 255);
+   glhckTextColorb(text, 255, 255, 255, 255);
    if ((rttText = glhckTextPlane(text, font2, 42, "RTT Text", NULL))) {
       glhckObjectScalef(rttText, 0.05f, 0.05f, 1.0f); /* scale to fit our 3d world */
       glhckObjectPositionf(rttText, 0, 2, 0);
@@ -433,7 +433,7 @@ int main(int argc, char **argv)
 #endif
 
       /* draw some text */
-      glhckTextColor(text, 255, 255, 255, 255);
+      glhckTextColorb(text, 255, 255, 255, 255);
       glhckTextStash(text, font2, 18,         0,  HEIGHT-4, WIN_TITLE, NULL);
       glhckTextStash(text, font,  42,        25, HEIGHT-80, "愛してるGLHCK", NULL);
       glhckTextStash(text, font2, 32,        25, HEIGHT-40, "Äöäö DejaVuSans perkele", NULL);
@@ -441,7 +441,7 @@ int main(int argc, char **argv)
       glhckTextRender(text);
       glhckTextClear(text);
 
-      glhckTextColor(text, 255, 0, 0, 255);
+      glhckTextColorb(text, 255, 0, 0, 255);
       glhckTextStash(text, font2, 12, WIDTH-100,        18, "Wall of text", NULL);
       glhckTextRender(text);
       glhckTextClear(text);

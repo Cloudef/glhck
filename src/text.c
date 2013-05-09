@@ -352,7 +352,7 @@ GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh)
 #endif
 
    /* default color */
-   glhckTextColor(object, 255, 255, 255, 255);
+   glhckTextColorb(object, 255, 255, 255, 255);
 
    /* insert to world */
    _glhckWorldInsert(text, object, glhckText*);
@@ -483,16 +483,19 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float 
    }
 }
 
-/* \brief set text color */
-GLHCKAPI void glhckTextColor(glhckText *object,
-      unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+/* \brief set text color */
+GLHCKAPI void glhckTextColor(glhckText *object, const glhckColorb *color)
 {
-   CALL(2 ,"%p, %d, %d, %d", object, r, g, b, a);
-   assert(object);
-   object->color.r = r;
-   object->color.g = g;
-   object->color.b = b;
-   object->color.a = a;
+   CALL(2 ,"%p, "COLBS, object, COLB(color));
+   assert(object && color);
+   memcpy(&object->color, color, sizeof(glhckColorb));
+}
+
+/* \brief set text color (with unsigned char) */
+GLHCKAPI void glhckTextColorb(glhckText *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+{
+   const glhckColorb color = {r, g, b, a};
+   glhckTextColor(object, &color);
 }
 
 /* \brief get text color */
