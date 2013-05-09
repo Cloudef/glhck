@@ -866,7 +866,7 @@ GLHCKAPI void glhckTextGetMetrics(glhckText *object, unsigned int font_id, float
 GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float size, const char *s, kmVec2 *min, kmVec2 *max);
 GLHCKAPI void glhckTextColor(glhckText *object, const glhckColorb *color);
 GLHCKAPI void glhckTextColorb(glhckText *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
-GLHCKAPI const glhckColorb* glhckGetTextColor(glhckText *object);
+GLHCKAPI const glhckColorb* glhckTextGetColor(glhckText *object);
 GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *object, const void *data, size_t size);
 GLHCKAPI unsigned int glhckTextNewFont(glhckText *object, const char *file);
 GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object, const char *file, int ascent, int descent, int line_gap);
