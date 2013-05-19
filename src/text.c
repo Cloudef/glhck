@@ -808,7 +808,7 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id,
       texture->geometry.vertexCount += i;
    }
 
-   if (dx) *dx = x;
+   if (dx) *dx = x + (glyph?glyph->xadv:0);
 }
 
 /* \brief set shader to text */
@@ -845,7 +845,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id,
 
    glhckTextStash(object, font_id, size, 0, size*0.82f, s, &linew);
 
-   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, linew+3, size, 0, 0,
+   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, linew, size, 0, 0,
             GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
       goto fail;
 
@@ -865,7 +865,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id,
    if (!(glhckFramebufferAttachTexture(fbo, texture, GLHCK_COLOR_ATTACHMENT0)))
       goto fail;
 
-   glhckFramebufferRecti(fbo, 0, 0, linew+3, size);
+   glhckFramebufferRecti(fbo, 0, 0, linew, size);
    glhckFramebufferBegin(fbo);
    glhckRenderClear(GLHCK_COLOR_BUFFER);
    glhckTextRender(object);
