@@ -371,18 +371,18 @@ typedef struct __GLHCKtextTexture {
    struct __GLHCKtextTextureRow *rows;
    struct __GLHCKtextTexture *next;
    glhckTexture *texture;
-   int numRows, allocatedRows;
+   float internalWidth, internalHeight;
+   int rowsCount, allocatedCount;
 } __GLHCKtextTexture;
 
 /* text container */
 typedef struct _glhckText {
    struct _glhckShader *shader;
-   struct __GLHCKtextFont *fcache;
-   struct __GLHCKtextTexture *tcache;
+   struct __GLHCKtextFont *fontCache;
+   struct __GLHCKtextTexture *textureCache;
    REFERENCE_COUNTED(_glhckText);
-   float itw, ith;
    unsigned int textureRange;
-   int tw, th;
+   int cacheWidth, cacheHeight;
    struct glhckColorb color;
 } _glhckText;
 
