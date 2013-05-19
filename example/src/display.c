@@ -401,7 +401,7 @@ int main(int argc, char **argv)
          glhckLightEndProjectionWithCamera(light[li], camera);
 #endif
 
-         glhckObjectDraw(rttText2);
+         if (rttText2) glhckObjectDraw(rttText2);
          glhckObjectDraw(sprite);
          glhckObjectDraw(sprite3);
          glhckObjectDraw(cube2);

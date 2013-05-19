@@ -859,21 +859,21 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
 GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime);
 
 /* text */
-GLHCKAPI glhckText* glhckTextNew(int cachew, int cacheh);
+GLHCKAPI glhckText* glhckTextNew(int cacheWidth, int cacheHeight);
 GLHCKAPI glhckText* glhckTextRef(glhckText *object);
 GLHCKAPI unsigned int glhckTextFree(glhckText *object);
-GLHCKAPI void glhckTextGetMetrics(glhckText *object, unsigned int font_id, float size, float *ascender, float *descender, float *lineh);
+GLHCKAPI void glhckTextGetMetrics(glhckText *object, unsigned int font_id, float size, float *ascender, float *descender, float *lineHeight);
 GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float size, const char *s, kmVec2 *min, kmVec2 *max);
 GLHCKAPI void glhckTextColor(glhckText *object, const glhckColorb *color);
 GLHCKAPI void glhckTextColorb(glhckText *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI const glhckColorb* glhckTextGetColor(glhckText *object);
 GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *object, const void *data, size_t size);
 GLHCKAPI unsigned int glhckTextNewFont(glhckText *object, const char *file);
-GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object, const char *file, int ascent, int descent, int line_gap);
+GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap);
 GLHCKAPI void glhckTextNewGlyph(glhckText *object, unsigned int font_id, const char *s,
       short size, short base, int x, int y, int w, int h,
       float xoff, float yoff, float xadvance);
-GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size, float x, float y, const char *s, float *dx);
+GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size, float x, float y, const char *s, float *width);
 GLHCKAPI void glhckTextClear(glhckText *object);
 GLHCKAPI void glhckTextRender(glhckText *object);
 GLHCKAPI void glhckTextShader(glhckText *object, glhckShader *shader);

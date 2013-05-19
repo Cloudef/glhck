@@ -15,9 +15,11 @@
 #define GLHCK_TEXT_ROWS 128
 #define GLHCK_TEXT_VERT_COUNT (6*GLHCK_TEXT_ROWS)
 
-#define GLHCK_FONT_TTF      1
-#define GLHCK_FONT_TTF_MEM  2
-#define GLHCK_FONT_BMP      3
+/* \brief font types */
+typedef enum _glhckTextFontType {
+   GLHCK_FONT_TTF,
+   GLHCK_FONT_BMP,
+} _glhckTextFontType;
 
 /* \brief quad helper struct */
 typedef struct __GLHCKtextQuad {
@@ -50,8 +52,9 @@ typedef struct __GLHCKtextFont
    struct __GLHCKtextTexture *texture; /* only used on bitmap fonts */
    void *data;
    float ascender, descender, lineHeight;
-   unsigned int id, type, glyphCount;
+   unsigned int id, glyphCount;
    int lut[GLHCK_TEXT_HASH_SIZE];
+   _glhckTextFontType type;
 } __GLHCKtextFont;
 
 // Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
@@ -275,8 +278,7 @@ static __GLHCKtextTexture* _glhckTextGetTextureCache(glhckText *object, int gw, 
 }
 
 /* \brief get glyph from font */
-__GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font,
-      unsigned int code, short isize)
+__GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font, unsigned int code, short isize)
 {
    int i, x1, y1, x2, y2, gw, gh, gid, advance, lsb;
    unsigned int h;
@@ -314,8 +316,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font,
       return NULL;
 
    /* create new glyph */
-   glyph = _glhckRealloc(font->glyphCache,
-         font->glyphCount, font->glyphCount+1, sizeof(__GLHCKtextGlyph));
+   glyph = _glhckRealloc(font->glyphCache, font->glyphCount, font->glyphCount+1, sizeof(__GLHCKtextGlyph));
    if (!glyph) return NULL;
    font->glyphCache = glyph;
 
@@ -356,8 +357,8 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font,
 }
 
 /* \brief get quad for text drawing */
-static int _getQuad(glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph *glyph,
-      short isize, float *x, float *y, __GLHCKtextQuad *q)
+static int _getQuad(glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph *glyph, short isize,
+      float *x, float *y, __GLHCKtextQuad *q)
 {
    glhckVector2f v1, v2, t1, t2;
    int rx, ry;
@@ -500,23 +501,23 @@ success:
 
 /* \brief get text metrics */
 GLHCKAPI void glhckTextGetMetrics(glhckText *object, unsigned int font_id,
-      float size, float *ascender, float *descender, float *lineh)
+      float size, float *ascender, float *descender, float *lineHeight)
 {
    __GLHCKtextFont *font;
-   CALL(1, "%p, %d, %f, %f, %f, %f", object, font_id, size, ascender, descender, lineh);
+   CALL(1, "%p, %d, %f, %f, %f, %f", object, font_id, size, ascender, descender, lineHeight);
    assert(object);
+   if (ascender) *ascender = 0.0f;
+   if (descender) *descender = 0.0f;
+   if (lineHeight) *lineHeight = 0.0f;
 
    /* search font */
    for (font = object->fontCache; font && font->id != font_id; font = font->next);
-
-   /* not found */
-   if (!font || (font->type != GLHCK_FONT_BMP && !font->data))
-      return;
+   if (!font) return;
 
    /* must not fail */
-   if (ascender)  *ascender  = font->ascender*size;
-   if (descender) *descender = font->descender*size;
-   if (lineh)     *lineh     = font->lineHeight*size;
+   if (ascender)   *ascender   = font->ascender*size;
+   if (descender)  *descender  = font->descender*size;
+   if (lineHeight) *lineHeight = font->lineHeight*size;
 }
 
 /* \brief get min max of text */
@@ -532,28 +533,24 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float 
 
    CALL(1, "%p, %u, %f, %s, %p, %p", object, font_id, size, s, min, max);
    assert(object && s && min && max);
+   if (min) memset(min, 0, sizeof(kmVec2));
+   if (max) memset(max, 0, sizeof(kmVec2));
 
    /* search font */
    for (font = object->fontCache; font && font->id != font_id; font = font->next);
+   if (!font) return;
 
-   /* not found */
-   if (!font || (font->type != GLHCK_FONT_BMP && !font->data))
-      return;
-
-   min->x = max->x = x = 0;
-   min->y = max->y = y = 0;
-
-   for (; *s; ++s) {
+   for (x = 0, y = 0; *s; ++s) {
       if (decutf8(&state, &codepoint, *(unsigned char*)s)) continue;
       if (!(glyph = _glhckTextGetGlyph(object, font, codepoint, isize)))
          continue;
       if (_getQuad(object, font, glyph, isize, &x, &y, &q) != RETURN_OK)
          continue;
 
-      glhckMinV2(min, &q.v1);
-      glhckMaxV2(max, &q.v1);
-      glhckMinV2(min, &q.v2);
-      glhckMaxV2(max, &q.v2);
+      if (min) glhckMinV2(min, &q.v1);
+      if (max) glhckMaxV2(max, &q.v1);
+      if (min) glhckMinV2(min, &q.v2);
+      if (max) glhckMaxV2(max, &q.v2);
    }
 }
 
@@ -585,7 +582,7 @@ GLHCKAPI const glhckColorb* glhckTextGetColor(glhckText *object)
 GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *object, const void *data, size_t size)
 {
    unsigned int id;
-   int ascent, descent, fh, line_gap;
+   int ascent, descent, fh, lineGap;
    __GLHCKtextFont *font, *f;
    CALL(0, "%p, %p", object, data);
    assert(object && data);
@@ -596,21 +593,24 @@ GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *object, const void *
 
    /* init */
    memset(font->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
-   for (id = 1, f = object->fontCache; f; f = f->next) ++id;
-   font->data = _glhckCopy(data, size);
+   for (id = 1, f = object->fontCache; f; f = f->next, ++id);
+
+   /* copy the data */
+   if (!(font->data = _glhckCopy(data, size)))
+      goto fail;
 
    /* create truetype font */
    if (!stbtt_InitFont(&font->font, font->data, 0))
       goto fail;
 
    /* store normalized line height */
-   stbtt_GetFontVMetrics(&font->font, &ascent, &descent, &line_gap);
+   stbtt_GetFontVMetrics(&font->font, &ascent, &descent, &lineGap);
    fh = ascent - descent;
    font->ascender    = (float)ascent/fh;
    font->descender   = (float)descent/fh;
-   font->lineHeight  = (float)(fh + line_gap)/fh;
+   font->lineHeight  = (float)(fh + lineGap)/fh;
    font->id          = id;
-   font->type        = GLHCK_FONT_TTF_MEM;
+   font->type        = GLHCK_FONT_TTF;
    font->next        = object->fontCache;
    object->fontCache = font;
 
@@ -618,6 +618,9 @@ GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *object, const void *
    return id;
 
 fail:
+   if (font) {
+      IFDO(_glhckFree, font->data);
+   }
    IFDO(_glhckFree, font);
    RET(0, "%d", 0);
    return 0;
@@ -644,7 +647,8 @@ GLHCKAPI unsigned int glhckTextNewFont(glhckText *object, const char *file)
       goto fail;
 
    /* read data */
-   fread(data, 1, size, f);
+   if (fread(data, 1, size, f) != size)
+      goto read_fail;
    NULLDO(fclose, f);
 
    /* read and add the new font to stash */
@@ -667,15 +671,14 @@ fail:
 }
 
 /* \brief new bitmap font */
-GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object,
-      const char *file, int ascent, int descent, int line_gap)
+GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap)
 {
    int fh;
    unsigned int id;
    glhckTextureParameters nparams;
    __GLHCKtextFont *font, *f;
    __GLHCKtextTexture *texture = NULL, *t;
-   CALL(0, "%p, %s, %d, %d, %d", object, file, ascent, descent, line_gap);
+   CALL(0, "%p, %s, %d, %d, %d", object, file, ascent, descent, lineGap);
    assert(object && file);
 
     /* allocate font */
@@ -684,7 +687,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object,
 
    /* init */
    memset(font->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
-   for (id = 1, f = object->fontCache; f; f = f->next) ++id;
+   for (id = 1, f = object->fontCache; f; f = f->next, ++id);
 
    if (!(texture = _glhckCalloc(1, sizeof(__GLHCKtextTexture))))
       goto fail;
@@ -716,7 +719,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object,
    if (fh == 0) fh = 1;
    font->ascender    = (float)ascent/fh;
    font->descender   = (float)descent/fh;
-   font->lineHeight  = (float)(fh + line_gap)/fh;
+   font->lineHeight  = (float)(fh + lineGap)/fh;
    font->texture     = texture;
    font->id          = id;
    font->type        = GLHCK_FONT_BMP;
@@ -751,8 +754,6 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *object,
 
    /* search font */
    for (font = object->fontCache; font && font->id != font_id; font = font->next);
-
-   /* not found */
    if (!font || font->type != GLHCK_FONT_BMP)
       return;
 
@@ -802,8 +803,7 @@ GLHCKAPI void glhckTextClear(glhckText *object)
 }
 
 /* \brief draw text using font */
-GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id,
-      float size, float x, float y, const char *s, float *dx)
+GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size, float x, float y, const char *s, float *width)
 {
    unsigned int i, codepoint, state = 0;
    short isize = (short)size*10.0f;
@@ -823,16 +823,13 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id,
    __GLHCKtextGlyph *glyph;
    __GLHCKtextFont *font;
    __GLHCKtextQuad q;
-   CALL(2, "%p, %d, %f, %f, %f, %s, %p", object, font_id, size, x, y, s, dx);
+   CALL(2, "%p, %d, %f, %f, %f, %s, %p", object, font_id, size, x, y, s, width);
    assert(object && s);
-   if (!object->textureCache) return;
+   if (width) *width = 0;
 
    /* search font */
    for (font = object->fontCache; font && font->id != font_id; font = font->next);
-
-   /* not found */
-   if (!font || (font->type != GLHCK_FONT_BMP && !font->data))
-      return;
+   if (!font) return;
 
    for (; *s; ++s) {
       if (decutf8(&state, &codepoint, *(unsigned char*)s)) continue;
@@ -896,7 +893,7 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id,
       texture->geometry.vertexCount += i;
    }
 
-   if (dx) *dx = x + (glyph?glyph->xadv:0);
+   if (width) *width = x + (glyph?glyph->xadv:0);
 }
 
 /* \brief set shader to text */
@@ -919,14 +916,14 @@ GLHCKAPI glhckShader* glhckTextGetShader(const glhckText *object)
 }
 
 /* \brief create texture from text */
-GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id,
-      float size, const char *s, const glhckTextureParameters *params)
+GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, float size,
+      const char *s, const glhckTextureParameters *params)
 {
    glhckTexture *texture = NULL;
    glhckFramebuffer *fbo = NULL;
    glhckTextureParameters nparams;
    float linew;
-   CALL(2, "%p, %u, %f, %s", object, font_id, size, s);
+   CALL(1, "%p, %u, %f, %s", object, font_id, size, s);
 
    if (!(texture = glhckTextureNew(NULL, NULL, params)))
       goto fail;
@@ -950,7 +947,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id,
    if (!(fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER)))
       goto fail;
 
-   if (!(glhckFramebufferAttachTexture(fbo, texture, GLHCK_COLOR_ATTACHMENT0)))
+   if (glhckFramebufferAttachTexture(fbo, texture, GLHCK_COLOR_ATTACHMENT0) != RETURN_OK)
       goto fail;
 
    glhckFramebufferRecti(fbo, 0, 0, linew, size);
@@ -962,19 +959,19 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id,
    texture->importFlags |= GLHCK_TEXTURE_IMPORT_TEXT;
    glhckFramebufferFree(fbo);
 
-   RET(2, "%p", texture);
+   RET(1, "%p", texture);
    return texture;
 
 fail:
    IFDO(glhckFramebufferFree, fbo);
    IFDO(glhckTextureFree, texture);
-   RET(2, "%p", NULL);
+   RET(1, "%p", NULL);
    return NULL;
 }
 
 /* \brief create plane object from text */
-GLHCKAPI glhckObject* glhckTextPlane(glhckText *object, unsigned int font_id,
-      float size, const char *s, const glhckTextureParameters *params)
+GLHCKAPI glhckObject* glhckTextPlane(glhckText *object, unsigned int font_id, float size,
+      const char *s, const glhckTextureParameters *params)
 {
    glhckTexture *texture;
    glhckObject *sprite = NULL;
