@@ -11,7 +11,9 @@
 #define STBTT_free(x,u)    _glhckFree(x)
 #include "helper/stb_truetype.h"
 
-#define GLHCK_TEXT_HASH_SIZE  256
+#define GLHCK_TEXT_HASH_SIZE 256
+#define GLHCK_TEXT_ROWS 128
+#define GLHCK_TEXT_VERT_COUNT (6*GLHCK_TEXT_ROWS)
 
 #define GLHCK_FONT_TTF      1
 #define GLHCK_FONT_TTF_MEM  2
@@ -96,6 +98,49 @@ static unsigned int hashint(unsigned int a)
    a += ~(a<<11);
    a ^=  (a>>16);
    return a;
+}
+
+/* \brief resize geometry data */
+static int _glhckTextGeometryAllocateMore(__GLHCKtextGeometry *geometry)
+{
+   int newCount;
+#if GLHCK_TEXT_FLOAT_PRECISION
+   glhckVertexData2f *newData;
+#else
+   glhckVertexData2s *newData;
+#endif
+
+   newCount = geometry->vertexCount + GLHCK_TEXT_VERT_COUNT;
+#if GLHCK_TEXT_FLOAT_PRECISION
+   if (!(newData = _glhckRealloc(geometry->vertexData, geometry->allocatedCount, newCount, sizeof(glhckVertexData2f))))
+      goto fail;
+#else
+   if (!(newData = _glhckRealloc(geometry->vertexData, geometry->allocatedCount, newCount, sizeof(glhckVertexData2s))))
+      goto fail;
+#endif
+
+   geometry->vertexData = newData;
+   return RETURN_OK;
+
+fail:
+   return RETURN_FAIL;
+}
+
+/* \brief resize row data */
+static int _glhckTextTextureRowsAllocateMore(__GLHCKtextTexture *texture)
+{
+   int newCount;
+   struct __GLHCKtextTextureRow *newRows;
+
+   newCount = texture->numRows + GLHCK_TEXT_ROWS;
+   if (!(newRows = _glhckRealloc(texture->rows, texture->allocatedRows, newCount, sizeof(__GLHCKtextTextureRow))))
+      goto fail;
+
+   texture->rows = newRows;
+   return RETURN_OK;
+
+fail:
+   return RETURN_FAIL;
 }
 
 /* \brief creates new texture to the cache */
@@ -226,6 +271,12 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font,
       }
 
       /* add new row */
+      if (texture->numRows >= texture->allocatedRows) {
+         if (_glhckTextTextureRowsAllocateMore(texture) != RETURN_OK) {
+            DEBUG(GLHCK_DBG_WARNING, "TEXT :: [%p] out of memory!", object);
+            continue;
+         }
+      }
       br = &texture->rows[texture->numRows];
       br->x = 0; br->y = py; br->h = rh;
       texture->numRows++;
@@ -397,6 +448,8 @@ GLHCKAPI unsigned int glhckTextFree(glhckText *object)
    for (t = object->tcache; t; t = tn) {
       tn = t->next;
       IFDO(glhckTextureFree, t->texture);
+      IFDO(_glhckFree, t->geometry.vertexData);
+      IFDO(_glhckFree, t->rows);
       _glhckFree(t);
    }
 
@@ -724,7 +777,7 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id,
 {
    unsigned int i, codepoint, state = 0;
    short isize = (short)size*10.0f;
-   size_t vcount;
+   int vcount;
 #if GLHCK_TEXT_FLOAT_PRECISION
    glhckVertexData2f *v;
 #if GLHCK_TRISTRIP
@@ -757,8 +810,12 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id,
          continue;
 
       vcount = (texture = glyph->texture)->geometry.vertexCount;
-      if ((vcount?vcount+6:4) >= GLHCK_TEXT_VERT_COUNT)
-         continue;
+      if ((vcount?vcount+6:4) >= texture->geometry.allocatedCount) {
+         if (_glhckTextGeometryAllocateMore(&texture->geometry) != RETURN_OK) {
+            DEBUG(GLHCK_DBG_WARNING, "TEXT :: [%p] out of memory!", object);
+            continue;
+         }
+      }
 
       /* should not ever fail */
       if (_getQuad(object, font, glyph, isize, &x, &y, &q)

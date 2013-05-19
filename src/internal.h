@@ -350,9 +350,6 @@ typedef struct _glhckAnimator {
    char dirty;
 } _glhckAnimator;
 
-#define GLHCK_TEXT_MAX_ROWS   128
-#define GLHCK_TEXT_VERT_COUNT (6*128)
-
 /* row data of text texture */
 typedef struct __GLHCKtextTextureRow {
    unsigned short x, y, h;
@@ -361,20 +358,20 @@ typedef struct __GLHCKtextTextureRow {
 /* representation of text geometry */
 typedef struct __GLHCKtextGeometry {
 #if GLHCK_TEXT_FLOAT_PRECISION
-   struct glhckVertexData2f vertexData[GLHCK_TEXT_VERT_COUNT];
+   struct glhckVertexData2f *vertexData;
 #else
-   struct glhckVertexData2s vertexData[GLHCK_TEXT_VERT_COUNT];
+   struct glhckVertexData2s *vertexData;
 #endif
-   int vertexCount;
+   int vertexCount, allocatedCount;
 } __GLHCKtextGeometry;
 
 /* text texture container */
 typedef struct __GLHCKtextTexture {
    struct __GLHCKtextGeometry geometry;
-   struct __GLHCKtextTextureRow rows[GLHCK_TEXT_MAX_ROWS];
+   struct __GLHCKtextTextureRow *rows;
    struct __GLHCKtextTexture *next;
    glhckTexture *texture;
-   int numRows;
+   int numRows, allocatedRows;
 } __GLHCKtextTexture;
 
 /* text container */
