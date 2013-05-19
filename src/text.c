@@ -818,8 +818,7 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id,
       }
 
       /* should not ever fail */
-      if (_getQuad(object, font, glyph, isize, &x, &y, &q)
-            != RETURN_OK)
+      if (_getQuad(object, font, glyph, isize, &x, &y, &q) != RETURN_OK)
          continue;
 
       /* insert geometry data */
