@@ -743,7 +743,7 @@ static inline void rTextRender(const glhckText *text)
 
    GL_CALL(glColor4ub(text->color.r, text->color.b, text->color.g, text->color.a));
 
-   for (texture = text->tcache; texture;
+   for (texture = text->textureCache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;

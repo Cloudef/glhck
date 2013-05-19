@@ -870,7 +870,7 @@ static inline void rTextRender(const glhckText *text)
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
          &((GLfloat[]){text->color.r, text->color.g, text->color.b, text->color.a}));
 
-   for (texture = text->tcache; texture;
+   for (texture = text->textureCache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
