@@ -427,13 +427,11 @@ GLHCKAPI void glhckTextGetMetrics(glhckText *object, unsigned int font_id,
       float size, float *ascender, float *descender, float *lineh)
 {
    __GLHCKtextFont *font;
-   CALL(1, "%p, %d, %f, %f, %f, %f", object, font_id, size,
-         ascender, descender, lineh);
+   CALL(1, "%p, %d, %f, %f, %f, %f", object, font_id, size, ascender, descender, lineh);
    assert(object);
 
    /* search font */
-   for (font = object->fcache; font && font->id != font_id;
-        font = font->next);
+   for (font = object->fcache; font && font->id != font_id; font = font->next);
 
    /* not found */
    if (!font || (font->type != GLHCK_FONT_BMP && !font->data))
@@ -456,13 +454,11 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float 
    __GLHCKtextQuad q;
    float x, y;
 
-   CALL(1, "%p, %u, %f, %s, %p, %p",
-         object, font_id, size, s, min, max);
+   CALL(1, "%p, %u, %f, %s, %p, %p", object, font_id, size, s, min, max);
    assert(object && s && min && max);
 
    /* search font */
-   for (font = object->fcache; font && font->id != font_id;
-        font = font->next);
+   for (font = object->fcache; font && font->id != font_id; font = font->next);
 
    /* not found */
    if (!font || (font->type != GLHCK_FONT_BMP && !font->data))
@@ -541,7 +537,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *object, const void *
    font->id       = id;
    font->type     = GLHCK_FONT_TTF_MEM;
    font->next     = object->fcache;
-   object->fcache   = font;
+   object->fcache = font;
 
    RET(0, "%d", id);
    return id;
@@ -642,7 +638,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object,
    font->id       = id;
    font->type     = GLHCK_FONT_BMP;
    font->next     = object->fcache;
-   object->fcache   = font;
+   object->fcache = font;
 
    RET(0, "%d", id);
    return id;
@@ -671,8 +667,7 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *object,
    assert(object && s);
 
    /* search font */
-   for (font = object->fcache; font && font->id != font_id;
-        font = font->next);
+   for (font = object->fcache; font && font->id != font_id; font = font->next);
 
    /* not found */
    if (!font || font->type == GLHCK_FONT_BMP)
@@ -745,14 +740,12 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id,
    __GLHCKtextGlyph *glyph;
    __GLHCKtextFont *font;
    __GLHCKtextQuad q;
-   CALL(2, "%p, %d, %f, %f, %f, %s, %p", object, font_id,
-         size, x, y, s, dx);
+   CALL(2, "%p, %d, %f, %f, %f, %s, %p", object, font_id, size, x, y, s, dx);
    assert(object && s);
    if (!object->tcache) return;
 
    /* search font */
-   for (font = object->fcache; font && font->id != font_id;
-        font = font->next);
+   for (font = object->fcache; font && font->id != font_id; font = font->next);
 
    /* not found */
    if (!font || (font->type != GLHCK_FONT_BMP && !font->data))
@@ -852,7 +845,8 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id,
 
    glhckTextStash(object, font_id, size, 0, size*0.82f, s, &linew);
 
-   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, linew+3, size, 0, 0, GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
+   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, linew+3, size, 0, 0,
+            GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
       goto fail;
 
    /* make sure mipmap is disabled from the parameters */
