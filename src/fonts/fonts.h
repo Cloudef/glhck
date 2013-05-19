@@ -1,7 +1,7 @@
 #ifndef __fonts_h__
 #define __fonts_h__
 
-/* \brief array struct element for internal font bitmap font mapping */
+/* \brief array struct element for internal font bitmap glyph mapping */
 typedef struct _glhckBitmapGlyph {
    const char *character;
    int x, y, w, h;
