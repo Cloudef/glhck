@@ -867,8 +867,10 @@ GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float 
 GLHCKAPI void glhckTextColor(glhckText *object, const glhckColorb *color);
 GLHCKAPI void glhckTextColorb(glhckText *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI const glhckColorb* glhckTextGetColor(glhckText *object);
+GLHCKAPI unsigned int glhckTextNewFontKakwafont(glhckText *object, int *nativeSize);
 GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *object, const void *data, size_t size);
 GLHCKAPI unsigned int glhckTextNewFont(glhckText *object, const char *file);
+GLHCKAPI unsigned int glhckTextNewFontFromTexture(glhckText *object, glhckTexture *texture, int ascent, int descent, int lineGap);
 GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap);
 GLHCKAPI void glhckTextNewGlyph(glhckText *object, unsigned int font_id, const char *s,
       short size, short base, int x, int y, int w, int h,

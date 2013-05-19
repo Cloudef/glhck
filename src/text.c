@@ -2,6 +2,10 @@
 #include <limits.h> /* for SHRT_MAX */
 #include <stdio.h>
 
+/* builtin fonts */
+#include "fonts/fonts.h"
+#include "fonts/kakwafont.h"
+
 /* traching channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_TEXT
 
@@ -170,6 +174,9 @@ static int _glhckTextNewTexture(glhckText *object, glhckTextureFormat format, gl
    nparams.mipmap = 0;
    /* FIXME: do a function that checks, if filter contains mipmaps, and then replace */
    nparams.minFilter = GLHCK_FILTER_NEAREST;
+   nparams.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
+   nparams.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
+   nparams.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
    glhckTextureParameter(texture->texture, &nparams);
 
    /* set internal texture dimensions for mapping */
@@ -403,6 +410,53 @@ static int _getQuad(glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph *
    return RETURN_OK;
 }
 
+/* \brief create new internal font */
+static unsigned int glhckTextNewFontInternal(glhckText *object, const _glhckBitmapFontInfo *font, int *nativeSize)
+{
+   unsigned int id, i;
+   glhckTexture *texture;
+   glhckTextureParameters nparams;
+   const _glhckBitmapGlyph *glyph;
+   assert(object && font);
+   if (nativeSize) *nativeSize = 0;
+
+   /* create texture for bitmap font */
+   if (!(texture = glhckTextureNew(NULL, NULL, NULL)))
+      goto fail;
+
+   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, font->width, font->height, 0, 0,
+            font->format, font->type, 0, font->data) != RETURN_OK)
+      goto fail;
+
+   /* make sure mipmap is disabled from the parameters */
+   memcpy(&nparams, glhckTextureDefaultParameters(), sizeof(glhckTextureParameters));
+   nparams.mipmap = 0;
+   /* FIXME: do a function that checks, if filter contains mipmaps, and then replace */
+   nparams.minFilter = GLHCK_FILTER_NEAREST;
+   nparams.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
+   nparams.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
+   nparams.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
+   glhckTextureParameter(texture, &nparams);
+
+   /* create font from texture */
+   if (!(id = glhckTextNewFontFromTexture(object, texture, font->ascent, font->descent, font->lineGap)))
+      return 0;
+
+   /* insert glyphs from font */
+   for (i = 0; font->glyphs[i].character; ++i) {
+      glyph = &font->glyphs[i];
+      glhckTextNewGlyph(object, id, glyph->character, font->fontSize, glyph->h,
+            glyph->w*glyph->x, glyph->h*glyph->y, glyph->w/2, glyph->h, 0, 0, glyph->w/2);
+   }
+
+   if (nativeSize) *nativeSize = font->fontSize;
+   return id;
+
+fail:
+   IFDO(glhckTextureFree, texture);
+   return 0;
+}
+
 /***
  * public api
  ***/
@@ -578,6 +632,17 @@ GLHCKAPI const glhckColorb* glhckTextGetColor(glhckText *object)
    return &object->color;
 }
 
+/* \brief new internal font */
+GLHCKAPI unsigned int glhckTextNewFontKakwafont(glhckText *object, int *nativeSize)
+{
+   unsigned int id;
+   CALL(0, "%p", object);
+   assert(object);
+   id = glhckTextNewFontInternal(object, &kakwafont, nativeSize);
+   RET(0, "%d", id);
+   return id;
+}
+
 /* \brief new font from memory */
 GLHCKAPI unsigned int glhckTextNewFontFromMemory(glhckText *object, const void *data, size_t size)
 {
@@ -670,18 +735,17 @@ fail:
    return 0;
 }
 
-/* \brief new bitmap font */
-GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap)
+/* \brief new bitmap font from texture */
+GLHCKAPI unsigned int glhckTextNewFontFromTexture(glhckText *object, glhckTexture *texture, int ascent, int descent, int lineGap)
 {
    int fh;
    unsigned int id;
-   glhckTextureParameters nparams;
    __GLHCKtextFont *font, *f;
-   __GLHCKtextTexture *texture = NULL, *t;
-   CALL(0, "%p, %s, %d, %d, %d", object, file, ascent, descent, lineGap);
-   assert(object && file);
+   __GLHCKtextTexture *textTexture, *t;
+   CALL(0, "%p, %p, %d, %d, %d", object, texture, ascent, descent, lineGap);
+   assert(object && texture);
 
-    /* allocate font */
+   /* allocate font */
    if (!(font = _glhckCalloc(1, sizeof(__GLHCKtextFont))))
       goto fail;
 
@@ -689,30 +753,23 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object, const char *
    memset(font->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
    for (id = 1, f = object->fontCache; f; f = f->next, ++id);
 
-   if (!(texture = _glhckCalloc(1, sizeof(__GLHCKtextTexture))))
+   /* allocate text texture */
+   if (!(textTexture = _glhckCalloc(1, sizeof(__GLHCKtextTexture))))
       goto fail;
 
-   /* load image */
-   if (!(texture->texture = glhckTextureNew(file, NULL, NULL)))
-      goto fail;
-
-   /* make sure mipmap is disabled from the parameters */
-   memcpy(&nparams, glhckTextureDefaultParameters(), sizeof(glhckTextureParameters));
-   nparams.mipmap = 0;
-   /* FIXME: do a function that checks, if filter contains mipmaps, and then replace */
-   nparams.minFilter = GLHCK_FILTER_NEAREST;
-   glhckTextureParameter(texture->texture, &nparams);
+   /* reference texture */
+   textTexture->texture = glhckTextureRef(texture);
 
    /* make sure no glyphs are cached to this texture */
-   texture->rowsCount = INT_MAX;
+   textTexture->rowsCount = INT_MAX;
 
    /* store internal dimensions for mapping */
-   texture->internalWidth = 1.0f/texture->texture->width;
-   texture->internalHeight = -1.0f/texture->texture->height;
+   textTexture->internalWidth = 1.0f/texture->width;
+   textTexture->internalHeight = 1.0f/texture->height;
 
    for (t = object->textureCache; t && t->next; t = t->next);
-   if (!t) object->textureCache = texture;
-   else t->next = texture;
+   if (!t) object->textureCache = textTexture;
+   else t->next = textTexture;
 
    /* store normalized line height */
    fh = ascent - descent;
@@ -720,7 +777,7 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object, const char *
    font->ascender    = (float)ascent/fh;
    font->descender   = (float)descent/fh;
    font->lineHeight  = (float)(fh + lineGap)/fh;
-   font->texture     = texture;
+   font->texture     = textTexture;
    font->id          = id;
    font->type        = GLHCK_FONT_BMP;
    font->next        = object->fontCache;
@@ -731,10 +788,46 @@ GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object, const char *
 
 fail:
    if (texture) {
-      IFDO(glhckTextureFree, texture->texture);
+      IFDO(glhckTextureFree, textTexture->texture);
    }
    IFDO(_glhckFree, texture);
    IFDO(_glhckFree, font);
+   RET(0, "%d", 0);
+   return 0;
+}
+
+/* \brief new bitmap font */
+GLHCKAPI unsigned int glhckTextNewFontFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap)
+{
+   unsigned int id;
+   glhckTextureParameters nparams;
+   glhckTexture *texture;
+   CALL(0, "%p, %s, %d, %d, %d", object, file, ascent, descent, lineGap);
+   assert(object && file);
+
+   /* load image */
+   if (!(texture = glhckTextureNew(file, NULL, NULL)))
+      goto fail;
+
+   /* make sure mipmap is disabled from the parameters */
+   memcpy(&nparams, glhckTextureDefaultParameters(), sizeof(glhckTextureParameters));
+   nparams.mipmap = 0;
+   /* FIXME: do a function that checks, if filter contains mipmaps, and then replace */
+   nparams.minFilter = GLHCK_FILTER_NEAREST;
+   nparams.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
+   nparams.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
+   nparams.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
+   glhckTextureParameter(texture, &nparams);
+
+   if (!(id = glhckTextNewFontFromTexture(object, texture, ascent, descent, lineGap)))
+      goto fail;
+
+   glhckTextureFree(texture);
+   RET(0, "%d", id);
+   return id;
+
+fail:
+   IFDO(glhckTextureFree, texture);
    RET(0, "%d", 0);
    return 0;
 }

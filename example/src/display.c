@@ -238,6 +238,7 @@ int main(int argc, char **argv)
 
    unsigned int font  = glhckTextNewFont(text, "example/media/sazanami-gothic.ttf");
    unsigned int font2 = glhckTextNewFont(text, "example/media/DejaVuSans.ttf");
+   unsigned int font3 = glhckTextNewFontKakwafont(text, NULL);
 
    glhckObject *rttText = NULL, *rttText2 = NULL;
    glhckTextColorb(text, 255, 255, 255, 255);
@@ -437,7 +438,7 @@ int main(int argc, char **argv)
       glhckTextStash(text, font2, 18,         0,  HEIGHT-4, WIN_TITLE, NULL);
       glhckTextStash(text, font,  42,        25, HEIGHT-80, "愛してるGLHCK", NULL);
       glhckTextStash(text, font2, 32,        25, HEIGHT-40, "Äöäö DejaVuSans perkele", NULL);
-      glhckTextStash(text, font2, 18,         0,        18, "SADASD!?,.:;", NULL);
+      glhckTextStash(text, font3, 12,         0,        12, "SADASD!?,.:;", NULL);
       glhckTextRender(text);
       glhckTextClear(text);
 
