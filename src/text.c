@@ -723,7 +723,7 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *object,
    for (font = object->fcache; font && font->id != font_id; font = font->next);
 
    /* not found */
-   if (!font || font->type == GLHCK_FONT_BMP)
+   if (!font || font->type != GLHCK_FONT_BMP)
       return;
 
    /* decode utf8 character */
