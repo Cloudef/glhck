@@ -96,6 +96,31 @@ static unsigned int decutf8(unsigned int* state, unsigned int* codep, unsigned i
    return *state;
 }
 
+/* \brief get utf8 encoded length */
+static int encutf8len(unsigned int ch) {
+   if (ch < 0x80) return 1;
+   if (ch < 0x800) return 2;
+   if (ch < 0x10000) return 3;
+   return 4;
+}
+
+/* \brief encode code point to utf8 */
+static int encutf8(unsigned int ch, char *buffer, int bufferSize) {
+   int i, j;
+   unsigned char *str = (unsigned char *)buffer;
+
+   if ((i = j = encutf8len(ch)) == 1) {
+      *str = ch;
+      return 1;
+   }
+
+   if (bufferSize < i) return 0;
+   for (; j > 1; j--) str[j-1] = 0x80 | (0x3F & (ch >> ((i - j) * 6)));
+   *str = (~0) << (8 - i);
+   *str |= (ch >> (i * 6 - 6));
+   return i;
+}
+
 /* hasher */
 static unsigned int hashint(unsigned int a)
 {
@@ -410,31 +435,6 @@ static int _getQuad(glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph *
    return RETURN_OK;
 }
 
-/* \brief get utf8 encoded length */
-static int _utf8EncodedLength(unsigned int ch) {
-   if (ch < 0x80) return 1;
-   if (ch < 0x800) return 2;
-   if (ch < 0x10000) return 3;
-   return 4;
-}
-
-/* \brief encode code point to utf8 */
-static int _utf8Encode(unsigned int ch, char *buffer, int bufferSize) {
-   int i, j;
-   unsigned char *str = (unsigned char *)buffer;
-
-   if ((i = j = _utf8EncodedLength(ch)) == 1) {
-      *str = ch;
-      return 1;
-   }
-
-   if (bufferSize < i) return 0;
-   for (; j > 1; j--) str[j-1] = 0x80 | (0x3F & (ch >> ((i - j) * 6)));
-   *str = (~0) << (8 - i);
-   *str |= (ch >> (i * 6 - 6));
-   return i;
-}
-
 /* \brief create new internal font */
 static unsigned int glhckTextNewFontInternal(glhckText *object, const _glhckBitmapFontInfo *font, int *nativeSize)
 {
@@ -471,7 +471,7 @@ static unsigned int glhckTextNewFontInternal(glhckText *object, const _glhckBitm
    /* fill glyphs to the monospaced bitmap font */
    for (r = 0; r != font->rows; ++r) {
       for (c = 0; c != font->columns; ++c) {
-         _utf8Encode(r*font->columns+c, utf8buf, sizeof(utf8buf));
+         encutf8(r*font->columns+c, utf8buf, sizeof(utf8buf));
          glhckTextNewGlyph(object, id, utf8buf, font->fontSize, font->fontSize,
                c*font->fontSize, r*font->fontSize, font->fontSize/2, font->fontSize, 0, 0, font->fontSize/2);
       }
