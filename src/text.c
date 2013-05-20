@@ -224,6 +224,26 @@ fail:
    return RETURN_FAIL;
 }
 
+/* \brief free cache texture from text object
+ * NOTE: all glyphs pointing to this cache texture is invalid after this! */
+static void _glhckTextFreeTexture(glhckText *object, __GLHCKtextTexture *texture)
+{
+   __GLHCKtextTexture *t, *tp;
+   CALL(1, "%p, %p", object, texture);
+   assert(object && texture);
+
+   /* search texture */
+   for (t = object->textureCache, tp = NULL; t && t != texture; tp = t, t = t->next);
+   if (!t) return;
+
+   if (!tp) object->textureCache = t->next;
+   else tp->next = t->next;
+   IFDO(glhckTextureFree, t->texture);
+   IFDO(_glhckFree, t->geometry.vertexData);
+   IFDO(_glhckFree, t->rows);
+   _glhckFree(t);
+}
+
 /* \brief get texture where to cache the glyph, will allocate new cache page if glyph doesn't fit any existing pages. */
 static __GLHCKtextTexture* _glhckTextGetTextureCache(glhckText *object, int gw, int gh, __GLHCKtextTextureRow **row)
 {
@@ -579,6 +599,63 @@ GLHCKAPI unsigned int glhckTextFree(glhckText *object)
 success:
    RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
    return object?object->refCounter:0;
+}
+
+/* \brief free font from text */
+GLHCKAPI void glhckTextFontFree(glhckText *object, unsigned int font_id)
+{
+   __GLHCKtextFont *f, *fp;
+   __GLHCKtextGlyph *g;
+   CALL(1, "%p, %u", object, font_id);
+   assert(object);
+
+   /* search font */
+   for (f = object->fontCache, fp = NULL; f && f->id != font_id; fp = f, f = f->next);
+   if (!f) return;
+
+   /* free font */
+   for (g = f->glyphCache; g; g = (g->next!=-1?&f->glyphCache[g->next]:NULL))
+      _glhckTextFreeTexture(object, g->texture);
+   IFDO(_glhckFree, f->glyphCache);
+   f->glyphCount = 0;
+   memset(f->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
+   if (!fp) object->fontCache = f->next;
+   else fp->next = f->next;
+   _glhckFree(f);
+}
+
+/* \brief flush text glyph cache */
+GLHCKAPI void glhckTextFlushCache(glhckText *object)
+{
+   __GLHCKtextTexture *t, *tn, *tp;
+   __GLHCKtextFont *f;
+   CALL(1, "%p", object);
+   assert(object);
+
+   /* free texture cache */
+   for (t = object->textureCache, tp = NULL; t; t = tn) {
+      tn = t->next;
+
+      /* skip bitmap font textures */
+      for (f = object->fontCache; f && f->texture != t; f = f->next);
+      if (f) { tp = t; continue; }
+
+      if (!object->textureCache) object->textureCache = tp;
+      if (tp) tp->next = t->next;
+      if (t == object->textureCache) t = NULL;
+      IFDO(glhckTextureFree, t->texture);
+      IFDO(_glhckFree, t->geometry.vertexData);
+      IFDO(_glhckFree, t->rows);
+      _glhckFree(t);
+   }
+
+   /* free font cache */
+   for (f = object->fontCache; f; f = f->next) {
+      if (f->type == GLHCK_FONT_BMP) continue;
+      IFDO(_glhckFree, f->glyphCache);
+      f->glyphCount = 0;
+      memset(f->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
+   }
 }
 
 /* \brief get text metrics */

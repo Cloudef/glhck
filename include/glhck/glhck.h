@@ -862,6 +862,8 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime);
 GLHCKAPI glhckText* glhckTextNew(int cacheWidth, int cacheHeight);
 GLHCKAPI glhckText* glhckTextRef(glhckText *object);
 GLHCKAPI unsigned int glhckTextFree(glhckText *object);
+GLHCKAPI void glhckTextFontFree(glhckText *object, unsigned int font_id);
+GLHCKAPI void glhckTextFlushCache(glhckText *object);
 GLHCKAPI void glhckTextGetMetrics(glhckText *object, unsigned int font_id, float size, float *ascender, float *descender, float *lineHeight);
 GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float size, const char *s, kmVec2 *min, kmVec2 *max);
 GLHCKAPI void glhckTextColor(glhckText *object, const glhckColorb *color);
