@@ -1,6 +1,8 @@
 #ifndef __glhck_opengl_helper_h__
 #define __glhck_opengl_helper_h__
 
+#include "../internal.h"
+
 #if GLHCK_USE_GLES1
 #  include <GLES/gl.h> /* for opengl ES 1.x */
 #  include <GLES/glext.h>

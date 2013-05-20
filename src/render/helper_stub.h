@@ -1,6 +1,8 @@
 #ifndef __glhck_stub_helper_h__
 #define __glhck_stub_helper_h__
 
+#include "../internal.h"
+
 /*** generate/delete mappings ***/
 void stubGenerate(int n, unsigned int *names);
 void stubDelete(int n, const unsigned int *names);

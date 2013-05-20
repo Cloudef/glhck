@@ -1,6 +1,8 @@
 #ifndef __glhck_import_h__
 #define __glhck_import_h__
 
+#include "../internal.h"
+
 /* Import struct for image data */
 typedef struct _glhckImportImageStruct
 {
