@@ -1,17 +1,21 @@
 #ifndef __fonts_h__
 #define __fonts_h__
 
-/* \brief array struct element for internal font bitmap glyph mapping */
-typedef struct _glhckBitmapGlyph {
-   const char *character;
-   int x, y, w, h;
-} _glhckBitmapGlyph;
+#include "../internal.h"
 
-/* \brief font info struct */
+/* \brief font info struct
+ * Support only monospaced bitmap fonts.
+ * The code-point for glyph is generated using algorithm: (row*columns+column)
+ * and is encoded to UTF8 for internal text system.
+ *
+ * The algorithm for glyph position in pixels is column*fontSize, row*fontSize
+ *
+ * Thefore glyph at c/r (3x3) from total c/r (3x3) would equal to character
+ * 3*3+3 = 12, and the position x/y at pixel size 12 would be 12*3 = 36 = 36,36 */
 typedef struct _glhckBitmapFontInfo {
    const char *name;
    int fontSize, ascent, descent, lineGap;
-   const _glhckBitmapGlyph *glyphs;
+   unsigned int columns, rows;
    glhckTextureFormat format;
    glhckDataType type;
    int width, height;
