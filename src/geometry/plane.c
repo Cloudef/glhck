@@ -78,7 +78,7 @@ GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, k
    CALL(0, "%s, %f, %f, %p, %p", file, width, height, importParams, params);
 
    /* load texture */
-   if (!(texture = glhckTextureNew(file, importParams, params))) {
+   if (!(texture = glhckTextureNewFromFile(file, importParams, params))) {
       RET(0, "%p", NULL);
       return NULL;
    }

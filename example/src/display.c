@@ -133,7 +133,7 @@ int main(int argc, char **argv)
    glhckCameraRange(camera, 1.0f, 1000.0f);
    camObj = glhckCameraGetObject(camera);
 
-   if (!(texture = glhckTextureNew("example/media/glhck.png", NULL, NULL)))
+   if (!(texture = glhckTextureNewFromFile("example/media/glhck.png", NULL, NULL)))
       return EXIT_FAILURE;
 
    if (!(material = glhckMaterialNew(texture)))
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
    } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, &animatedParams, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
       glhckMaterial *mat;
       glhckTexture *tex;
-      if ((tex = glhckTextureNew("example/media/texture-b.png", NULL, NULL))) {
+      if ((tex = glhckTextureNewFromFile("example/media/texture-b.png", NULL, NULL))) {
          if ((mat = glhckMaterialNew(tex))) glhckObjectMaterial(cube, mat);
          glhckTextureFree(tex);
       }
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
 
    int sW = 1024, sH = 1024;
    glhckRenderbuffer *depthBuffer = glhckRenderbufferNew(sW, sH, GLHCK_DEPTH_COMPONENT16);
-   glhckTexture *depthColorMap = glhckTextureNew(NULL, NULL, NULL);
+   glhckTexture *depthColorMap = glhckTextureNew();
    glhckTextureCreate(depthColorMap, GLHCK_TEXTURE_2D, 0, sW, sH, 0, 0, GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL);
    glhckFramebuffer *fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER);
    glhckFramebufferAttachTexture(fbo, depthColorMap, GLHCK_COLOR_ATTACHMENT0);

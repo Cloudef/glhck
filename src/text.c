@@ -187,7 +187,7 @@ static int _glhckTextTextureNew(glhckText *object, glhckTextureFormat format, gl
    if (!(texture = _glhckCalloc(1, sizeof(__GLHCKtextTexture))))
       goto fail;
 
-   if (!(texture->texture = glhckTextureNew(NULL, NULL, NULL)))
+   if (!(texture->texture = glhckTextureNew()))
       goto fail;
 
    if (glhckTextureCreate(texture->texture, GLHCK_TEXTURE_2D, 0, object->cacheWidth, object->cacheHeight,
@@ -480,7 +480,7 @@ static unsigned int glhckTextFontNewInternal(glhckText *object, const _glhckBitm
    memset(utf8buf, 0, sizeof(utf8buf));
 
    /* create texture for bitmap font */
-   if (!(texture = glhckTextureNew(NULL, NULL, NULL)))
+   if (!(texture = glhckTextureNew()))
       goto fail;
 
    if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, font->width, font->height, 0, 0,
@@ -924,7 +924,7 @@ GLHCKAPI unsigned int glhckTextFontNewFromBitmap(glhckText *object, const char *
    assert(object && file);
 
    /* load image */
-   if (!(texture = glhckTextureNew(file, NULL, NULL)))
+   if (!(texture = glhckTextureNewFromFile(file, NULL, NULL)))
       goto fail;
 
    /* make sure mipmap is disabled from the parameters */
@@ -1135,7 +1135,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
    float linew;
    CALL(1, "%p, %u, %f, %s", object, font_id, size, s);
 
-   if (!(texture = glhckTextureNew(NULL, NULL, params)))
+   if (!(texture = glhckTextureNew()))
       goto fail;
 
    glhckTextStash(object, font_id, size, 0, size*0.82f, s, &linew);

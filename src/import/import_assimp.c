@@ -409,7 +409,7 @@ glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl
       return NULL;
 
    DEBUG(0, "%s", texturePath);
-   texture = glhckTextureNew(texturePath, NULL, &params);
+   texture = glhckTextureNewFromFile(texturePath, NULL, &params);
    _glhckFree(texturePath);
    return texture;
 }

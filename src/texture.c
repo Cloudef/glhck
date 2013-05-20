@@ -153,16 +153,10 @@ inline int _glhckIsCompressedFormat(glhckTextureFormat format)
 
 /* ---- PUBLIC API ---- */
 
-/* \brief Allocate texture
- * Takes filename as argument, pass NULL to use user data */
-GLHCKAPI glhckTexture* glhckTextureNew(const char *file, const glhckImportImageParameters *importParams, const glhckTextureParameters *params)
+/* \brief allocate new texture object */
+GLHCKAPI glhckTexture* glhckTextureNew(void)
 {
    glhckTexture *object;
-   CALL(0, "%s, %p, %p", file, importParams, params);
-
-   /* check if texture is in cache */
-   if ((object = _glhckTextureCacheCheck(file)))
-      goto success;
 
    /* allocate texture */
    if (!(object = _glhckCalloc(1, sizeof(glhckTexture))))
@@ -174,22 +168,42 @@ GLHCKAPI glhckTexture* glhckTextureNew(const char *file, const glhckImportImageP
    /* default target type */
    object->target = GLHCK_TEXTURE_2D;
 
-   /* If file is passed, then try import it */
-   if (file) {
-      /* copy filename */
-      if (!(object->file = _glhckStrdup(file)))
-         goto fail;
-
-      /* import image */
-      if (_glhckImportImage(object, file, importParams) != RETURN_OK)
-         goto fail;
-
-      /* apply texture parameters */
-      glhckTextureParameter(object, params);
-   }
-
    /* insert to world */
    _glhckWorldInsert(texture, object, glhckTexture*);
+
+   RET(0, "%p", object);
+   return object;
+
+fail:
+   IFDO(glhckTextureFree, object);
+   RET(0, "%p", NULL);
+   return NULL;
+}
+
+/* \brief new texture object from file */
+GLHCKAPI glhckTexture* glhckTextureNewFromFile(const char *file, const glhckImportImageParameters *importParams, const glhckTextureParameters *params)
+{
+   glhckTexture *object;
+   CALL(0, "%s, %p, %p", file, importParams, params);
+   assert(file);
+
+   /* check if texture is in cache */
+   if ((object = _glhckTextureCacheCheck(file)))
+      goto success;
+
+   if (!(object = glhckTextureNew()))
+      goto fail;
+
+   /* copy filename */
+   if (!(object->file = _glhckStrdup(file)))
+      goto fail;
+
+   /* import image */
+   if (_glhckImportImage(object, file, importParams) != RETURN_OK)
+      goto fail;
+
+   /* apply texture parameters */
+   glhckTextureParameter(object, params);
 
 success:
    RET(0, "%p", object);

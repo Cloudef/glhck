@@ -93,7 +93,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
       if (!(texturePath = _glhckImportTexturePath(mmd->texture[i].file, file)))
          continue;
 
-      if ((texture = glhckTextureNew(texturePath, NULL, NULL))) {
+      if ((texture = glhckTextureNewFromFile(texturePath, NULL, NULL))) {
          glhckAtlasInsertTexture(atlas, texture);
          glhckTextureFree(texture);
          textureList[i] = texture;

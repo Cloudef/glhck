@@ -919,7 +919,8 @@ GLHCKAPI void glhckMaterialSpecularb(glhckMaterial *object, unsigned char r, uns
 GLHCKAPI const glhckColorb* glhckMaterialGetSpecular(const glhckMaterial *object);
 
 /* textures */
-GLHCKAPI glhckTexture* glhckTextureNew(const char *file, const glhckImportImageParameters *importParams, const glhckTextureParameters *params);
+GLHCKAPI glhckTexture* glhckTextureNew(void);
+GLHCKAPI glhckTexture* glhckTextureNewFromFile(const char *file, const glhckImportImageParameters *importParams, const glhckTextureParameters *params);
 GLHCKAPI glhckTexture* glhckTextureRef(glhckTexture *object);
 GLHCKAPI unsigned int glhckTextureFree(glhckTexture *object);
 GLHCKAPI void glhckTextureGetInformation(glhckTexture *object, glhckTextureTarget *target, int *width, int *height, int *depth, int *border, glhckTextureFormat *format, glhckDataType *type);

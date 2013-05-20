@@ -2,9 +2,6 @@ TODO
 ====
 
 ---
-Seperate glhckTextureNew to glhckTextureNewFromFile
-Confusion caused in glhckTextureParameters argument when NULL file argument is given.
----
 GPU bone transformation
 ---
 Make animations work with different vertex formats

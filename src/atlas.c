@@ -235,7 +235,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    }
 
    /* create stuff needed for rendering */
-   if (!(texture = glhckTextureNew(NULL, NULL, NULL)))
+   if (!(texture = glhckTextureNew()))
       goto fail;
    if (!(glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, width, height, 0, 0, GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL)))
       goto fail;
