@@ -225,16 +225,29 @@ fail:
 }
 
 /* \brief free cache texture from text object
- * NOTE: all glyphs pointing to this cache texture is invalid after this! */
+ * NOTE: all glyphs from fonts pointing to this cache texture are flushed after this! */
 static void _glhckTextTextureFree(glhckText *object, __GLHCKtextTexture *texture)
 {
+   unsigned int i;
    __GLHCKtextTexture *t, *tp;
+   __GLHCKtextFont *f;
    CALL(1, "%p, %p", object, texture);
    assert(object && texture);
 
    /* search texture */
    for (t = object->textureCache, tp = NULL; t && t != texture; tp = t, t = t->next);
    if (!t) return;
+
+   /* remove glyphs from fonts that contain this texture */
+   for (f = object->fontCache; f; f = f->next) {
+      for (i = 0; i != f->glyphCount; ++i) {
+         if (f->glyphCache[i].texture != t) continue;
+         IFDO(_glhckFree, f->glyphCache);
+         f->glyphCount = 0;
+         memset(f->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
+         break;
+      }
+   }
 
    if (!tp) object->textureCache = t->next;
    else tp->next = t->next;
@@ -492,7 +505,7 @@ static unsigned int glhckTextFontNewInternal(glhckText *object, const _glhckBitm
    for (r = 0; r != font->rows; ++r) {
       for (c = 0; c != font->columns; ++c) {
          encutf8(r*font->columns+c, utf8buf, sizeof(utf8buf));
-         glhckTextNewGlyph(object, id, utf8buf, font->fontSize, font->fontSize,
+         glhckTextGlyphNew(object, id, utf8buf, font->fontSize, font->fontSize,
                c*font->fontSize, r*font->fontSize, font->fontSize/2, font->fontSize, 0, 0, font->fontSize/2);
       }
    }
@@ -938,7 +951,7 @@ fail:
 }
 
 /* \brief add new glyph to bitmap font */
-GLHCKAPI void glhckTextNewGlyph(glhckText *object,
+GLHCKAPI void glhckTextGlyphNew(glhckText *object,
       unsigned int font_id, const char *s,
       short size, short base, int x, int y, int w, int h,
       float xoff, float yoff, float xadvance)
@@ -961,8 +974,7 @@ GLHCKAPI void glhckTextNewGlyph(glhckText *object,
    if (state != UTF8_ACCEPT) return;
 
    /* allocate space for new glyph */
-   glyph = _glhckRealloc(font->glyphCache,
-         font->glyphCount, font->glyphCount+1, sizeof(__GLHCKtextGlyph));
+   glyph = _glhckRealloc(font->glyphCache, font->glyphCount, font->glyphCount+1, sizeof(__GLHCKtextGlyph));
    if (!glyph) return;
    font->glyphCache = glyph;
 

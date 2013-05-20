@@ -874,7 +874,7 @@ GLHCKAPI unsigned int glhckTextFontNewFromMemory(glhckText *object, const void *
 GLHCKAPI unsigned int glhckTextFontNew(glhckText *object, const char *file);
 GLHCKAPI unsigned int glhckTextFontNewFromTexture(glhckText *object, glhckTexture *texture, int ascent, int descent, int lineGap);
 GLHCKAPI unsigned int glhckTextFontNewFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap);
-GLHCKAPI void glhckTextNewGlyph(glhckText *object, unsigned int font_id, const char *s,
+GLHCKAPI void glhckTextGlyphNew(glhckText *object, unsigned int font_id, const char *s,
       short size, short base, int x, int y, int w, int h,
       float xoff, float yoff, float xadvance);
 GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size, float x, float y, const char *s, float *width);
