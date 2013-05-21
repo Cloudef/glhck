@@ -929,6 +929,7 @@ GLHCKAPI int glhckTextureRecreate(glhckTexture *object, glhckTextureFormat forma
 GLHCKAPI void glhckTextureFill(glhckTexture *object, int level, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data);
 GLHCKAPI void glhckTextureParameter(glhckTexture *object, const glhckTextureParameters *params);
 GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void);
+GLHCKAPI const glhckTextureParameters* glhckTextureDefaultSpriteParameters(void);
 GLHCKAPI int glhckTextureSave(glhckTexture *object, const char *path);
 GLHCKAPI glhckTexture* glhckTextureCurrentForTarget(glhckTextureTarget target);
 GLHCKAPI void glhckTextureActive(unsigned int index);

@@ -307,6 +307,28 @@ GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void)
    return &defaultParameters;
 }
 
+/* \brief return default sprite parameters */
+GLHCKAPI const glhckTextureParameters* glhckTextureDefaultSpriteParameters(void)
+{
+   static glhckTextureParameters defaultParameters = {
+      .maxAnisotropy = 16.0f,
+      .minLod        = -1000.0f,
+      .maxLod        = 1000.0f,
+      .biasLod       = 0.0f,
+      .baseLevel     = 0,
+      .maxLevel      = 1000,
+      .wrapS         = GLHCK_WRAP_CLAMP_TO_EDGE,
+      .wrapT         = GLHCK_WRAP_CLAMP_TO_EDGE,
+      .wrapR         = GLHCK_WRAP_CLAMP_TO_EDGE,
+      .minFilter     = GLHCK_FILTER_NEAREST,
+      .magFilter     = GLHCK_FILTER_NEAREST,
+      .compareMode   = GLHCK_COMPARE_NONE,
+      .compareFunc   = GLHCK_COMPARE_LEQUAL,
+      .mipmap        = 0,
+   };
+   return &defaultParameters;
+}
+
 /* \brief get texture's information */
 GLHCKAPI void glhckTextureGetInformation(glhckTexture *object, glhckTextureTarget *target, int *width, int *height, int *depth, int *border, glhckTextureFormat *format, glhckDataType *type)
 {
