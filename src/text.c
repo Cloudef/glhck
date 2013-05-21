@@ -1129,6 +1129,7 @@ GLHCKAPI glhckShader* glhckTextGetShader(const glhckText *object)
 GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, float size,
       const char *s, const glhckTextureParameters *params)
 {
+   glhckColorb oldClear;
    glhckTexture *texture = NULL;
    glhckFramebuffer *fbo = NULL;
    glhckTextureParameters nparams;
@@ -1160,11 +1161,18 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
    if (glhckFramebufferAttachTexture(fbo, texture, GLHCK_COLOR_ATTACHMENT0) != RETURN_OK)
       goto fail;
 
+   /* set clear color */
+   memcpy(&oldClear, glhckRenderGetClearColor(), sizeof(glhckColorb));
+   glhckRenderClearColorb(0,0,0,0);
+
    glhckFramebufferRecti(fbo, 0, 0, linew, size);
    glhckFramebufferBegin(fbo);
    glhckRenderClear(GLHCK_COLOR_BUFFER);
    glhckTextRender(object);
    glhckFramebufferEnd(fbo);
+
+   /* restore clear color */
+   glhckRenderClearColor(&oldClear);
 
    texture->importFlags |= GLHCK_TEXTURE_IMPORT_TEXT;
    glhckFramebufferFree(fbo);
