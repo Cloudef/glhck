@@ -176,7 +176,7 @@ GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *object)
 }
 
 /* \brief pack textures to atlas */
-GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const int border)
+GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int powerOfTwo, int border, const glhckTextureParameters *params)
 {
    int width, height, maxTexSize;
    unsigned short count;
@@ -189,7 +189,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    glhckObject *plane = NULL;
    glhckMaterial *material = NULL;
    kmMat4 ortho;
-   CALL(0, "%p, %d, %d", object, power_of_two, border);
+   CALL(0, "%p, %d, %d", object, powerOfTwo, border);
 
    /* count textures */
    for (count = 0, rect = object->rect;
@@ -218,7 +218,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
             rect->texture->width, rect->texture->height);
 
    /* pack textures */
-   _glhckTexturePackerPack(tp, &width, &height, power_of_two, border);
+   _glhckTexturePackerPack(tp, &width, &height, powerOfTwo, border);
 
    /* downscale if over maximum texture size */
 
@@ -237,7 +237,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    /* create stuff needed for rendering */
    if (!(texture = glhckTextureNew()))
       goto fail;
-   if (!(glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, width, height, 0, 0, GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL)))
+   if (!(glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, width, height, 0, 0, format, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL)))
       goto fail;
    if (!(fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER)))
       goto fail;
@@ -298,9 +298,9 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
 
    /* reference rtt's texture */
    IFDO(glhckTextureFree, object->texture);
-   glhckTextureParameter(texture, NULL);
+   glhckTextureParameter(texture, (params?params:glhckTextureDefaultSpriteParameters()));
+   if (_glhckHasAlpha(format)) texture->importFlags |= GLHCK_TEXTURE_IMPORT_ALPHA;
    object->texture = texture;
-   texture->importFlags |= GLHCK_TEXTURE_IMPORT_ALPHA;
 
    /* cleanup */
    glhckMaterialFree(material);
@@ -336,8 +336,7 @@ GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(const glhckAtlas *object, uns
 }
 
 /* \brief return transformed coordinates of packed texture */
-GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *object, glhckTexture *texture,
-      glhckRect *out, short *degrees)
+GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *object, glhckTexture *texture, glhckRect *out, short *degrees)
 {
    float atlasWidth, atlasHeight;
    _glhckAtlasArea *packed;
@@ -377,8 +376,7 @@ fail:
 }
 
 /* \brief return coordinates transformed with the packed texture's transform */
-GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *object, glhckTexture *texture,
-      const kmVec2 *in, kmVec2 *out)
+GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *object, glhckTexture *texture, const kmVec2 *in, kmVec2 *out)
 {
    short degrees;
    glhckRect transformed;
@@ -386,14 +384,13 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *object, glhckTextu
    CALL(2, "%p, %p, %p, %p", object, texture, in, out);
 
    /* only one texture */
-   if (_glhckAtlasNumTextures(object)==1) {
+   if (_glhckAtlasNumTextures(object) == 1) {
       kmVec2Assign(out, in);
       RET(2, "%d", RETURN_OK);
       return RETURN_OK;
    }
 
-   if (glhckAtlasGetTransform(object, texture, &transformed, &degrees)
-         != RETURN_OK)
+   if (glhckAtlasGetTransform(object, texture, &transformed, &degrees) != RETURN_OK)
       goto fail;
 
    if (transformed.w == 0.f || transformed.h == 0.f)

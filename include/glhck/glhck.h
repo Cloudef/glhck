@@ -942,7 +942,7 @@ GLHCKAPI glhckAtlas* glhckAtlasNew(void);
 GLHCKAPI unsigned int glhckAtlasFree(glhckAtlas *object);
 GLHCKAPI int glhckAtlasInsertTexture(glhckAtlas *object, glhckTexture *texture);
 GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *object);
-GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const int border);
+GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int powerOfTwo, int border, const glhckTextureParameters *params);
 GLHCKAPI glhckTexture* glhckAtlasGetTextureByIndex(const glhckAtlas *object, unsigned short index);
 GLHCKAPI int glhckAtlasGetTransform(const glhckAtlas *object, glhckTexture *texture, glhckRect *transformed, short *degrees);
 GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *object, glhckTexture *texture, const kmVec2 *in, kmVec2 *out);

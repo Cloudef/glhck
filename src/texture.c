@@ -109,6 +109,34 @@ inline int _glhckSizeForTexture(glhckTextureTarget target, int width, int height
    return size;
 }
 
+/* \brief returns 1, if format contains alpha */
+inline int _glhckHasAlpha(glhckTextureFormat format)
+{
+   switch (format) {
+      case GLHCK_RG:
+      case GLHCK_RED:
+      case GLHCK_RGB:
+      case GLHCK_BGR:
+      case GLHCK_LUMINANCE:
+      case GLHCK_COMPRESSED_RGB_DXT1:
+      case GLHCK_DEPTH_COMPONENT:
+      case GLHCK_DEPTH_COMPONENT16:
+      case GLHCK_DEPTH_COMPONENT24:
+      case GLHCK_DEPTH_COMPONENT32:
+      case GLHCK_DEPTH_STENCIL:
+         return 0;
+      case GLHCK_RGBA:
+      case GLHCK_BGRA:
+      case GLHCK_ALPHA:
+      case GLHCK_LUMINANCE_ALPHA:
+      case GLHCK_COMPRESSED_RGBA_DXT5:
+         return 1;
+      default:break;
+   }
+   assert(0 && "Alpha check not implemented for texture format");
+   return 0;
+}
+
 /* \brief returns number of channels needed for texture format */
 inline unsigned int _glhckNumChannels(glhckTextureFormat format)
 {

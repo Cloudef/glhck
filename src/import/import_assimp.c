@@ -474,7 +474,7 @@ static int processModel(const char *file, glhckObject *object,
 
       /* pack combined textures */
       if (hasTexture) {
-         if (glhckAtlasPack(atlas, 1, 0) != RETURN_OK)
+         if (glhckAtlasPack(atlas, GLHCK_RGBA, 1, 0, glhckTextureDefaultParameters()) != RETURN_OK)
             goto fail;
       } else {
          NULLDO(glhckAtlasFree, atlas);

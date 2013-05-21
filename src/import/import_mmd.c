@@ -103,7 +103,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
    }
 
    /* pack textures */
-   if (glhckAtlasPack(atlas, 1, 0) != RETURN_OK)
+   if (glhckAtlasPack(atlas, GLHCK_RGBA, 1, 0, glhckTextureDefaultParameters()) != RETURN_OK)
       goto fail;
 
    /* assign data */

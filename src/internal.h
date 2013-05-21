@@ -850,6 +850,7 @@ void _glhckObjectUpdateBoxes(glhckObject *object);
 void _glhckCameraWorldUpdate(int width, int height);
 
 /* textures */
+int _glhckHasAlpha(glhckTextureFormat format);
 unsigned int _glhckNumChannels(unsigned int format);
 int _glhckSizeForTexture(glhckTextureTarget target, int width, int height, int depth, glhckTextureFormat format, glhckDataType type);
 int _glhckIsCompressedFormat(unsigned int format);
