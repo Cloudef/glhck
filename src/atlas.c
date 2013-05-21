@@ -300,6 +300,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    IFDO(glhckTextureFree, object->texture);
    glhckTextureParameter(texture, NULL);
    object->texture = texture;
+   texture->importFlags |= GLHCK_TEXTURE_IMPORT_ALPHA;
 
    /* cleanup */
    glhckMaterialFree(material);
