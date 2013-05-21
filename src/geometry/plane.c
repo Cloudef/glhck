@@ -75,10 +75,24 @@ GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, k
 {
    glhckObject *object;
    glhckTexture *texture;
+   glhckTextureParameters spriteParams;
    CALL(0, "%s, %f, %f, %p, %p", file, width, height, importParams, params);
 
+   /* give some sprite friendly params, if null is passed.
+    * otherwise just copy the params given. */
+   if (params) memcpy(&spriteParams, params, sizeof(glhckTextureParameters));
+   else {
+      memcpy(&spriteParams, glhckTextureDefaultParameters(), sizeof(glhckTextureParameters));
+      spriteParams.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
+      spriteParams.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
+      spriteParams.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
+      spriteParams.minFilter = GLHCK_FILTER_NEAREST;
+      spriteParams.magFilter = GLHCK_FILTER_NEAREST;
+      spriteParams.mipmap = 0;
+   }
+
    /* load texture */
-   if (!(texture = glhckTextureNewFromFile(file, importParams, params))) {
+   if (!(texture = glhckTextureNewFromFile(file, importParams, &spriteParams))) {
       RET(0, "%p", NULL);
       return NULL;
    }
