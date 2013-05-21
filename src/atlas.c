@@ -262,7 +262,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, const int power_of_two, const in
    kmMat4OrthographicProjection(&ortho, 0, width, 0, height, -1.0f, 1.0f);
    kmMat4Translation(&ortho, -1, -1, 0);
    glhckRenderProjectionOnly(&ortho);
-   glhckRenderClearColorb(0,0,255,255);
+   glhckRenderClearColorb(0,0,0,0);
 
    glhckFramebufferRecti(fbo, 0, 0, width, height);
    glhckFramebufferBegin(fbo);
