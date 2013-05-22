@@ -980,6 +980,9 @@ static int renderInit(void)
    /* default GLhck shader directivies */
    glswAddDirectiveToken("GLhck", "#version 140");
 
+   /* NOTE: uniform constructors crash on fglrx, don't use them.
+    * At least until the cause is sorted out. */
+
    /* vertex directivies */
    glswAddDirectiveToken("Vertex",
          "in vec3 GlhckVertex;"
@@ -1031,11 +1034,7 @@ static int renderInit(void)
          "  vec2 TextureOffset;"
          "  vec2 TextureScale;"
          "};"
-         "uniform glhckMaterial GlhckMaterial ="
-         "  glhckMaterial(vec3(1,1,1),"
-         "                vec4(255,255,255,255),"
-         "                vec3(200,200,200),0.9,"
-         "                vec2(0,0),vec2(1,1));"
+         "uniform glhckMaterial GlhckMaterial;"
          "uniform sampler2D GlhckTexture0;");
 
    /* lighting functions */
@@ -1137,6 +1136,9 @@ static int renderInit(void)
    DEBUG(GLHCK_DBG_CRAP, "GLHCK UBO SIZE: %d", GLPOINTER()->sharedUBO->size);
 
    glhckHwBufferBindRange(GLPOINTER()->sharedUBO, 0, 0, GLPOINTER()->sharedUBO->size);
+
+   /* set default uniforms to text shader */
+   glhckShaderUniform(GLPOINTER()->shader[GL_SHADER_TEXT], "GlhckMaterial.TextureScale", 1, &((GLfloat[]){1,1}));
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
