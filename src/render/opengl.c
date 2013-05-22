@@ -760,6 +760,20 @@ static inline void rObjectStart(const glhckObject *object)
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
          &((GLfloat[]){diffuse.r, diffuse.g, diffuse.b, diffuse.a}));
 
+   glhckColorb ambient = {255,255,255,255};
+   if (object->material) memcpy(&ambient, &object->material->ambient, sizeof(glhckColorb));
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Ambient", 1,
+         &((GLfloat[]){ambient.r, ambient.g, ambient.b, ambient.a}));
+
+   glhckColorb specular = {255,255,255,255};
+   if (object->material) memcpy(&specular, &object->material->specular, sizeof(glhckColorb));
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Specular", 1,
+         &((GLfloat[]){specular.r, specular.g, specular.b, specular.a}));
+
+   float shininess = 0.0f;
+   if (object->material) shininess = object->material->shininess;
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Shininess", 1, &shininess);
+
    kmVec2 offset = {0,0};
    if (object->material) memcpy(&offset, &object->material->textureOffset, sizeof(kmVec2));
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureOffset", 1, (kmVec2*)&offset);
