@@ -178,7 +178,7 @@ GLHCKAPI void glhckHwBufferBindBase(glhckHwBuffer *object, unsigned int index)
 /* \brief bind hardware buffer object to index with range */
 GLHCKAPI void glhckHwBufferBindRange(glhckHwBuffer *object, unsigned int index, int offset, int size)
 {
-   CALL(0, "%p, %u, %p, %d", object, index, offset, size);
+   CALL(0, "%p, %u, %d, %d", object, index, offset, size);
    assert(object && object->created);
    GLHCKRA()->hwBufferBindRange(object->target, index, object->object, offset, size);
 }

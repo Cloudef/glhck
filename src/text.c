@@ -181,7 +181,7 @@ static int _glhckTextTextureNew(glhckText *object, glhckTextureFormat format, gl
 {
    __GLHCKtextTexture *texture = NULL, *t;
    glhckTextureParameters nparams;
-   CALL(0, "%p, %d, %u", object, format);
+   CALL(0, "%p, %u, %u, %p", object, format, type, data);
    assert(object);
 
    if (!(texture = _glhckCalloc(1, sizeof(__GLHCKtextTexture))))
@@ -956,10 +956,10 @@ GLHCKAPI void glhckTextGlyphNew(glhckText *object,
       short size, short base, int x, int y, int w, int h,
       float xoff, float yoff, float xadvance)
 {
-   unsigned int codepoint, state = 0, hh;
+   unsigned int codepoint = 0, state = 0, hh;
    __GLHCKtextFont *font;
    __GLHCKtextGlyph *glyph;
-   CALL(0, "%p, %s, %d, %d, %d, %d, %d, %d, %f, %f, %f",
+   CALL(0, "%p, \"%s\", %d, %d, %d, %d, %d, %d, %f, %f, %f",
          object, s, size, base, w, y, w, h, xoff, yoff, xadvance);
    assert(object && s);
 
