@@ -276,7 +276,7 @@ int main(int argc, char **argv)
       glhckLightPointLightFactor(light[li], 0.0f);
       glhckLightAttenf(light[li], 0.0, 0.0, 0.01);
       glhckLightColorb(light[li], rand()%255, rand()%255, rand()%255, 255);
-      glhckObject *c = glhckCubeNew(1.0f);
+      glhckObject *c = glhckEllipsoidNew(2.0f, 4.0f, 2.0f);
       glhckObjectAddChild(glhckLightGetObject(light[li]), c);
       glhckObjectMaterial(c, material);
       glhckObjectFree(c);

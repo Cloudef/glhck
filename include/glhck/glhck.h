@@ -801,6 +801,10 @@ GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, const glh
       glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
 GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+GLHCKAPI glhckObject* glhckSphereNew(kmScalar size);
+GLHCKAPI glhckObject* glhckSphereNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+GLHCKAPI glhckObject* glhckEllipsoidNew(kmScalar rx, kmScalar ry, kmScalar rz);
+GLHCKAPI glhckObject* glhckEllipsoidNewEx(kmScalar rx, kmScalar ry, kmScalar rz, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height);
 GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, kmScalar width, kmScalar height);
