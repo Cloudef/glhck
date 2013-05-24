@@ -23,8 +23,15 @@
 #else
 /* FIXME: include glew instead of gl.h and glext.h here in future */
 #  define GL_GLEXT_PROTOTYPES
-#  include <GL/gl.h>
-#  include <GL/glext.h>
+#  ifdef __APPLE__
+#    include <OpenGL/gl.h>
+#    include <OpenGL/glext.h>
+#    include <OpenGL/gl3.h>
+#    include <OpenGL/gl3ext.h>
+#  else
+#    include <GL/gl.h>
+#    include <GL/glext.h>
+#  endif
 #endif
 
 #if GLHCK_USE_GLES1

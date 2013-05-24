@@ -19,18 +19,24 @@ GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property)
          return GL_MAX_CUBE_MAP_TEXTURE_SIZE;
       case GLHCK_MAX_VERTEX_ATTRIBS:
          return GL_MAX_VERTEX_ATTRIBS;
+#if GL_MAX_VERTEX_UNIFORM_VECTORS
       case GLHCK_MAX_VERTEX_UNIFORM_VECTORS:
          return GL_MAX_VERTEX_UNIFORM_VECTORS;
+#endif
+#if GL_MAX_VARYING_VECTORS
       case GLHCK_MAX_VARYING_VECTORS:
          return GL_MAX_VARYING_VECTORS;
+#endif
+#if GL_MAX_FRAGMENT_UNIFORM_VECTORS
+      case GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS:
+         return GL_MAX_FRAGMENT_UNIFORM_VECTORS;
+#endif
       case GLHCK_MAX_COMBINED_TEXTURE_IMAGE_UNITS:
          return GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS;
       case GLHCK_MAX_VERTEX_TEXTURE_IMAGE_UNITS:
          return GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS;
       case GLHCK_MAX_TEXTURE_IMAGE_UNITS:
          return GL_MAX_TEXTURE_IMAGE_UNITS;
-      case GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS:
-         return GL_MAX_FRAGMENT_UNIFORM_VECTORS;
       case GLHCK_MAX_RENDERBUFFER_SIZE:
          return GL_MAX_RENDERBUFFER_SIZE;
       case GLHCK_MAX_VIEWPORT_DIMS:
@@ -488,12 +494,14 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
          return GL_FLOAT_VEC4;
       case GLHCK_SHADER_DOUBLE:
          return GL_DOUBLE;
+#if GL_DOUBLE_VEC2
       case GLHCK_SHADER_DOUBLE_VEC2:
          return GL_DOUBLE_VEC2;
       case GLHCK_SHADER_DOUBLE_VEC3:
          return GL_DOUBLE_VEC3;
       case GLHCK_SHADER_DOUBLE_VEC4:
          return GL_DOUBLE_VEC4;
+#endif
       case GLHCK_SHADER_INT:
          return GL_INT;
       case GLHCK_SHADER_INT_VEC2:
@@ -536,6 +544,7 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
          return GL_FLOAT_MAT4x2;
       case GLHCK_SHADER_FLOAT_MAT4x3:
          return GL_FLOAT_MAT4x3;
+#if GL_DOUBLE_MAT2
       case GLHCK_SHADER_DOUBLE_MAT2:
          return GL_DOUBLE_MAT2;
       case GLHCK_SHADER_DOUBLE_MAT3:
@@ -554,6 +563,7 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
          return GL_DOUBLE_MAT4x2;
       case GLHCK_SHADER_DOUBLE_MAT4x3:
          return GL_DOUBLE_MAT4x3;
+#endif
       case GLHCK_SHADER_SAMPLER_1D:
          return GL_SAMPLER_1D;
       case GLHCK_SHADER_SAMPLER_2D:
@@ -626,6 +636,7 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
          return GL_UNSIGNED_INT_SAMPLER_BUFFER;
       case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT:
          return GL_UNSIGNED_INT_SAMPLER_2D_RECT;
+#if GL_IMAGE_1D
       case GLHCK_SHADER_IMAGE_1D:
          return GL_IMAGE_1D;
       case GLHCK_SHADER_IMAGE_2D:
@@ -646,6 +657,8 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
          return GL_IMAGE_2D_MULTISAMPLE;
       case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE_ARRAY:
          return GL_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
+#if GL_INT_IMAGE_1D
      case GLHCK_SHADER_INT_IMAGE_1D:
          return GL_INT_IMAGE_1D;
       case GLHCK_SHADER_INT_IMAGE_2D:
@@ -666,6 +679,8 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
          return GL_INT_IMAGE_2D_MULTISAMPLE;
       case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
          return GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
+#if GL_UNSIGNED_INT_IMAGE_1D
       case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D:
          return GL_UNSIGNED_INT_IMAGE_1D;
       case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D:
@@ -686,6 +701,7 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
          return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
       case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
          return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
 #if GL_UNSIGNED_INT_ATOMIC_COUNTER
       case GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER:
          return GL_UNSIGNED_INT_ATOMIC_COUNTER;
@@ -710,12 +726,14 @@ _glhckShaderVariableType glhGlhckShaderVariableTypeForGLType(GLenum type)
          return GLHCK_SHADER_FLOAT_VEC4;
       case GL_DOUBLE:
          return GLHCK_SHADER_DOUBLE;
+#if GL_DOUBLE_VEC2
       case GL_DOUBLE_VEC2:
          return GLHCK_SHADER_DOUBLE_VEC2;
       case GL_DOUBLE_VEC3:
          return GLHCK_SHADER_DOUBLE_VEC3;
       case GL_DOUBLE_VEC4:
          return GLHCK_SHADER_DOUBLE_VEC4;
+#endif
       case GL_INT:
          return GLHCK_SHADER_INT;
       case GL_INT_VEC2:
@@ -758,6 +776,7 @@ _glhckShaderVariableType glhGlhckShaderVariableTypeForGLType(GLenum type)
          return GLHCK_SHADER_FLOAT_MAT4x2;
       case GL_FLOAT_MAT4x3:
          return GLHCK_SHADER_FLOAT_MAT4x3;
+#if GL_DOUBLE_MAT2
       case GL_DOUBLE_MAT2:
          return GLHCK_SHADER_DOUBLE_MAT2;
       case GL_DOUBLE_MAT3:
@@ -776,6 +795,7 @@ _glhckShaderVariableType glhGlhckShaderVariableTypeForGLType(GLenum type)
          return GLHCK_SHADER_DOUBLE_MAT4x2;
       case GL_DOUBLE_MAT4x3:
          return GLHCK_SHADER_DOUBLE_MAT4x3;
+#endif
       case GL_SAMPLER_1D:
          return GLHCK_SHADER_SAMPLER_1D;
       case GL_SAMPLER_2D:
@@ -848,6 +868,7 @@ _glhckShaderVariableType glhGlhckShaderVariableTypeForGLType(GLenum type)
          return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER;
       case GL_UNSIGNED_INT_SAMPLER_2D_RECT:
          return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT;
+#if GL_IMAGE_1D
       case GL_IMAGE_1D:
          return GLHCK_SHADER_IMAGE_1D;
       case GL_IMAGE_2D:
@@ -868,7 +889,9 @@ _glhckShaderVariableType glhGlhckShaderVariableTypeForGLType(GLenum type)
          return GLHCK_SHADER_IMAGE_2D_MULTISAMPLE;
       case GL_IMAGE_2D_MULTISAMPLE_ARRAY:
          return GLHCK_SHADER_IMAGE_2D_MULTISAMPLE_ARRAY;
-     case GL_INT_IMAGE_1D:
+#endif
+#if GL_INT_IMAGE_1D
+      case GL_INT_IMAGE_1D:
          return GLHCK_SHADER_INT_IMAGE_1D;
       case GL_INT_IMAGE_2D:
          return GLHCK_SHADER_INT_IMAGE_2D;
@@ -888,6 +911,8 @@ _glhckShaderVariableType glhGlhckShaderVariableTypeForGLType(GLenum type)
          return GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE;
       case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
          return GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
+#if GL_UNSINGED_INT_IMAGE_1D
       case GL_UNSIGNED_INT_IMAGE_1D:
          return GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D;
       case GL_UNSIGNED_INT_IMAGE_2D:
@@ -908,6 +933,7 @@ _glhckShaderVariableType glhGlhckShaderVariableTypeForGLType(GLenum type)
          return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
       case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
          return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
 #if GL_UNSIGNED_INT_ATOMIC_COUNTER
       case GL_UNSIGNED_INT_ATOMIC_COUNTER:
          return GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER;
@@ -927,9 +953,11 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type)
       case GL_FLOAT_VEC3: return "vec3";
       case GL_FLOAT_VEC4: return "vec4";
       case GL_DOUBLE: return "double";
+#if GL_DOUBLE_VEC2
       case GL_DOUBLE_VEC2: return "dvec2";
       case GL_DOUBLE_VEC3: return "dvec3";
       case GL_DOUBLE_VEC4: return "dvec4";
+#endif
       case GL_INT: return "int";
       case GL_INT_VEC2: return "ivec2";
       case GL_INT_VEC3: return "ivec3";
@@ -951,6 +979,7 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type)
       case GL_FLOAT_MAT3x4: return "mat3x4";
       case GL_FLOAT_MAT4x2: return "mat4x2";
       case GL_FLOAT_MAT4x3: return "mat4x3";
+#if GL_DOUBLE_MAT2
       case GL_DOUBLE_MAT2: return "dmat2";
       case GL_DOUBLE_MAT3: return "dmat3";
       case GL_DOUBLE_MAT4: return "dmat4";
@@ -960,6 +989,7 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type)
       case GL_DOUBLE_MAT3x4: return "dmat3x4";
       case GL_DOUBLE_MAT4x2: return "dmat4x2";
       case GL_DOUBLE_MAT4x3: return "dmat4x3";
+#endif
       case GL_SAMPLER_1D: return "sampler1D";
       case GL_SAMPLER_2D: return "sampler2D";
       case GL_SAMPLER_3D: return "sampler3D";
@@ -996,6 +1026,7 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type)
       case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return "usampler2DMSArray";
       case GL_UNSIGNED_INT_SAMPLER_BUFFER: return "usamplerBuffer";
       case GL_UNSIGNED_INT_SAMPLER_2D_RECT: return "usampler2DRect";
+#if GL_IMAGE_1D
       case GL_IMAGE_1D: return "image1D";
       case GL_IMAGE_2D: return "image2D";
       case GL_IMAGE_3D: return "image3D";
@@ -1006,6 +1037,8 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type)
       case GL_IMAGE_2D_ARRAY: return "image2DArray";
       case GL_IMAGE_2D_MULTISAMPLE: return "image2DMS";
       case GL_IMAGE_2D_MULTISAMPLE_ARRAY: return "image2DMSArray";
+#endif
+#if GL_INT_IMAGE_1D
       case GL_INT_IMAGE_1D: return "iimage1D";
       case GL_INT_IMAGE_2D: return "iimage2D";
       case GL_INT_IMAGE_3D: return "iimage3D";
@@ -1016,6 +1049,8 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type)
       case GL_INT_IMAGE_2D_ARRAY: return "iimage2DArray";
       case GL_INT_IMAGE_2D_MULTISAMPLE: return "iimage2DMS";
       case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return "iimage2DMSArray";
+#endif
+#if GL_UNSIGNED_INT_IMAGE_1D
       case GL_UNSIGNED_INT_IMAGE_1D: return "uimage1D";
       case GL_UNSIGNED_INT_IMAGE_2D: return "uimage2D";
       case GL_UNSIGNED_INT_IMAGE_3D: return "uimage3D";
@@ -1026,6 +1061,7 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type)
       case GL_UNSIGNED_INT_IMAGE_2D_ARRAY: return "uimage2DArray";
       case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE: return "uimage2DMS";
       case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return "uimage2DMSArray";
+#endif
 #if GL_UNSIGNED_INT_ATOMIC_COUNTER
       case GL_UNSIGNED_INT_ATOMIC_COUNTER: return "atomic_uint";
 #endif
