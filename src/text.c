@@ -153,6 +153,7 @@ static int _glhckTextGeometryAllocateMore(__GLHCKtextGeometry *geometry)
 #endif
 
    geometry->vertexData = newData;
+   geometry->allocatedCount = newCount;
    return RETURN_OK;
 
 fail:
@@ -170,6 +171,7 @@ static int _glhckTextTextureRowsAllocateMore(__GLHCKtextTexture *texture)
       goto fail;
 
    texture->rows = newRows;
+   texture->allocatedCount = newCount;
    return RETURN_OK;
 
 fail:
@@ -1017,7 +1019,7 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size
 {
    unsigned int i, codepoint, state = 0;
    short isize = (short)size*10.0f;
-   int vcount;
+   int vcount, newVcount;
 #if GLHCK_TEXT_FLOAT_PRECISION
    glhckVertexData2f *v;
 #if GLHCK_TRISTRIP
@@ -1033,7 +1035,7 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size
    __GLHCKtextGlyph *glyph;
    __GLHCKtextFont *font;
    __GLHCKtextQuad q;
-   CALL(2, "%p, %d, %f, %f, %f, %s, %p", object, font_id, size, x, y, s, width);
+   CALL(2, "%p, %u, %f, %f, %f, %s, %p", object, font_id, size, x, y, s, width);
    assert(object && s);
    if (width) *width = 0;
 
@@ -1049,7 +1051,12 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size
          continue;
 
       vcount = (texture = glyph->texture)->geometry.vertexCount;
-      if ((vcount?vcount+6:4) >= texture->geometry.allocatedCount) {
+#if GLHCK_TRISTRIP
+      newVcount = (vcount?vcount+6:4)
+#else
+      newVcount = vcount+6;
+#endif
+      if (newVcount >= texture->geometry.allocatedCount) {
          if (_glhckTextGeometryAllocateMore(&texture->geometry) != RETURN_OK) {
             DEBUG(GLHCK_DBG_WARNING, "TEXT :: [%p] out of memory!", object);
             continue;
