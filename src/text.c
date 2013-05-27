@@ -1047,10 +1047,10 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size
       if (decutf8(&state, &codepoint, *(unsigned char*)s)) continue;
       if (!(glyph = _glhckTextGetGlyph(object, font, codepoint, isize)))
          continue;
-      if (!glyph->texture)
+      if (!(texture = glyph->texture))
          continue;
 
-      vcount = (texture = glyph->texture)->geometry.vertexCount;
+      vcount = texture->geometry.vertexCount;
 #if GLHCK_TRISTRIP
       newVcount = (vcount?vcount+6:4)
 #else
