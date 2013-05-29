@@ -2,6 +2,14 @@
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_CAMERA
 
+/* the cameras in glhck contain right-handed projection
+ *
+ * WORLD/3D
+ *    y     -z FAR
+ * -x | x   /
+ *   -y    z NEAR
+ */
+
 /* \brief calculate projection matrix */
 static void _glhckCameraProjectionMatrix(glhckCamera *object)
 {
@@ -92,6 +100,7 @@ void _glhckCameraWorldUpdate(int width, int height)
    /* no camera binded, upload default projection */
    if (!(camera = GLHCKRD()->camera)) {
       _glhckRenderDefaultProjection(width, height);
+      glhckRenderViewport(0, 0, width, height);
    } else {
       /* update camera */
       GLHCKRD()->camera = NULL;

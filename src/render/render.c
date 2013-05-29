@@ -74,14 +74,9 @@ void _glhckRenderCheckApi(void)
 /* \brief builds and sends the default projection to renderer */
 void _glhckRenderDefaultProjection(int width, int height)
 {
-   kmMat4 projection;
    CALL(1, "%d, %d", width, height);
    assert(width > 0 && height > 0);
-
-   glhckRenderViewport(0, 0, width, height);
-   kmMat4PerspectiveProjection(&projection, 35.0f,
-         (float)width/(float)height, 0.1f, 100.0f);
-   glhckRenderProjectionOnly(&projection);
+   glhckRenderProjection2D(width, height, -100.0f, 100.0f);
 }
 
 /***
@@ -139,7 +134,7 @@ GLHCKAPI void glhckRenderViewport(int x, int y, int width, int height)
    GLHCKRA()->viewport(x, y, width, height);
 
    /* update orthographic matrix */
-   kmMat4OrthographicProjection(&ortho, x, width, height, y, -1, 1);
+   kmMat4OrthographicProjection(&ortho, x, width, height, y, -1.0f, 1.0f);
    GLHCKRA()->setOrthographic(&ortho);
    memcpy(&GLHCKRD()->view.orthographic, &ortho, sizeof(kmMat4));
 }
@@ -316,6 +311,25 @@ GLHCKAPI void glhckRenderProjectionOnly(const kmMat4 *mat)
    kmMat4Identity(&identity);
    glhckRenderProjection(mat);
    glhckRenderView(&identity);
+}
+
+/* \brief set 2D projection matrix, and identity view matrix
+ * the text is left-handed, the glhck cameras are right-handed
+ *
+ *  TEXT    WORLD/3D
+ *   -y        y
+ * -x | x   -x | x
+ *    y       -y
+ *
+ */
+GLHCKAPI void glhckRenderProjection2D(int width, int height, kmScalar near, kmScalar far)
+{
+   kmMat4 ortho;
+   GLHCK_INITIALIZED();
+   CALL(2, "%d, %d, %f, %f", width, height, near, far);
+   assert(width > 0 && height > 0);
+   kmMat4OrthographicProjection(&ortho, 0, (kmScalar)width, (kmScalar)height, 0, near, far);
+   glhckRenderProjectionOnly(&ortho);
 }
 
 /* \brief output queued objects */

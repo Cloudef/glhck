@@ -188,7 +188,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
    glhckTexture *texture = NULL;
    glhckObject *plane = NULL;
    glhckMaterial *material = NULL;
-   kmMat4 ortho;
+   kmMat4 projection;
    CALL(0, "%p, %d, %d", object, powerOfTwo, border);
 
    /* count textures */
@@ -259,11 +259,9 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
    memcpy(&oldView, glhckRenderGetView(), sizeof(kmMat4));
 
    /* create projection for drawing */
-   kmMat4OrthographicProjection(&ortho, 0, width, 0, height, -1.0f, 1.0f);
-   kmMat4Translation(&ortho, -1, -1, 0);
-   glhckRenderProjectionOnly(&ortho);
+   kmMat4Translation(&projection, -1.0f, -1.0f, 0.0f);
+   glhckRenderProjectionOnly(&projection);
    glhckRenderClearColorb(0,0,0,0);
-
    glhckFramebufferRecti(fbo, 0, 0, width, height);
    glhckFramebufferBegin(fbo);
    glhckRenderClear(GLHCK_COLOR_BUFFER);
@@ -279,10 +277,10 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
          glhckObjectRotatef(plane, 0, 0, 0);
 
       /* position */
-      glhckObjectScalef(plane, (float)rect->packed.x2/width, (float)rect->packed.y2/height, 0);
+      glhckObjectScalef(plane, (kmScalar)rect->packed.x2/width, (kmScalar)rect->packed.y2/height, 0);
       glhckObjectPositionf(plane,
-            (float)(rect->packed.x1*2+rect->packed.x2)/width,
-            (float)(rect->packed.y1*2+rect->packed.y2)/height,
+            (kmScalar)(rect->packed.x1*2+rect->packed.x2)/width,
+            (kmScalar)(rect->packed.y1*2+rect->packed.y2)/height,
             0);
 
       /* draw texture */

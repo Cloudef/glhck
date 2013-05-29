@@ -696,6 +696,7 @@ GLHCKAPI void glhckRenderPassShader(glhckShader *shader);
 GLHCKAPI glhckShader* glhckRenderGetShader(void);
 GLHCKAPI void glhckRenderProjection(kmMat4 const* mat);
 GLHCKAPI void glhckRenderProjectionOnly(const kmMat4 *mat);
+GLHCKAPI void glhckRenderProjection2D(int width, int height, kmScalar near, kmScalar far);
 GLHCKAPI const kmMat4* glhckRenderGetProjection(void);
 GLHCKAPI void glhckRenderView(kmMat4 const* mat);
 GLHCKAPI const kmMat4* glhckRenderGetView(void);
