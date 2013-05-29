@@ -168,7 +168,9 @@ static void rLightBind(glhckLight *light)
    if (!light)
       return;
 
-   camera = GLHCKRD()->camera;
+   if (!(camera = GLHCKRD()->camera))
+      return;
+
    object = glhckLightGetObject(light);
    kmVec3 diffuse = { 255, 255, 255 }; // FIXME: Get real diffuse
    glhckHwBufferFillUniform(GLPOINTER()->sharedUBO, "GlhckLight.Position", sizeof(kmVec3), (GLvoid*)glhckObjectGetPosition(object));
