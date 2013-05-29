@@ -13,8 +13,8 @@
 /* \brief calculate projection matrix */
 static void _glhckCameraProjectionMatrix(glhckCamera *object)
 {
-   kmScalar w, h;
-   float distanceFromTarget;
+   kmScalar w, h, distanceFromTarget;
+   kmVec3 toTarget;
 
    CALL(2, "%p", object);
    assert(object);
@@ -27,7 +27,6 @@ static void _glhckCameraProjectionMatrix(glhckCamera *object)
          h = object->view.viewport.w < object->view.viewport.h ? 1 :
                object->view.viewport.h / object->view.viewport.w;
 
-         kmVec3 toTarget;
          kmVec3Subtract(&toTarget, &object->object->view.translation, &object->object->view.target);
          distanceFromTarget = kmVec3Length(&toTarget);
 
