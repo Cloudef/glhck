@@ -709,6 +709,10 @@ static inline void rTextRender(const glhckText *text)
       GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
    }
 
+   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
+      glhFrontFace(GLHCK_FACE_CCW);
+   }
+
    if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
       GLPOINTER()->state.flags |= GL_STATE_TEXTURE;
       GLPOINTER()->state.attrib[1] = 1;
@@ -756,6 +760,10 @@ static inline void rTextRender(const glhckText *text)
             &texture->geometry.vertexData[0].coord));
       GL_CALL(glDrawArrays(GLHCK_TRISTRIP?GL_TRIANGLE_STRIP:GL_TRIANGLES,
                0, texture->geometry.vertexCount));
+   }
+
+   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
+      glhFrontFace(GLPOINTER()->state.frontFace);
    }
 
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
