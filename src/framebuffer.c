@@ -112,6 +112,7 @@ GLHCKAPI void glhckFramebufferBegin(glhckFramebuffer *object)
 {
    CALL(2, "%p", object);
    assert(object);
+   glhckRenderStatePush();
    glhckFramebufferBind(object);
    glhckRenderViewport(object->rect.x, object->rect.y, object->rect.w, object->rect.h);
 }
@@ -122,10 +123,7 @@ GLHCKAPI void glhckFramebufferEnd(glhckFramebuffer *object)
    CALL(2, "%p", object);
    assert(object);
    glhckFramebufferUnbind(object->target);
-   if (GLHCKRD()->camera) {
-      GLHCKRD()->camera->view.updateViewport = 1;
-      glhckCameraUpdate(GLHCKRD()->camera);
-   } else glhckRenderViewport(0, 0, GLHCKR()->width, GLHCKR()->height);
+   glhckRenderStatePop();
 }
 
 /* \brief set framebuffer's visible area */

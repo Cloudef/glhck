@@ -180,8 +180,6 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
 {
    int width, height, maxTexSize;
    unsigned short count;
-   glhckColorb oldClear;
-   kmMat4 oldProjection, oldView;
    _glhckTexturePacker *tp;
    _glhckAtlasRect *rect;
    glhckFramebuffer *fbo = NULL;
@@ -249,21 +247,18 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
       goto fail;
 
    /* set material to object */
-   glhckMaterialOptions(material, 0);
    glhckObjectMaterial(plane, material);
-   glhckObjectDepth(plane, 0);
-   glhckObjectCull(plane, 0);
-
-   memcpy(&oldClear, glhckRenderGetClearColor(), sizeof(glhckColorb));
-   memcpy(&oldProjection, glhckRenderGetProjection(), sizeof(kmMat4));
-   memcpy(&oldView, glhckRenderGetView(), sizeof(kmMat4));
 
    /* create projection for drawing */
    kmMat4Translation(&projection, -1.0f, -1.0f, 0.0f);
-   glhckRenderProjectionOnly(&projection);
-   glhckRenderClearColorb(0,0,0,0);
+
+   /* render atlas */
    glhckFramebufferRecti(fbo, 0, 0, width, height);
    glhckFramebufferBegin(fbo);
+   glhckRenderFlip(0);
+   glhckRenderPass(GLHCK_PASS_TEXTURE);
+   glhckRenderProjectionOnly(&projection);
+   glhckRenderClearColorb(0,0,0,0);
    glhckRenderClear(GLHCK_COLOR_BUFFER);
    for (rect = object->rect; rect; rect = rect->next) {
       rect->packed.rotated = _glhckTexturePackerGetLocation(tp,
@@ -288,11 +283,6 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
       glhckObjectRender(plane);
    }
    glhckFramebufferEnd(fbo);
-
-   /* restore old state */
-   glhckRenderProjection(&oldProjection);
-   glhckRenderView(&oldView);
-   glhckRenderClearColor(&oldClear);
 
    /* reference rtt's texture */
    IFDO(glhckTextureFree, object->texture);

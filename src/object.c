@@ -246,6 +246,10 @@ static inline void _glhckObjectUpdateMatrix(glhckObject *object)
    kmMat4Multiply(&scaling, &rotation, &scaling);
    kmMat4Multiply(&object->view.matrix, &translation, &scaling);
 
+   /* we need to flip the matrix for 2D drawing */
+   if (GLHCKRD()->view.flippedProjection)
+      kmMat4Multiply(&object->view.matrix, &object->view.matrix, &_glhckFlipMatrix);
+
    /* update bounding boxes */
    _glhckObjectUpdateBoxes(object);
 
@@ -618,8 +622,10 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
    assert(object);
 
    /* does view matrix need update? */
-   if (object->view.update)
+   if (object->view.update || object->view.wasFlipped != GLHCKRD()->view.flippedProjection) {
       _glhckObjectUpdateMatrix(object);
+      object->view.wasFlipped = GLHCKRD()->view.flippedProjection;
+   }
 
    /* render */
    assert(object->drawFunc);

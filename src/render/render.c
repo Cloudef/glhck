@@ -9,6 +9,17 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 
+/* \brief internal glhck flip matrix
+ * every model matrix is multiplied with this when glhckRenderFlip(1) is used */
+const kmMat4 _glhckFlipMatrix = {
+   .mat = {
+      1.0f,  0.0f, 0.0f, 0.0f,
+      0.0f, -1.0f, 0.0f, 0.0f,
+      0.0f,  0.0f, 1.0f, 0.0f,
+      0.0f,  0.0f, 0.0f, 1.0f,
+   }
+};
+
 /* \brief is renderer initialized? */
 int _glhckRenderInitialized(void)
 {
@@ -132,11 +143,61 @@ GLHCKAPI void glhckRenderViewport(int x, int y, int width, int height)
 
    /* set viewport on render */
    GLHCKRA()->viewport(x, y, width, height);
+   memcpy(&GLHCKRP()->viewport, (&(glhckRect){x, y, width, height}), sizeof(glhckRect));
 
    /* update orthographic matrix */
    kmMat4OrthographicProjection(&ortho, x, width, height, y, -1.0f, 1.0f);
    GLHCKRA()->setOrthographic(&ortho);
    memcpy(&GLHCKRD()->view.orthographic, &ortho, sizeof(kmMat4));
+}
+
+/* \brief push current render state to stack */
+GLHCKAPI void glhckRenderStatePush(void)
+{
+   __GLHCKrenderState *state;
+   GLHCK_INITIALIZED();
+   TRACE(2);
+
+   if (!(state = _glhckMalloc(sizeof(__GLHCKrenderState))))
+      return;
+
+   memcpy(&state->pass, &GLHCKR()->pass, sizeof(__GLHCKrenderPass));
+   memcpy(&state->view, &GLHCKRD()->view, sizeof(__GLHCKrenderView));
+   state->next = GLHCKR()->stack;
+   GLHCKR()->stack = state;
+}
+
+/* \brief push 2D drawing state */
+GLHCKAPI void glhckRenderStatePush2D(int width, int height, kmScalar near, kmScalar far)
+{
+   GLHCK_INITIALIZED();
+   TRACE(2);
+   glhckRenderStatePush();
+   glhckRenderPass(GLHCK_PASS_DEFAULTS & ~GLHCK_PASS_DEPTH);
+   glhckRenderProjection2D(width, height, near, far);
+}
+
+/* \brief pop render state from stack */
+GLHCKAPI void glhckRenderStatePop(void)
+{
+   __GLHCKrenderState *state, *newState;
+
+   if (!(state = GLHCKR()->stack))
+      return;
+
+   memcpy(&GLHCKR()->pass, &state->pass, sizeof(__GLHCKrenderPass));
+   glhckRenderClearColor(&state->pass.clearColor);
+   glhckRenderViewport(state->pass.viewport.x, state->pass.viewport.y, state->pass.viewport.w, state->pass.viewport.h);
+
+   glhckRenderFlip(state->view.flippedProjection);
+   glhckRenderProjection(&state->view.projection);
+   glhckRenderView(&state->view.view);
+   GLHCKRA()->setOrthographic(&state->view.orthographic);
+   memcpy(&GLHCKRD()->view.orthographic, &state->view.orthographic, sizeof(kmMat4));
+
+   newState = (state?state->next:NULL);
+   IFDO(_glhckFree, state);
+   GLHCKR()->stack = newState;
 }
 
 /* \brief set render pass flags */
@@ -158,6 +219,15 @@ GLHCKAPI void glhckRenderPass(unsigned int flags)
    GLHCKRP()->flags = flags;
 }
 
+/* \brief get current render pass flags */
+GLHCKAPI unsigned int glhckRenderGetPass(void)
+{
+   GLHCK_INITIALIZED();
+   TRACE(2);
+   RET(2, "%u", GLHCKRP()->flags);
+   return GLHCKRP()->flags;
+}
+
 /* \brief give current program time to glhck */
 GLHCKAPI void glhckRenderTime(float time)
 {
@@ -174,7 +244,7 @@ GLHCKAPI void glhckRenderClearColor(const glhckColorb *color)
    CALL(2, "%p", color);
    if (!_glhckRenderInitialized()) return;
    GLHCKRA()->clearColor(color);
-   memcpy(&GLHCKRD()->clearColor, color, sizeof(glhckColorb));
+   memcpy(&GLHCKRP()->clearColor, color, sizeof(glhckColorb));
 }
 
 /* \brief set clear color to render */
@@ -189,8 +259,8 @@ GLHCKAPI const glhckColorb* glhckRenderGetClearColor(void)
 {
    GLHCK_INITIALIZED();
    TRACE(2);
-   RET(2, "%p", &GLHCKRD()->clearColor);
-   return &GLHCKRD()->clearColor;
+   RET(2, "%p", &GLHCKRP()->clearColor);
+   return &GLHCKRP()->clearColor;
 }
 
 /* \brief clear scene */
@@ -208,6 +278,15 @@ GLHCKAPI void glhckRenderFrontFace(glhckFaceOrientation orientation)
    GLHCK_INITIALIZED();
    CALL(2, "%d", orientation);
    GLHCKRP()->frontFace = orientation;
+}
+
+/* \brief return current render pass front face */
+GLHCKAPI glhckFaceOrientation glhckRenderGetFrontFace(void)
+{
+   GLHCK_INITIALIZED();
+   TRACE(2);
+   RET(2, "%u", GLHCKRP()->frontFace);
+   return GLHCKRP()->frontFace;
 }
 
 /* \brief set render pass cull face side */
@@ -264,6 +343,22 @@ GLHCKAPI glhckShader* glhckRenderPassGetShader(void)
    return GLHCKRP()->shader;
 }
 
+/* \brief set vertically flipped rendering mode */
+GLHCKAPI void glhckRenderFlip(int flip)
+{
+   GLHCK_INITIALIZED();
+   CALL(2, "%d", flip);
+   GLHCKRD()->view.flippedProjection = flip;
+}
+
+/* \brief get current flipping */
+GLHCKAPI int glhckRenderGetFlip(void)
+{
+   GLHCK_INITIALIZED();
+   TRACE(2);
+   return GLHCKRD()->view.flippedProjection;
+}
+
 /* \brief set projection matrix */
 GLHCKAPI void glhckRenderProjection(const kmMat4 *mat)
 {
@@ -272,6 +367,37 @@ GLHCKAPI void glhckRenderProjection(const kmMat4 *mat)
    if (!_glhckRenderInitialized()) return;
    GLHCKRA()->setProjection(mat);
    memcpy(&GLHCKRD()->view.projection, mat, sizeof(kmMat4));
+}
+
+/* \brief set projection matrix, and identity view matrix */
+GLHCKAPI void glhckRenderProjectionOnly(const kmMat4 *mat)
+{
+   kmMat4 identity;
+   GLHCK_INITIALIZED();
+   CALL(2, "%p", mat);
+   kmMat4Identity(&identity);
+   glhckRenderProjection(mat);
+   glhckRenderView(&identity);
+}
+
+/* \brief set 2D projection matrix, and identity view matrx
+ * 2D projection matrix sets screen coordinates where (0,0) == TOP LEFT (W,H) == BOTTOM RIGHT
+ *
+ *  TEXT    WORLD/3D
+ *   -y        y
+ * -x | x   -x | x
+ *    y       -y
+ *
+ */
+GLHCKAPI void glhckRenderProjection2D(int width, int height, kmScalar near, kmScalar far)
+{
+   kmMat4 ortho;
+   GLHCK_INITIALIZED();
+   CALL(2, "%d, %d, %f, %f", width, height, near, far);
+   assert(width > 0 && height > 0);
+   kmMat4OrthographicProjection(&ortho, 0, (kmScalar)width, (kmScalar)height, 0, near, far);
+   glhckRenderProjectionOnly(&ortho);
+   glhckRenderFlip(1);
 }
 
 /* \brief return projection matrix */
@@ -300,36 +426,6 @@ GLHCKAPI const kmMat4* glhckRenderGetView(void)
    TRACE(2);
    RET(2, "%p", &GLHCKRD()->view.view);
    return &GLHCKRD()->view.view;
-}
-
-/* \brief set projection matrix, and identity view matrix */
-GLHCKAPI void glhckRenderProjectionOnly(const kmMat4 *mat)
-{
-   kmMat4 identity;
-   GLHCK_INITIALIZED();
-   CALL(2, "%p", mat);
-   kmMat4Identity(&identity);
-   glhckRenderProjection(mat);
-   glhckRenderView(&identity);
-}
-
-/* \brief set 2D projection matrix, and identity view matrix
- * the text is left-handed, the glhck cameras are right-handed
- *
- *  TEXT    WORLD/3D
- *   -y        y
- * -x | x   -x | x
- *    y       -y
- *
- */
-GLHCKAPI void glhckRenderProjection2D(int width, int height, kmScalar near, kmScalar far)
-{
-   kmMat4 ortho;
-   GLHCK_INITIALIZED();
-   CALL(2, "%d, %d, %f, %f", width, height, near, far);
-   assert(width > 0 && height > 0);
-   kmMat4OrthographicProjection(&ortho, 0, (kmScalar)width, (kmScalar)height, 0, near, far);
-   glhckRenderProjectionOnly(&ortho);
 }
 
 /* \brief output queued objects */

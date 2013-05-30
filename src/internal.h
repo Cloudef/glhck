@@ -53,6 +53,10 @@
 /* floating point precision text? */
 #define GLHCK_TEXT_FLOAT_PRECISION 1
 
+/* internal glhck flip matrix
+ * every model matrix is multiplied with this when glhckRenderFlip(1) is used */
+extern const kmMat4 _glhckFlipMatrix;
+
 /* return variables used throughout library */
 typedef enum _glhckReturnValue {
    RETURN_FAIL    =  0,
@@ -270,6 +274,7 @@ typedef struct __GLHCKobjectView {
    kmAABB obb; /* transformed bounding (oriented) */
    kmVec3 translation, target, rotation, scaling;
    char update; /* does the model matrix need recalculation? */
+   char wasFlipped; /* was drawn last time using flipped projection? */
 } __GLHCKobjectView;
 
 /* object container */
@@ -653,6 +658,7 @@ typedef struct __GLHCKtextureQueue {
 /* view matrices */
 typedef struct __GLHCKrenderView {
    kmMat4 projection, view, orthographic;
+   char flippedProjection;
 } __GLHCKrenderView;
 
 #define GLHCK_MAX_ACTIVE_TEXTURE 8
@@ -670,24 +676,33 @@ typedef struct __GLHCKrenderDraw {
    struct _glhckCamera *camera;
    unsigned int activeTexture;
    unsigned int drawCount;
-   glhckColorb clearColor;
 } __GLHCKrenderDraw;
 
 /* context render pass state
  * the pass state overrides object state */
 typedef struct __GLHCKrenderPass {
    struct _glhckShader *shader;
+   glhckRect viewport;
    unsigned int blenda, blendb;
    unsigned int flags;
    glhckCullFaceType cullFace;
    glhckFaceOrientation frontFace;
+   glhckColorb clearColor;
 } __GLHCKrenderPass;
+
+/* render state */
+typedef struct __GLHCKrenderState {
+   struct __GLHCKrenderView view;
+   struct __GLHCKrenderPass pass;
+   struct __GLHCKrenderState *next;
+} __GLHCKrenderState;
 
 /* context render properties */
 typedef struct __GLHCKrender {
    struct __GLHCKrenderAPI api;
    struct __GLHCKrenderPass pass;
    struct __GLHCKrenderDraw draw;
+   struct __GLHCKrenderState *stack;
    void *renderPointer; /* this pointer is reserved for renderer */
    const char *name;
    int width, height;

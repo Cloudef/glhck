@@ -1070,6 +1070,12 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size
       /* insert geometry data */
       v = &texture->geometry.vertexData[vcount];
 
+      /* NOTE: Text geometry has inverse winding to glhck's planes.
+       * This is so we don't need to toggle winding order in GL when drawing.
+       *
+       * The end effect is basically same as using glhckRenderFlip,
+       * only these vertices are pre-multiplied. */
+
       i = 0;
 #if GLHCK_TRISTRIP
       /* degenerate */
@@ -1136,7 +1142,6 @@ GLHCKAPI glhckShader* glhckTextGetShader(const glhckText *object)
 GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, float size,
       const char *s, const glhckTextureParameters *params)
 {
-   glhckColorb oldClear;
    glhckTexture *texture = NULL;
    glhckFramebuffer *fbo = NULL;
    glhckTextureParameters nparams;
@@ -1168,18 +1173,12 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
    if (glhckFramebufferAttachTexture(fbo, texture, GLHCK_COLOR_ATTACHMENT0) != RETURN_OK)
       goto fail;
 
-   /* set clear color */
-   memcpy(&oldClear, glhckRenderGetClearColor(), sizeof(glhckColorb));
-   glhckRenderClearColorb(0,0,0,0);
-
    glhckFramebufferRecti(fbo, 0, 0, linew, size);
    glhckFramebufferBegin(fbo);
+   glhckRenderPass(GLHCK_PASS_TEXTURE);
    glhckRenderClear(GLHCK_COLOR_BUFFER);
    glhckTextRender(object);
    glhckFramebufferEnd(fbo);
-
-   /* restore clear color */
-   glhckRenderClearColor(&oldClear);
 
    texture->importFlags |= GLHCK_TEXTURE_IMPORT_TEXT;
    glhckFramebufferFree(fbo);
