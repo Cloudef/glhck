@@ -152,8 +152,8 @@ int main(int argc, char **argv)
    glhckObjectScalef(sprite, 0.05f, 0.05f, 0.05f);
    glhckObjectPositionf(sprite3, 64*2, 48*2, 0);
 
-#define SKIP_MMD    1
-#define SKIP_OCTM   1
+#define SKIP_MMD    0
+#define SKIP_OCTM   0
 #define SKIP_ASSIMP 0
 
 #if SKIP_MMD
@@ -437,7 +437,7 @@ int main(int argc, char **argv)
       kmVec3 oldPos = *glhckObjectGetPosition(cube);
       kmVec3 oldScale = *glhckObjectGetScale(cube);
       glhckRenderPass(glhckRenderGetPass() & ~GLHCK_PASS_LIGHTING);
-      glhckObjectScalef(cube, 0.5, 0.5, 0.5);
+      glhckObjectScalef(cube, oldScale.x*5, oldScale.y*5, oldScale.z*5);
       glhckObjectPositionf(cube, WIDTH/2, HEIGHT/2, 0.0f);
       glhckObjectDraw(cube);
       glhckRender();
