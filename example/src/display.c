@@ -433,6 +433,21 @@ int main(int argc, char **argv)
       glhckObjectRender(screen);
 #endif
 
+      glhckRenderStatePush2D(WIDTH, HEIGHT, -1000, 1000);
+      kmVec3 oldPos = *glhckObjectGetPosition(cube);
+      kmVec3 oldScale = *glhckObjectGetScale(cube);
+      glhckRenderPass(glhckRenderGetPass() & ~GLHCK_PASS_LIGHTING);
+      glhckObjectScalef(cube, 0.5, 0.5, 0.5);
+      glhckObjectPositionf(cube, WIDTH/2, HEIGHT/2, 0.0f);
+      glhckObjectDraw(cube);
+      glhckRender();
+      glhckObjectPositionf(cube, 45, 85, 0.0f);
+      glhckObjectDraw(cube);
+      glhckRender();
+      glhckObjectScale(cube, &oldScale);
+      glhckObjectPosition(cube, &oldPos);
+      glhckRenderStatePop();
+
       /* draw some text */
       glhckTextColorb(text, 255, 255, 255, 255);
       glhckTextStash(text, font2, 18,         0,  HEIGHT-4, WIN_TITLE, NULL);
