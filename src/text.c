@@ -182,7 +182,6 @@ fail:
 static int _glhckTextTextureNew(glhckText *object, glhckTextureFormat format, glhckDataType type, const void *data)
 {
    __GLHCKtextTexture *texture = NULL, *t;
-   glhckTextureParameters nparams;
    CALL(0, "%p, %u, %u, %p", object, format, type, data);
    assert(object);
 
@@ -196,15 +195,8 @@ static int _glhckTextTextureNew(glhckText *object, glhckTextureFormat format, gl
             0, 0, format, type, 0, data) != RETURN_OK)
       goto fail;
 
-   /* make sure mipmap is disabled from the parameters */
-   memcpy(&nparams, glhckTextureDefaultParameters(), sizeof(glhckTextureParameters));
-   nparams.mipmap = 0;
-   /* FIXME: do a function that checks, if filter contains mipmaps, and then replace */
-   nparams.minFilter = GLHCK_FILTER_NEAREST;
-   nparams.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
-   nparams.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
-   nparams.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
-   glhckTextureParameter(texture->texture, &nparams);
+   /* set default params */
+   glhckTextureParameter(texture->texture, glhckTextureDefaultSpriteParameters());
 
    /* set internal texture dimensions for mapping */
    texture->internalWidth = (float)1.0f/object->cacheWidth;
@@ -475,7 +467,6 @@ static unsigned int glhckTextFontNewInternal(glhckText *object, const _glhckBitm
 {
    unsigned int id, c, r;
    glhckTexture *texture;
-   glhckTextureParameters nparams;
    char utf8buf[5];
    assert(object && font);
    if (nativeSize) *nativeSize = 0;
@@ -489,15 +480,8 @@ static unsigned int glhckTextFontNewInternal(glhckText *object, const _glhckBitm
             font->format, font->type, 0, font->data) != RETURN_OK)
       goto fail;
 
-   /* make sure mipmap is disabled from the parameters */
-   memcpy(&nparams, glhckTextureDefaultParameters(), sizeof(glhckTextureParameters));
-   nparams.mipmap = 0;
-   /* FIXME: do a function that checks, if filter contains mipmaps, and then replace */
-   nparams.minFilter = GLHCK_FILTER_NEAREST;
-   nparams.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
-   nparams.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
-   nparams.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
-   glhckTextureParameter(texture, &nparams);
+   /* set default params */
+   glhckTextureParameter(texture, glhckTextureDefaultSpriteParameters());
 
    /* create font from texture */
    if (!(id = glhckTextFontNewFromTexture(object, texture, font->ascent, font->descent, font->lineGap)))
@@ -920,7 +904,6 @@ fail:
 GLHCKAPI unsigned int glhckTextFontNewFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap)
 {
    unsigned int id;
-   glhckTextureParameters nparams;
    glhckTexture *texture;
    CALL(0, "%p, %s, %d, %d, %d", object, file, ascent, descent, lineGap);
    assert(object && file);
@@ -929,15 +912,8 @@ GLHCKAPI unsigned int glhckTextFontNewFromBitmap(glhckText *object, const char *
    if (!(texture = glhckTextureNewFromFile(file, NULL, NULL)))
       goto fail;
 
-   /* make sure mipmap is disabled from the parameters */
-   memcpy(&nparams, glhckTextureDefaultParameters(), sizeof(glhckTextureParameters));
-   nparams.mipmap = 0;
-   /* FIXME: do a function that checks, if filter contains mipmaps, and then replace */
-   nparams.minFilter = GLHCK_FILTER_NEAREST;
-   nparams.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
-   nparams.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
-   nparams.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
-   glhckTextureParameter(texture, &nparams);
+   /* set default parameters */
+   glhckTextureParameter(texture, glhckTextureDefaultSpriteParameters());
 
    if (!(id = glhckTextFontNewFromTexture(object, texture, ascent, descent, lineGap)))
       goto fail;
