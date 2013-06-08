@@ -662,7 +662,7 @@ GLHCKAPI void glhckTextGetMetrics(glhckText *object, unsigned int font_id,
       float size, float *ascender, float *descender, float *lineHeight)
 {
    __GLHCKtextFont *font;
-   CALL(1, "%p, %d, %f, %f, %f, %f", object, font_id, size, ascender, descender, lineHeight);
+   CALL(1, "%p, %d, %f, %p, %p, %p", object, font_id, size, ascender, descender, lineHeight);
    assert(object);
    if (ascender) *ascender = 0.0f;
    if (descender) *descender = 0.0f;
@@ -1127,8 +1127,12 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
    if (!(texture = glhckTextureNew()))
       goto fail;
 
+
+   float ascender, descender;
    glhckTextClear(object);
-   glhckTextStash(object, font_id, size, 0, size*0.82f, s, &linew);
+   glhckTextGetMetrics(object, font_id, 1.0f, &ascender, &descender, NULL);
+   // printf("A: %f, D: %f\n", ascender, descender);
+   glhckTextStash(object, font_id, size, 0, size+descender*size, s, &linew);
 
    if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, linew, size, 0, 0,
             GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
@@ -1146,6 +1150,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
    glhckFramebufferRecti(fbo, 0, 0, linew, size);
    glhckFramebufferBegin(fbo);
    glhckRenderPass(GLHCK_PASS_TEXTURE);
+   glhckRenderClearColorb(0,0,0,0);
    glhckRenderClear(GLHCK_COLOR_BUFFER);
    glhckTextRender(object);
    glhckFramebufferEnd(fbo);
