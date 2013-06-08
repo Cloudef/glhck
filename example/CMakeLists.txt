@@ -1,5 +1,6 @@
 SET(EXAMPLE_EXE
-   display)
+   display
+   distanceField)
 
 FOREACH (example ${EXAMPLE_EXE})
    PROJECT(${example})
