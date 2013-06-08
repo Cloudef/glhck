@@ -27,11 +27,21 @@ static const char *_glhckBaseShader =
 "     0.0, 0.0, 0.5, 0.0,"
 "     0.5, 0.5, 0.5, 1.0);"
 ""
+"vec2 vec2RotateBy(vec2 invec, float degrees, vec2 center) {"
+"  float radians = degrees * 0.017453;"
+"  float cs = cos(radians), sn = sin(radians);"
+"  vec2 tmp = invec - center;"
+"  float x = tmp.x * cs - tmp.y * sn;"
+"  float y = tmp.x * sn + tmp.y * cs;"
+"  return vec2(x, y) + center;"
+"}\n"
+""
 "void main() {"
+"  vec2 rotated = vec2RotateBy(GlhckUV0, GlhckMaterial.TextureRotation, vec2(0.5, 0.5));"
 "  GlhckFVertexWorld = GlhckModel * vec4(GlhckVertex, 1.0);"
 "  GlhckFVertexView = GlhckView * GlhckFVertexWorld;"
 "  GlhckFNormalWorld = normalize(mat3(GlhckModel) * GlhckNormal);"
-"  GlhckFUV0 = GlhckMaterial.TextureOffset + (GlhckUV0 * GlhckMaterial.TextureScale);"
+"  GlhckFUV0 = GlhckMaterial.TextureOffset + (rotated * GlhckMaterial.TextureScale);"
 "  GlhckFSC0 = ScaleMatrix * GlhckLight.Projection * GlhckLight.View * GlhckFVertexWorld;"
 "  gl_Position = GlhckProjection * GlhckFVertexView;"
 "}\n"
@@ -776,6 +786,10 @@ static inline void rObjectStart(const glhckObject *object)
    if (object->material) shininess = object->material->shininess;
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Shininess", 1, &shininess);
 
+   kmScalar rotation = 0.0f;
+   if (object->material) rotation = object->material->textureRotation;
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureRotation", 1, (GLfloat*)&rotation);
+
    kmVec2 offset = {0,0};
    if (object->material) memcpy(&offset, &object->material->textureOffset, sizeof(kmVec2));
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureOffset", 1, (kmVec2*)&offset);
@@ -1055,6 +1069,7 @@ static int renderInit(void)
          "  vec4 Diffuse;"
          "  vec3 Specular;"
          "  float Shininess;"
+         "  float TextureRotation;"
          "  vec2 TextureOffset;"
          "  vec2 TextureScale;"
          "};"

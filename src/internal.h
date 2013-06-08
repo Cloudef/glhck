@@ -254,6 +254,7 @@ typedef struct _glhckAtlas {
 typedef struct _glhckMaterial {
    kmVec2 textureScale;
    kmVec2 textureOffset;
+   kmScalar textureRotation; /* in degrees */
    struct _glhckShader *shader;
    struct _glhckTexture *texture;
    struct glhckColorb ambient;

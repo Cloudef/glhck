@@ -584,8 +584,6 @@ glhckGeometry* _glhckGeometryCopy(glhckGeometry *src)
       object->vertices.any =_glhckCopy(src->vertices.any, src->vertexCount * glhckVertexTypeElementSize(src->vertexType));
    if (src->indices.any)
       object->indices.any = _glhckCopy(src->indices.any, src->indexCount * glhckIndexTypeElementSize(src->indexType));
-   if (src->transformedCoordinates)
-      object->transformedCoordinates = _glhckCopy(src->transformedCoordinates, sizeof(glhckGeometryTransformCoordinates));
 
    return object;
 }
@@ -594,7 +592,6 @@ glhckGeometry* _glhckGeometryCopy(glhckGeometry *src)
 void _glhckGeometryFree(glhckGeometry *object)
 {
    assert(object);
-   IFDO(_glhckFree, object->transformedCoordinates);
    _glhckGeometryFreeVertices(object);
    _glhckGeometryFreeIndices(object);
    _glhckFree(object);
@@ -1065,56 +1062,6 @@ GLHCKAPI void glhckGeometrySetVertexDataForIndex(
       default:
          break;
    }
-}
-
-/* \brief transform coordinates with vec4 (off x, off y, width, height) and rotation */
-GLHCKAPI void glhckGeometryTransformCoordinates(glhckGeometry *object, const glhckRect *transformed, short degrees)
-{
-   int i;
-   kmVec2 out, center = { 0.5f, 0.5f };
-   glhckVector2f coord;
-   glhckCoordTransform *newCoords;
-   CALL(2, "%p, %p, %d", object, transformed, degrees);
-   assert(object);
-
-   if (transformed->w == 0.f || transformed->h == 0.f)
-      return;
-
-   if (!(newCoords = _glhckMalloc(sizeof(glhckCoordTransform))))
-      return;
-
-   /* transform coordinates */
-   for (i = 0; i != object->vertexCount; ++i) {
-      glhckGeometryGetVertexDataForIndex(object, i, NULL, NULL, &coord, NULL);
-      out.x = coord.x/(float)object->textureRange;
-      out.y = coord.y/(float)object->textureRange;
-
-      if (object->transformedCoordinates) {
-         if (object->transformedCoordinates->degrees != 0)
-            kmVec2RotateBy(&out, &out, -object->transformedCoordinates->degrees, &center);
-
-         out.x -= object->transformedCoordinates->transform.x;
-         out.x /= object->transformedCoordinates->transform.w;
-         out.y -= object->transformedCoordinates->transform.y;
-         out.y /= object->transformedCoordinates->transform.h;
-      }
-
-      if (degrees != 0) kmVec2RotateBy(&out, &out, degrees, &center);
-      out.x *= transformed->w;
-      out.x += transformed->x;
-      out.y *= transformed->h;
-      out.y += transformed->y;
-
-      coord.x = out.x*object->textureRange;
-      coord.y = out.y*object->textureRange;
-      glhckGeometrySetVertexDataForIndex(object, i, NULL, NULL, &coord, NULL);
-   }
-
-   /* assign to geometry */
-   newCoords->degrees   = degrees;
-   newCoords->transform = *transformed;
-   IFDO(_glhckFree, object->transformedCoordinates);
-   object->transformedCoordinates = newCoords;
 }
 
 /* \brief calculate object's bounding box */

@@ -613,16 +613,22 @@ static inline void rObjectStart(const glhckObject *object) {
       GL_CALL(glMatrixMode(GL_TEXTURE));
       GL_CALL(glLoadIdentity());
 
+      kmScalar rotation = 0.0f;
+      if (object->material) rotation = object->material->textureRotation;
+      GL_CALL(glTranslatef(0.5f, 0.5f, 0.0f));
+      GL_CALL(glRotatef(rotation, 0, 0, 1));
+      GL_CALL(glTranslatef(-0.5f, -0.5f, 0.0f));
+
       kmVec2 offset = {0,0};
       if (object->material) memcpy(&offset, &object->material->textureOffset, sizeof(kmVec2));
       GL_CALL(glTranslatef(offset.x, offset.y, 1.0f));
 
-      /* set texture coords according to how geometry wants them */
-      GL_CALL(glScalef((GLfloat)1.0f/object->geometry->textureRange, (GLfloat)1.0f/object->geometry->textureRange, 1.0f));
-
       kmVec2 scale = {1,1};
       if (object->material) memcpy(&scale, &object->material->textureScale, sizeof(kmVec2));
       GL_CALL(glScalef(scale.x, scale.y, 1.0f));
+
+      /* set texture coords according to how geometry wants them */
+      GL_CALL(glScalef((GLfloat)1.0f/object->geometry->textureRange, (GLfloat)1.0f/object->geometry->textureRange, 1.0f));
 
       glhckTextureBind(object->material->texture);
    } else if (GL_STATE_CHANGED(GL_STATE_TEXTURE)) {

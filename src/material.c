@@ -195,6 +195,34 @@ GLHCKAPI const kmVec2* glhckMaterialGetTextureOffset(glhckMaterial *object)
    return &object->textureOffset;
 }
 
+/* \brief set texture rotation on material */
+GLHCKAPI void glhckMaterialTextureRotationf(glhckMaterial *object, kmScalar degrees)
+{
+   CALL(1, "%p, %f", object, degrees);
+   assert(object);
+   object->textureRotation = degrees;
+}
+
+/* \brief get texture rotation on material */
+GLHCKAPI kmScalar glhckMaterialGetTextureRotation(glhckMaterial *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+   RET(1, "%f", object->textureRotation);
+   return object->textureRotation;
+}
+
+/* \brief transform texture using rect and rotation */
+GLHCKAPI void glhckMaterialTextureTransform(glhckMaterial *object, const glhckRect *transformed, short degrees)
+{
+   if (kmAlmostEqual(transformed->w, 0.f) || kmAlmostEqual(transformed->h, 0.f))
+      return;
+
+   glhckMaterialTextureOffsetf(object, transformed->x, transformed->y);
+   glhckMaterialTextureScalef(object, transformed->w, transformed->h);
+   glhckMaterialTextureRotationf(object, degrees);
+}
+
 /* \brief set material's shininess */
 GLHCKAPI void glhckMaterialShininess(glhckMaterial *object, float shininess)
 {

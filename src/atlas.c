@@ -381,7 +381,7 @@ GLHCKAPI int glhckAtlasTransformCoordinates(const glhckAtlas *object, glhckTextu
    if (glhckAtlasGetTransform(object, texture, &transformed, &degrees) != RETURN_OK)
       goto fail;
 
-   if (transformed.w == 0.f || transformed.h == 0.f)
+   if (kmAlmostEqual(transformed.w, 0.f) || kmAlmostEqual(transformed.h, 0.f))
       goto fail;
 
    /* do we need to rotate? */

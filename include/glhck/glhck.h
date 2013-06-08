@@ -598,9 +598,6 @@ typedef struct glhckGeometry {
    /* indices */
    glhckIndexData indices;
 
-   /* transformed coordinates */
-   glhckCoordTransform *transformedCoordinates;
-
    /* counts for vertices && indices */
    int vertexCount, indexCount;
 
@@ -914,6 +911,9 @@ GLHCKAPI const kmVec2* glhckMaterialGetTextureScale(glhckMaterial *object);
 GLHCKAPI void glhckMaterialTextureOffset(glhckMaterial *object, const kmVec2 *offset);
 GLHCKAPI void glhckMaterialTextureOffsetf(glhckMaterial *object, kmScalar x, kmScalar y);
 GLHCKAPI const kmVec2* glhckMaterialGetTextureOffset(glhckMaterial *object);
+GLHCKAPI void glhckMaterialTextureRotationf(glhckMaterial *object, kmScalar degrees);
+GLHCKAPI kmScalar glhckMaterialGetTextureRotation(glhckMaterial *object);
+GLHCKAPI void glhckMaterialTextureTransform(glhckMaterial *object, const glhckRect *transformed, short degrees);
 GLHCKAPI void glhckMaterialShininess(glhckMaterial *object, float shininess);
 GLHCKAPI float glhckMaterialGetShininess(const glhckMaterial *object);
 GLHCKAPI void glhckMaterialBlendFunc(glhckMaterial *object, glhckBlendingMode blenda, glhckBlendingMode blendb);
@@ -1065,7 +1065,6 @@ GLHCKAPI void glhckGeometrySetVertexDataForIndex(
       glhckGeometry *geometry, glhckIndexi ix,
       const glhckVector3f *vertex, const glhckVector3f *normal,
       const glhckVector2f *coord, const glhckColorb *color);
-GLHCKAPI void glhckGeometryTransformCoordinates(glhckGeometry *geometry, const glhckRect *transformed, short degrees);
 GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb);
 GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *geometry, glhckGeometryVertexType type, const void *data, int memb);
 GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *geometry, glhckGeometryIndexType type, const void *data, int memb);
