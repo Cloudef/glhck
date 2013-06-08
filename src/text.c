@@ -1158,14 +1158,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
             GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
       goto fail;
 
-   /* make sure mipmap is disabled from the parameters */
-   memcpy(&nparams, (params?params:glhckTextureDefaultParameters()), sizeof(glhckTextureParameters));
-   nparams.mipmap = 0;
-   /* FIXME: do a function that checks, if filter contains mipmaps, and then replace */
-   nparams.minFilter = GLHCK_FILTER_NEAREST;
-   nparams.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
-   nparams.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
-   nparams.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
+   memcpy(&nparams, (params?params:glhckTextureDefaultSpriteParameters()), sizeof(glhckTextureParameters));
    glhckTextureParameter(texture, &nparams);
 
    if (!(fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER)))
