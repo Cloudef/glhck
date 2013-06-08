@@ -335,6 +335,28 @@ GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void)
    return &defaultParameters;
 }
 
+/* \brief return default texture parameters without mipmap and repeat */
+GLHCKAPI const glhckTextureParameters* glhckTextureDefaultLinearParameters(void)
+{
+   static glhckTextureParameters defaultParameters = {
+      .maxAnisotropy = 16.0f,
+      .minLod        = -1000.0f,
+      .maxLod        = 1000.0f,
+      .biasLod       = 0.0f,
+      .baseLevel     = 0,
+      .maxLevel      = 1000,
+      .wrapS         = GLHCK_WRAP_CLAMP_TO_EDGE,
+      .wrapT         = GLHCK_WRAP_CLAMP_TO_EDGE,
+      .wrapR         = GLHCK_WRAP_CLAMP_TO_EDGE,
+      .minFilter     = GLHCK_FILTER_LINEAR,
+      .magFilter     = GLHCK_FILTER_LINEAR,
+      .compareMode   = GLHCK_COMPARE_NONE,
+      .compareFunc   = GLHCK_COMPARE_LEQUAL,
+      .mipmap        = 0,
+   };
+   return &defaultParameters;
+}
+
 /* \brief return default sprite parameters */
 GLHCKAPI const glhckTextureParameters* glhckTextureDefaultSpriteParameters(void)
 {
