@@ -48,7 +48,7 @@ static const char *_glhckBaseShader =
 
 "-- GLhck.Text.Vertex\n"
 "void main() {"
-"  GlhckFUV0 = GlhckMaterial.TextureOffset + (GlhckUV0 * GlhckMaterial.TextureScale);"
+"  GlhckFUV0 = GlhckUV0;"
 "  gl_Position = GlhckOrthographic * vec4(GlhckVertex, 1.0);"
 "}\n"
 
@@ -1175,9 +1175,6 @@ static int renderInit(void)
    DEBUG(GLHCK_DBG_CRAP, "GLHCK UBO SIZE: %d", GLPOINTER()->sharedUBO->size);
 
    glhckHwBufferBindRange(GLPOINTER()->sharedUBO, 0, 0, GLPOINTER()->sharedUBO->size);
-
-   /* set default uniforms to text shader */
-   glhckShaderUniform(GLPOINTER()->shader[GL_SHADER_TEXT], "GlhckMaterial.TextureScale", 1, &((GLfloat[]){1,1}));
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
