@@ -1151,6 +1151,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
    if (!(texture = glhckTextureNew()))
       goto fail;
 
+   glhckTextClear(object);
    glhckTextStash(object, font_id, size, 0, size*0.82f, s, &linew);
 
    if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, linew, size, 0, 0,
@@ -1182,11 +1183,13 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
 
    texture->importFlags |= GLHCK_TEXTURE_IMPORT_TEXT;
    glhckFramebufferFree(fbo);
+   glhckTextClear(object);
 
    RET(1, "%p", texture);
    return texture;
 
 fail:
+   glhckTextClear(object);
    IFDO(glhckFramebufferFree, fbo);
    IFDO(glhckTextureFree, texture);
    RET(1, "%p", NULL);
