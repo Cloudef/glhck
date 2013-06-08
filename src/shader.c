@@ -37,8 +37,7 @@ static void _glhckShaderFreeUniforms(glhckShader *object)
  * contentsFromMemory may be null
  *
  * NOTE: you need to free shaderObjects yourself! */
-GLHCKAPI unsigned int glhckCompileShaderObject(glhckShaderType type,
-      const char *effectKey, const char *contentsFromMemory)
+GLHCKAPI unsigned int glhckCompileShaderObject(glhckShaderType type, const char *effectKey, const char *contentsFromMemory)
 {
    unsigned int obj = 0;
    CALL(0, "%u, %s, %s", type, effectKey, contentsFromMemory);
@@ -56,8 +55,7 @@ GLHCKAPI void glhckDeleteShaderObject(unsigned int shaderObject)
 
 /* \brief allocate new shader object
  * contentsFromMemory may be null */
-GLHCKAPI glhckShader* glhckShaderNew(
-      const char *vertexEffect, const char *fragmentEffect, const char *contentsFromMemory)
+GLHCKAPI glhckShader* glhckShaderNew(const char *vertexEffect, const char *fragmentEffect, const char *contentsFromMemory)
 {
    glhckShader *object = NULL;
    unsigned int vsobj, fsobj;
@@ -83,8 +81,7 @@ fail:
 }
 
 /* \brief allocate new shader object with GL shader objects */
-GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(
-      unsigned int vertexShader, unsigned int fragmentShader)
+GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(unsigned int vertexShader, unsigned int fragmentShader)
 {
    glhckShader *object = NULL;
    CALL(0, "%u, %u", vertexShader, fragmentShader);
