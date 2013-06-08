@@ -1116,7 +1116,7 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size
       texture->geometry.vertexCount += i;
    }
 
-   if (width) *width = x + (glyph?glyph->xadv:0);
+   if (width) *width = x;
 }
 
 /* \brief set shader to text */
