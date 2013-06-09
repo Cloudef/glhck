@@ -114,8 +114,8 @@ GLHCKAPI void glhckFramebufferBegin(glhckFramebuffer *object)
    assert(object);
    glhckRenderStatePush();
    glhckFramebufferBind(object);
-   glhckRenderViewport(object->rect.x, object->rect.y, object->rect.w, object->rect.h);
-   _glhckCameraWorldUpdate(object->rect.w, object->rect.h);
+   glhckRenderResize(object->rect.w, object->rect.h);
+   glhckRenderViewport(&object->rect);
 }
 
 /* \brief end rendering with the fbo */
@@ -124,7 +124,6 @@ GLHCKAPI void glhckFramebufferEnd(glhckFramebuffer *object)
    CALL(2, "%p", object);
    assert(object);
    glhckFramebufferUnbind(object->target);
-   _glhckCameraWorldUpdate(GLHCKR()->width, GLHCKR()->height);
    glhckRenderStatePop();
 }
 

@@ -89,7 +89,7 @@ void _glhckCameraWorldUpdate(int width, int height)
    diffh = height - GLHCKR()->height;
 
    for (camera = GLHCKW()->camera; camera; camera = camera->next) {
-      glhckCameraViewportf(camera,
+      glhckCameraViewporti(camera,
             camera->view.viewport.x,
             camera->view.viewport.y,
             camera->view.viewport.w + diffw,
@@ -99,7 +99,7 @@ void _glhckCameraWorldUpdate(int width, int height)
    /* no camera binded, upload default projection */
    if (!(camera = GLHCKRD()->camera)) {
       _glhckRenderDefaultProjection(width, height);
-      glhckRenderViewport(0, 0, width, height);
+      glhckRenderViewporti(0, 0, width, height);
    } else {
       /* update camera */
       GLHCKRD()->camera = NULL;
@@ -203,11 +203,7 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *object)
    }
 
    if (GLHCKRD()->camera != object || object->view.updateViewport) {
-      glhckRenderViewport(
-            object->view.viewport.x,
-            object->view.viewport.y,
-            object->view.viewport.w,
-            object->view.viewport.h);
+      glhckRenderViewport(&object->view.viewport);
       object->view.updateViewport = 0;
    }
 
@@ -337,9 +333,8 @@ GLHCKAPI void glhckCameraViewport(glhckCamera *object, const glhckRect *viewport
    object->view.updateViewport = 1;
 }
 
-/* \brief set camera's viewport (kmScalar) */
-GLHCKAPI void glhckCameraViewportf(glhckCamera *object,
-      int x, int y, int w, int h)
+/* \brief set camera's viewport (int) */
+GLHCKAPI void glhckCameraViewporti(glhckCamera *object, int x, int y, int w, int h)
 {
    const glhckRect viewport = { x, y, w, h };
    glhckCameraViewport(object, &viewport);

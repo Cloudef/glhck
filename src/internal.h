@@ -696,6 +696,7 @@ typedef struct __GLHCKrenderState {
    struct __GLHCKrenderView view;
    struct __GLHCKrenderPass pass;
    struct __GLHCKrenderState *next;
+   int width, height;
 } __GLHCKrenderState;
 
 /* context render properties */

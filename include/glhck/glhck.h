@@ -677,7 +677,8 @@ GLHCKAPI void glhckDisplayResize(int width, int height);
 GLHCKAPI const char* glhckRenderName(void);
 GLHCKAPI glhckDriverType glhckRenderGetDriver(void);
 GLHCKAPI void glhckRenderResize(int width, int height);
-GLHCKAPI void glhckRenderViewport(int x, int y, int width, int height);
+GLHCKAPI void glhckRenderViewport(const glhckRect *viewport);
+GLHCKAPI void glhckRenderViewporti(int x, int y, int width, int height);
 GLHCKAPI void glhckRenderStatePush(void);
 GLHCKAPI void glhckRenderStatePush2D(int width, int height, kmScalar near, kmScalar far);
 GLHCKAPI void glhckRenderStatePop(void);
@@ -729,7 +730,7 @@ GLHCKAPI void glhckCameraUpVector(glhckCamera *object, const kmVec3 *upVector);
 GLHCKAPI void glhckCameraFov(glhckCamera *object, const kmScalar fov);
 GLHCKAPI void glhckCameraRange(glhckCamera *object, const kmScalar near, const kmScalar far);
 GLHCKAPI void glhckCameraViewport(glhckCamera *object, const glhckRect *viewport);
-GLHCKAPI void glhckCameraViewportf(glhckCamera *object, int x, int y, int w, int h);
+GLHCKAPI void glhckCameraViewporti(glhckCamera *object, int x, int y, int w, int h);
 GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *object);
 
 /* objects */

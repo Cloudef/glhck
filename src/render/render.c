@@ -133,22 +133,29 @@ GLHCKAPI void glhckRenderResize(int width, int height)
 }
 
 /* \brief set renderer's viewport */
-GLHCKAPI void glhckRenderViewport(int x, int y, int width, int height)
+GLHCKAPI void glhckRenderViewport(const glhckRect *viewport)
 {
    kmMat4 ortho;
    GLHCK_INITIALIZED();
-   CALL(1, "%d, %d, %d, %d", x, y, width, height);
-   assert(x >= 0 && y >= 0 && width > 0 && height > 0);
+   CALL(1, RECTS, RECT(viewport));
+   assert(viewport->x >= 0 && viewport->y >= 0 && viewport->w > 0 && viewport->h > 0);
    if (!_glhckRenderInitialized()) return;
 
    /* set viewport on render */
-   GLHCKRA()->viewport(x, y, width, height);
-   memcpy(&GLHCKRP()->viewport, (&(glhckRect){x, y, width, height}), sizeof(glhckRect));
+   GLHCKRA()->viewport(viewport->x, viewport->y, viewport->w, viewport->h);
+   memcpy(&GLHCKRP()->viewport, viewport, sizeof(glhckRect));
 
    /* update orthographic matrix */
-   kmMat4OrthographicProjection(&ortho, x, width, height, y, -1.0f, 1.0f);
+   kmMat4OrthographicProjection(&ortho, viewport->x, viewport->w, viewport->h, viewport->y, -1.0f, 1.0f);
    GLHCKRA()->setOrthographic(&ortho);
    memcpy(&GLHCKRD()->view.orthographic, &ortho, sizeof(kmMat4));
+}
+
+/* \brief set renderer's viewport (int) */
+GLHCKAPI void glhckRenderViewporti(int x, int y, int width, int height)
+{
+   glhckRect viewport = {x, y, width, height};
+   glhckRenderViewport(&viewport);
 }
 
 /* \brief push current render state to stack */
@@ -163,6 +170,7 @@ GLHCKAPI void glhckRenderStatePush(void)
 
    memcpy(&state->pass, &GLHCKR()->pass, sizeof(__GLHCKrenderPass));
    memcpy(&state->view, &GLHCKRD()->view, sizeof(__GLHCKrenderView));
+   state->width = GLHCKR()->width; state->height = GLHCKR()->height;
    state->next = GLHCKR()->stack;
    GLHCKR()->stack = state;
 }
@@ -187,13 +195,14 @@ GLHCKAPI void glhckRenderStatePop(void)
 
    memcpy(&GLHCKR()->pass, &state->pass, sizeof(__GLHCKrenderPass));
    glhckRenderClearColor(&state->pass.clearColor);
-   glhckRenderViewport(state->pass.viewport.x, state->pass.viewport.y, state->pass.viewport.w, state->pass.viewport.h);
+   glhckRenderViewport(&state->pass.viewport);
 
    glhckRenderFlip(state->view.flippedProjection);
    glhckRenderProjection(&state->view.projection);
    glhckRenderView(&state->view.view);
    GLHCKRA()->setOrthographic(&state->view.orthographic);
    memcpy(&GLHCKRD()->view.orthographic, &state->view.orthographic, sizeof(kmMat4));
+   glhckRenderResize(state->width, state->height);
 
    newState = (state?state->next:NULL);
    IFDO(_glhckFree, state);
