@@ -193,16 +193,16 @@ GLHCKAPI void glhckRenderStatePop(void)
    if (!(state = GLHCKR()->stack))
       return;
 
+   glhckRenderResize(state->width, state->height);
    memcpy(&GLHCKR()->pass, &state->pass, sizeof(__GLHCKrenderPass));
    glhckRenderClearColor(&state->pass.clearColor);
    glhckRenderViewport(&state->pass.viewport);
 
-   glhckRenderFlip(state->view.flippedProjection);
    glhckRenderProjection(&state->view.projection);
    glhckRenderView(&state->view.view);
    GLHCKRA()->setOrthographic(&state->view.orthographic);
    memcpy(&GLHCKRD()->view.orthographic, &state->view.orthographic, sizeof(kmMat4));
-   glhckRenderResize(state->width, state->height);
+   glhckRenderFlip(state->view.flippedProjection);
 
    newState = (state?state->next:NULL);
    IFDO(_glhckFree, state);
