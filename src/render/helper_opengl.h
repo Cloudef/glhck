@@ -44,6 +44,11 @@
 #  endif
 #endif /* GLESv1 SUPPORT */
 
+/* typedef mostly for GLES */
+#ifndef GLchar
+#  define GLchar char
+#endif
+
 /* check gl errors on debug build */
 #ifdef NDEBUG
 #  define GL_CALL(x) x
