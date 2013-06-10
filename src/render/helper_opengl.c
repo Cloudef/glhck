@@ -13,34 +13,39 @@
 GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property)
 {
    switch (property) {
-      case GLHCK_MAX_TEXTURE_SIZE:
-         return GL_MAX_TEXTURE_SIZE;
-      case GLHCK_MAX_CUBE_MAP_TEXTURE_SIZE:
-         return GL_MAX_CUBE_MAP_TEXTURE_SIZE;
-      case GLHCK_MAX_VERTEX_ATTRIBS:
-         return GL_MAX_VERTEX_ATTRIBS;
-#if GL_MAX_VERTEX_UNIFORM_VECTORS
-      case GLHCK_MAX_VERTEX_UNIFORM_VECTORS:
-         return GL_MAX_VERTEX_UNIFORM_VECTORS;
+#ifdef GL_MAX_TEXTURE_SIZE
+      case GLHCK_MAX_TEXTURE_SIZE:return GL_MAX_TEXTURE_SIZE;
 #endif
-#if GL_MAX_VARYING_VECTORS
-      case GLHCK_MAX_VARYING_VECTORS:
-         return GL_MAX_VARYING_VECTORS;
+#ifdef GL_MAX_CUBE_MAP_TEXTURE_SIZE
+      case GLHCK_MAX_CUBE_MAP_TEXTURE_SIZE:return GL_MAX_CUBE_MAP_TEXTURE_SIZE;
 #endif
-#if GL_MAX_FRAGMENT_UNIFORM_VECTORS
-      case GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS:
-         return GL_MAX_FRAGMENT_UNIFORM_VECTORS;
+#ifdef GL_MAX_VERTEX_ATTRIBS
+      case GLHCK_MAX_VERTEX_ATTRIBS:return GL_MAX_VERTEX_ATTRIBS;
 #endif
-      case GLHCK_MAX_COMBINED_TEXTURE_IMAGE_UNITS:
-         return GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS;
-      case GLHCK_MAX_VERTEX_TEXTURE_IMAGE_UNITS:
-         return GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS;
-      case GLHCK_MAX_TEXTURE_IMAGE_UNITS:
-         return GL_MAX_TEXTURE_IMAGE_UNITS;
-      case GLHCK_MAX_RENDERBUFFER_SIZE:
-         return GL_MAX_RENDERBUFFER_SIZE;
-      case GLHCK_MAX_VIEWPORT_DIMS:
-         return GL_MAX_VIEWPORT_DIMS;
+#ifdef GL_MAX_VERTEX_UNIFORM_VECTORS
+      case GLHCK_MAX_VERTEX_UNIFORM_VECTORS:return GL_MAX_VERTEX_UNIFORM_VECTORS;
+#endif
+#ifdef GL_MAX_VARYING_VECTORS
+      case GLHCK_MAX_VARYING_VECTORS:return GL_MAX_VARYING_VECTORS;
+#endif
+#ifdef GL_MAX_FRAGMENT_UNIFORM_VECTORS
+      case GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS:return GL_MAX_FRAGMENT_UNIFORM_VECTORS;
+#endif
+#ifdef GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS
+      case GLHCK_MAX_COMBINED_TEXTURE_IMAGE_UNITS:return GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS;
+#endif
+#ifdef GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS
+      case GLHCK_MAX_VERTEX_TEXTURE_IMAGE_UNITS:return GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS;
+#endif
+#ifdef GL_MAX_TEXTURE_IMAGE_UNITS
+      case GLHCK_MAX_TEXTURE_IMAGE_UNITS:return GL_MAX_TEXTURE_IMAGE_UNITS;
+#endif
+#ifdef GL_MAX_RENDERBUFFER_SIZE
+      case GLHCK_MAX_RENDERBUFFER_SIZE:return GL_MAX_RENDERBUFFER_SIZE;
+#endif
+#ifdef GL_MAX_VIEWPORT_DIMS
+      case GLHCK_MAX_VIEWPORT_DIMS:return GL_MAX_VIEWPORT_DIMS;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -51,10 +56,8 @@ GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property)
 GLenum glhFaceOrientationForGlhckOrientation(glhckFaceOrientation orientation)
 {
    switch (orientation) {
-      case GLHCK_FACE_CW:
-         return GL_CW;
-      case GLHCK_FACE_CCW:
-         return GL_CCW;
+      case GLHCK_FACE_CW:return GL_CW;
+      case GLHCK_FACE_CCW:return GL_CCW;
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -65,10 +68,8 @@ GLenum glhFaceOrientationForGlhckOrientation(glhckFaceOrientation orientation)
 GLenum glhCullFaceTypeForGlhckType(glhckCullFaceType type)
 {
    switch (type) {
-      case GLHCK_CULL_FRONT:
-         return GL_FRONT;
-      case GLHCK_CULL_BACK:
-         return GL_BACK;
+      case GLHCK_CULL_FRONT:return GL_FRONT;
+      case GLHCK_CULL_BACK:return GL_BACK;
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -79,18 +80,12 @@ GLenum glhCullFaceTypeForGlhckType(glhckCullFaceType type)
 GLenum glhGeometryTypeForGlhckType(glhckGeometryType type)
 {
    switch (type) {
-      case GLHCK_POINTS:
-         return GL_POINTS;
-      case GLHCK_LINES:
-         return GL_LINES;
-      case GLHCK_LINE_LOOP:
-         return GL_LINE_LOOP;
-      case GLHCK_LINE_STRIP:
-         return GL_LINE_STRIP;
-      case GLHCK_TRIANGLES:
-         return GL_TRIANGLES;
-      case GLHCK_TRIANGLE_STRIP:
-         return GL_TRIANGLE_STRIP;
+      case GLHCK_POINTS:return GL_POINTS;
+      case GLHCK_LINES:return GL_LINES;
+      case GLHCK_LINE_LOOP:return GL_LINE_LOOP;
+      case GLHCK_LINE_STRIP:return GL_LINE_STRIP;
+      case GLHCK_TRIANGLES:return GL_TRIANGLES;
+      case GLHCK_TRIANGLE_STRIP:return GL_TRIANGLE_STRIP;
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -101,14 +96,18 @@ GLenum glhGeometryTypeForGlhckType(glhckGeometryType type)
 GLenum glhTextureTargetForGlhckType(glhckTextureTarget target)
 {
    switch (target) {
-      case GLHCK_TEXTURE_1D:
-         return GL_TEXTURE_1D;
-      case GLHCK_TEXTURE_2D:
-         return GL_TEXTURE_2D;
-      case GLHCK_TEXTURE_3D:
-         return GL_TEXTURE_3D;
-      case GLHCK_TEXTURE_CUBE_MAP:
-         return GL_TEXTURE_CUBE_MAP;
+#ifdef GL_TEXTURE_1D
+      case GLHCK_TEXTURE_1D:return GL_TEXTURE_1D;
+#endif
+#ifdef GL_TEXTURE_2D
+      case GLHCK_TEXTURE_2D:return GL_TEXTURE_2D;
+#endif
+#ifdef GL_TEXTURE_3D
+      case GLHCK_TEXTURE_3D:return GL_TEXTURE_3D;
+#endif
+#ifdef GL_TEXTURE_CUBE_MAP
+      case GLHCK_TEXTURE_CUBE_MAP:return GL_TEXTURE_CUBE_MAP;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -119,38 +118,54 @@ GLenum glhTextureTargetForGlhckType(glhckTextureTarget target)
 GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format)
 {
    switch (format) {
-      case GLHCK_RED:
-         return GL_RED;
-      case GLHCK_RG:
-         return GL_RG;
-      case GLHCK_ALPHA:
-         return GL_ALPHA;
-      case GLHCK_LUMINANCE:
-         return GL_LUMINANCE;
-      case GLHCK_LUMINANCE_ALPHA:
-         return GL_LUMINANCE_ALPHA;
-      case GLHCK_RGB:
-         return GL_RGB;
-      case GLHCK_BGR:
-         return GL_BGR;
-      case GLHCK_RGBA:
-         return GL_RGBA;
-      case GLHCK_BGRA:
-         return GL_BGRA;
-      case GLHCK_DEPTH_COMPONENT:
-         return GL_DEPTH_COMPONENT;
-      case GLHCK_DEPTH_COMPONENT16:
-         return GL_DEPTH_COMPONENT16;
-      case GLHCK_DEPTH_COMPONENT24:
-         return GL_DEPTH_COMPONENT24;
-      case GLHCK_DEPTH_COMPONENT32:
-         return GL_DEPTH_COMPONENT32;
-      case GLHCK_DEPTH_STENCIL:
-         return GL_DEPTH_STENCIL;
-      case GLHCK_COMPRESSED_RGBA_DXT5:
-         return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-      case GLHCK_COMPRESSED_RGB_DXT1:
-         return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+#ifdef GL_RED
+      case GLHCK_RED:return GL_RED;
+#endif
+#ifdef GL_RG
+      case GLHCK_RG:return GL_RG;
+#endif
+#ifdef GL_ALPHA
+      case GLHCK_ALPHA:return GL_ALPHA;
+#endif
+#ifdef GL_LUMINANCE
+      case GLHCK_LUMINANCE:return GL_LUMINANCE;
+#endif
+#ifdef GL_LUMINANCE_ALPHA
+      case GLHCK_LUMINANCE_ALPHA:return GL_LUMINANCE_ALPHA;
+#endif
+#ifdef GL_RGB
+      case GLHCK_RGB:return GL_RGB;
+#endif
+#ifdef GL_BGR
+      case GLHCK_BGR:return GL_BGR;
+#endif
+#ifdef GL_RGBA
+      case GLHCK_RGBA:return GL_RGBA;
+#endif
+#ifdef GL_BGRA
+      case GLHCK_BGRA:return GL_BGRA;
+#endif
+#ifdef GL_DEPTH_COMPONENT
+      case GLHCK_DEPTH_COMPONENT:return GL_DEPTH_COMPONENT;
+#endif
+#ifdef GL_DEPTH_COMPONENT16
+      case GLHCK_DEPTH_COMPONENT16:return GL_DEPTH_COMPONENT16;
+#endif
+#ifdef GL_DEPTH_COMPONENT24
+      case GLHCK_DEPTH_COMPONENT24:return GL_DEPTH_COMPONENT24;
+#endif
+#ifdef GL_DEPTH_COMPONENT32
+      case GLHCK_DEPTH_COMPONENT32:return GL_DEPTH_COMPONENT32;
+#endif
+#ifdef GL_DEPTH_STENCIL
+      case GLHCK_DEPTH_STENCIL:return GL_DEPTH_STENCIL;
+#endif
+#ifdef GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+      case GLHCK_COMPRESSED_RGBA_DXT5:return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+#endif
+#ifdef GLHCK_COMPRESSED_RGB_DXT1
+      case GLHCK_COMPRESSED_RGB_DXT1:return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -161,45 +176,65 @@ GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format)
 GLenum glhDataTypeForGlhckType(glhckDataType type)
 {
    switch (type) {
+#ifdef GL_UNSIGNED_BYTE
       case GLHCK_DATA_COMPRESSED:
       case GLHCK_DATA_UNSIGNED_BYTE:
          return GL_UNSIGNED_BYTE;
-      case GLHCK_DATA_BYTE:
-         return GL_BYTE;
-      case GLHCK_DATA_UNSIGNED_SHORT:
-         return GL_UNSIGNED_SHORT;
-      case GLHCK_DATA_SHORT:
-         return GL_SHORT;
-      case GLHCK_DATA_UNSIGNED_INT:
-         return GL_UNSIGNED_INT;
-      case GLHCK_DATA_INT:
-         return GL_INT;
-      case GLHCK_DATA_FLOAT:
-         return GL_FLOAT;
-      case GLHCK_DATA_UNSIGNED_BYTE_3_3_2:
-         return GL_UNSIGNED_BYTE_3_3_2;
-      case GLHCK_DATA_UNSIGNED_BYTE_2_3_3_REV:
-         return GL_UNSIGNED_BYTE_2_3_3_REV;
-      case GLHCK_DATA_UNSIGNED_SHORT_5_6_5:
-         return GL_UNSIGNED_SHORT_5_6_5;
-      case GLHCK_DATA_UNSIGNED_SHORT_5_6_5_REV:
-         return GL_UNSIGNED_SHORT_5_6_5_REV;
-      case GLHCK_DATA_UNSIGNED_SHORT_4_4_4_4:
-         return GL_UNSIGNED_SHORT_4_4_4_4;
-      case GLHCK_DATA_UNISNGED_SHORT_4_4_4_4_REV:
-         return GL_UNSIGNED_SHORT_4_4_4_4_REV;
-      case GLHCK_DATA_UNISGNED_SHORT_5_5_5_1:
-         return GL_UNSIGNED_SHORT_5_5_5_1;
-      case GLHCK_DATA_UNSIGNED_SHORT_1_5_5_5_REV:
-         return GL_UNSIGNED_SHORT_1_5_5_5_REV;
-      case GLHCK_DATA_UNSIGNED_INT_8_8_8_8:
-         return GL_UNSIGNED_INT_8_8_8_8;
-      case GLHCK_DATA_UNSIGNED_INT_8_8_8_8_REV:
-         return GL_UNSIGNED_INT_8_8_8_8_REV;
-      case GLHCK_DATA_UNSIGNED_INT_10_10_10_2:
-         return GL_UNSIGNED_INT_10_10_10_2;
-      case GLHCK_DATA_UNSIGNED_INT_2_10_10_10_REV:
-         return GL_UNSIGNED_INT_2_10_10_10_REV;
+#endif
+#ifdef GL_BYTE
+      case GLHCK_DATA_BYTE:return GL_BYTE;
+#endif
+#ifdef GL_UNSIGNED_SHORT
+      case GLHCK_DATA_UNSIGNED_SHORT:return GL_UNSIGNED_SHORT;
+#endif
+#ifdef GL_SHORT
+      case GLHCK_DATA_SHORT:return GL_SHORT;
+#endif
+#ifdef GL_UNSIGNED_INT
+      case GLHCK_DATA_UNSIGNED_INT:return GL_UNSIGNED_INT;
+#endif
+#ifdef GL_INT
+      case GLHCK_DATA_INT:return GL_INT;
+#endif
+#ifdef GL_FLOAT
+      case GLHCK_DATA_FLOAT:return GL_FLOAT;
+#endif
+#ifdef GL_UNSIGNED_BYTE_3_3_2
+      case GLHCK_DATA_UNSIGNED_BYTE_3_3_2:return GL_UNSIGNED_BYTE_3_3_2;
+#endif
+#ifdef GL_UNSIGNED_BYTE_2_3_3_REV
+      case GLHCK_DATA_UNSIGNED_BYTE_2_3_3_REV:return GL_UNSIGNED_BYTE_2_3_3_REV;
+#endif
+#ifdef GL_UNSIGNED_SHORT_5_6_5
+      case GLHCK_DATA_UNSIGNED_SHORT_5_6_5:return GL_UNSIGNED_SHORT_5_6_5;
+#endif
+#ifdef GL_UNSIGNED_SHORT_5_6_5_REV
+      case GLHCK_DATA_UNSIGNED_SHORT_5_6_5_REV:return GL_UNSIGNED_SHORT_5_6_5_REV;
+#endif
+#ifdef GL_UNSIGNED_SHORT_4_4_4_4
+      case GLHCK_DATA_UNSIGNED_SHORT_4_4_4_4:return GL_UNSIGNED_SHORT_4_4_4_4;
+#endif
+#ifdef GL_UNSIGNED_SHORT_4_4_4_4_REV
+      case GLHCK_DATA_UNISNGED_SHORT_4_4_4_4_REV:return GL_UNSIGNED_SHORT_4_4_4_4_REV;
+#endif
+#ifdef GL_UNSIGNED_SHORT_5_5_5_1
+      case GLHCK_DATA_UNISGNED_SHORT_5_5_5_1:return GL_UNSIGNED_SHORT_5_5_5_1;
+#endif
+#ifdef GL_UNSIGNED_SHORT_1_5_5_5_REV
+      case GLHCK_DATA_UNSIGNED_SHORT_1_5_5_5_REV:return GL_UNSIGNED_SHORT_1_5_5_5_REV;
+#endif
+#ifdef GL_UNSIGNED_INT_8_8_8_8
+      case GLHCK_DATA_UNSIGNED_INT_8_8_8_8:return GL_UNSIGNED_INT_8_8_8_8;
+#endif
+#ifdef GL_UNSIGNED_INT_8_8_8_8_REV
+      case GLHCK_DATA_UNSIGNED_INT_8_8_8_8_REV:return GL_UNSIGNED_INT_8_8_8_8_REV;
+#endif
+#ifdef GL_UNSIGNED_INT_10_10_10_2
+      case GLHCK_DATA_UNSIGNED_INT_10_10_10_2:return GL_UNSIGNED_INT_10_10_10_2;
+#endif
+#ifdef GL_UNSIGNED_INT_2_10_10_10_REV
+      case GLHCK_DATA_UNSIGNED_INT_2_10_10_10_REV:return GL_UNSIGNED_INT_2_10_10_10_REV;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -210,10 +245,12 @@ GLenum glhDataTypeForGlhckType(glhckDataType type)
 GLenum glhTextureCompareModeForGlhckMode(glhckTextureCompareMode mode)
 {
    switch (mode) {
-      case GLHCK_COMPARE_NONE:
-         return GL_NONE;
-      case GLHCK_COMPARE_REF_TO_TEXTURE:
-         return GL_COMPARE_REF_TO_TEXTURE;
+#ifdef GL_NONE
+      case GLHCK_COMPARE_NONE:return GL_NONE;
+#endif
+#ifdef GL_COMPARE_REF_TO_TEXTURE
+      case GLHCK_COMPARE_REF_TO_TEXTURE:return GL_COMPARE_REF_TO_TEXTURE;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -224,22 +261,14 @@ GLenum glhTextureCompareModeForGlhckMode(glhckTextureCompareMode mode)
 GLenum glhCompareFuncForGlhckFunc(glhckCompareFunc mode)
 {
    switch (mode) {
-      case GLHCK_COMPARE_LEQUAL:
-         return GL_LEQUAL;
-      case GLHCK_COMPARE_GEQUAL:
-         return GL_GEQUAL;
-      case GLHCK_COMPARE_LESS:
-         return GL_LESS;
-      case GLHCK_COMPARE_GREATER:
-         return GL_GREATER;
-      case GLHCK_COMPARE_EQUAL:
-         return GL_EQUAL;
-      case GLHCK_COMPARE_NOTEQUAL:
-         return GL_NOTEQUAL;
-      case GLHCK_COMPARE_ALWAYS:
-         return GL_ALWAYS;
-      case GLHCK_COMPARE_NEVER:
-         return GL_NEVER;
+      case GLHCK_COMPARE_LEQUAL:return GL_LEQUAL;
+      case GLHCK_COMPARE_GEQUAL:return GL_GEQUAL;
+      case GLHCK_COMPARE_LESS:return GL_LESS;
+      case GLHCK_COMPARE_GREATER:return GL_GREATER;
+      case GLHCK_COMPARE_EQUAL:return GL_EQUAL;
+      case GLHCK_COMPARE_NOTEQUAL:return GL_NOTEQUAL;
+      case GLHCK_COMPARE_ALWAYS:return GL_ALWAYS;
+      case GLHCK_COMPARE_NEVER:return GL_NEVER;
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -250,14 +279,18 @@ GLenum glhCompareFuncForGlhckFunc(glhckCompareFunc mode)
 GLenum glhTextureWrapModeForGlhckMode(glhckTextureWrap wrap)
 {
    switch (wrap) {
-      case GLHCK_WRAP_REPEAT:
-         return GL_REPEAT;
-      case GLHCK_WRAP_MIRRORED_REPEAT:
-         return GL_MIRRORED_REPEAT;
-      case GLHCK_WRAP_CLAMP_TO_EDGE:
-         return GL_CLAMP_TO_EDGE;
-      case GLHCK_WRAP_CLAMP_TO_BORDER:
-         return GL_CLAMP_TO_BORDER;
+#ifdef GL_REPEAT
+      case GLHCK_WRAP_REPEAT:return GL_REPEAT;
+#endif
+#ifdef GL_CLAMP_TO_EDGE
+      case GLHCK_WRAP_CLAMP_TO_EDGE:return GL_CLAMP_TO_EDGE;
+#endif
+#ifdef GL_MIRRORED_REPEAT
+      case GLHCK_WRAP_MIRRORED_REPEAT:return GL_MIRRORED_REPEAT;
+#endif
+#ifdef GL_CLAMP_TO_BORDER
+      case GLHCK_WRAP_CLAMP_TO_BORDER:return GL_CLAMP_TO_BORDER;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -268,18 +301,12 @@ GLenum glhTextureWrapModeForGlhckMode(glhckTextureWrap wrap)
 GLenum glhTextureFilterModeForGlhckMode(glhckTextureFilter filter)
 {
    switch (filter) {
-      case GLHCK_FILTER_NEAREST:
-         return GL_NEAREST;
-      case GLHCK_FILTER_LINEAR:
-         return GL_LINEAR;
-      case GLHCK_FILTER_NEAREST_MIPMAP_NEAREST:
-         return GL_NEAREST_MIPMAP_NEAREST;
-      case GLHCK_FILTER_LINEAR_MIPMAP_NEAREST:
-         return GL_LINEAR_MIPMAP_NEAREST;
-      case GLHCK_FILTER_NEAREST_MIPMAP_LINEAR:
-         return GL_NEAREST_MIPMAP_LINEAR;
-      case GLHCK_FILTER_LINEAR_MIPMAP_LINEAR:
-         return GL_LINEAR_MIPMAP_LINEAR;
+      case GLHCK_FILTER_NEAREST:return GL_NEAREST;
+      case GLHCK_FILTER_LINEAR:return GL_LINEAR;
+      case GLHCK_FILTER_NEAREST_MIPMAP_NEAREST:return GL_NEAREST_MIPMAP_NEAREST;
+      case GLHCK_FILTER_LINEAR_MIPMAP_NEAREST:return GL_LINEAR_MIPMAP_NEAREST;
+      case GLHCK_FILTER_NEAREST_MIPMAP_LINEAR:return GL_NEAREST_MIPMAP_LINEAR;
+      case GLHCK_FILTER_LINEAR_MIPMAP_LINEAR:return GL_LINEAR_MIPMAP_LINEAR;
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -290,34 +317,48 @@ GLenum glhTextureFilterModeForGlhckMode(glhckTextureFilter filter)
 GLenum glhBlendingModeForGlhckMode(glhckBlendingMode mode)
 {
    switch (mode) {
-      case GLHCK_ZERO:
-         return GL_ZERO;
-      case GLHCK_ONE:
-         return GL_ONE;
-      case GLHCK_SRC_COLOR:
-         return GL_SRC_COLOR;
-      case GLHCK_ONE_MINUS_SRC_COLOR:
-         return GL_ONE_MINUS_SRC_COLOR;
-      case GLHCK_SRC_ALPHA:
-         return GL_SRC_ALPHA;
-      case GLHCK_ONE_MINUS_SRC_ALPHA:
-         return GL_ONE_MINUS_SRC_ALPHA;
-      case GLHCK_DST_ALPHA:
-         return GL_DST_ALPHA;
-      case GLHCK_ONE_MINUS_DST_ALPHA:
-         return GL_ONE_MINUS_DST_ALPHA;
-      case GLHCK_DST_COLOR:
-         return GL_DST_COLOR;
-      case GLHCK_ONE_MINUS_DST_COLOR:
-         return GL_ONE_MINUS_DST_COLOR;
-      case GLHCK_SRC_ALPHA_SATURATE:
-         return GL_SRC_ALPHA_SATURATE;
-      case GLHCK_CONSTANT_COLOR:
-         return GL_CONSTANT_COLOR;
-      case GLHCK_CONSTANT_ALPHA:
-         return GL_CONSTANT_ALPHA;
-      case GLHCK_ONE_MINUS_CONSTANT_ALPHA:
-         return GL_ONE_MINUS_CONSTANT_ALPHA;
+#ifdef GL_ZERO
+      case GLHCK_ZERO:return GL_ZERO;
+#endif
+#ifdef GL_ONE
+      case GLHCK_ONE:return GL_ONE;
+#endif
+#ifdef GL_SRC_COLOR
+      case GLHCK_SRC_COLOR:return GL_SRC_COLOR;
+#endif
+#ifdef GL_ONE_MINUS_SRC_COLOR
+      case GLHCK_ONE_MINUS_SRC_COLOR:return GL_ONE_MINUS_SRC_COLOR;
+#endif
+#ifdef GL_SRC_ALPHA
+      case GLHCK_SRC_ALPHA:return GL_SRC_ALPHA;
+#endif
+#ifdef GL_ONE_MINUS_DST_ALPHA
+      case GLHCK_ONE_MINUS_SRC_ALPHA:return GL_ONE_MINUS_SRC_ALPHA;
+#endif
+#ifdef GL_DST_ALPHA
+      case GLHCK_DST_ALPHA:return GL_DST_ALPHA;
+#endif
+#ifdef GL_ONE_MINUS_DST_ALPHA
+      case GLHCK_ONE_MINUS_DST_ALPHA:return GL_ONE_MINUS_DST_ALPHA;
+#endif
+#ifdef GL_DST_COLOR
+      case GLHCK_DST_COLOR:return GL_DST_COLOR;
+#endif
+#ifdef GL_ONE_MINUS_DST_COLOR
+      case GLHCK_ONE_MINUS_DST_COLOR:return GL_ONE_MINUS_DST_COLOR;
+#endif
+#ifdef GL_SRC_ALPHA_SATURATE
+      case GLHCK_SRC_ALPHA_SATURATE:return GL_SRC_ALPHA_SATURATE;
+#endif
+#ifdef GL_CONSTANT_COLOR
+      case GLHCK_CONSTANT_COLOR:return GL_CONSTANT_COLOR;
+#endif
+#ifdef GL_CONSTANT_ALPHA
+      case GLHCK_CONSTANT_ALPHA:return GL_CONSTANT_ALPHA;
+#endif
+#ifdef GL_ONE_MINUS_CONSTANT_ALPHA
+      case GLHCK_ONE_MINUS_CONSTANT_ALPHA:return GL_ONE_MINUS_CONSTANT_ALPHA;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -328,12 +369,15 @@ GLenum glhBlendingModeForGlhckMode(glhckBlendingMode mode)
 GLenum glhFramebufferTargetForGlhckType(glhckFramebufferTarget target)
 {
    switch (target) {
-      case GLHCK_FRAMEBUFFER:
-         return GL_FRAMEBUFFER;
-      case GLHCK_FRAMEBUFFER_READ:
-         return GL_READ_FRAMEBUFFER;
-      case GLHCK_FRAMEBUFFER_DRAW:
-         return GL_DRAW_FRAMEBUFFER;
+#ifdef GL_FRAMEBUFFER
+      case GLHCK_FRAMEBUFFER:return GL_FRAMEBUFFER;
+#endif
+#ifdef GL_READ_FRAMEBUFFER
+      case GLHCK_FRAMEBUFFER_READ:return GL_READ_FRAMEBUFFER;
+#endif
+#ifdef GL_DRAW_FRAMEBUFFER
+      case GLHCK_FRAMEBUFFER_DRAW:return GL_DRAW_FRAMEBUFFER;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -344,42 +388,30 @@ GLenum glhFramebufferTargetForGlhckType(glhckFramebufferTarget target)
 GLenum glhAttachmentTypeForGlhckType(glhckFramebufferAttachmentType type)
 {
    switch (type) {
-      case GLHCK_COLOR_ATTACHMENT0:
-         return GL_COLOR_ATTACHMENT0;
-      case GLHCK_COLOR_ATTACHMENT1:
-         return GL_COLOR_ATTACHMENT1;
-      case GLHCK_COLOR_ATTACHMENT2:
-         return GL_COLOR_ATTACHMENT2;
-      case GLHCK_COLOR_ATTACHMENT3:
-         return GL_COLOR_ATTACHMENT3;
-      case GLHCK_COLOR_ATTACHMENT4:
-         return GL_COLOR_ATTACHMENT4;
-      case GLHCK_COLOR_ATTACHMENT5:
-         return GL_COLOR_ATTACHMENT5;
-      case GLHCK_COLOR_ATTACHMENT6:
-         return GL_COLOR_ATTACHMENT6;
-      case GLHCK_COLOR_ATTACHMENT7:
-         return GL_COLOR_ATTACHMENT7;
-      case GLHCK_COLOR_ATTACHMENT8:
-         return GL_COLOR_ATTACHMENT8;
-      case GLHCK_COLOR_ATTACHMENT9:
-         return GL_COLOR_ATTACHMENT9;
-      case GLHCK_COLOR_ATTACHMENT10:
-         return GL_COLOR_ATTACHMENT10;
-      case GLHCK_COLOR_ATTACHMENT11:
-         return GL_COLOR_ATTACHMENT11;
-      case GLHCK_COLOR_ATTACHMENT12:
-         return GL_COLOR_ATTACHMENT12;
-      case GLHCK_COLOR_ATTACHMENT13:
-         return GL_COLOR_ATTACHMENT13;
-      case GLHCK_COLOR_ATTACHMENT14:
-         return GL_COLOR_ATTACHMENT14;
-      case GLHCK_COLOR_ATTACHMENT15:
-         return GL_COLOR_ATTACHMENT15;
-      case GLHCK_DEPTH_ATTACHMENT:
-         return GL_DEPTH_ATTACHMENT;
-      case GLHCK_STENCIL_ATTACHMENT:
-         return GL_STENCIL_ATTACHMENT;
+#ifdef GL_COLOR_ATTACHMENT0
+      case GLHCK_COLOR_ATTACHMENT0:return GL_COLOR_ATTACHMENT0;
+      case GLHCK_COLOR_ATTACHMENT1:return GL_COLOR_ATTACHMENT1;
+      case GLHCK_COLOR_ATTACHMENT2:return GL_COLOR_ATTACHMENT2;
+      case GLHCK_COLOR_ATTACHMENT3:return GL_COLOR_ATTACHMENT3;
+      case GLHCK_COLOR_ATTACHMENT4:return GL_COLOR_ATTACHMENT4;
+      case GLHCK_COLOR_ATTACHMENT5:return GL_COLOR_ATTACHMENT5;
+      case GLHCK_COLOR_ATTACHMENT6:return GL_COLOR_ATTACHMENT6;
+      case GLHCK_COLOR_ATTACHMENT7:return GL_COLOR_ATTACHMENT7;
+      case GLHCK_COLOR_ATTACHMENT8:return GL_COLOR_ATTACHMENT8;
+      case GLHCK_COLOR_ATTACHMENT9:return GL_COLOR_ATTACHMENT9;
+      case GLHCK_COLOR_ATTACHMENT10:return GL_COLOR_ATTACHMENT10;
+      case GLHCK_COLOR_ATTACHMENT11:return GL_COLOR_ATTACHMENT11;
+      case GLHCK_COLOR_ATTACHMENT12:return GL_COLOR_ATTACHMENT12;
+      case GLHCK_COLOR_ATTACHMENT13:return GL_COLOR_ATTACHMENT13;
+      case GLHCK_COLOR_ATTACHMENT14:return GL_COLOR_ATTACHMENT14;
+      case GLHCK_COLOR_ATTACHMENT15:return GL_COLOR_ATTACHMENT15;
+#endif
+#ifdef GL_DEPTH_ATTACHMENT
+      case GLHCK_DEPTH_ATTACHMENT:return GL_DEPTH_ATTACHMENT;
+#endif
+#ifdef GL_STENCIL_ATTACHMENT
+      case GLHCK_STENCIL_ATTACHMENT:return GL_STENCIL_ATTACHMENT;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -390,31 +422,38 @@ GLenum glhAttachmentTypeForGlhckType(glhckFramebufferAttachmentType type)
 GLenum glhHwBufferTargetForGlhckType(glhckHwBufferTarget target)
 {
    switch (target) {
-      case GLHCK_ARRAY_BUFFER:
-         return GL_ARRAY_BUFFER;
-      case GLHCK_COPY_READ_BUFFER:
-         return GL_COPY_READ_BUFFER;
-      case GLHCK_COPY_WRITE_BUFFER:
-         return GL_COPY_WRITE_BUFFER;
-      case GLHCK_ELEMENT_ARRAY_BUFFER:
-         return GL_ELEMENT_ARRAY_BUFFER;
-      case GLHCK_PIXEL_PACK_BUFFER:
-         return GL_PIXEL_PACK_BUFFER;
-      case GLHCK_PIXEL_UNPACK_BUFFER:
-         return GL_PIXEL_UNPACK_BUFFER;
-      case GLHCK_TEXTURE_BUFFER:
-         return GL_TEXTURE_BUFFER;
-      case GLHCK_TRANSFORM_FEEDBACK_BUFFER:
-         return GL_TRANSFORM_FEEDBACK_BUFFER;
-      case GLHCK_UNIFORM_BUFFER:
-         return GL_UNIFORM_BUFFER;
-#if GL_SHADER_STORAGE_BUFFER
-      case GLHCK_SHADER_STORAGE_BUFFER:
-         return GL_SHADER_STORAGE_BUFFER;
+#ifdef GL_ARRAY_BUFFER
+      case GLHCK_ARRAY_BUFFER:return GL_ARRAY_BUFFER;
 #endif
-#if GL_ATOMIC_COUNTER_BUFFER
-      case GLHCK_ATOMIC_COUNTER_BUFFER:
-         return GL_ATOMIC_COUNTER_BUFFER;
+#ifdef GL_COPY_READ_BUFFER
+      case GLHCK_COPY_READ_BUFFER:return GL_COPY_READ_BUFFER;
+#endif
+#ifdef GL_COPY_WRITE_BUFFER
+      case GLHCK_COPY_WRITE_BUFFER:return GL_COPY_WRITE_BUFFER;
+#endif
+#ifdef GL_ELEMENT_ARRAY_BUFFER
+      case GLHCK_ELEMENT_ARRAY_BUFFER:return GL_ELEMENT_ARRAY_BUFFER;
+#endif
+#ifdef GL_PIXEL_PACK_BUFFER
+      case GLHCK_PIXEL_PACK_BUFFER:return GL_PIXEL_PACK_BUFFER;
+#endif
+#ifdef GL_PIXEL_UNPACK_BUFFER
+      case GLHCK_PIXEL_UNPACK_BUFFER:return GL_PIXEL_UNPACK_BUFFER;
+#endif
+#ifdef GL_TEXTURE_BUFFER
+      case GLHCK_TEXTURE_BUFFER:return GL_TEXTURE_BUFFER;
+#endif
+#ifdef GL_TRANSFORM_FEEDBACK_BUFFER
+      case GLHCK_TRANSFORM_FEEDBACK_BUFFER:return GL_TRANSFORM_FEEDBACK_BUFFER;
+#endif
+#ifdef GL_UNIFORM_BUFFER
+      case GLHCK_UNIFORM_BUFFER:return GL_UNIFORM_BUFFER;
+#endif
+#ifdef GL_SHADER_STORAGE_BUFFER
+      case GLHCK_SHADER_STORAGE_BUFFER:return GL_SHADER_STORAGE_BUFFER;
+#endif
+#ifdef GL_ATOMIC_COUNTER_BUFFER
+      case GLHCK_ATOMIC_COUNTER_BUFFER:return GL_ATOMIC_COUNTER_BUFFER;
 #endif
       default:break;
    }
@@ -426,24 +465,33 @@ GLenum glhHwBufferTargetForGlhckType(glhckHwBufferTarget target)
 GLenum glhHwBufferStoreTypeForGlhckType(glhckHwBufferStoreType type)
 {
    switch (type) {
-      case GLHCK_BUFFER_STREAM_DRAW:
-         return GL_STREAM_DRAW;
-      case GLHCK_BUFFER_STREAM_READ:
-         return GL_STREAM_READ;
-      case GLHCK_BUFFER_STREAM_COPY:
-         return GL_STREAM_COPY;
-      case GLHCK_BUFFER_STATIC_DRAW:
-         return GL_STATIC_DRAW;
-      case GLHCK_BUFFER_STATIC_READ:
-         return GL_STATIC_READ;
-      case GLHCK_BUFFER_STATIC_COPY:
-         return GL_STATIC_COPY;
-      case GLHCK_BUFFER_DYNAMIC_DRAW:
-         return GL_DYNAMIC_DRAW;
-      case GLHCK_BUFFER_DYNAMIC_READ:
-         return GL_DYNAMIC_READ;
-      case GLHCK_BUFFER_DYNAMIC_COPY:
-         return GL_DYNAMIC_COPY;
+#ifdef GL_STREAM_DRAW
+      case GLHCK_BUFFER_STREAM_DRAW:return GL_STREAM_DRAW;
+#endif
+#ifdef GL_STREAM_READ
+      case GLHCK_BUFFER_STREAM_READ:return GL_STREAM_READ;
+#endif
+#ifdef GL_STREAM_COPY
+      case GLHCK_BUFFER_STREAM_COPY:return GL_STREAM_COPY;
+#endif
+#ifdef GL_STATIC_DRAW
+      case GLHCK_BUFFER_STATIC_DRAW:return GL_STATIC_DRAW;
+#endif
+#ifdef GL_STATIC_READ
+      case GLHCK_BUFFER_STATIC_READ:return GL_STATIC_READ;
+#endif
+#ifdef GL_STATIC_COPY
+      case GLHCK_BUFFER_STATIC_COPY:return GL_STATIC_COPY;
+#endif
+#ifdef GL_DYNAMIC_DRAW
+      case GLHCK_BUFFER_DYNAMIC_DRAW:return GL_DYNAMIC_DRAW;
+#endif
+#ifdef GL_DYNAMIC_READ
+      case GLHCK_BUFFER_DYNAMIC_READ:return GL_DYNAMIC_READ;
+#endif
+#ifdef GL_DYNAMIC_COPY
+      case GLHCK_BUFFER_DYNAMIC_COPY:return GL_DYNAMIC_COPY;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -454,12 +502,15 @@ GLenum glhHwBufferStoreTypeForGlhckType(glhckHwBufferStoreType type)
 GLenum glhHwBufferAccessTypeForGlhckType(glhckHwBufferAccessType type)
 {
    switch (type) {
-      case GLHCK_BUFFER_READ_ONLY:
-         return GL_READ_ONLY;
-      case GLHCK_BUFFER_WRITE_ONLY:
-         return GL_WRITE_ONLY;
-      case GLHCK_BUFFER_READ_WRITE:
-         return GL_READ_WRITE;
+#ifdef GL_READ_ONLY
+      case GLHCK_BUFFER_READ_ONLY:return GL_READ_ONLY;
+#endif
+#ifdef GL_WRITE_ONLY
+      case GLHCK_BUFFER_WRITE_ONLY:return GL_WRITE_ONLY;
+#endif
+#ifdef GL_READ_WRITE
+      case GLHCK_BUFFER_READ_WRITE:return GL_READ_WRITE;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -470,10 +521,12 @@ GLenum glhHwBufferAccessTypeForGlhckType(glhckHwBufferAccessType type)
 GLenum glhShaderTypeForGlhckType(glhckShaderType type)
 {
    switch (type) {
-      case GLHCK_VERTEX_SHADER:
-         return GL_VERTEX_SHADER;
-      case GLHCK_FRAGMENT_SHADER:
-         return GL_FRAGMENT_SHADER;
+#ifdef GL_VERTEX_SHADER
+      case GLHCK_VERTEX_SHADER:return GL_VERTEX_SHADER;
+#endif
+#ifdef GL_FRAGMENT_SHADER
+      case GLHCK_FRAGMENT_SHADER:return GL_FRAGMENT_SHADER;
+#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -484,227 +537,148 @@ GLenum glhShaderTypeForGlhckType(glhckShaderType type)
 GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
 {
    switch (type) {
-      case GLHCK_SHADER_FLOAT:
-         return GL_FLOAT;
-      case GLHCK_SHADER_FLOAT_VEC2:
-         return GL_FLOAT_VEC2;
-      case GLHCK_SHADER_FLOAT_VEC3:
-         return GL_FLOAT_VEC3;
-      case GLHCK_SHADER_FLOAT_VEC4:
-         return GL_FLOAT_VEC4;
-      case GLHCK_SHADER_DOUBLE:
-         return GL_DOUBLE;
-#if GL_DOUBLE_VEC2
-      case GLHCK_SHADER_DOUBLE_VEC2:
-         return GL_DOUBLE_VEC2;
-      case GLHCK_SHADER_DOUBLE_VEC3:
-         return GL_DOUBLE_VEC3;
-      case GLHCK_SHADER_DOUBLE_VEC4:
-         return GL_DOUBLE_VEC4;
+#ifdef GL_FLOAT
+      case GLHCK_SHADER_FLOAT:return GL_FLOAT;
 #endif
-      case GLHCK_SHADER_INT:
-         return GL_INT;
-      case GLHCK_SHADER_INT_VEC2:
-         return GL_INT_VEC2;
-      case GLHCK_SHADER_INT_VEC3:
-         return GL_INT_VEC3;
-      case GLHCK_SHADER_INT_VEC4:
-         return GL_INT_VEC4;
-      case GLHCK_SHADER_UNSIGNED_INT:
-         return GL_UNSIGNED_INT;
-      case GLHCK_SHADER_UNSIGNED_INT_VEC2:
-         return GL_UNSIGNED_INT_VEC2;
-      case GLHCK_SHADER_UNSIGNED_INT_VEC3:
-         return GL_UNSIGNED_INT_VEC3;
-      case GLHCK_SHADER_UNSIGNED_INT_VEC4:
-         return GL_UNSIGNED_INT_VEC4;
-      case GLHCK_SHADER_BOOL:
-         return GL_BOOL;
-      case GLHCK_SHADER_BOOL_VEC2:
-         return GL_BOOL_VEC2;
-      case GLHCK_SHADER_BOOL_VEC3:
-         return GL_BOOL_VEC3;
-      case GLHCK_SHADER_BOOL_VEC4:
-         return GL_BOOL_VEC4;
-      case GLHCK_SHADER_FLOAT_MAT2:
-         return GL_FLOAT_MAT2;
-      case GLHCK_SHADER_FLOAT_MAT3:
-         return GL_FLOAT_MAT3;
-      case GLHCK_SHADER_FLOAT_MAT4:
-         return GL_FLOAT_MAT4;
-      case GLHCK_SHADER_FLOAT_MAT2x3:
-         return GL_FLOAT_MAT2x3;
-      case GLHCK_SHADER_FLOAT_MAT2x4:
-         return GL_FLOAT_MAT2x4;
-      case GLHCK_SHADER_FLOAT_MAT3x2:
-         return GL_FLOAT_MAT3x2;
-      case GLHCK_SHADER_FLOAT_MAT3x4:
-         return GL_FLOAT_MAT3x4;
-      case GLHCK_SHADER_FLOAT_MAT4x2:
-         return GL_FLOAT_MAT4x2;
-      case GLHCK_SHADER_FLOAT_MAT4x3:
-         return GL_FLOAT_MAT4x3;
-#if GL_DOUBLE_MAT2
-      case GLHCK_SHADER_DOUBLE_MAT2:
-         return GL_DOUBLE_MAT2;
-      case GLHCK_SHADER_DOUBLE_MAT3:
-         return GL_DOUBLE_MAT3;
-      case GLHCK_SHADER_DOUBLE_MAT4:
-         return GL_DOUBLE_MAT4;
-      case GLHCK_SHADER_DOUBLE_MAT2x3:
-         return GL_DOUBLE_MAT2x3;
-      case GLHCK_SHADER_DOUBLE_MAT2x4:
-         return GL_DOUBLE_MAT2x4;
-      case GLHCK_SHADER_DOUBLE_MAT3x2:
-         return GL_DOUBLE_MAT3x2;
-      case GLHCK_SHADER_DOUBLE_MAT3x4:
-         return GL_DOUBLE_MAT3x4;
-      case GLHCK_SHADER_DOUBLE_MAT4x2:
-         return GL_DOUBLE_MAT4x2;
-      case GLHCK_SHADER_DOUBLE_MAT4x3:
-         return GL_DOUBLE_MAT4x3;
+#ifdef GL_FLOAT_VEC2
+      case GLHCK_SHADER_FLOAT_VEC2:return GL_FLOAT_VEC2;
+      case GLHCK_SHADER_FLOAT_VEC3:return GL_FLOAT_VEC3;
+      case GLHCK_SHADER_FLOAT_VEC4:return GL_FLOAT_VEC4;
 #endif
-      case GLHCK_SHADER_SAMPLER_1D:
-         return GL_SAMPLER_1D;
-      case GLHCK_SHADER_SAMPLER_2D:
-         return GL_SAMPLER_2D;
-      case GLHCK_SHADER_SAMPLER_3D:
-         return GL_SAMPLER_3D;
-      case GLHCK_SHADER_SAMPLER_CUBE:
-         return GL_SAMPLER_CUBE;
-      case GLHCK_SHADER_SAMPLER_1D_SHADOW:
-         return GL_SAMPLER_1D_SHADOW;
-      case GLHCK_SHADER_SAMPLER_2D_SHADOW:
-         return GL_SAMPLER_2D_SHADOW;
-      case GLHCK_SHADER_SAMPLER_1D_ARRAY:
-         return GL_SAMPLER_1D_ARRAY;
-      case GLHCK_SHADER_SAMPLER_2D_ARRAY:
-         return GL_SAMPLER_2D_ARRAY;
-      case GLHCK_SHADER_SAMPLER_1D_ARRAY_SHADOW:
-         return GL_SAMPLER_1D_ARRAY_SHADOW;
-      case GLHCK_SHADER_SAMPLER_2D_ARRAY_SHADOW:
-         return GL_SAMPLER_2D_ARRAY_SHADOW;
-      case GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE:
-         return GL_SAMPLER_2D_MULTISAMPLE;
-      case GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE_ARRAY:
-         return GL_SAMPLER_2D_MULTISAMPLE_ARRAY;
-      case GLHCK_SHADER_SAMPLER_CUBE_SHADOW:
-         return GL_SAMPLER_CUBE_SHADOW;
-      case GLHCK_SHADER_SAMPLER_BUFFER:
-         return GL_SAMPLER_BUFFER;
-      case GLHCK_SHADER_SAMPLER_2D_RECT:
-         return GL_SAMPLER_2D_RECT;
-      case GLHCK_SHADER_SAMPLER_2D_RECT_SHADOW:
-         return GL_SAMPLER_2D_RECT_SHADOW;
-      case GLHCK_SHADER_INT_SAMPLER_1D:
-         return GL_INT_SAMPLER_1D;
-      case GLHCK_SHADER_INT_SAMPLER_2D:
-         return GL_INT_SAMPLER_2D;
-      case GLHCK_SHADER_INT_SAMPLER_3D:
-         return GL_INT_SAMPLER_3D;
-      case GLHCK_SHADER_INT_SAMPLER_CUBE:
-         return GL_INT_SAMPLER_CUBE;
-      case GLHCK_SHADER_INT_SAMPLER_1D_ARRAY:
-         return GL_INT_SAMPLER_1D_ARRAY;
-      case GLHCK_SHADER_INT_SAMPLER_2D_ARRAY:
-         return GL_INT_SAMPLER_2D_ARRAY;
-      case GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE:
-         return GL_INT_SAMPLER_2D_MULTISAMPLE;
-      case GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
-         return GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
-      case GLHCK_SHADER_INT_SAMPLER_BUFFER:
-         return GL_INT_SAMPLER_BUFFER;
-      case GLHCK_SHADER_INT_SAMPLER_2D_RECT:
-         return GL_INT_SAMPLER_2D_RECT;
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D:
-         return GL_UNSIGNED_INT_SAMPLER_1D;
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D:
-         return GL_UNSIGNED_INT_SAMPLER_2D;
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_3D:
-         return GL_UNSIGNED_INT_SAMPLER_3D;
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_CUBE:
-         return GL_UNSIGNED_INT_SAMPLER_CUBE;
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D_ARRAY:
-         return GL_UNSIGNED_INT_SAMPLER_1D_ARRAY;
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_ARRAY:
-         return GL_UNSIGNED_INT_SAMPLER_2D_ARRAY;
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:
-         return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
-         return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER:
-         return GL_UNSIGNED_INT_SAMPLER_BUFFER;
-      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT:
-         return GL_UNSIGNED_INT_SAMPLER_2D_RECT;
-#if GL_IMAGE_1D
-      case GLHCK_SHADER_IMAGE_1D:
-         return GL_IMAGE_1D;
-      case GLHCK_SHADER_IMAGE_2D:
-         return GL_IMAGE_2D;
-      case GLHCK_SHADER_IMAGE_3D:
-         return GL_IMAGE_3D;
-      case GLHCK_SHADER_IMAGE_2D_RECT:
-         return GL_IMAGE_2D_RECT;
-      case GLHCK_SHADER_IMAGE_CUBE:
-         return GL_IMAGE_CUBE;
-      case GLHCK_SHADER_IMAGE_BUFFER:
-         return GL_IMAGE_BUFFER;
-      case GLHCK_SHADER_IMAGE_1D_ARRAY:
-         return GL_IMAGE_1D_ARRAY;
-      case GLHCK_SHADER_IMAGE_2D_ARRAY:
-         return GL_IMAGE_2D_ARRAY;
-      case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE:
-         return GL_IMAGE_2D_MULTISAMPLE;
-      case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE_ARRAY:
-         return GL_IMAGE_2D_MULTISAMPLE_ARRAY;
+#ifdef GL_DOBULE
+      case GLHCK_SHADER_DOUBLE:return GL_DOUBLE;
 #endif
-#if GL_INT_IMAGE_1D
-     case GLHCK_SHADER_INT_IMAGE_1D:
-         return GL_INT_IMAGE_1D;
-      case GLHCK_SHADER_INT_IMAGE_2D:
-         return GL_INT_IMAGE_2D;
-      case GLHCK_SHADER_INT_IMAGE_3D:
-         return GL_INT_IMAGE_3D;
-      case GLHCK_SHADER_INT_IMAGE_2D_RECT:
-         return GL_INT_IMAGE_2D_RECT;
-      case GLHCK_SHADER_INT_IMAGE_CUBE:
-         return GL_INT_IMAGE_CUBE;
-      case GLHCK_SHADER_INT_IMAGE_BUFFER:
-         return GL_INT_IMAGE_BUFFER;
-      case GLHCK_SHADER_INT_IMAGE_1D_ARRAY:
-         return GL_INT_IMAGE_1D_ARRAY;
-      case GLHCK_SHADER_INT_IMAGE_2D_ARRAY:
-         return GL_INT_IMAGE_2D_ARRAY;
-      case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE:
-         return GL_INT_IMAGE_2D_MULTISAMPLE;
-      case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
-         return GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#ifdef GL_DOUBLE_VEC2
+      case GLHCK_SHADER_DOUBLE_VEC2:return GL_DOUBLE_VEC2;
+      case GLHCK_SHADER_DOUBLE_VEC3:return GL_DOUBLE_VEC3;
+      case GLHCK_SHADER_DOUBLE_VEC4:return GL_DOUBLE_VEC4;
 #endif
-#if GL_UNSIGNED_INT_IMAGE_1D
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D:
-         return GL_UNSIGNED_INT_IMAGE_1D;
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D:
-         return GL_UNSIGNED_INT_IMAGE_2D;
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_3D:
-         return GL_UNSIGNED_INT_IMAGE_3D;
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_RECT:
-         return GL_UNSIGNED_INT_IMAGE_2D_RECT;
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_CUBE:
-         return GL_UNSIGNED_INT_IMAGE_CUBE;
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_BUFFER:
-         return GL_UNSIGNED_INT_IMAGE_BUFFER;
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D_ARRAY:
-         return GL_UNSIGNED_INT_IMAGE_1D_ARRAY;
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_ARRAY:
-         return GL_UNSIGNED_INT_IMAGE_2D_ARRAY;
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:
-         return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
-      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
-         return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#ifdef GL_INT
+      case GLHCK_SHADER_INT:return GL_INT;
 #endif
-#if GL_UNSIGNED_INT_ATOMIC_COUNTER
-      case GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER:
-         return GL_UNSIGNED_INT_ATOMIC_COUNTER;
+#ifdef GL_INT_VEC2
+      case GLHCK_SHADER_INT_VEC2:return GL_INT_VEC2;
+      case GLHCK_SHADER_INT_VEC3:return GL_INT_VEC3;
+      case GLHCK_SHADER_INT_VEC4:return GL_INT_VEC4;
+#endif
+#ifdef GL_UNSIGNED_INT
+      case GLHCK_SHADER_UNSIGNED_INT:return GL_UNSIGNED_INT;
+#endif
+#ifdef GL_UNSIGNED_INT_VEC2
+      case GLHCK_SHADER_UNSIGNED_INT_VEC2:return GL_UNSIGNED_INT_VEC2;
+      case GLHCK_SHADER_UNSIGNED_INT_VEC3:return GL_UNSIGNED_INT_VEC3;
+      case GLHCK_SHADER_UNSIGNED_INT_VEC4:return GL_UNSIGNED_INT_VEC4;
+#endif
+#ifdef GL_BOOL
+      case GLHCK_SHADER_BOOL:return GL_BOOL;
+#endif
+#ifdef GL_BOOL_VEC2
+      case GLHCK_SHADER_BOOL_VEC2:return GL_BOOL_VEC2;
+      case GLHCK_SHADER_BOOL_VEC3:return GL_BOOL_VEC3;
+      case GLHCK_SHADER_BOOL_VEC4:return GL_BOOL_VEC4;
+#endif
+#ifdef GL_FLOAT_MAT2
+      case GLHCK_SHADER_FLOAT_MAT2:return GL_FLOAT_MAT2;
+      case GLHCK_SHADER_FLOAT_MAT3:return GL_FLOAT_MAT3;
+      case GLHCK_SHADER_FLOAT_MAT4:return GL_FLOAT_MAT4;
+      case GLHCK_SHADER_FLOAT_MAT2x3:return GL_FLOAT_MAT2x3;
+      case GLHCK_SHADER_FLOAT_MAT2x4:return GL_FLOAT_MAT2x4;
+      case GLHCK_SHADER_FLOAT_MAT3x2:return GL_FLOAT_MAT3x2;
+      case GLHCK_SHADER_FLOAT_MAT3x4:return GL_FLOAT_MAT3x4;
+      case GLHCK_SHADER_FLOAT_MAT4x2:return GL_FLOAT_MAT4x2;
+      case GLHCK_SHADER_FLOAT_MAT4x3:return GL_FLOAT_MAT4x3;
+#endif
+#ifdef GL_DOUBLE_MAT2
+      case GLHCK_SHADER_DOUBLE_MAT2:return GL_DOUBLE_MAT2;
+      case GLHCK_SHADER_DOUBLE_MAT3:return GL_DOUBLE_MAT3;
+      case GLHCK_SHADER_DOUBLE_MAT4:return GL_DOUBLE_MAT4;
+      case GLHCK_SHADER_DOUBLE_MAT2x3:return GL_DOUBLE_MAT2x3;
+      case GLHCK_SHADER_DOUBLE_MAT2x4:return GL_DOUBLE_MAT2x4;
+      case GLHCK_SHADER_DOUBLE_MAT3x2:return GL_DOUBLE_MAT3x2;
+      case GLHCK_SHADER_DOUBLE_MAT3x4:return GL_DOUBLE_MAT3x4;
+      case GLHCK_SHADER_DOUBLE_MAT4x2:return GL_DOUBLE_MAT4x2;
+      case GLHCK_SHADER_DOUBLE_MAT4x3:return GL_DOUBLE_MAT4x3;
+#endif
+#ifdef GL_SAMPLER_1D
+      case GLHCK_SHADER_SAMPLER_1D:return GL_SAMPLER_1D;
+      case GLHCK_SHADER_SAMPLER_2D:return GL_SAMPLER_2D;
+      case GLHCK_SHADER_SAMPLER_3D:return GL_SAMPLER_3D;
+      case GLHCK_SHADER_SAMPLER_CUBE:return GL_SAMPLER_CUBE;
+      case GLHCK_SHADER_SAMPLER_1D_SHADOW:return GL_SAMPLER_1D_SHADOW;
+      case GLHCK_SHADER_SAMPLER_2D_SHADOW:return GL_SAMPLER_2D_SHADOW;
+      case GLHCK_SHADER_SAMPLER_1D_ARRAY:return GL_SAMPLER_1D_ARRAY;
+      case GLHCK_SHADER_SAMPLER_2D_ARRAY:return GL_SAMPLER_2D_ARRAY;
+      case GLHCK_SHADER_SAMPLER_1D_ARRAY_SHADOW:return GL_SAMPLER_1D_ARRAY_SHADOW;
+      case GLHCK_SHADER_SAMPLER_2D_ARRAY_SHADOW:return GL_SAMPLER_2D_ARRAY_SHADOW;
+      case GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE:return GL_SAMPLER_2D_MULTISAMPLE;
+      case GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE_ARRAY:return GL_SAMPLER_2D_MULTISAMPLE_ARRAY;
+      case GLHCK_SHADER_SAMPLER_CUBE_SHADOW:return GL_SAMPLER_CUBE_SHADOW;
+      case GLHCK_SHADER_SAMPLER_BUFFER:return GL_SAMPLER_BUFFER;
+      case GLHCK_SHADER_SAMPLER_2D_RECT:return GL_SAMPLER_2D_RECT;
+      case GLHCK_SHADER_SAMPLER_2D_RECT_SHADOW:return GL_SAMPLER_2D_RECT_SHADOW;
+#endif
+#ifdef GL_INT_SAMPLER_1D
+      case GLHCK_SHADER_INT_SAMPLER_1D:return GL_INT_SAMPLER_1D;
+      case GLHCK_SHADER_INT_SAMPLER_2D:return GL_INT_SAMPLER_2D;
+      case GLHCK_SHADER_INT_SAMPLER_3D:return GL_INT_SAMPLER_3D;
+      case GLHCK_SHADER_INT_SAMPLER_CUBE:return GL_INT_SAMPLER_CUBE;
+      case GLHCK_SHADER_INT_SAMPLER_1D_ARRAY:return GL_INT_SAMPLER_1D_ARRAY;
+      case GLHCK_SHADER_INT_SAMPLER_2D_ARRAY:return GL_INT_SAMPLER_2D_ARRAY;
+      case GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE:return GL_INT_SAMPLER_2D_MULTISAMPLE;
+      case GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:return GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+      case GLHCK_SHADER_INT_SAMPLER_BUFFER:return GL_INT_SAMPLER_BUFFER;
+      case GLHCK_SHADER_INT_SAMPLER_2D_RECT:return GL_INT_SAMPLER_2D_RECT;
+#endif
+#ifdef GL_UNSIGNED_INT_SAMPLER_1D
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D:return GL_UNSIGNED_INT_SAMPLER_1D;
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D:return GL_UNSIGNED_INT_SAMPLER_2D;
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_3D:return GL_UNSIGNED_INT_SAMPLER_3D;
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_CUBE:return GL_UNSIGNED_INT_SAMPLER_CUBE;
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D_ARRAY:return GL_UNSIGNED_INT_SAMPLER_1D_ARRAY;
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_ARRAY:return GL_UNSIGNED_INT_SAMPLER_2D_ARRAY;
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER:return GL_UNSIGNED_INT_SAMPLER_BUFFER;
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT:return GL_UNSIGNED_INT_SAMPLER_2D_RECT;
+#endif
+#ifdef GL_IMAGE_1D
+      case GLHCK_SHADER_IMAGE_1D:return GL_IMAGE_1D;
+      case GLHCK_SHADER_IMAGE_2D:return GL_IMAGE_2D;
+      case GLHCK_SHADER_IMAGE_3D:return GL_IMAGE_3D;
+      case GLHCK_SHADER_IMAGE_2D_RECT:return GL_IMAGE_2D_RECT;
+      case GLHCK_SHADER_IMAGE_CUBE:return GL_IMAGE_CUBE;
+      case GLHCK_SHADER_IMAGE_BUFFER:return GL_IMAGE_BUFFER;
+      case GLHCK_SHADER_IMAGE_1D_ARRAY:return GL_IMAGE_1D_ARRAY;
+      case GLHCK_SHADER_IMAGE_2D_ARRAY:return GL_IMAGE_2D_ARRAY;
+      case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE:return GL_IMAGE_2D_MULTISAMPLE;
+      case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE_ARRAY:return GL_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
+#ifdef GL_INT_IMAGE_1D
+     case GLHCK_SHADER_INT_IMAGE_1D:return GL_INT_IMAGE_1D;
+      case GLHCK_SHADER_INT_IMAGE_2D:return GL_INT_IMAGE_2D;
+      case GLHCK_SHADER_INT_IMAGE_3D:return GL_INT_IMAGE_3D;
+      case GLHCK_SHADER_INT_IMAGE_2D_RECT:return GL_INT_IMAGE_2D_RECT;
+      case GLHCK_SHADER_INT_IMAGE_CUBE:return GL_INT_IMAGE_CUBE;
+      case GLHCK_SHADER_INT_IMAGE_BUFFER:return GL_INT_IMAGE_BUFFER;
+      case GLHCK_SHADER_INT_IMAGE_1D_ARRAY:return GL_INT_IMAGE_1D_ARRAY;
+      case GLHCK_SHADER_INT_IMAGE_2D_ARRAY:return GL_INT_IMAGE_2D_ARRAY;
+      case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE:return GL_INT_IMAGE_2D_MULTISAMPLE;
+      case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY:return GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
+#ifdef GL_UNSIGNED_INT_IMAGE_1D
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D:return GL_UNSIGNED_INT_IMAGE_1D;
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D:return GL_UNSIGNED_INT_IMAGE_2D;
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_3D:return GL_UNSIGNED_INT_IMAGE_3D;
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_RECT:return GL_UNSIGNED_INT_IMAGE_2D_RECT;
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_CUBE:return GL_UNSIGNED_INT_IMAGE_CUBE;
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_BUFFER:return GL_UNSIGNED_INT_IMAGE_BUFFER;
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D_ARRAY:return GL_UNSIGNED_INT_IMAGE_1D_ARRAY;
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_ARRAY:return GL_UNSIGNED_INT_IMAGE_2D_ARRAY;
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
+#ifdef GL_UNSIGNED_INT_ATOMIC_COUNTER
+      case GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER:return GL_UNSIGNED_INT_ATOMIC_COUNTER;
 #endif
       default:break;
    }
@@ -716,227 +690,148 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
 _glhckShaderVariableType glhGlhckShaderVariableTypeForOpenGLType(GLenum type)
 {
    switch (type) {
-      case GL_FLOAT:
-         return GLHCK_SHADER_FLOAT;
-      case GL_FLOAT_VEC2:
-         return GLHCK_SHADER_FLOAT_VEC2;
-      case GL_FLOAT_VEC3:
-         return GLHCK_SHADER_FLOAT_VEC3;
-      case GL_FLOAT_VEC4:
-         return GLHCK_SHADER_FLOAT_VEC4;
-      case GL_DOUBLE:
-         return GLHCK_SHADER_DOUBLE;
-#if GL_DOUBLE_VEC2
-      case GL_DOUBLE_VEC2:
-         return GLHCK_SHADER_DOUBLE_VEC2;
-      case GL_DOUBLE_VEC3:
-         return GLHCK_SHADER_DOUBLE_VEC3;
-      case GL_DOUBLE_VEC4:
-         return GLHCK_SHADER_DOUBLE_VEC4;
+#ifdef GL_FLOAT
+      case GL_FLOAT:return GLHCK_SHADER_FLOAT;
 #endif
-      case GL_INT:
-         return GLHCK_SHADER_INT;
-      case GL_INT_VEC2:
-         return GLHCK_SHADER_INT_VEC2;
-      case GL_INT_VEC3:
-         return GLHCK_SHADER_INT_VEC3;
-      case GL_INT_VEC4:
-         return GLHCK_SHADER_INT_VEC4;
-      case GL_UNSIGNED_INT:
-         return GLHCK_SHADER_UNSIGNED_INT;
-      case GL_UNSIGNED_INT_VEC2:
-         return GLHCK_SHADER_UNSIGNED_INT_VEC2;
-      case GL_UNSIGNED_INT_VEC3:
-         return GLHCK_SHADER_UNSIGNED_INT_VEC3;
-      case GL_UNSIGNED_INT_VEC4:
-         return GLHCK_SHADER_UNSIGNED_INT_VEC4;
-      case GL_BOOL:
-         return GLHCK_SHADER_BOOL;
-      case GL_BOOL_VEC2:
-         return GLHCK_SHADER_BOOL_VEC2;
-      case GL_BOOL_VEC3:
-         return GLHCK_SHADER_BOOL_VEC3;
-      case GL_BOOL_VEC4:
-         return GLHCK_SHADER_BOOL_VEC4;
-      case GL_FLOAT_MAT2:
-         return GLHCK_SHADER_FLOAT_MAT2;
-      case GL_FLOAT_MAT3:
-         return GLHCK_SHADER_FLOAT_MAT3;
-      case GL_FLOAT_MAT4:
-         return GLHCK_SHADER_FLOAT_MAT4;
-      case GL_FLOAT_MAT2x3:
-         return GLHCK_SHADER_FLOAT_MAT2x3;
-      case GL_FLOAT_MAT2x4:
-         return GLHCK_SHADER_FLOAT_MAT2x4;
-      case GL_FLOAT_MAT3x2:
-         return GLHCK_SHADER_FLOAT_MAT3x2;
-      case GL_FLOAT_MAT3x4:
-         return GLHCK_SHADER_FLOAT_MAT3x4;
-      case GL_FLOAT_MAT4x2:
-         return GLHCK_SHADER_FLOAT_MAT4x2;
-      case GL_FLOAT_MAT4x3:
-         return GLHCK_SHADER_FLOAT_MAT4x3;
-#if GL_DOUBLE_MAT2
-      case GL_DOUBLE_MAT2:
-         return GLHCK_SHADER_DOUBLE_MAT2;
-      case GL_DOUBLE_MAT3:
-         return GLHCK_SHADER_DOUBLE_MAT3;
-      case GL_DOUBLE_MAT4:
-         return GLHCK_SHADER_DOUBLE_MAT4;
-      case GL_DOUBLE_MAT2x3:
-         return GLHCK_SHADER_DOUBLE_MAT2x3;
-      case GL_DOUBLE_MAT2x4:
-         return GLHCK_SHADER_DOUBLE_MAT2x4;
-      case GL_DOUBLE_MAT3x2:
-         return GLHCK_SHADER_DOUBLE_MAT3x2;
-      case GL_DOUBLE_MAT3x4:
-         return GLHCK_SHADER_DOUBLE_MAT3x4;
-      case GL_DOUBLE_MAT4x2:
-         return GLHCK_SHADER_DOUBLE_MAT4x2;
-      case GL_DOUBLE_MAT4x3:
-         return GLHCK_SHADER_DOUBLE_MAT4x3;
+#ifdef GL_FLOAT_VEC2
+      case GL_FLOAT_VEC2:return GLHCK_SHADER_FLOAT_VEC2;
+      case GL_FLOAT_VEC3:return GLHCK_SHADER_FLOAT_VEC3;
+      case GL_FLOAT_VEC4:return GLHCK_SHADER_FLOAT_VEC4;
 #endif
-      case GL_SAMPLER_1D:
-         return GLHCK_SHADER_SAMPLER_1D;
-      case GL_SAMPLER_2D:
-         return GLHCK_SHADER_SAMPLER_2D;
-      case GL_SAMPLER_3D:
-         return GLHCK_SHADER_SAMPLER_3D;
-      case GL_SAMPLER_CUBE:
-         return GLHCK_SHADER_SAMPLER_CUBE;
-      case GL_SAMPLER_1D_SHADOW:
-         return GLHCK_SHADER_SAMPLER_1D_SHADOW;
-      case GL_SAMPLER_2D_SHADOW:
-         return GLHCK_SHADER_SAMPLER_2D_SHADOW;
-      case GL_SAMPLER_1D_ARRAY:
-         return GLHCK_SHADER_SAMPLER_1D_ARRAY;
-      case GL_SAMPLER_2D_ARRAY:
-         return GLHCK_SHADER_SAMPLER_2D_ARRAY;
-      case GL_SAMPLER_1D_ARRAY_SHADOW:
-         return GLHCK_SHADER_SAMPLER_1D_ARRAY_SHADOW;
-      case GL_SAMPLER_2D_ARRAY_SHADOW:
-         return GLHCK_SHADER_SAMPLER_2D_ARRAY_SHADOW;
-      case GL_SAMPLER_2D_MULTISAMPLE:
-         return GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE;
-      case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:
-         return GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE_ARRAY;
-      case GL_SAMPLER_CUBE_SHADOW:
-         return GLHCK_SHADER_SAMPLER_CUBE_SHADOW;
-      case GL_SAMPLER_BUFFER:
-         return GLHCK_SHADER_SAMPLER_BUFFER;
-      case GL_SAMPLER_2D_RECT:
-         return GLHCK_SHADER_SAMPLER_2D_RECT;
-      case GL_SAMPLER_2D_RECT_SHADOW:
-         return GLHCK_SHADER_SAMPLER_2D_RECT_SHADOW;
-      case GL_INT_SAMPLER_1D:
-         return GLHCK_SHADER_INT_SAMPLER_1D;
-      case GL_INT_SAMPLER_2D:
-         return GLHCK_SHADER_INT_SAMPLER_2D;
-      case GL_INT_SAMPLER_3D:
-         return GLHCK_SHADER_INT_SAMPLER_3D;
-      case GL_INT_SAMPLER_CUBE:
-         return GLHCK_SHADER_INT_SAMPLER_CUBE;
-      case GL_INT_SAMPLER_1D_ARRAY:
-         return GLHCK_SHADER_INT_SAMPLER_1D_ARRAY;
-      case GL_INT_SAMPLER_2D_ARRAY:
-         return GLHCK_SHADER_INT_SAMPLER_2D_ARRAY;
-      case GL_INT_SAMPLER_2D_MULTISAMPLE:
-         return GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE;
-      case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
-         return GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
-      case GL_INT_SAMPLER_BUFFER:
-         return GLHCK_SHADER_INT_SAMPLER_BUFFER;
-      case GL_INT_SAMPLER_2D_RECT:
-         return GLHCK_SHADER_INT_SAMPLER_2D_RECT;
-      case GL_UNSIGNED_INT_SAMPLER_1D:
-         return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D;
-      case GL_UNSIGNED_INT_SAMPLER_2D:
-         return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D;
-      case GL_UNSIGNED_INT_SAMPLER_3D:
-         return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_3D;
-      case GL_UNSIGNED_INT_SAMPLER_CUBE:
-         return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_CUBE;
-      case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY:
-         return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D_ARRAY;
-      case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:
-         return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_ARRAY;
-      case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:
-         return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
-      case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:
-         return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
-      case GL_UNSIGNED_INT_SAMPLER_BUFFER:
-         return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER;
-      case GL_UNSIGNED_INT_SAMPLER_2D_RECT:
-         return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT;
-#if GL_IMAGE_1D
-      case GL_IMAGE_1D:
-         return GLHCK_SHADER_IMAGE_1D;
-      case GL_IMAGE_2D:
-         return GLHCK_SHADER_IMAGE_2D;
-      case GL_IMAGE_3D:
-         return GLHCK_SHADER_IMAGE_3D;
-      case GL_IMAGE_2D_RECT:
-         return GLHCK_SHADER_IMAGE_2D_RECT;
-      case GL_IMAGE_CUBE:
-         return GLHCK_SHADER_IMAGE_CUBE;
-      case GL_IMAGE_BUFFER:
-         return GLHCK_SHADER_IMAGE_BUFFER;
-      case GL_IMAGE_1D_ARRAY:
-         return GLHCK_SHADER_IMAGE_1D_ARRAY;
-      case GL_IMAGE_2D_ARRAY:
-         return GLHCK_SHADER_IMAGE_2D_ARRAY;
-      case GL_IMAGE_2D_MULTISAMPLE:
-         return GLHCK_SHADER_IMAGE_2D_MULTISAMPLE;
-      case GL_IMAGE_2D_MULTISAMPLE_ARRAY:
-         return GLHCK_SHADER_IMAGE_2D_MULTISAMPLE_ARRAY;
+#ifdef GL_DOUBLE
+      case GL_DOUBLE:return GLHCK_SHADER_DOUBLE;
 #endif
-#if GL_INT_IMAGE_1D
-      case GL_INT_IMAGE_1D:
-         return GLHCK_SHADER_INT_IMAGE_1D;
-      case GL_INT_IMAGE_2D:
-         return GLHCK_SHADER_INT_IMAGE_2D;
-      case GL_INT_IMAGE_3D:
-         return GLHCK_SHADER_INT_IMAGE_3D;
-      case GL_INT_IMAGE_2D_RECT:
-         return GLHCK_SHADER_INT_IMAGE_2D_RECT;
-      case GL_INT_IMAGE_CUBE:
-         return GLHCK_SHADER_INT_IMAGE_CUBE;
-      case GL_INT_IMAGE_BUFFER:
-         return GLHCK_SHADER_INT_IMAGE_BUFFER;
-      case GL_INT_IMAGE_1D_ARRAY:
-         return GLHCK_SHADER_INT_IMAGE_1D_ARRAY;
-      case GL_INT_IMAGE_2D_ARRAY:
-         return GLHCK_SHADER_INT_IMAGE_2D_ARRAY;
-      case GL_INT_IMAGE_2D_MULTISAMPLE:
-         return GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE;
-      case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
-         return GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#ifdef GL_DOUBLE_VEC2
+      case GL_DOUBLE_VEC2:return GLHCK_SHADER_DOUBLE_VEC2;
+      case GL_DOUBLE_VEC3:return GLHCK_SHADER_DOUBLE_VEC3;
+      case GL_DOUBLE_VEC4:return GLHCK_SHADER_DOUBLE_VEC4;
 #endif
-#if GL_UNSINGED_INT_IMAGE_1D
-      case GL_UNSIGNED_INT_IMAGE_1D:
-         return GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D;
-      case GL_UNSIGNED_INT_IMAGE_2D:
-         return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D;
-      case GL_UNSIGNED_INT_IMAGE_3D:
-         return GLHCK_SHADER_UNSIGNED_INT_IMAGE_3D;
-      case GL_UNSIGNED_INT_IMAGE_2D_RECT:
-         return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_RECT;
-      case GL_UNSIGNED_INT_IMAGE_CUBE:
-         return GLHCK_SHADER_UNSIGNED_INT_IMAGE_CUBE;
-      case GL_UNSIGNED_INT_IMAGE_BUFFER:
-         return GLHCK_SHADER_UNSIGNED_INT_IMAGE_BUFFER;
-      case GL_UNSIGNED_INT_IMAGE_1D_ARRAY:
-         return GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D_ARRAY;
-      case GL_UNSIGNED_INT_IMAGE_2D_ARRAY:
-         return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_ARRAY;
-      case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:
-         return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
-      case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
-         return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#ifdef GL_INT
+      case GL_INT:return GLHCK_SHADER_INT;
 #endif
-#if GL_UNSIGNED_INT_ATOMIC_COUNTER
-      case GL_UNSIGNED_INT_ATOMIC_COUNTER:
-         return GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER;
+#ifdef GL_INT_VEC2
+      case GL_INT_VEC2:return GLHCK_SHADER_INT_VEC2;
+      case GL_INT_VEC3:return GLHCK_SHADER_INT_VEC3;
+      case GL_INT_VEC4:return GLHCK_SHADER_INT_VEC4;
+#endif
+#ifdef GL_UNSIGNED_INT
+      case GL_UNSIGNED_INT:return GLHCK_SHADER_UNSIGNED_INT;
+#endif
+#ifdef GL_UNSIGNED_INT_VEC2
+      case GL_UNSIGNED_INT_VEC2:return GLHCK_SHADER_UNSIGNED_INT_VEC2;
+      case GL_UNSIGNED_INT_VEC3:return GLHCK_SHADER_UNSIGNED_INT_VEC3;
+      case GL_UNSIGNED_INT_VEC4:return GLHCK_SHADER_UNSIGNED_INT_VEC4;
+#endif
+#ifdef GL_BOOL
+      case GL_BOOL:return GLHCK_SHADER_BOOL;
+#endif
+#ifdef GL_BOOL_VEC2
+      case GL_BOOL_VEC2:return GLHCK_SHADER_BOOL_VEC2;
+      case GL_BOOL_VEC3:return GLHCK_SHADER_BOOL_VEC3;
+      case GL_BOOL_VEC4:return GLHCK_SHADER_BOOL_VEC4;
+#endif
+#ifdef GL_FLOAT_MAT2
+      case GL_FLOAT_MAT2:return GLHCK_SHADER_FLOAT_MAT2;
+      case GL_FLOAT_MAT3:return GLHCK_SHADER_FLOAT_MAT3;
+      case GL_FLOAT_MAT4:return GLHCK_SHADER_FLOAT_MAT4;
+      case GL_FLOAT_MAT2x3:return GLHCK_SHADER_FLOAT_MAT2x3;
+      case GL_FLOAT_MAT2x4:return GLHCK_SHADER_FLOAT_MAT2x4;
+      case GL_FLOAT_MAT3x2:return GLHCK_SHADER_FLOAT_MAT3x2;
+      case GL_FLOAT_MAT3x4:return GLHCK_SHADER_FLOAT_MAT3x4;
+      case GL_FLOAT_MAT4x2:return GLHCK_SHADER_FLOAT_MAT4x2;
+      case GL_FLOAT_MAT4x3:return GLHCK_SHADER_FLOAT_MAT4x3;
+#endif
+#ifdef GL_DOUBLE_MAT2
+      case GL_DOUBLE_MAT2:return GLHCK_SHADER_DOUBLE_MAT2;
+      case GL_DOUBLE_MAT3:return GLHCK_SHADER_DOUBLE_MAT3;
+      case GL_DOUBLE_MAT4:return GLHCK_SHADER_DOUBLE_MAT4;
+      case GL_DOUBLE_MAT2x3:return GLHCK_SHADER_DOUBLE_MAT2x3;
+      case GL_DOUBLE_MAT2x4:return GLHCK_SHADER_DOUBLE_MAT2x4;
+      case GL_DOUBLE_MAT3x2:return GLHCK_SHADER_DOUBLE_MAT3x2;
+      case GL_DOUBLE_MAT3x4:return GLHCK_SHADER_DOUBLE_MAT3x4;
+      case GL_DOUBLE_MAT4x2:return GLHCK_SHADER_DOUBLE_MAT4x2;
+      case GL_DOUBLE_MAT4x3:return GLHCK_SHADER_DOUBLE_MAT4x3;
+#endif
+#ifdef GL_SAMPLER_1D
+      case GL_SAMPLER_1D:return GLHCK_SHADER_SAMPLER_1D;
+      case GL_SAMPLER_2D:return GLHCK_SHADER_SAMPLER_2D;
+      case GL_SAMPLER_3D:return GLHCK_SHADER_SAMPLER_3D;
+      case GL_SAMPLER_CUBE:return GLHCK_SHADER_SAMPLER_CUBE;
+      case GL_SAMPLER_1D_SHADOW:return GLHCK_SHADER_SAMPLER_1D_SHADOW;
+      case GL_SAMPLER_2D_SHADOW:return GLHCK_SHADER_SAMPLER_2D_SHADOW;
+      case GL_SAMPLER_1D_ARRAY:return GLHCK_SHADER_SAMPLER_1D_ARRAY;
+      case GL_SAMPLER_2D_ARRAY:return GLHCK_SHADER_SAMPLER_2D_ARRAY;
+      case GL_SAMPLER_1D_ARRAY_SHADOW:return GLHCK_SHADER_SAMPLER_1D_ARRAY_SHADOW;
+      case GL_SAMPLER_2D_ARRAY_SHADOW:return GLHCK_SHADER_SAMPLER_2D_ARRAY_SHADOW;
+      case GL_SAMPLER_2D_MULTISAMPLE:return GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE;
+      case GL_SAMPLER_2D_MULTISAMPLE_ARRAY:return GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE_ARRAY;
+      case GL_SAMPLER_CUBE_SHADOW:return GLHCK_SHADER_SAMPLER_CUBE_SHADOW;
+      case GL_SAMPLER_BUFFER:return GLHCK_SHADER_SAMPLER_BUFFER;
+      case GL_SAMPLER_2D_RECT:return GLHCK_SHADER_SAMPLER_2D_RECT;
+      case GL_SAMPLER_2D_RECT_SHADOW:return GLHCK_SHADER_SAMPLER_2D_RECT_SHADOW;
+#endif
+#ifdef GL_INT_SAMPLER_1D
+      case GL_INT_SAMPLER_1D:return GLHCK_SHADER_INT_SAMPLER_1D;
+      case GL_INT_SAMPLER_2D:return GLHCK_SHADER_INT_SAMPLER_2D;
+      case GL_INT_SAMPLER_3D:return GLHCK_SHADER_INT_SAMPLER_3D;
+      case GL_INT_SAMPLER_CUBE:return GLHCK_SHADER_INT_SAMPLER_CUBE;
+      case GL_INT_SAMPLER_1D_ARRAY:return GLHCK_SHADER_INT_SAMPLER_1D_ARRAY;
+      case GL_INT_SAMPLER_2D_ARRAY:return GLHCK_SHADER_INT_SAMPLER_2D_ARRAY;
+      case GL_INT_SAMPLER_2D_MULTISAMPLE:return GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE;
+      case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:return GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+      case GL_INT_SAMPLER_BUFFER:return GLHCK_SHADER_INT_SAMPLER_BUFFER;
+      case GL_INT_SAMPLER_2D_RECT:return GLHCK_SHADER_INT_SAMPLER_2D_RECT;
+#endif
+#ifdef GL_UNSIGNED_INT_SAMPLER_1D
+      case GL_UNSIGNED_INT_SAMPLER_1D:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D;
+      case GL_UNSIGNED_INT_SAMPLER_2D:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D;
+      case GL_UNSIGNED_INT_SAMPLER_3D:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_3D;
+      case GL_UNSIGNED_INT_SAMPLER_CUBE:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_CUBE;
+      case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D_ARRAY;
+      case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_ARRAY;
+      case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE;
+      case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
+      case GL_UNSIGNED_INT_SAMPLER_BUFFER:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER;
+      case GL_UNSIGNED_INT_SAMPLER_2D_RECT:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT;
+#endif
+#ifdef GL_IMAGE_1D
+      case GL_IMAGE_1D:return GLHCK_SHADER_IMAGE_1D;
+      case GL_IMAGE_2D:return GLHCK_SHADER_IMAGE_2D;
+      case GL_IMAGE_3D:return GLHCK_SHADER_IMAGE_3D;
+      case GL_IMAGE_2D_RECT:return GLHCK_SHADER_IMAGE_2D_RECT;
+      case GL_IMAGE_CUBE:return GLHCK_SHADER_IMAGE_CUBE;
+      case GL_IMAGE_BUFFER:return GLHCK_SHADER_IMAGE_BUFFER;
+      case GL_IMAGE_1D_ARRAY:return GLHCK_SHADER_IMAGE_1D_ARRAY;
+      case GL_IMAGE_2D_ARRAY:return GLHCK_SHADER_IMAGE_2D_ARRAY;
+      case GL_IMAGE_2D_MULTISAMPLE:return GLHCK_SHADER_IMAGE_2D_MULTISAMPLE;
+      case GL_IMAGE_2D_MULTISAMPLE_ARRAY:return GLHCK_SHADER_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
+#ifdef GL_INT_IMAGE_1D
+      case GL_INT_IMAGE_1D:return GLHCK_SHADER_INT_IMAGE_1D;
+      case GL_INT_IMAGE_2D:return GLHCK_SHADER_INT_IMAGE_2D;
+      case GL_INT_IMAGE_3D:return GLHCK_SHADER_INT_IMAGE_3D;
+      case GL_INT_IMAGE_2D_RECT:return GLHCK_SHADER_INT_IMAGE_2D_RECT;
+      case GL_INT_IMAGE_CUBE:return GLHCK_SHADER_INT_IMAGE_CUBE;
+      case GL_INT_IMAGE_BUFFER:return GLHCK_SHADER_INT_IMAGE_BUFFER;
+      case GL_INT_IMAGE_1D_ARRAY:return GLHCK_SHADER_INT_IMAGE_1D_ARRAY;
+      case GL_INT_IMAGE_2D_ARRAY:return GLHCK_SHADER_INT_IMAGE_2D_ARRAY;
+      case GL_INT_IMAGE_2D_MULTISAMPLE:return GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE;
+      case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY:return GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
+#ifdef GL_UNSINGED_INT_IMAGE_1D
+      case GL_UNSIGNED_INT_IMAGE_1D:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D;
+      case GL_UNSIGNED_INT_IMAGE_2D:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D;
+      case GL_UNSIGNED_INT_IMAGE_3D:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_3D;
+      case GL_UNSIGNED_INT_IMAGE_2D_RECT:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_RECT;
+      case GL_UNSIGNED_INT_IMAGE_CUBE:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_CUBE;
+      case GL_UNSIGNED_INT_IMAGE_BUFFER:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_BUFFER;
+      case GL_UNSIGNED_INT_IMAGE_1D_ARRAY:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D_ARRAY;
+      case GL_UNSIGNED_INT_IMAGE_2D_ARRAY:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_ARRAY;
+      case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
+      case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
+#endif
+#ifdef GL_UNSIGNED_INT_ATOMIC_COUNTER
+      case GL_UNSIGNED_INT_ATOMIC_COUNTER:return GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER;
 #endif
       default:break;
    }
@@ -945,134 +840,122 @@ _glhckShaderVariableType glhGlhckShaderVariableTypeForOpenGLType(GLenum type)
 }
 
 /* return shader variable name for OpenGL shader variable constant */
-const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type)
+const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type)
 {
    switch (type) {
-      case GL_FLOAT: return "float";
-      case GL_FLOAT_VEC2: return "vec2";
-      case GL_FLOAT_VEC3: return "vec3";
-      case GL_FLOAT_VEC4: return "vec4";
-      case GL_DOUBLE: return "double";
-#if GL_DOUBLE_VEC2
-      case GL_DOUBLE_VEC2: return "dvec2";
-      case GL_DOUBLE_VEC3: return "dvec3";
-      case GL_DOUBLE_VEC4: return "dvec4";
-#endif
-      case GL_INT: return "int";
-      case GL_INT_VEC2: return "ivec2";
-      case GL_INT_VEC3: return "ivec3";
-      case GL_INT_VEC4: return "ivec4";
-      case GL_UNSIGNED_INT: return "uint";
-      case GL_UNSIGNED_INT_VEC2: return "uvec2";
-      case GL_UNSIGNED_INT_VEC3: return "uvec3";
-      case GL_UNSIGNED_INT_VEC4: return "uvec4";
-      case GL_BOOL: return "bool";
-      case GL_BOOL_VEC2: return "bvec2";
-      case GL_BOOL_VEC3: return "bvec3";
-      case GL_BOOL_VEC4: return "bvec4";
-      case GL_FLOAT_MAT2: return "mat2";
-      case GL_FLOAT_MAT3: return "mat3";
-      case GL_FLOAT_MAT4: return "mat4";
-      case GL_FLOAT_MAT2x3: return "mat2x3";
-      case GL_FLOAT_MAT2x4: return "mat2x4";
-      case GL_FLOAT_MAT3x2: return "mat3x2";
-      case GL_FLOAT_MAT3x4: return "mat3x4";
-      case GL_FLOAT_MAT4x2: return "mat4x2";
-      case GL_FLOAT_MAT4x3: return "mat4x3";
-#if GL_DOUBLE_MAT2
-      case GL_DOUBLE_MAT2: return "dmat2";
-      case GL_DOUBLE_MAT3: return "dmat3";
-      case GL_DOUBLE_MAT4: return "dmat4";
-      case GL_DOUBLE_MAT2x3: return "dmat2x3";
-      case GL_DOUBLE_MAT2x4: return "dmat2x4";
-      case GL_DOUBLE_MAT3x2: return "dmat3x2";
-      case GL_DOUBLE_MAT3x4: return "dmat3x4";
-      case GL_DOUBLE_MAT4x2: return "dmat4x2";
-      case GL_DOUBLE_MAT4x3: return "dmat4x3";
-#endif
-      case GL_SAMPLER_1D: return "sampler1D";
-      case GL_SAMPLER_2D: return "sampler2D";
-      case GL_SAMPLER_3D: return "sampler3D";
-      case GL_SAMPLER_CUBE: return "samplerCube";
-      case GL_SAMPLER_1D_SHADOW: return "sampler1DShadow";
-      case GL_SAMPLER_2D_SHADOW: return "sampler2DShadow";
-      case GL_SAMPLER_1D_ARRAY: return "sampler1DArray";
-      case GL_SAMPLER_2D_ARRAY: return "sampler2DArray";
-      case GL_SAMPLER_1D_ARRAY_SHADOW: return "sampler1DArrayShadow";
-      case GL_SAMPLER_2D_ARRAY_SHADOW: return "sampler2DArrayShadow";
-      case GL_SAMPLER_2D_MULTISAMPLE: return "sampler2DMS";
-      case GL_SAMPLER_2D_MULTISAMPLE_ARRAY: return "sampler2DMSArray";
-      case GL_SAMPLER_CUBE_SHADOW: return "samplerCubeShadow";
-      case GL_SAMPLER_BUFFER: return "samplerBuffer";
-      case GL_SAMPLER_2D_RECT: return "sampler2DRect";
-      case GL_SAMPLER_2D_RECT_SHADOW: return "sampler2DRectShadow";
-      case GL_INT_SAMPLER_1D: return "isampler1D";
-      case GL_INT_SAMPLER_2D: return "isampler2D";
-      case GL_INT_SAMPLER_3D: return "isampler3D";
-      case GL_INT_SAMPLER_CUBE: return "isamplerCube";
-      case GL_INT_SAMPLER_1D_ARRAY: return "isampler1DArray";
-      case GL_INT_SAMPLER_2D_ARRAY: return "isampler2DArray";
-      case GL_INT_SAMPLER_2D_MULTISAMPLE: return "isampler2DMS";
-      case GL_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return "isampler2DMSArray";
-      case GL_INT_SAMPLER_BUFFER: return "isamplerBuffer";
-      case GL_INT_SAMPLER_2D_RECT: return "isampler2DRect";
-      case GL_UNSIGNED_INT_SAMPLER_1D: return "usampler1D";
-      case GL_UNSIGNED_INT_SAMPLER_2D: return "usampler2D";
-      case GL_UNSIGNED_INT_SAMPLER_3D: return "usampler3D";
-      case GL_UNSIGNED_INT_SAMPLER_CUBE: return "usamplerCube";
-      case GL_UNSIGNED_INT_SAMPLER_1D_ARRAY: return "usampler2DArray";
-      case GL_UNSIGNED_INT_SAMPLER_2D_ARRAY: return "usampler2DArray";
-      case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE: return "usampler2DMS";
-      case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return "usampler2DMSArray";
-      case GL_UNSIGNED_INT_SAMPLER_BUFFER: return "usamplerBuffer";
-      case GL_UNSIGNED_INT_SAMPLER_2D_RECT: return "usampler2DRect";
-#if GL_IMAGE_1D
-      case GL_IMAGE_1D: return "image1D";
-      case GL_IMAGE_2D: return "image2D";
-      case GL_IMAGE_3D: return "image3D";
-      case GL_IMAGE_2D_RECT: return "image2DRect";
-      case GL_IMAGE_CUBE: return "imageCube";
-      case GL_IMAGE_BUFFER: return "imageBuffer";
-      case GL_IMAGE_1D_ARRAY: return "image1DArray";
-      case GL_IMAGE_2D_ARRAY: return "image2DArray";
-      case GL_IMAGE_2D_MULTISAMPLE: return "image2DMS";
-      case GL_IMAGE_2D_MULTISAMPLE_ARRAY: return "image2DMSArray";
-#endif
-#if GL_INT_IMAGE_1D
-      case GL_INT_IMAGE_1D: return "iimage1D";
-      case GL_INT_IMAGE_2D: return "iimage2D";
-      case GL_INT_IMAGE_3D: return "iimage3D";
-      case GL_INT_IMAGE_2D_RECT: return "iimage2DRect";
-      case GL_INT_IMAGE_CUBE: return "iimageCube";
-      case GL_INT_IMAGE_BUFFER: return "iimageBuffer";
-      case GL_INT_IMAGE_1D_ARRAY: return "iimage1DArray";
-      case GL_INT_IMAGE_2D_ARRAY: return "iimage2DArray";
-      case GL_INT_IMAGE_2D_MULTISAMPLE: return "iimage2DMS";
-      case GL_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return "iimage2DMSArray";
-#endif
-#if GL_UNSIGNED_INT_IMAGE_1D
-      case GL_UNSIGNED_INT_IMAGE_1D: return "uimage1D";
-      case GL_UNSIGNED_INT_IMAGE_2D: return "uimage2D";
-      case GL_UNSIGNED_INT_IMAGE_3D: return "uimage3D";
-      case GL_UNSIGNED_INT_IMAGE_2D_RECT: return "uimage2DRect";
-      case GL_UNSIGNED_INT_IMAGE_CUBE: return "uimageCube";
-      case GL_UNSIGNED_INT_IMAGE_BUFFER: return "uimageBuffer";
-      case GL_UNSIGNED_INT_IMAGE_1D_ARRAY: return "uimage1DArray";
-      case GL_UNSIGNED_INT_IMAGE_2D_ARRAY: return "uimage2DArray";
-      case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE: return "uimage2DMS";
-      case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return "uimage2DMSArray";
-#endif
-#if GL_UNSIGNED_INT_ATOMIC_COUNTER
-      case GL_UNSIGNED_INT_ATOMIC_COUNTER: return "atomic_uint";
-#endif
+      case GLHCK_SHADER_FLOAT: return "float";
+      case GLHCK_SHADER_FLOAT_VEC2: return "vec2";
+      case GLHCK_SHADER_FLOAT_VEC3: return "vec3";
+      case GLHCK_SHADER_FLOAT_VEC4: return "vec4";
+      case GLHCK_SHADER_DOUBLE: return "double";
+      case GLHCK_SHADER_DOUBLE_VEC2: return "dvec2";
+      case GLHCK_SHADER_DOUBLE_VEC3: return "dvec3";
+      case GLHCK_SHADER_DOUBLE_VEC4: return "dvec4";
+      case GLHCK_SHADER_INT: return "int";
+      case GLHCK_SHADER_INT_VEC2: return "ivec2";
+      case GLHCK_SHADER_INT_VEC3: return "ivec3";
+      case GLHCK_SHADER_INT_VEC4: return "ivec4";
+      case GLHCK_SHADER_UNSIGNED_INT: return "uint";
+      case GLHCK_SHADER_UNSIGNED_INT_VEC2: return "uvec2";
+      case GLHCK_SHADER_UNSIGNED_INT_VEC3: return "uvec3";
+      case GLHCK_SHADER_UNSIGNED_INT_VEC4: return "uvec4";
+      case GLHCK_SHADER_BOOL: return "bool";
+      case GLHCK_SHADER_BOOL_VEC2: return "bvec2";
+      case GLHCK_SHADER_BOOL_VEC3: return "bvec3";
+      case GLHCK_SHADER_BOOL_VEC4: return "bvec4";
+      case GLHCK_SHADER_FLOAT_MAT2: return "mat2";
+      case GLHCK_SHADER_FLOAT_MAT3: return "mat3";
+      case GLHCK_SHADER_FLOAT_MAT4: return "mat4";
+      case GLHCK_SHADER_FLOAT_MAT2x3: return "mat2x3";
+      case GLHCK_SHADER_FLOAT_MAT2x4: return "mat2x4";
+      case GLHCK_SHADER_FLOAT_MAT3x2: return "mat3x2";
+      case GLHCK_SHADER_FLOAT_MAT3x4: return "mat3x4";
+      case GLHCK_SHADER_FLOAT_MAT4x2: return "mat4x2";
+      case GLHCK_SHADER_FLOAT_MAT4x3: return "mat4x3";
+      case GLHCK_SHADER_DOUBLE_MAT2: return "dmat2";
+      case GLHCK_SHADER_DOUBLE_MAT3: return "dmat3";
+      case GLHCK_SHADER_DOUBLE_MAT4: return "dmat4";
+      case GLHCK_SHADER_DOUBLE_MAT2x3: return "dmat2x3";
+      case GLHCK_SHADER_DOUBLE_MAT2x4: return "dmat2x4";
+      case GLHCK_SHADER_DOUBLE_MAT3x2: return "dmat3x2";
+      case GLHCK_SHADER_DOUBLE_MAT3x4: return "dmat3x4";
+      case GLHCK_SHADER_DOUBLE_MAT4x2: return "dmat4x2";
+      case GLHCK_SHADER_DOUBLE_MAT4x3: return "dmat4x3";
+      case GLHCK_SHADER_SAMPLER_1D: return "sampler1D";
+      case GLHCK_SHADER_SAMPLER_2D: return "sampler2D";
+      case GLHCK_SHADER_SAMPLER_3D: return "sampler3D";
+      case GLHCK_SHADER_SAMPLER_CUBE: return "samplerCube";
+      case GLHCK_SHADER_SAMPLER_1D_SHADOW: return "sampler1DShadow";
+      case GLHCK_SHADER_SAMPLER_2D_SHADOW: return "sampler2DShadow";
+      case GLHCK_SHADER_SAMPLER_1D_ARRAY: return "sampler1DArray";
+      case GLHCK_SHADER_SAMPLER_2D_ARRAY: return "sampler2DArray";
+      case GLHCK_SHADER_SAMPLER_1D_ARRAY_SHADOW: return "sampler1DArrayShadow";
+      case GLHCK_SHADER_SAMPLER_2D_ARRAY_SHADOW: return "sampler2DArrayShadow";
+      case GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE: return "sampler2DMS";
+      case GLHCK_SHADER_SAMPLER_2D_MULTISAMPLE_ARRAY: return "sampler2DMSArray";
+      case GLHCK_SHADER_SAMPLER_CUBE_SHADOW: return "samplerCubeShadow";
+      case GLHCK_SHADER_SAMPLER_BUFFER: return "samplerBuffer";
+      case GLHCK_SHADER_SAMPLER_2D_RECT: return "sampler2DRect";
+      case GLHCK_SHADER_SAMPLER_2D_RECT_SHADOW: return "sampler2DRectShadow";
+      case GLHCK_SHADER_INT_SAMPLER_1D: return "isampler1D";
+      case GLHCK_SHADER_INT_SAMPLER_2D: return "isampler2D";
+      case GLHCK_SHADER_INT_SAMPLER_3D: return "isampler3D";
+      case GLHCK_SHADER_INT_SAMPLER_CUBE: return "isamplerCube";
+      case GLHCK_SHADER_INT_SAMPLER_1D_ARRAY: return "isampler1DArray";
+      case GLHCK_SHADER_INT_SAMPLER_2D_ARRAY: return "isampler2DArray";
+      case GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE: return "isampler2DMS";
+      case GLHCK_SHADER_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return "isampler2DMSArray";
+      case GLHCK_SHADER_INT_SAMPLER_BUFFER: return "isamplerBuffer";
+      case GLHCK_SHADER_INT_SAMPLER_2D_RECT: return "isampler2DRect";
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D: return "usampler1D";
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D: return "usampler2D";
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_3D: return "usampler3D";
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_CUBE: return "usamplerCube";
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D_ARRAY: return "usampler2DArray";
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_ARRAY: return "usampler2DArray";
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE: return "usampler2DMS";
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY: return "usampler2DMSArray";
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER: return "usamplerBuffer";
+      case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT: return "usampler2DRect";
+      case GLHCK_SHADER_IMAGE_1D: return "image1D";
+      case GLHCK_SHADER_IMAGE_2D: return "image2D";
+      case GLHCK_SHADER_IMAGE_3D: return "image3D";
+      case GLHCK_SHADER_IMAGE_2D_RECT: return "image2DRect";
+      case GLHCK_SHADER_IMAGE_CUBE: return "imageCube";
+      case GLHCK_SHADER_IMAGE_BUFFER: return "imageBuffer";
+      case GLHCK_SHADER_IMAGE_1D_ARRAY: return "image1DArray";
+      case GLHCK_SHADER_IMAGE_2D_ARRAY: return "image2DArray";
+      case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE: return "image2DMS";
+      case GLHCK_SHADER_IMAGE_2D_MULTISAMPLE_ARRAY: return "image2DMSArray";
+      case GLHCK_SHADER_INT_IMAGE_1D: return "iimage1D";
+      case GLHCK_SHADER_INT_IMAGE_2D: return "iimage2D";
+      case GLHCK_SHADER_INT_IMAGE_3D: return "iimage3D";
+      case GLHCK_SHADER_INT_IMAGE_2D_RECT: return "iimage2DRect";
+      case GLHCK_SHADER_INT_IMAGE_CUBE: return "iimageCube";
+      case GLHCK_SHADER_INT_IMAGE_BUFFER: return "iimageBuffer";
+      case GLHCK_SHADER_INT_IMAGE_1D_ARRAY: return "iimage1DArray";
+      case GLHCK_SHADER_INT_IMAGE_2D_ARRAY: return "iimage2DArray";
+      case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE: return "iimage2DMS";
+      case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return "iimage2DMSArray";
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D: return "uimage1D";
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D: return "uimage2D";
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_3D: return "uimage3D";
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_RECT: return "uimage2DRect";
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_CUBE: return "uimageCube";
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_BUFFER: return "uimageBuffer";
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_1D_ARRAY: return "uimage1DArray";
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_ARRAY: return "uimage2DArray";
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE: return "uimage2DMS";
+      case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY: return "uimage2DMSArray";
+      case GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER: return "atomic_uint";
       default:break;
    }
    return "unknown";
 }
 
 /* return shader variable name for glhck shader variable constant */
-const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type) {
-   return glhShaderVariableNameForOpenGLConstant(glhShaderVariableTypeForGlhckType(type));
+const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type) {
+   return glhShaderVariableNameForGlhckConstant(glhGlhckShaderVariableTypeForOpenGLType(type));
 }
 
 /*
@@ -1203,7 +1086,7 @@ void glhTextureParameter(glhckTextureTarget target, const glhckTextureParameters
    GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MIN_LOD, params->minLod));
    GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MAX_LOD, params->maxLod));
 
-#if GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#ifdef GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
    if (params->mipmap && params->maxAnisotropy) {
       float max;
       GL_CALL(glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &max));
@@ -1605,9 +1488,12 @@ void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, 
 
    /* automatically figure out the data type */
    switch (uniform->type) {
+#ifdef GL_FLOAT
       case GLHCK_SHADER_FLOAT:
          GL_CALL(glUniform1fv(uniform->location, count, (GLfloat*)value));
          break;
+#endif
+#ifdef GL_FLOAT_VEC2
       case GLHCK_SHADER_FLOAT_VEC2:
          GL_CALL(glUniform2fv(uniform->location, count, (GLfloat*)value));
          break;
@@ -1617,10 +1503,13 @@ void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, 
       case GLHCK_SHADER_FLOAT_VEC4:
          GL_CALL(glUniform4fv(uniform->location, count, (GLfloat*)value));
          break;
-#if glUniform1dv
+#endif
+#ifdef GL_DOUBLE
       case GLHCK_SHADER_DOUBLE:
          GL_CALL(glUniform1dv(uniform->location, count, (GLdouble*)value));
          break;
+#endif
+#ifdef GL_DOUBLE_VEC2
       case GLHCK_SHADER_DOUBLE_VEC2:
          GL_CALL(glUniform2dv(uniform->location, count, (GLdouble*)value));
          break;
@@ -1631,6 +1520,7 @@ void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, 
          GL_CALL(glUniform4dv(uniform->location, count, (GLdouble*)value));
          break;
 #endif
+#ifdef GL_INT
       case GLHCK_SHADER_INT:
       case GLHCK_SHADER_BOOL:
       case GLHCK_SHADER_SAMPLER_1D:
@@ -1681,6 +1571,8 @@ void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, 
       case GLHCK_SHADER_INT_IMAGE_2D_MULTISAMPLE_ARRAY:
          GL_CALL(glUniform1iv(uniform->location, count, (GLint*)value));
          break;
+#endif
+#ifdef GL_INT_VEC2
       case GLHCK_SHADER_INT_VEC2:
       case GLHCK_SHADER_BOOL_VEC2:
          GL_CALL(glUniform2iv(uniform->location, count, (GLint*)value));
@@ -1693,7 +1585,8 @@ void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, 
       case GLHCK_SHADER_BOOL_VEC4:
          GL_CALL(glUniform4iv(uniform->location, count, (GLint*)value));
          break;
-#if glUniform1uiv
+#endif
+#ifdef GL_UNSIGNED_INT
       case GLHCK_SHADER_UNSIGNED_INT:
       case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_1D:
       case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D:
@@ -1718,6 +1611,8 @@ void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, 
       case GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER:
          GL_CALL(glUniform1uiv(uniform->location, count, (GLuint*)value));
          break;
+#endif
+#ifdef GL_UNSIGNED_INT_VEC2
       case GLHCK_SHADER_UNSIGNED_INT_VEC2:
          GL_CALL(glUniform2uiv(uniform->location, count, (GLuint*)value));
          break;
@@ -1728,6 +1623,7 @@ void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, 
          GL_CALL(glUniform4uiv(uniform->location, count, (GLuint*)value));
          break;
 #endif
+#ifdef GL_FLOAT_MAT2
       case GLHCK_SHADER_FLOAT_MAT2:
          GL_CALL(glUniformMatrix2fv(uniform->location, count, 0, (GLfloat*)value));
          break;
@@ -1755,7 +1651,8 @@ void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, 
       case GLHCK_SHADER_FLOAT_MAT4x3:
          GL_CALL(glUniformMatrix4x3fv(uniform->location, count, 0, (GLfloat*)value));
          break;
-#if glUniformMatrix2dv
+#endif
+#ifdef GL_DOUBLE_MAT2
       case GLHCK_SHADER_DOUBLE_MAT2:
          GL_CALL(glUniformMatrix2dv(uniform->location, count, 0, (GLdouble*)value));
          break;
