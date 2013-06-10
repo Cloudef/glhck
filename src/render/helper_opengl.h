@@ -136,7 +136,7 @@ GLenum glhHwBufferStoreTypeForGlhckType(glhckHwBufferStoreType type);
 GLenum glhHwBufferAccessTypeForGlhckType(glhckHwBufferAccessType type);
 GLenum glhShaderTypeForGlhckType(glhckShaderType type);
 GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type);
-_glhckShaderVariableType glhGlhckShaderVariableTypeForGLType(GLenum type);
+_glhckShaderVariableType glhGlhckShaderVariableTypeForOpenGLType(GLenum type);
 const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type);
 const GLchar* glhShaderVariableNameForGlhckConstant(GLenum type);
 

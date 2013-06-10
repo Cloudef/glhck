@@ -713,7 +713,7 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
 }
 
 /* \brief map OpenGL shader constants to glhck shader constants */
-_glhckShaderVariableType glhGlhckShaderVariableTypeForGLType(GLenum type)
+_glhckShaderVariableType glhGlhckShaderVariableTypeForOpenGLType(GLenum type)
 {
    switch (type) {
       case GL_FLOAT:
@@ -1434,7 +1434,7 @@ _glhckHwBufferShaderUniform* glhProgramUniformBufferList(GLuint program, const G
       u->name = uname;
       glGetActiveUniformsiv(program, 1, &index, GL_UNIFORM_OFFSET, &u->offset);
       u->typeName = glhShaderVariableNameForOpenGLConstant(type);
-      u->type = glhGlhckShaderVariableTypeForGLType(type);
+      u->type = glhGlhckShaderVariableTypeForOpenGLType(type);
       u->size = size;
    }
 
@@ -1485,7 +1485,7 @@ _glhckShaderAttribute* glhProgramAttributeList(GLuint obj)
       memcpy(a->name, name, length+1);
       a->typeName = glhShaderVariableNameForOpenGLConstant(type);
       a->location = glGetAttribLocation(obj, a->name);
-      a->type = glhGlhckShaderVariableTypeForGLType(type);
+      a->type = glhGlhckShaderVariableTypeForOpenGLType(type);
       a->size = size;
    }
 
@@ -1550,7 +1550,7 @@ _glhckShaderUniform* glhProgramUniformList(GLuint obj)
       u->name = uname;
       u->typeName = glhShaderVariableNameForOpenGLConstant(type);
       u->location = location;
-      u->type = glhGlhckShaderVariableTypeForGLType(type);
+      u->type = glhGlhckShaderVariableTypeForOpenGLType(type);
       u->size = size;
 
       /* store for iterating the array slots */
@@ -1577,7 +1577,7 @@ _glhckShaderUniform* glhProgramUniformList(GLuint obj)
          u->name = uname;
          u->typeName = glhShaderVariableNameForOpenGLConstant(type);
          u->location = location;
-         u->type = glhGlhckShaderVariableTypeForGLType(type);
+         u->type = glhGlhckShaderVariableTypeForOpenGLType(type);
          u->size = size;
       }
    }
