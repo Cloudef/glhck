@@ -25,12 +25,21 @@ SET(GLHCK_SRC
    skeletal/animation.c
    skeletal/animator.c
    render/render.c
-   render/helper_opengl.c
    render/helper_stub.c
    render/stub.c
-   render/opengl.c
-   render/opengl_fixpipe.c
    import/import.c)
+
+IF (GLHCK_USE_GLES1)
+   LIST(APPEND GLHCK_SRC render/helper_opengl.c)
+   LIST(APPEND GLHCK_SRC render/opengl_fixpipe.c)
+ELSEIF (GLHCK_USE_GLES2)
+   LIST(APPEND GLHCK_SRC render/helper_opengl.c)
+   LIST(APPEND GLHCK_SRC render/opengl.c)
+ELSE ()
+   LIST(APPEND GLHCK_SRC render/helper_opengl.c)
+   LIST(APPEND GLHCK_SRC render/opengl.c)
+   LIST(APPEND GLHCK_SRC render/opengl_fixpipe.c)
+ENDIF ()
 
 # Setup importers
 IF (GLHCK_IMPORT_OPENCTM)
