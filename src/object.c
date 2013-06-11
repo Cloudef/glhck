@@ -140,13 +140,15 @@ static void _glhckObjectBuildParent(glhckObject *object, kmMat4 *parentMatrix)
         parent = parent->parent, child = child->parent) {
       kmMat4Identity(&matrix);
 
-      if (child->affectionFlags & GLHCK_AFFECT_ROTATION) {
-         _glhckObjectBuildRotation(parent, &tmp);
+      if (child->affectionFlags & GLHCK_AFFECT_SCALING) {
+         /* don't use _glhckObjectBuildScaling, as we don't want parent->geometry->scale affection
+          * XXX: Should we do same for the translation below? */
+         kmMat4Scaling(&tmp, parent->view.scaling.x, parent->view.scaling.y, parent->view.scaling.z);
          kmMat4Multiply(&matrix, &tmp, &matrix);
       }
 
-      if (child->affectionFlags & GLHCK_AFFECT_SCALING) {
-         _glhckObjectBuildScaling(parent, &tmp);
+      if (child->affectionFlags & GLHCK_AFFECT_ROTATION) {
+         _glhckObjectBuildRotation(parent, &tmp);
          kmMat4Multiply(&matrix, &tmp, &matrix);
       }
 
