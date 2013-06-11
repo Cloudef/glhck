@@ -7,11 +7,18 @@
 #ifdef GLHCK_USE_GLES2
 #  define GLFW_INCLUDE_ES2
 #endif
-#include "GL/glfw3.h"
+#include "GLFW/glfw3.h"
 #include "glhck/glhck.h"
 
 static int RUNNING = 0;
 static int WIDTH = 800, HEIGHT = 480;
+
+static void error_callback(int error, const char *msg)
+{
+   (void)error;
+   printf("-!- GLFW: %s\n", msg);
+}
+
 static void close_callback(GLFWwindow* window)
 {
    (void)window;
@@ -38,6 +45,7 @@ int main(int argc, char **argv)
    char           WIN_TITLE[256];
    memset(WIN_TITLE, 0, sizeof(WIN_TITLE));
 
+   glfwSetErrorCallback(error_callback);
    if (!glfwInit())
       return EXIT_FAILURE;
 

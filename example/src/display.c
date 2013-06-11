@@ -7,13 +7,20 @@
 #ifdef GLHCK_USE_GLES2
 #  define GLFW_INCLUDE_ES2
 #endif
-#include "GL/glfw3.h"
+#include "GLFW/glfw3.h"
 #include "glhck/glhck.h"
 
 static int RUNNING = 0;
 static int WIDTH = 800, HEIGHT = 480;
 static double MOUSEX = 0, MOUSEY = 0;
 static double LASTMOUSEX = 0, LASTMOUSEY = 0;
+
+static void error_callback(int error, const char *msg)
+{
+   (void)error;
+   printf("-!- GLFW: %s\n", msg);
+}
+
 static void close_callback(GLFWwindow* window)
 {
    (void)window;
@@ -91,6 +98,7 @@ int main(int argc, char **argv)
    char           WIN_TITLE[256];
    memset(WIN_TITLE, 0, sizeof(WIN_TITLE));
 
+   glfwSetErrorCallback(error_callback);
    if (!glfwInit())
       return EXIT_FAILURE;
 
@@ -264,7 +272,7 @@ int main(int argc, char **argv)
    glfwSetWindowCloseCallback(window, close_callback);
    glfwSetWindowSizeCallback(window, resize_callback);
    glfwSetCursorPosCallback(window, mousepos_callback);
-   glfwSetInputMode(window, GLFW_CURSOR_MODE, GLFW_CURSOR_CAPTURED);
+   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
    glhckProjectionType projectionType = GLHCK_PROJECTION_PERSPECTIVE;
 
