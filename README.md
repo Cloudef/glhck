@@ -26,11 +26,15 @@ Move on.
     cd target                                # - cd to your target directory
     make install                             # - install
 
+## Addons for GLhck
+* [nethck][] - Geometry sharing over network
+* [anglhck][] - AngelScript bindings
+* [consolehck][] - Text console widget
+
 ## Projects using GLhck
 *  [glhck-scene][] - QMLON GLhck scene arranger
 *  [2dshooter][] - 2D Shooter game
 *  [spacerocks][] - 2D Asteroids clone
-*  [anglhck][] - AngelScript bindings for glhck
 
 ## Thanks to
 *  [GLEW][] - OpenGL Extension Wrangler
@@ -40,10 +44,13 @@ Move on.
 *  [Kazmath][] - C Math library
 *  [STB-stuff][] - Used as freetype replacement
 
+[nethck]: https://github.com/Cloudef/nethck
+[anglhck]: https://github.com/bzar/anglhck
+[consolehck]: https://github.com/bzar/consolehck
+
 [glhck-scene]: https://github.com/bzar/glhck-scene
 [2dshooter]: https://github.com/bzar/2dshooter
 [spacerocks]: https://github.com/bzar/spacerocks
-[anglhck]: https://github.com/bzar/anglhck
 
 [GLEW]: http://glew.sourceforge.net/
 [GLFW]: http://www.glfw.org/
