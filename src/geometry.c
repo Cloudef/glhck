@@ -85,11 +85,11 @@ glhckGeometryVertexType _glhckGeometryCheckVertexType(glhckGeometryVertexType ty
       type = GLHCK_VERTEX_V3F;
    }
 
-   /* fglrx on linux at least seems to fail with byte vertices.
+   /* fglrx and SGX on linux at least seems to fail with byte vertices.
     * workaround for now until I stumble upon why it's wrong. */
-   if (GLHCKR()->driver == GLHCK_DRIVER_ATI) {
+   if (GLHCKR()->driver != GLHCK_DRIVER_NVIDIA) {
       if (type == GLHCK_VERTEX_V2B || type == GLHCK_VERTEX_V3B) {
-         DEBUG(GLHCK_DBG_WARNING, "ATI has problems with BYTE precision vertexdata.");
+         DEBUG(GLHCK_DBG_WARNING, "Some GPU's has problems with BYTE precision vertexdata.");
          DEBUG(GLHCK_DBG_WARNING, "Will use SHORT precision instead, just a friendly warning.");
       }
       if (type == GLHCK_VERTEX_V3B) type = GLHCK_VERTEX_V3S;
