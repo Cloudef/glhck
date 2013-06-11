@@ -115,10 +115,11 @@ typedef enum glhckRenderType {
 /* driver type */
 typedef enum glhckDriverType {
    GLHCK_DRIVER_NONE,
+   GLHCK_DRIVER_OTHER,
+   GLHCK_DRIVER_MESA,
    GLHCK_DRIVER_NVIDIA,
    GLHCK_DRIVER_ATI,
-   GLHCK_DRIVER_MESA,
-   GLHCK_DRIVER_OTHER,
+   GLHCK_DRIVER_IMGTEC,
 } glhckDriverType;
 
 /* renderer properties */

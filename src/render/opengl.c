@@ -956,6 +956,8 @@ static int renderInfo(void)
       GLHCKR()->driver = GLHCK_DRIVER_NVIDIA;
    else if (strstr(vendor, "ATI"))
       GLHCKR()->driver = GLHCK_DRIVER_ATI;
+   else if (strstr(vendor, "Imagination Technologies"))
+      GLHCKR()->driver = GLHCK_DRIVER_IMGTEC;
    else
       GLHCKR()->driver = GLHCK_DRIVER_OTHER;
 
