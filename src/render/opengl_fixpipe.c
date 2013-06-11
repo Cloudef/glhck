@@ -698,7 +698,7 @@ static inline void rTextRender(const glhckText *text)
    CALL(2, "%p", text);
 
    /* set states */
-   if (GL_HAS_STATE(GL_LIGHTING)) {
+   if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
       GL_CALL(glDisable(GL_LIGHTING));
    }
 
@@ -776,7 +776,7 @@ static inline void rTextRender(const glhckText *text)
       GL_CALL(glEnable(GL_DEPTH_TEST));
    }
 
-   if (GL_HAS_STATE(GL_LIGHTING)) {
+   if (GL_HAS_STATE(GL_STATE_LIGHTING)) {
       GL_CALL(glEnable(GL_LIGHTING));
    }
 
