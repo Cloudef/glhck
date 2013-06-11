@@ -196,7 +196,7 @@ static int _glhckTextTextureNew(glhckText *object, glhckTextureFormat format, gl
       goto fail;
 
    /* set default params */
-   glhckTextureParameter(texture->texture, glhckTextureDefaultSpriteParameters());
+   glhckTextureParameter(texture->texture, glhckTextureDefaultLinearParameters());
 
    /* set internal texture dimensions for mapping */
    texture->internalWidth = (float)1.0f/object->cacheWidth;
@@ -1138,7 +1138,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
             GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
       goto fail;
 
-   memcpy(&nparams, (params?params:glhckTextureDefaultSpriteParameters()), sizeof(glhckTextureParameters));
+   memcpy(&nparams, (params?params:glhckTextureDefaultLinearParameters()), sizeof(glhckTextureParameters));
    glhckTextureParameter(texture, &nparams);
 
    if (!(fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER)))
