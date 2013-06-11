@@ -1096,9 +1096,15 @@ void glhTextureParameter(glhckTextureTarget target, const glhckTextureParameters
    magFilter   = glhTextureFilterModeForGlhckMode(params->magFilter);
    wrapS       = glhTextureWrapModeForGlhckMode(params->wrapS);
    wrapT       = glhTextureWrapModeForGlhckMode(params->wrapT);
+#ifdef GL_TEXTURE_WRAP_R
    wrapR       = glhTextureWrapModeForGlhckMode(params->wrapR);
+#endif
+#ifdef GL_TEXTURE_COMPARE_MODE
    compareMode = glhTextureCompareModeForGlhckMode(params->compareMode);
+#endif
+#ifdef GL_TEXTURE_COMPARE_FUNC
    compareFunc = glhCompareFuncForGlhckFunc(params->compareFunc);
+#endif
 
    GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, minFilter));
    GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, magFilter));
