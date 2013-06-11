@@ -345,10 +345,10 @@ static inline void rFrustumRender(glhckFrustum *frustum)
    rLoadMatrix(&GLHCKRD()->view.view);
 
    GL_CALL(glLineWidth(4));
-   GL_CALL(glColor3ub(255, 0, 0));
+   GL_CALL(glColor4ub(255, 0, 0, 255));
    GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
-   GL_CALL(glColor3ub(255, 255, 255));
+   GL_CALL(glColor4ub(255, 255, 255, 255));
    GL_CALL(glLineWidth(1));
 
    /* re enable stuff we disabled */
@@ -406,10 +406,10 @@ static inline void rOBBRender(const glhckObject *object)
          GL_CALL(glDisableClientState(_glhckAttribName[i]));
       }
 
-   GL_CALL(glColor3ub(0, 255, 0));
+   GL_CALL(glColor4ub(0, 255, 0, 255));
    GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
-   GL_CALL(glColor3ub(255, 255, 255));
+   GL_CALL(glColor4ub(255, 255, 255, 255));
 
    /* re enable stuff we disabled */
    if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
@@ -469,10 +469,10 @@ static inline void rAABBRender(const glhckObject *object)
    GL_CALL(glMatrixMode(GL_MODELVIEW));
    rLoadMatrix(&GLHCKRD()->view.view);
 
-   GL_CALL(glColor3ub(0, 0, 255));
+   GL_CALL(glColor4ub(0, 0, 255, 255));
    GL_CALL(glVertexPointer(3, GL_FLOAT, 0, &points[0]));
    GL_CALL(glDrawArrays(GL_LINES, 0, 24));
-   GL_CALL(glColor3ub(255, 255, 255));
+   GL_CALL(glColor4ub(255, 255, 255, 255));
 
    /* back to modelView matrix */
    rMultMatrix(&object->view.matrix);
@@ -828,10 +828,14 @@ static int renderInfo(void)
       _glhckFree(extcpy);
    }
 
+#ifdef GL_MAX_TEXTURE_SIZE
    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTex);
    DEBUG(3, "GL_MAX_TEXTURE_SIZE: %d", maxTex);
+#endif
+#if GL_MAX_RENDERBUFFER_SIZE
    glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxTex);
    DEBUG(3, "GL_MAX_RENDERBUFFER_SIZE: %d", maxTex);
+#endif
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -911,6 +915,7 @@ void _glhckRenderOpenGLFixedPipeline(void)
    /* lights */
    GLHCK_RENDER_FUNC(lightBind, rLightBind);
 
+#if GL_RENDERBUFFER
    /* renderbuffer objects */
    GLHCK_RENDER_FUNC(renderbufferGenerate, glGenRenderbuffers);
    GLHCK_RENDER_FUNC(renderbufferDelete, glDeleteRenderbuffers);
@@ -923,6 +928,7 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(framebufferBind, glhFramebufferBind);
    GLHCK_RENDER_FUNC(framebufferTexture, glhFramebufferTexture);
    GLHCK_RENDER_FUNC(framebufferRenderbuffer, glhFramebufferRenderbuffer);
+#endif
 
    /* hardware buffer objects */
    GLHCK_RENDER_FUNC(hwBufferGenerate, glGenBuffers);
