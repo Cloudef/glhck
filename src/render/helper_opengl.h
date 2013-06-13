@@ -2,49 +2,8 @@
 #define __glhck_opengl_helper_h__
 
 #include "../internal.h"
+#include "glew.h"
 
-#if GLHCK_USE_GLES1
-#  include <GLES/gl.h> /* for opengl ES 1.x */
-#  include <GLES/glext.h>
-#  define GL_FRAMEBUFFER_COMPLETE                        GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_UNDEFINED                       GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT           GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER          GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER          GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT   GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE          GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS        GL_FRAMEBUFFER_COMPLETE_OES
-#  define GL_FRAMEBUFFER_UNSUPPORTED                     GL_FRAMEBUFFER_UNSUPPORTED_OES
-#  define GL_FRAMEBUFFER                                 GL_FRAMEBUFFER_OES
-#elif GLHCK_USE_GLES2
-#  include <GLES2/gl2.h> /* for opengl ES 2.x */
-#  include <GLES2/gl2ext.h>
-#  warning "GLES 2.x not working yet"
-#else
-/* FIXME: include glew instead of gl.h and glext.h here in future */
-#  define GL_GLEXT_PROTOTYPES
-#  ifdef __APPLE__
-#    include <OpenGL/gl.h>
-#    include <OpenGL/glext.h>
-#    include <OpenGL/gl3.h>
-#    include <OpenGL/gl3ext.h>
-#  else
-#    include <GL/gl.h>
-#    include <GL/glext.h>
-#  endif
-#endif
-
-#if GLHCK_USE_GLES1
-#  ifdef GL_OES_element_index_uint
-#     ifndef GL_UNSIGNED_INT
-#        define GL_UNSIGNED_INT 0x1405
-#     endif
-#  else
-#     error "GLHCK needs GL_OES_element_index_uint for GLESv1 support!"
-#  endif
-#endif /* GLESv1 SUPPORT */
-
-/* typedef mostly for GLES */
 #ifndef GLchar
 #  define GLchar char
 #endif
@@ -109,6 +68,9 @@ static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum
    return error;
 }
 #endif
+
+/*** check if driver setup is supported ***/
+int glhCheckSupport(void);
 
 /*** binding mappings ***/
 void glhTextureBind(glhckTextureTarget target, GLuint object);

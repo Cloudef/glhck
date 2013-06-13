@@ -220,23 +220,39 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    if (width <= 0 && height <= 0)
       goto fail;
 
-   /* autodetect */
-   if (renderType == GLHCK_RENDER_AUTO)
-      renderType = GLHCK_RENDER_OPENGL_FIXED_PIPELINE;
-
    /* close display if created already */
-   if (GLHCKR()->type == renderType) goto success;
+   if (GLHCKR()->type == renderType && renderType != GLHCK_RENDER_AUTO) goto success;
    else glhckDisplayClose();
 
    /* init renderer */
    switch (renderType) {
+      case GLHCK_RENDER_AUTO:
+#ifdef GLHCK_HAS_OPENGL
+         _glhckRenderOpenGL();
+         if (_glhckRenderInitialized()) break;
+#endif
+#ifdef GLHCK_HAS_OPENGL_FIXED_PIPELINE
+         _glhckRenderOpenGLFixedPipeline();
+         if (_glhckRenderInitialized()) break;
+#endif
+         _glhckRenderStub();
+         break;
+
       case GLHCK_RENDER_OPENGL:
       case GLHCK_RENDER_GLES2:
+#ifdef GLHCK_HAS_OPENGL
          _glhckRenderOpenGL();
+#else
+         DEBUG(GLHCK_DBG_ERROR, "OpenGL support was not compiled in!");
+#endif
          break;
       case GLHCK_RENDER_OPENGL_FIXED_PIPELINE:
       case GLHCK_RENDER_GLES1:
+#ifdef GLHCK_HAS_OPENGL_FIXED_PIPELINE
          _glhckRenderOpenGLFixedPipeline();
+#else
+         DEBUG(GLHCK_DBG_ERROR, "OpenGL Fixed Pipeline support was not compiled in!");
+#endif
          break;
       case GLHCK_RENDER_STUB:
       default:

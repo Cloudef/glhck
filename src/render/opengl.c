@@ -997,16 +997,6 @@ static int renderInit(void)
    if (!(GLHCKR()->renderPointer = _glhckCalloc(1, sizeof(__OpenGLrender))))
       goto fail;
 
-   /* NOTE: Currently we don't use GLEW for anything.
-    * GLEW used to be in libraries as submodule.
-    * But since GLEW is so simple, we could just compile it with,
-    * the OpenGL renderer within GLHCK in future when needed. */
-#if 0
-   /* we use GLEW */
-   if (glewInit() != GLEW_OK)
-      goto fail;
-#endif
-
    /* setup OpenGL debug output */
    glhSetupDebugOutput();
 
@@ -1220,6 +1210,10 @@ static void renderTerminate(void)
 void _glhckRenderOpenGL(void)
 {
    TRACE(0);
+
+   /* check that we can use this renderer */
+   if (glhCheckSupport() != RETURN_OK)
+      goto fail;
 
    /* register api functions */
 

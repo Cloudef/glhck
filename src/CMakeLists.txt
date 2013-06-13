@@ -30,12 +30,16 @@ SET(GLHCK_SRC
    import/import.c)
 
 IF (GLHCK_USE_GLES1)
+   ADD_DEFINITIONS(-DGLHCK_HAS_OPENGL_FIXED_PIPELINE)
    LIST(APPEND GLHCK_SRC render/helper_opengl.c)
    LIST(APPEND GLHCK_SRC render/opengl_fixpipe.c)
 ELSEIF (GLHCK_USE_GLES2)
+   ADD_DEFINITIONS(-DGLHCK_HAS_OPENGL)
    LIST(APPEND GLHCK_SRC render/helper_opengl.c)
    LIST(APPEND GLHCK_SRC render/opengl.c)
 ELSE ()
+   ADD_DEFINITIONS(-DGLHCK_HAS_OPENGL)
+   ADD_DEFINITIONS(-DGLHCK_HAS_OPENGL_FIXED_PIPELINE)
    LIST(APPEND GLHCK_SRC render/helper_opengl.c)
    LIST(APPEND GLHCK_SRC render/opengl.c)
    LIST(APPEND GLHCK_SRC render/opengl_fixpipe.c)
@@ -90,11 +94,12 @@ INCLUDE_DIRECTORIES(
    ${actc_SOURCE_DIR}/src
    ${IMGHCK_SOURCE_DIR}/src
    ${GLSW_SOURCE_DIR}/src
+   ${glew-glhck_SOURCE_DIR}
    ${GLHCK_INCL}
    ${OPT_INCL}
 )
 
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck kazmath imghck actc glsw ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
+TARGET_LINK_LIBRARIES(glhck kazmath imghck actc glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
 INSTALL(TARGETS glhck DESTINATION lib)

@@ -830,14 +830,10 @@ static int renderInfo(void)
       _glhckFree(extcpy);
    }
 
-#ifdef GL_MAX_TEXTURE_SIZE
    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTex);
    DEBUG(3, "GL_MAX_TEXTURE_SIZE: %d", maxTex);
-#endif
-#if GL_MAX_RENDERBUFFER_SIZE
    glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxTex);
    DEBUG(3, "GL_MAX_RENDERBUFFER_SIZE: %d", maxTex);
-#endif
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -855,16 +851,6 @@ static int renderInit(void)
    /* init render's context */
    if (!(GLHCKR()->renderPointer = _glhckCalloc(1, sizeof(__OpenGLrender))))
       goto fail;
-
-   /* NOTE: Currently we don't use GLEW for anything.
-    * GLEW used to be in libraries as submodule.
-    * But since GLEW is so simple, we could just compile it with,
-    * the OpenGL renderer within GLHCK in future when needed. */
-#if 0
-   /* we use GLEW */
-   if (glewInit() != GLEW_OK)
-      goto fail;
-#endif
 
    /* setup OpenGL debug output */
    glhSetupDebugOutput();
@@ -902,6 +888,10 @@ void _glhckRenderOpenGLFixedPipeline(void)
 {
    TRACE(0);
 
+   /* check that we can use this renderer */
+   if (glhCheckSupport() != RETURN_OK)
+      goto fail;
+
    /* register api functions */
 
    /* textures */
@@ -917,7 +907,6 @@ void _glhckRenderOpenGLFixedPipeline(void)
    /* lights */
    GLHCK_RENDER_FUNC(lightBind, rLightBind);
 
-#if GL_RENDERBUFFER
    /* renderbuffer objects */
    GLHCK_RENDER_FUNC(renderbufferGenerate, glGenRenderbuffers);
    GLHCK_RENDER_FUNC(renderbufferDelete, glDeleteRenderbuffers);
@@ -930,7 +919,6 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(framebufferBind, glhFramebufferBind);
    GLHCK_RENDER_FUNC(framebufferTexture, glhFramebufferTexture);
    GLHCK_RENDER_FUNC(framebufferRenderbuffer, glhFramebufferRenderbuffer);
-#endif
 
    /* hardware buffer objects */
    GLHCK_RENDER_FUNC(hwBufferGenerate, glGenBuffers);

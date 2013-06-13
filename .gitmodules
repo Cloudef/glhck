@@ -9,3 +9,6 @@
 [submodule "lib/openctm/src"]
 	path = lib/openctm/src
 	url = https://github.com/Danny02/OpenCTM.git
+[submodule "lib/glew-glhck/src"]
+	path = lib/glew-glhck/src
+	url = https://github.com/Cloudef/glew-glhck.git
