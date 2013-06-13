@@ -2,7 +2,7 @@
 #define __glhck_opengl_helper_h__
 
 #include "../internal.h"
-#include "glew.h"
+#include "GL/glew.h"
 
 #ifndef GLchar
 #  define GLchar char
