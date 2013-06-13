@@ -89,7 +89,7 @@ glhckGeometryVertexType _glhckGeometryCheckVertexType(glhckGeometryVertexType ty
     * workaround for now until I stumble upon why it's wrong. */
    if (GLHCKR()->driver != GLHCK_DRIVER_NVIDIA) {
       if (type == GLHCK_VERTEX_V2B || type == GLHCK_VERTEX_V3B) {
-         DEBUG(GLHCK_DBG_WARNING, "Some GPU's has problems with BYTE precision vertexdata.");
+         DEBUG(GLHCK_DBG_WARNING, "Some drivers have problems with BYTE precision vertexdata.");
          DEBUG(GLHCK_DBG_WARNING, "Will use SHORT precision instead, just a friendly warning.");
       }
       if (type == GLHCK_VERTEX_V3B) type = GLHCK_VERTEX_V3S;
