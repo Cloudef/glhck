@@ -90,11 +90,11 @@ ENDIF ()
 # include directories
 INCLUDE_DIRECTORIES(
    ${glhck_SOURCE_DIR}/include
+   ${glew-glhck_SOURCE_DIR}/include
    ${kazmath_SOURCE_DIR}/src
    ${actc_SOURCE_DIR}/src
    ${IMGHCK_SOURCE_DIR}/src
    ${GLSW_SOURCE_DIR}/src
-   ${glew-glhck_SOURCE_DIR}
    ${GLHCK_INCL}
    ${OPT_INCL}
 )
