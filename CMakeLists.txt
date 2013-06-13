@@ -85,6 +85,8 @@ IF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/kazmath/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
 ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glfw/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
+ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glew-glhck/src/.git)
+   SET(SUBMODULE_ERROR_THROW 1)
 ENDIF ()
 
 # Throw the error
