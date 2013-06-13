@@ -18,6 +18,7 @@ static void _glhckCameraProjectionMatrix(glhckCamera *object)
 
    CALL(2, "%p", object);
    assert(object);
+   assert(object->view.viewport.w > 0.0f && object->view.viewport.h > 0.0f);
 
    switch(object->view.projectionType)
    {
