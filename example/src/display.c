@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 
    puts("-!- glhck init");
 
-   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_OPENGL))
+   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_AUTO))
       return EXIT_FAILURE;
 
    puts("-!- glhck display create");
@@ -276,7 +276,7 @@ int main(int argc, char **argv)
 
    glhckProjectionType projectionType = GLHCK_PROJECTION_PERSPECTIVE;
 
-   int numLights = 4, li;
+   int numLights = 1, li;
    glhckLight *light[numLights];
    for (li = 0; li != numLights; ++li) {
       light[li] = glhckLightNew();
@@ -406,7 +406,7 @@ int main(int argc, char **argv)
          glhckRenderPassShader(shader);
 #else
          glhckLightBeginProjectionWithCamera(light[li], camera);
-         glhckLightBind(light[li]);
+         //glhckLightBind(light[li]);
          glhckLightEndProjectionWithCamera(light[li], camera);
 #endif
 
