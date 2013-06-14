@@ -221,7 +221,8 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
    /* downscale if over maximum texture size */
 
    /* FIXME: render properties! */
-   maxTexSize = 4096;
+   maxTexSize = 2048;
+int rwidth = width, rheight = height;
    if (width > maxTexSize) {
       height *= (float)maxTexSize/width;
       width   = maxTexSize;
@@ -272,11 +273,23 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
          glhckObjectRotatef(plane, 0, 0, 0);
 
       /* position */
-      glhckObjectScalef(plane, (kmScalar)rect->packed.x2/width, (kmScalar)rect->packed.y2/height, 0);
+      glhckObjectScalef(plane, (kmScalar)rect->packed.x2/rwidth, (kmScalar)rect->packed.y2/rheight, 0);
       glhckObjectPositionf(plane,
-            (kmScalar)(rect->packed.x1*2+rect->packed.x2)/width,
-            (kmScalar)(rect->packed.y1*2+rect->packed.y2)/height,
+            (kmScalar)(rect->packed.x1*2+rect->packed.x2)/rwidth,
+            (kmScalar)(rect->packed.y1*2+rect->packed.y2)/rheight,
             0);
+
+      /* transform rect to fit the real width */
+      if (width != rwidth) {
+         rect->packed.x1 *= (float)width/rwidth;
+         rect->packed.x2 *= (float)width/rwidth;
+      }
+
+      /* transform rect to fit the real height */
+      if (height != rheight) {
+         rect->packed.y1 *= (float)height/rheight;
+         rect->packed.y2 *= (float)height/rheight;
+      }
 
       /* draw texture */
       glhckMaterialTexture(material, rect->texture);
