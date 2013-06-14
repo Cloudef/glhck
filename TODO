@@ -2,6 +2,8 @@ TODO
 ====
 
 ---
+Scale down textures bigger than GL_MAX_TEXTURE_SIZE by rendering parts to target size FBO
+---
 Have multiple draw queues, and but the object on specific queue depending on it's state.
 Generate key from state so the queue can be sorted easily with qsort.
 Thus simplifying the current horrifying glhckRender() a lot
