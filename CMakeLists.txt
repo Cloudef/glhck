@@ -26,12 +26,6 @@ OPTION(GLHCK_IMPORT_PNG "Enable PNG importer" ON)
 OPTION(GLHCK_IMPORT_TGA "Enable TGA importer" ON)
 OPTION(GLHCK_IMPORT_JPEG "Enable JPEG importer" ON)
 
-# Debug build
-SET(CMAKE_BUILD_TYPE Debug)
-
-# Release build
-# SET(CMAKE_BUILD_TYPE Release)
-
 # Pandora related build options
 IF (PANDORA)
     ADD_DEFINITIONS(-DPANDORA)
