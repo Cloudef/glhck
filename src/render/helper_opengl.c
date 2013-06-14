@@ -5,8 +5,6 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #include "helper_opengl.h"
 
-/* FIXME: use extension wrangler and get rid of the most defines. */
-
 /*
  * glhck to OpenGL mappings
  */
@@ -796,18 +794,34 @@ void glhTextureParameter(glhckTextureTarget target, const glhckTextureParameters
    compareMode = glhTextureCompareModeForGlhckMode(params->compareMode);
    compareFunc = glhCompareFuncForGlhckFunc(params->compareFunc);
 
+   /* remap filters, if no mipmap possible */
+   if (!glGenerateMipmap || !params->mipmap) {
+      switch (minFilter) {
+         case GL_NEAREST_MIPMAP_NEAREST:
+         case GL_NEAREST_MIPMAP_LINEAR:
+            minFilter = GL_NEAREST;
+         case GL_LINEAR_MIPMAP_NEAREST:
+         case GL_LINEAR_MIPMAP_LINEAR:
+            magFilter = GL_LINEAR;
+         default:break;
+      }
+   }
+
    GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MIN_FILTER, minFilter));
    GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAG_FILTER, magFilter));
    GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_WRAP_S, wrapS));
    GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_WRAP_T, wrapT));
-   GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_WRAP_R, wrapR));
-   GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_COMPARE_MODE, compareMode));
-   GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_COMPARE_FUNC, compareFunc));
-   GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_BASE_LEVEL, params->baseLevel));
-   GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAX_LEVEL, params->maxLevel));
-   GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_LOD_BIAS, params->biasLod));
-   GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MIN_LOD, params->minLod));
-   GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MAX_LOD, params->maxLod));
+
+   if (GLEW_VERSION_1_4) {
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_WRAP_R, wrapR));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_COMPARE_MODE, compareMode));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_COMPARE_FUNC, compareFunc));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_BASE_LEVEL, params->baseLevel));
+      GL_CALL(glTexParameteri(glTarget, GL_TEXTURE_MAX_LEVEL, params->maxLevel));
+      GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_LOD_BIAS, params->biasLod));
+      GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MIN_LOD, params->minLod));
+      GL_CALL(glTexParameterf(glTarget, GL_TEXTURE_MAX_LOD, params->maxLod));
+   }
 
    if (GLEW_EXT_texture_filter_anisotropic) {
       if (params->mipmap && params->maxAnisotropy) {
@@ -824,11 +838,9 @@ void glhTextureMipmap(glhckTextureTarget target)
 {
    GLenum glTarget;
    CALL(0, "%d", target);
+   if (!glGenerateMipmap) return;
    glTarget = glhTextureTargetForGlhckType(target);
-
-#if defined(GL_VERSION_1_5) || defined(GLHCK_USE_GLES2)
    GL_CALL(glGenerateMipmap(glTarget));
-#endif
 }
 
 /* \brief create texture from data and upload it to OpenGL */
@@ -1460,15 +1472,35 @@ int glhCheckSupport(void)
       return RETURN_FAIL;
 
 #ifdef GLHCK_USE_GLES1
+#if 0
    if (!GLEW_OES_element_index_uint) {
       DEBUG(GLHCK_DBG_ERROR, "GLES1.1 needs GL_OES_element_index_uint extension!");
       return RETURN_FAIL;
    }
+#endif
 
-   if (!GLEW_OES_framebuffer_object) {
+   if (GLEW_OES_framebuffer_object) {
       DEBUG(GLHCK_DBG_ERROR, "GLES1.1 needs GL_OES_framebuffer_object extension!");
       return RETURN_FAIL;
    }
+
+   /* map OES_framebuffer_object functions */
+   /* TODO: try fix glew-glhck for this */
+
+   /* glGenerateMipmapOES crashes when run on non pow2 texture */
+#if 0
+   glGenerateMipmap = (void*)eglGetProcAddress("glGenerateMipmapOES");
+#endif
+   glBindFramebuffer = (void*)eglGetProcAddress("glBindFramebufferOES");
+   glGenFramebuffers = (void*)eglGetProcAddress("glGenFramebuffersOES");
+   glDeleteFramebuffers = (void*)eglGetProcAddress("glDeleteFramebuffersOES");
+   glFramebufferTexture2D = (void*)eglGetProcAddress("glFramebufferTexture2DOES");
+   glCheckFramebufferStatus = (void*)eglGetProcAddress("glCheckFramebufferStatusOES");
+   glFramebufferRenderbuffer = (void*)eglGetProcAddress("glFramebufferRenderbufferOES");
+   glBindRenderbuffer = (void*)eglGetProcAddress("glBindRenderbufferOES");
+   glGenRenderbuffers = (void*)eglGetProcAddress("glGenRenderbuffersOES");
+   glDeleteRenderbuffers = (void*)eglGetProcAddress("glDeleteRenderbuffersOES");
+   glRenderbufferStorage = (void*)eglGetProcAddress("glRenderbufferStorageOES");
 #endif
    return RETURN_OK;
 }
