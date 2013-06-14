@@ -828,6 +828,8 @@ void __glhckTrackSteal(const char *channel, void *ptr);
 /* tracking functions */
 void _glhckTrackFake(void *ptr, size_t size);
 void _glhckTrackTerminate(void);
+#else
+#define _glhckTrackFake(x,y) ;
 #endif
 
 /* util functions */
