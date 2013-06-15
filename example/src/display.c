@@ -275,10 +275,7 @@ int main(int argc, char **argv)
    glfwSetWindowCloseCallback(window, close_callback);
    glfwSetWindowSizeCallback(window, resize_callback);
    glfwSetCursorPosCallback(window, mousepos_callback);
-
-   if (features.render.opengl) {
-      glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-   }
+   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
    glhckProjectionType projectionType = GLHCK_PROJECTION_PERSPECTIVE;
 
