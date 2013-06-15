@@ -271,11 +271,11 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
          glhckObjectRotatef(plane, 0, 0, 0);
 
       /* position */
-      glhckObjectScalef(plane, (kmScalar)rect->packed.x2/realWidth, (kmScalar)rect->packed.y2/realHeight, 0);
+      glhckObjectScalef(plane, (kmScalar)rect->packed.x2/realWidth, (kmScalar)rect->packed.y2/realHeight, 1.0f);
       glhckObjectPositionf(plane,
             (kmScalar)(rect->packed.x1*2+rect->packed.x2)/realWidth,
             (kmScalar)(rect->packed.y1*2+rect->packed.y2)/realHeight,
-            0);
+            0.0f);
 
       /* transform rect to fit the real width */
       if (width != realWidth) {
