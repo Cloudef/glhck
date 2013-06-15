@@ -627,7 +627,7 @@ int _glhckImportAssimp(glhckObject *object, const char *file, const glhckImportM
    /* import the model using assimp
     * TODO: make import hints tunable?
     * Needs changes to import protocol! */
-   aflags = aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_OptimizeGraph;
+   aflags = aiProcessPreset_TargetRealtime_Fast | aiProcess_OptimizeGraph;
    if (!params->animated && params->flatten) aflags |= aiProcess_PreTransformVertices;
    scene = aiImportFile(file, aflags);
    if (!scene) goto assimp_fail;
