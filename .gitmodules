@@ -1,14 +1,14 @@
 [submodule "lib/glfw/src"]
 	path = lib/glfw/src
-        url = https://github.com/glfw/glfw.git
+        url = git://github.com/glfw/glfw.git
         ignore = dirty
 [submodule "lib/kazmath/src"]
 	path = lib/kazmath/src
-        url = https://github.com/Cloudef/kazmath.git
+        url = git://github.com/Cloudef/kazmath.git
         ignore = dirty
 [submodule "lib/openctm/src"]
 	path = lib/openctm/src
-	url = https://github.com/Danny02/OpenCTM.git
+	url = git://github.com/Danny02/OpenCTM.git
 [submodule "lib/glew-glhck/src"]
 	path = lib/glew-glhck/src
-	url = https://github.com/Cloudef/glew-glhck.git
+	url = git://github.com/Cloudef/glew-glhck.git
