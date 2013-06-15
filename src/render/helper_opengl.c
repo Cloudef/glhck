@@ -1557,10 +1557,7 @@ int glhCheckSupport(const char *renderName)
    /* map OES_framebuffer_object functions */
    /* TODO: try fix glew-glhck for this */
 
-   /* glGenerateMipmapOES crashes when run on non pow2 texture */
-#if 0
    glGenerateMipmap = (void*)eglGetProcAddress("glGenerateMipmapOES");
-#endif
    glBindFramebuffer = (void*)eglGetProcAddress("glBindFramebufferOES");
    glGenFramebuffers = (void*)eglGetProcAddress("glGenFramebuffersOES");
    glDeleteFramebuffers = (void*)eglGetProcAddress("glDeleteFramebuffersOES");
