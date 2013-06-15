@@ -88,6 +88,9 @@ IF (SUBMODULE_ERROR_THROW)
    MESSAGE(FATAL_ERROR ${SUBMODULE_ERROR})
 ENDIF ()
 
+# Libs like to define custom target (uninstall) and doesn't guard it...
+SET_PROPERTY(GLOBAL APPEND PROPERTY ALLOW_DUPLICATE_CUSTOM_TARGETS true)
+
 # Build depencies
 ADD_SUBDIRECTORY(lib)
 

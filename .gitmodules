@@ -12,3 +12,6 @@
 [submodule "lib/glew-glhck/src"]
 	path = lib/glew-glhck/src
 	url = git://github.com/Cloudef/glew-glhck.git
+[submodule "lib/assimp/src"]
+	path = lib/assimp/src
+	url = git://github.com/assimp/assimp.git
