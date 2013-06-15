@@ -172,9 +172,8 @@ static void glhckTexturePackerNodeNew(_glhckTexturePacker *tp, int x, int y, int
 
 static int next_pow2(int v)
 {
-   int p = 1;
-   while (p < v)
-      p = p * 2;
+   int p;
+   for (p = 1; p < v; p = p * 2);
    return p;
 }
 
