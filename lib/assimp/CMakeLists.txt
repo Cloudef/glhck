@@ -1,0 +1,3 @@
+SET(ASSIMP_ENABLE_BOOST_WORKAROUND 1 CACHE BOOL "Enable assimp boost workaround")
+SET(ASSIMP_BUILD_STATIC_LIB 1 CACHE BOOL "Build assimp as static library")
+ADD_SUBDIRECTORY(src)
