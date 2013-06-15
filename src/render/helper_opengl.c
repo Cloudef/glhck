@@ -1497,10 +1497,13 @@ static int glhRenderFeatures(const char *renderName)
 
    vendor = (GLchar*)GL_CALL(glGetString(GL_VENDOR));
    renderer = (GLchar*)GL_CALL(glGetString(GL_RENDERER));
-   shaderVersion = (GLchar*)GL_CALL(glGetString(GL_SHADING_LANGUAGE_VERSION));
-   for (; shaderVersion &&
-         !sscanf(shaderVersion, "%d.%d.%d", &shaderMajor, &shaderMinor, &shaderPatch);
-         ++shaderVersion);
+
+   if (GLEW_VERSION_1_4 || GLEW_ES_VERSION_2_0) {
+      shaderVersion = (GLchar*)GL_CALL(glGetString(GL_SHADING_LANGUAGE_VERSION));
+      for (; shaderVersion &&
+            !sscanf(shaderVersion, "%d.%d.%d", &shaderMajor, &shaderMinor, &shaderPatch);
+            ++shaderVersion);
+   }
 
    /* try to identify driver */
    if (vendor && _glhckStrupstr(vendor, "MESA"))
