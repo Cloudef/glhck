@@ -179,6 +179,38 @@ inline int _glhckIsCompressedFormat(glhckTextureFormat format)
    return 0;
 }
 
+/* \brief get next power of two size */
+void _glhckNextPow2(int width, int height, int depth, int *outWidth, int *outHeight, int *outDepth, int limitToSize)
+{
+   int pot, i;
+   int dimensions[3] = { width, height, depth };
+
+   /* every implementation above GL 2.0 should support NPOT */
+   if (GLHCKRF()->texture.hasNativeNpotSupport) {
+      if (outWidth) *outWidth = dimensions[0];
+      if (outHeight) *outHeight = dimensions[1];
+      if (outDepth) *outDepth = dimensions[2];
+      return;
+   }
+
+   /* scale dimensions to next pot size */
+   for (i = 0; i != 3; ++i) {
+      if ((dimensions[i] != 1) && (dimensions[i] & (dimensions[i] - 1))) {
+         for (pot = 1; pot < dimensions[i]; pot *= 2);
+         dimensions[i] = pot;
+      }
+   }
+
+   /* limit dimensions if requested */
+   if (limitToSize) {
+      for (i = 0; i != 3; ++i) if (dimensions[i] > limitToSize) dimensions[i] = limitToSize;
+   }
+
+   if (outWidth) *outWidth = dimensions[0];
+   if (outHeight) *outHeight = dimensions[1];
+   if (outDepth) *outDepth = dimensions[2];
+}
+
 /* ---- PUBLIC API ---- */
 
 /* \brief allocate new texture object */
@@ -268,7 +300,7 @@ GLHCKAPI unsigned int glhckTextureFree(glhckTexture *object)
    /* there is still references to this object alive */
    if (--object->refCounter != 0) goto success;
 
-   DEBUG(GLHCK_DBG_CRAP, "FREE(%p) %dx%dx%d", object, object->width, object->height, object->depth);
+   DEBUG(GLHCK_DBG_CRAP, "FREE(%p) %dx%dx%d", object, object->internalWidth, object->internalHeight, object->internalDepth);
 
    /* unbind from active slot */
    for (i = 0; i != GLHCK_MAX_ACTIVE_TEXTURE; ++i) {
@@ -395,6 +427,7 @@ GLHCKAPI void glhckTextureGetInformation(glhckTexture *object, glhckTextureTarge
 GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, glhckDataType type, int size, const void *data)
 {
    glhckTexture *old = NULL;
+   int twidth = width, theight = height, tdepth = depth;
    CALL(0, "%p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p", object, target, level, width, height, depth, border, format, type, size, data);
    assert(object);
    assert(level >= 0);
@@ -409,9 +442,19 @@ GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target,
    /* set texture type */
    object->target = target;
 
+   /* scale to next pow2 */
+   _glhckNextPow2(width, height, depth, &twidth, &theight, &tdepth, 0);
+
    old = glhckTextureCurrentForTarget(object->target);
    glhckTextureBind(object);
-   GLHCKRA()->textureImage(target, level, width, height, depth, border, format, type, size, data);
+   if (width == twidth && height == theight) {
+      GLHCKRA()->textureImage(target, level, twidth, theight, tdepth, border, format, type, size, data);
+   } else {
+      GLHCKRA()->textureImage(target, level, twidth, theight, tdepth, border, format, type, 0, NULL);
+      if (data) {
+         GLHCKRA()->textureFill(target, level, 0, 0, 0, width, height, depth, format, type, size, data);
+      }
+   }
    if (old) glhckTextureBind(old);
 
    /* set rest */
@@ -419,12 +462,26 @@ GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target,
    object->width  = width;
    object->height = height;
    object->depth  = depth;
+   object->internalWidth = twidth;
+   object->internalHeight = theight;
+   object->internalDepth = tdepth;
    object->border = border;
+   object->internalScale.x = (width?(kmScalar)width/twidth:1.0f);
+   object->internalScale.y = (height?(kmScalar)height/theight:1.0f);
+   object->internalScale.z = (depth?(kmScalar)depth/tdepth:1.0f);
 
    /* make aprox texture sizes show up in memory graph, even if not allocated */
    _glhckTrackFake(object, sizeof(glhckTexture) + size);
 
-   DEBUG(GLHCK_DBG_CRAP, "NEW(%p) %dx%dx%d %.2f MiB", object, object->width, object->height, object->depth, (float)size/1048576);
+   /* FIXME: downscale and give warning about it
+    * for now just throw big fat error! */
+   if (twidth  > GLHCKRF()->texture.maxTextureSize ||
+       theight > GLHCKRF()->texture.maxTextureSize ||
+       tdepth  > GLHCKRF()->texture.maxTextureSize) {
+      DEBUG(GLHCK_DBG_ERROR, "TEXTURE IS BIGGER THAN MAX TEXTURE SIZE (%d)", GLHCKRF()->texture.maxTextureSize);
+   }
+
+   DEBUG(GLHCK_DBG_CRAP, "NEW(%p) %dx%dx%d %.2f MiB", object, object->internalWidth, object->internalHeight, object->internalDepth, (float)size/1048576);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
@@ -442,8 +499,8 @@ GLHCKAPI int glhckTextureRecreate(glhckTexture *object, glhckTextureFormat forma
       size = _glhckSizeForTexture(object->target, object->width, object->height, object->depth, format, type);
    }
 
-   return glhckTextureCreate(object, object->target, 0, object->width, object->height,
-         object->depth, 0, format, type, size, data);
+   return glhckTextureCreate(object, object->target, 0, object->internalWidth, object->internalHeight,
+         object->internalDepth, 0, format, type, size, data);
 }
 
 /* \brief fill subdata to texture */

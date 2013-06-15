@@ -521,8 +521,9 @@ GLHCKAPI glhckText* glhckTextNew(int cacheWidth, int cacheHeight)
    /* increase reference */
    object->refCounter++;
 
-   object->cacheWidth = cacheWidth;
-   object->cacheHeight = cacheHeight;
+   /* find next pow and limit */
+   _glhckNextPow2(cacheWidth, cacheHeight, 0, &object->cacheWidth, &object->cacheHeight, NULL, GLHCKRF()->texture.maxTextureSize);
+
 #if GLHCK_TEXT_FLOAT_PRECISION
    object->textureRange = 1;
 #else

@@ -247,9 +247,11 @@ typedef struct _glhckTexture {
    struct glhckTextureParameters params;
    char *file;
    REFERENCE_COUNTED(_glhckTexture);
+   kmVec3 internalScale;
    unsigned int object;
    unsigned int flags, importFlags;
    int width, height, depth;
+   int internalWidth, internalHeight, internalDepth;
    char border;
    glhckTextureTarget target;
 } _glhckTexture;
@@ -907,6 +909,7 @@ int _glhckHasAlpha(glhckTextureFormat format);
 unsigned int _glhckNumChannels(unsigned int format);
 int _glhckSizeForTexture(glhckTextureTarget target, int width, int height, int depth, glhckTextureFormat format, glhckDataType type);
 int _glhckIsCompressedFormat(unsigned int format);
+void _glhckNextPow2(int width, int height, int depth, int *outWidth, int *outHeight, int *outDepth, int limitToSize);
 void _glhckTextureInsertToQueue(_glhckTexture *texture);
 
 /* tracing && debug functions */

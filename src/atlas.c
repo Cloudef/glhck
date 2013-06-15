@@ -178,7 +178,7 @@ GLHCKAPI glhckTexture* glhckAtlasGetTexture(glhckAtlas *object)
 /* \brief pack textures to atlas */
 GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int powerOfTwo, int border, const glhckTextureParameters *params)
 {
-   int width, height, maxTexSize;
+   int width, height, realWidth, realHeight, maxTexSize;
    unsigned short count;
    _glhckTexturePacker *tp;
    _glhckAtlasRect *rect;
@@ -219,18 +219,16 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
    _glhckTexturePackerPack(tp, &width, &height, powerOfTwo, border);
 
    /* downscale if over maximum texture size */
-
-   /* FIXME: render properties! */
-   maxTexSize = 2048;
-int rwidth = width, rheight = height;
+   realWidth = width, realHeight = height;
+   maxTexSize = GLHCKRF()->texture.maxTextureSize;
    if (width > maxTexSize) {
       height *= (float)maxTexSize/width;
       width   = maxTexSize;
-      DEBUG(0, "Downscaling atlas texture to: %dx%d", width, height);
+      DEBUG(GLHCK_DBG_WARNING, "Downscaling atlas texture to: %dx%d", width, height);
    } else if (height > maxTexSize) {
       width *= (float)maxTexSize/height;
       height = maxTexSize;
-      DEBUG(0, "Downscaling atlas texture to: %dx%d", width, height);
+      DEBUG(GLHCK_DBG_WARNING, "Downscaling atlas texture to: %dx%d", width, height);
    }
 
    /* create stuff needed for rendering */
@@ -273,22 +271,22 @@ int rwidth = width, rheight = height;
          glhckObjectRotatef(plane, 0, 0, 0);
 
       /* position */
-      glhckObjectScalef(plane, (kmScalar)rect->packed.x2/rwidth, (kmScalar)rect->packed.y2/rheight, 0);
+      glhckObjectScalef(plane, (kmScalar)rect->packed.x2/realWidth, (kmScalar)rect->packed.y2/realHeight, 0);
       glhckObjectPositionf(plane,
-            (kmScalar)(rect->packed.x1*2+rect->packed.x2)/rwidth,
-            (kmScalar)(rect->packed.y1*2+rect->packed.y2)/rheight,
+            (kmScalar)(rect->packed.x1*2+rect->packed.x2)/realWidth,
+            (kmScalar)(rect->packed.y1*2+rect->packed.y2)/realHeight,
             0);
 
       /* transform rect to fit the real width */
-      if (width != rwidth) {
-         rect->packed.x1 *= (float)width/rwidth;
-         rect->packed.x2 *= (float)width/rwidth;
+      if (width != realWidth) {
+         rect->packed.x1 *= (float)width/realWidth;
+         rect->packed.x2 *= (float)width/realWidth;
       }
 
       /* transform rect to fit the real height */
-      if (height != rheight) {
-         rect->packed.y1 *= (float)height/rheight;
-         rect->packed.y2 *= (float)height/rheight;
+      if (height != realHeight) {
+         rect->packed.y1 *= (float)height/realHeight;
+         rect->packed.y2 *= (float)height/realHeight;
       }
 
       /* draw texture */

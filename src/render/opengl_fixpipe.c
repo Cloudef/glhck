@@ -613,7 +613,7 @@ static inline void rObjectStart(const glhckObject *object) {
       GL_CALL(glMatrixMode(GL_TEXTURE));
       GL_CALL(glLoadIdentity());
 
-      kmScalar rotation = 0.0f;
+      GLfloat rotation = 0.0f;
       if (object->material) rotation = object->material->textureRotation;
       GL_CALL(glTranslatef(0.5f, 0.5f, 0.0f));
       GL_CALL(glRotatef(rotation, 0, 0, 1));
@@ -624,11 +624,14 @@ static inline void rObjectStart(const glhckObject *object) {
       GL_CALL(glTranslatef(offset.x, offset.y, 1.0f));
 
       kmVec2 scale = {1,1};
-      if (object->material) memcpy(&scale, &object->material->textureScale, sizeof(kmVec2));
-      GL_CALL(glScalef(scale.x, scale.y, 1.0f));
+      if (object->material) {
+         memcpy(&scale, &object->material->textureScale, sizeof(kmVec2));
+         scale.x *= object->material->texture->internalScale.x;
+         scale.y *= object->material->texture->internalScale.y;
+      }
 
       /* set texture coords according to how geometry wants them */
-      GL_CALL(glScalef((GLfloat)1.0f/object->geometry->textureRange, (GLfloat)1.0f/object->geometry->textureRange, 1.0f));
+      GL_CALL(glScalef((GLfloat)scale.x/object->geometry->textureRange, (GLfloat)scale.y/object->geometry->textureRange, 1.0f));
 
       glhckTextureBind(object->material->texture);
    } else if (GL_STATE_CHANGED(GL_STATE_TEXTURE)) {
@@ -753,11 +756,14 @@ static inline void rTextRender(const glhckText *text)
 
    GL_CALL(glColor4ub(text->color.r, text->color.b, text->color.g, text->color.a));
 
+   GL_CALL(glMatrixMode(GL_TEXTURE));
    for (texture = text->textureCache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
       glhckTextureBind(texture->texture);
+      GL_CALL(glLoadIdentity());
+      GL_CALL(glScalef(texture->texture->internalScale.x, texture->texture->internalScale.y, 1.0f));
       GL_CALL(glVertexPointer(2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
             (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
             &texture->geometry.vertexData[0].vertex));

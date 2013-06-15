@@ -48,7 +48,7 @@ static const char *_glhckBaseShader =
 
 "-- GLhck.Text.Vertex\n"
 "void main() {"
-"  GlhckFUV0 = GlhckUV0;"
+"  GlhckFUV0 = GlhckUV0 * GlhckMaterial.TextureScale;"
 "  gl_Position = GlhckOrthographic * vec4(GlhckVertex, 1.0);"
 "}\n"
 
@@ -782,21 +782,25 @@ static inline void rObjectStart(const glhckObject *object)
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Specular", 1,
          &((GLfloat[]){specular.r, specular.g, specular.b, specular.a}));
 
-   float shininess = 0.0f;
+   GLfloat shininess = 0.0f;
    if (object->material) shininess = object->material->shininess;
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Shininess", 1, &shininess);
 
-   kmScalar rotation = 0.0f;
+   GLfloat rotation = 0.0f;
    if (object->material) rotation = object->material->textureRotation;
-   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureRotation", 1, (GLfloat*)&rotation);
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureRotation", 1, &rotation);
 
    kmVec2 offset = {0,0};
    if (object->material) memcpy(&offset, &object->material->textureOffset, sizeof(kmVec2));
-   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureOffset", 1, (kmVec2*)&offset);
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureOffset", 1, &offset);
 
    kmVec2 scale = {1,1};
-   if (object->material) memcpy(&scale, &object->material->textureScale, sizeof(kmVec2));
-   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureScale", 1, (kmVec2*)&scale);
+   if (object->material) {
+      memcpy(&scale, &object->material->textureScale, sizeof(kmVec2));
+      scale.x *= object->material->texture->internalScale.x;
+      scale.y *= object->material->texture->internalScale.y;
+   }
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureScale", 1, &scale);
 
    glhckShaderUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
 }
@@ -909,6 +913,8 @@ static inline void rTextRender(const glhckText *text)
       if (!texture->geometry.vertexCount)
          continue;
       glhckTextureBind(texture->texture);
+      glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureScale", 1, &texture->texture->internalScale);
+
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT), 0,
                (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
                &texture->geometry.vertexData[0].vertex));
