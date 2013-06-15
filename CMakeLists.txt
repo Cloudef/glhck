@@ -70,7 +70,8 @@ ELSE ()
 ENDIF ()
 
 # Export GLHCK library dependencies
-set(GLHCK_LIBRARIES ${GLHCK_LINK} CACHE STRING "Dependencies of GLHCK")
+SET(GLHCK_LIBRARIES ${GLHCK_LINK} CACHE STRING "Dependencies of GLHCK")
+
 
 # Build checks
 # Abort git submodule init && git submodule update has not been ran.

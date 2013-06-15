@@ -10,7 +10,7 @@ FOREACH (example ${EXAMPLE_EXE})
       ${GLFW_SOURCE_DIR}/include
       ${kazmath_SOURCE_DIR}/src
    )
-   TARGET_LINK_LIBRARIES(${example} glfw glhck ${GLFW_LIBRARIES} ${EGL_LIBRARY})
+   TARGET_LINK_LIBRARIES(${example} glfw glhck ${GLHCK_LIBRARIES} ${GLFW_LIBRARIES} ${EGL_LIBRARY})
    INSTALL(TARGETS ${example} DESTINATION example)
 ENDFOREACH (example)
 
