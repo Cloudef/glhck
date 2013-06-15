@@ -797,8 +797,10 @@ static inline void rObjectStart(const glhckObject *object)
    kmVec2 scale = {1,1};
    if (object->material) {
       memcpy(&scale, &object->material->textureScale, sizeof(kmVec2));
-      scale.x *= object->material->texture->internalScale.x;
-      scale.y *= object->material->texture->internalScale.y;
+      if (object->material->texture) {
+         scale.x *= object->material->texture->internalScale.x;
+         scale.y *= object->material->texture->internalScale.y;
+      }
    }
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureScale", 1, &scale);
 
