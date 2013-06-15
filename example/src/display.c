@@ -104,15 +104,18 @@ int main(int argc, char **argv)
 
    puts("-!- glfwinit");
 
-#if GLHCK_USE_GLES1
-   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-   glfwWindowHint(GLFW_DEPTH_BITS, 16);
-#elif GLHCK_USE_GLES2
-   glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-   glfwWindowHint(GLFW_DEPTH_BITS, 16);
-#else
-   glfwWindowHint(GLFW_DEPTH_BITS, 24);
-#endif
+   glhckCompileFeatures features;
+   glhckGetCompileFeatures(&features);
+   if (features.render.glesv1 || features.render.glesv2) {
+      glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+      glfwWindowHint(GLFW_DEPTH_BITS, 16);
+   }
+   if (features.render.glesv2) {
+      glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+   }
+   if (features.render.opengl) {
+      glfwWindowHint(GLFW_DEPTH_BITS, 24);
+   }
    if (!(window = glfwCreateWindow(WIDTH, HEIGHT, "display test", NULL, NULL)))
       return EXIT_FAILURE;
 

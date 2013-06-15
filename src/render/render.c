@@ -112,6 +112,15 @@ GLHCKAPI glhckDriverType glhckRenderGetDriver(void)
    return GLHCKR()->driver;
 }
 
+/* \brief get renderer features */
+GLHCKAPI const glhckRenderFeatures* glhckRenderGetFeatures(void)
+{
+   GLHCK_INITIALIZED();
+   TRACE(0);
+   RET(0, "%p", &GLHCKR()->features);
+   return &GLHCKR()->features;
+}
+
 /* \brief resize render viewport internally */
 GLHCKAPI void glhckRenderResize(int width, int height)
 {

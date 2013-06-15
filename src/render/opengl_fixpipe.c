@@ -58,7 +58,7 @@ typedef struct __OpenGLrender {
 /* \brief load matrix */
 static void rLoadMatrix(const kmMat4 *mat)
 {
-#ifdef USE_DOUBLE_PRECISION
+#if USE_DOUBLE_PRECISION
    GL_CALL(glLoadMatrixd((GLdouble*)mat));
 #else
    GL_CALL(glLoadMatrixf((GLfloat*)mat));
@@ -68,7 +68,7 @@ static void rLoadMatrix(const kmMat4 *mat)
 /* \brief multiplies current matrix with given matrix */
 static void rMultMatrix(const kmMat4 *mat)
 {
-#ifdef USE_DOUBLE_PRECISION
+#if USE_DOUBLE_PRECISION
    GL_CALL(glMultMatrixd((GLdouble*)mat));
 #else
    GL_CALL(glMultMatrixf((GLfloat*)mat));
@@ -787,62 +787,6 @@ static inline void rTextRender(const glhckText *text)
 
 /* ---- Initialization ---- */
 
-/* \brief get render information */
-static int renderInfo(void)
-{
-   GLint maxTex;
-   GLchar *version, *vendor, *extensions, *extcpy, *s;
-   GLuint major = 0, minor = 0, patch = 0;
-   TRACE(0);
-
-   version = (GLchar*)GL_CALL(glGetString(GL_VERSION));
-   vendor  = (GLchar*)GL_CALL(glGetString(GL_VENDOR));
-
-   if (!version || !vendor)
-      goto fail;
-
-   for (; version &&
-          !sscanf(version, "%d.%d.%d", &major, &minor, &patch);
-          ++version);
-
-   /* try to identify driver */
-   if (_glhckStrupstr(vendor, "MESA"))
-      GLHCKR()->driver = GLHCK_DRIVER_MESA;
-   else if (strstr(vendor, "NVIDIA"))
-      GLHCKR()->driver = GLHCK_DRIVER_NVIDIA;
-   else if (strstr(vendor, "ATI"))
-      GLHCKR()->driver = GLHCK_DRIVER_ATI;
-   else if (strstr(vendor, "Imagination Technologies"))
-      GLHCKR()->driver = GLHCK_DRIVER_IMGTEC;
-   else
-      GLHCKR()->driver = GLHCK_DRIVER_OTHER;
-
-   DEBUG(3, "%s [%u.%u.%u] [%s]", RENDER_NAME, major, minor, patch, vendor);
-   extensions = (char*)GL_CALL(glGetString(GL_EXTENSIONS));
-
-   if (extensions) {
-      extcpy = _glhckStrdup(extensions);
-      s = strtok(extcpy, " ");
-      while (s) {
-         DEBUG(3, "%s", s);
-         s = strtok(NULL, " ");
-      }
-      _glhckFree(extcpy);
-   }
-
-   glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTex);
-   DEBUG(3, "GL_MAX_TEXTURE_SIZE: %d", maxTex);
-   glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &maxTex);
-   DEBUG(3, "GL_MAX_RENDERBUFFER_SIZE: %d", maxTex);
-
-   RET(0, "%d", RETURN_OK);
-   return RETURN_OK;
-
-fail:
-   RET(0, "%d", RETURN_FAIL);
-   return RETURN_FAIL;
-}
-
 /* \brief init renderers global state */
 static int renderInit(void)
 {
@@ -888,8 +832,8 @@ void _glhckRenderOpenGLFixedPipeline(void)
 {
    TRACE(0);
 
-   /* check that we can use this renderer */
-   if (glhCheckSupport() != RETURN_OK)
+   /* check that we can use with this renderer */
+   if (glhCheckSupport(RENDER_NAME) != RETURN_OK)
       goto fail;
 
    /* register api functions */
@@ -962,10 +906,6 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(time, stubTime);
    GLHCK_RENDER_FUNC(viewport, rViewport);
    GLHCK_RENDER_FUNC(terminate, renderTerminate);
-
-   /* output information */
-   if (renderInfo() != RETURN_OK)
-      goto fail;
 
    /* reset global data */
    if (renderInit() != RETURN_OK)

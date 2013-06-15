@@ -1464,14 +1464,84 @@ void glhSetupDebugOutput(void)
 }
 
 /*
- * check support
+ * opengl init
  */
-int glhCheckSupport(void)
+
+static int glhRenderFeatures(const char *renderName)
+{
+   GLchar *version, *vendor, *extensions, *extcpy, *s;
+   GLchar *shaderVersion, *renderer;
+   GLint major = 0, minor = 0, patch = 0;
+   GLint shaderMajor = 0, shaderMinor = 0, shaderPatch = 0;
+   glhckRenderFeatures *features;
+   CALL(0, "%s", renderName);
+   assert(renderName);
+
+   if (GLEW_VERSION_3_0) {
+      GL_CALL(glGetIntegerv(GL_MAJOR_VERSION, &major));
+      GL_CALL(glGetIntegerv(GL_MINOR_VERSION, &minor));
+   } else {
+      version = (GLchar*)GL_CALL(glGetString(GL_VERSION));
+      for (; version &&
+          !sscanf(version, "%d.%d.%d", &major, &minor, &patch);
+          ++version);
+   }
+
+   vendor = (GLchar*)GL_CALL(glGetString(GL_VENDOR));
+   renderer = (GLchar*)GL_CALL(glGetString(GL_RENDERER));
+   shaderVersion = (GLchar*)GL_CALL(glGetString(GL_SHADING_LANGUAGE_VERSION));
+   for (; shaderVersion &&
+         !sscanf(shaderVersion, "%d.%d.%d", &shaderMajor, &shaderMinor, &shaderPatch);
+         ++shaderVersion);
+
+   /* try to identify driver */
+   if (vendor && _glhckStrupstr(vendor, "MESA"))
+      GLHCKR()->driver = GLHCK_DRIVER_MESA;
+   else if (vendor && strstr(vendor, "NVIDIA"))
+      GLHCKR()->driver = GLHCK_DRIVER_NVIDIA;
+   else if (vendor && strstr(vendor, "ATI"))
+      GLHCKR()->driver = GLHCK_DRIVER_ATI;
+   else if (vendor && strstr(vendor, "Imagination Technologies"))
+      GLHCKR()->driver = GLHCK_DRIVER_IMGTEC;
+   else
+      GLHCKR()->driver = GLHCK_DRIVER_OTHER;
+
+   DEBUG(3, "GLEW [%s]", glewGetString(GLEW_VERSION));
+   DEBUG(3, "%s [%d.%d.%d] [%s]", renderName, major, minor, patch, vendor);
+   DEBUG(3, "%s [%d.%d.%d]", (renderer?renderer:"Generic"), shaderMajor, shaderMinor, shaderPatch);
+   extensions = (char*)GL_CALL(glGetString(GL_EXTENSIONS));
+
+   if (extensions) {
+      extcpy = _glhckStrdup(extensions);
+      s = strtok(extcpy, " ");
+      while (s) {
+         DEBUG(3, "%s", s);
+         s = strtok(NULL, " ");
+      }
+      _glhckFree(extcpy);
+   }
+
+   features = &GLHCKR()->features;
+   features->version.major = major;
+   features->version.minor = minor;
+   features->version.patch = patch;
+   features->version.shaderMajor = shaderMajor;
+   features->version.shaderMinor = shaderMinor;
+   features->version.shaderPatch = shaderPatch;
+   GL_CALL(glGetIntegerv(GL_MAX_TEXTURE_SIZE, &features->texture.maxTextureSize));
+   GL_CALL(glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &features->texture.maxRenderbufferSize));
+   features->texture.hasNativeNpotSupport = (GLEW_VERSION_2_0 || GLEW_VERSION_3_0);
+
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
+}
+
+int glhCheckSupport(const char *renderName)
 {
    if (glewInit() != GLEW_OK)
       return RETURN_FAIL;
 
-#ifdef GLHCK_USE_GLES1
+#if GLHCK_USE_GLES1
 #if 0
    if (!GLEW_OES_element_index_uint) {
       DEBUG(GLHCK_DBG_ERROR, "GLES1.1 needs GL_OES_element_index_uint extension!");
@@ -1502,6 +1572,11 @@ int glhCheckSupport(void)
    glDeleteRenderbuffers = (void*)eglGetProcAddress("glDeleteRenderbuffersOES");
    glRenderbufferStorage = (void*)eglGetProcAddress("glRenderbufferStorageOES");
 #endif
+
+   /* fill the renderer's features struct */
+   if (glhRenderFeatures(renderName) != RETURN_OK)
+      return RETURN_FAIL;
+
    return RETURN_OK;
 }
 

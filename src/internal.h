@@ -15,6 +15,38 @@
 #include "helper/common.h" /* for macros, etc */
 #include <string.h> /* for strrchr */
 
+/* check compile time options */
+#ifndef GLHCK_USE_GLES1
+#  define GLHCK_USE_GLES1 0
+#endif
+#ifndef GLHCK_USE_GLES2
+#  define GLHCK_USE_GLES2 0
+#endif
+#ifndef GLHCK_IMPORT_ASSIMP
+#  define GLHCK_IMPORT_ASSIMP 0
+#endif
+#ifndef GLHCK_IMPORT_OPENCTM
+#  define GLHCK_IMPORT_OPENCTM 0
+#endif
+#ifndef GLHCK_IMPORT_MMD
+#  define GLHCK_IMPORT_MMD 0
+#endif
+#ifndef GLHCK_IMPORT_BMP
+#  define GLHCK_IMPORT_BMP 0
+#endif
+#ifndef GLHCK_IMPORT_PNG
+#  define GLHCK_IMPORT_PNG 0
+#endif
+#ifndef GLHCK_IMPORT_TGA
+#  define GLHCK_IMPORT_TGA 0
+#endif
+#ifndef GLHCK_IMPORT_JPEG
+#  define GLHCK_IMPORT_JPEG 0
+#endif
+#ifndef USE_DOUBLE_PRECISION
+#  define USE_DOUBLE_PRECISION 0
+#endif
+
 /* tracing channels */
 #define GLHCK_CHANNEL_GLHCK         "GLHCK"
 #define GLHCK_CHANNEL_NETWORK       "NETWORK"
@@ -701,10 +733,11 @@ typedef struct __GLHCKrenderState {
 
 /* context render properties */
 typedef struct __GLHCKrender {
+   struct __GLHCKrenderState *stack;
    struct __GLHCKrenderAPI api;
    struct __GLHCKrenderPass pass;
    struct __GLHCKrenderDraw draw;
-   struct __GLHCKrenderState *stack;
+   struct glhckRenderFeatures features;
    void *renderPointer; /* this pointer is reserved for renderer */
    const char *name;
    int width, height;
@@ -789,6 +822,7 @@ typedef struct __GLHCKcontext {
 #define GLHCKRA() (&glhckContextGet()->render.api)
 #define GLHCKRD() (&glhckContextGet()->render.draw)
 #define GLHCKRP() (&glhckContextGet()->render.pass)
+#define GLHCKRF() (&glhckContextGet()->render.features)
 #define GLHCKW() (&glhckContextGet()->world)
 #define GLHCKT() (&glhckContextGet()->trace)
 #define GLHCKM() (&glhckContextGet()->misc)

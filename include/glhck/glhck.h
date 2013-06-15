@@ -391,6 +391,48 @@ typedef enum glhckDataType {
    GLHCK_DATA_UNSIGNED_INT_2_10_10_10_REV,
 } glhckDataType;
 
+/* \brief render compile time features */
+typedef struct glhckCompileFeaturesRender {
+   char glesv1, glesv2, opengl;
+} glhckCompileFeaturesRender;
+
+/* \brief import compile time features */
+typedef struct glhckCompileFeaturesImport {
+   char assimp, openctm, mmd;
+   char bmp, png, tga, jpeg;
+} glhckCompileFeaturesImport;
+
+/* \brief math compile time features */
+typedef struct glhckCompileFeaturesMath {
+   char useDoublePrecision;
+} glhckCompileFeaturesMath;
+
+/* \brief compile time features struct */
+typedef struct glhckCompileFeatures {
+   glhckCompileFeaturesRender render;
+   glhckCompileFeaturesImport import;
+   glhckCompileFeaturesMath math;
+} glhckCompileFeatures;
+
+/* \brief version render features */
+typedef struct glhckRenderFeaturesVersion {
+   int major, minor, patch;
+   int shaderMajor, shaderMinor, shaderPatch;
+} glhckRenderFeaturesVersion;
+
+/* \brief texture render features */
+typedef struct glhckRenderFeaturesTexture {
+   char hasNativeNpotSupport;
+   int maxTextureSize;
+   int maxRenderbufferSize;
+} glhckRenderFeaturesTexture;
+
+/* \brief renderer features */
+typedef struct glhckRenderFeatures {
+   glhckRenderFeaturesVersion version;
+   glhckRenderFeaturesTexture texture;
+} glhckRenderFeatures;
+
 /* texture parameters struct */
 typedef struct glhckTextureParameters {
    float maxAnisotropy;
@@ -654,6 +696,9 @@ typedef struct __GLHCKcontext          glhckContext;
 
 typedef void (*glhckDebugHookFunc)(const char *file, int line, const char *function, glhckDebugLevel level, const char *str);
 
+/* can be called before context */
+GLHCKAPI void glhckGetCompileFeatures(glhckCompileFeatures *features);
+
 /* init && terminate */
 GLHCKAPI int glhckInitialized(void);
 GLHCKAPI void glhckContextSet(glhckContext *ctx);
@@ -677,6 +722,7 @@ GLHCKAPI void glhckDisplayResize(int width, int height);
 /* rendering */
 GLHCKAPI const char* glhckRenderName(void);
 GLHCKAPI glhckDriverType glhckRenderGetDriver(void);
+GLHCKAPI const glhckRenderFeatures* glhckRenderGetFeatures(void);
 GLHCKAPI void glhckRenderResize(int width, int height);
 GLHCKAPI void glhckRenderViewport(const glhckRect *viewport);
 GLHCKAPI void glhckRenderViewporti(int x, int y, int width, int height);

@@ -108,6 +108,24 @@ static void _glhckSetBacktrace(void)
  * public api
  ***/
 
+/* \brief get compile time options, can be called before context */
+GLHCKAPI void glhckGetCompileFeatures(glhckCompileFeatures *features)
+{
+   assert(features);
+   memset(features, 0, sizeof(glhckGetCompileFeatures));
+   features->render.opengl = (!GLHCK_USE_GLES1 && !GLHCK_USE_GLES2);
+   features->render.glesv1 = GLHCK_USE_GLES1;
+   features->render.glesv2 = GLHCK_USE_GLES2;
+   features->import.assimp = GLHCK_IMPORT_ASSIMP;
+   features->import.openctm = GLHCK_IMPORT_OPENCTM;
+   features->import.mmd = GLHCK_IMPORT_MMD;
+   features->import.bmp = GLHCK_IMPORT_BMP;
+   features->import.png = GLHCK_IMPORT_PNG;
+   features->import.tga = GLHCK_IMPORT_TGA;
+   features->import.jpeg = GLHCK_IMPORT_JPEG;
+   features->math.useDoublePrecision = USE_DOUBLE_PRECISION;
+}
+
 /* \brief is glhck initialized? */
 GLHCKAPI int glhckInitialized(void)
 {
@@ -295,6 +313,7 @@ GLHCKAPI void glhckDisplayClose(void)
    GLHCK_INITIALIZED();
    TRACE(0);
    if (!_glhckRenderInitialized()) return;
+   memset(&GLHCKR()->features, 0, sizeof(glhckRenderFeatures));
    GLHCKRA()->terminate();
    GLHCKR()->type = GLHCK_RENDER_AUTO;
 }

@@ -70,7 +70,7 @@ static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum
 #endif
 
 /*** check if driver setup is supported ***/
-int glhCheckSupport(void);
+int glhCheckSupport(const char *renderName);
 
 /*** binding mappings ***/
 void glhTextureBind(glhckTextureTarget target, GLuint object);
