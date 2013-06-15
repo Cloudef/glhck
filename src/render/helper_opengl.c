@@ -1568,7 +1568,10 @@ int glhCheckSupport(const char *renderName)
    /* map OES_framebuffer_object functions */
    /* TODO: try fix glew-glhck for this */
 
-   glGenerateMipmap = (void*)eglGetProcAddress("glGenerateMipmapOES");
+   // Broken on Pandora(?)
+   // Provide own implementation using framebuffers?
+   // glGenerateMipmap = (void*)eglGetProcAddress("glGenerateMipmapOES");
+
    glBindFramebuffer = (void*)eglGetProcAddress("glBindFramebufferOES");
    glGenFramebuffers = (void*)eglGetProcAddress("glGenFramebuffersOES");
    glDeleteFramebuffers = (void*)eglGetProcAddress("glDeleteFramebuffersOES");
