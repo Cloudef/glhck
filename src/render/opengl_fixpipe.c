@@ -80,6 +80,13 @@ static void rMultMatrix(const kmMat4 *mat)
 /* \brief bind light */
 static void rLightBind(glhckLight *light)
 {
+   /* stub in fixed pipeline */
+   (void)light;
+}
+
+/* \brief we use this function instead in fixed pipeline in rObjectStart */
+static void rLightSetup(glhckLight *light)
+{
    glhckObject *object;
 
    if (!light)
@@ -87,14 +94,18 @@ static void rLightBind(glhckLight *light)
 
    object = glhckLightGetObject(light);
    kmVec3 diffuse = { 255, 255, 255 }; // FIXME: Get real diffuse
-   GL_CALL(glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat*)glhckObjectGetPosition(object)));
+   const kmVec3 *pos = glhckObjectGetPosition(object);
+
+   /* position is affected by model view matrix */
+   rLoadMatrix(&GLHCKRD()->view.view);
+   GL_CALL(glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat[]){pos->x, pos->y, pos->z, glhckLightGetPointLightFactor(light)}));
    GL_CALL(glLightfv(GL_LIGHT0, GL_CONSTANT_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->x));
    GL_CALL(glLightfv(GL_LIGHT0, GL_LINEAR_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->y));
-   GL_CALL(glLightfv(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->z));
+   GL_CALL(glLightfv(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->z))
+   GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, (GLfloat*)glhckObjectGetTarget(object)));
 #if 0
    GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_CUTOFF, (GLfloat*)&glhckLightGetCutout(light)->x));
    GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_EXPONENT, (GLfloat*)&glhckLightGetCutout(light)->y));
-   GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, (GLfloat*)glhckObjectGetTarget(object)));
 #endif
    GL_CALL(glLightfv(GL_LIGHT0, GL_DIFFUSE, ((GLfloat[]){
                (GLfloat)diffuse.x/255.0f,
@@ -647,6 +658,7 @@ static inline void rObjectStart(const glhckObject *object) {
 
    /* load view matrix */
    GL_CALL(glMatrixMode(GL_MODELVIEW));
+   rLightSetup(GLHCKRD()->light);
    rLoadMatrix(&GLHCKRD()->view.view);
    rMultMatrix(&object->view.matrix);
 }

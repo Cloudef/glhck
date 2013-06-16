@@ -1025,7 +1025,7 @@ static int renderInit(void)
          "vec3 glhckLighting(vec3 Diffuse) {"
          "  vec3 Color    = Diffuse * GlhckMaterial.Ambient/255.0;"
          "  vec3 LDiffuse = GlhckLight.Diffuse/255.0;"
-         "  vec3 LAtten   = GlhckLight.Atten;"
+         "  vec3 LAtten   = GlhckLight.Atten*0.001;"
          "  vec2 LCutout  = GlhckLight.Cutout;"
          "  vec3 Specular = Diffuse * GlhckMaterial.Specular/255.0;"
          "  vec3 Normal   = normalize(GlhckFNormalWorld);"
