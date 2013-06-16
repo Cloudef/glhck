@@ -1,7 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(glhck)
-SET(GLHCK_NAME "GLhck Rendering Engine")
-SET(GLHCK_DESCRIPTION "A dead simple OpenGL/GLES rendering engine")
+SET(GLHCK_NAME "GLhck")
+SET(GLHCK_DESCRIPTION "A dead simple OpenGL(ES) framework")
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${glhck_SOURCE_DIR}/CMake/modules)
 
 # General build options
@@ -51,7 +51,7 @@ IF (GLHCK_USE_GLES1)
    FIND_PACKAGE(GLESv1 REQUIRED)
    LIST(APPEND GLHCK_INCL ${GLESv1_INCLUDE_DIR})
    LIST(APPEND GLHCK_LINK ${GLESv1_LIBRARY})
-   MESSAGE("GLES 1.x support not working yet")
+   MESSAGE("Building GLhck for GLES 1.x")
 ELSEIF (GLHCK_USE_GLES2)
    # GLES 2.x
    FIND_PACKAGE(EGL REQUIRED)
@@ -71,7 +71,6 @@ ENDIF ()
 
 # Export GLHCK library dependencies
 SET(GLHCK_LIBRARIES ${GLHCK_LINK} CACHE STRING "Dependencies of GLHCK")
-
 
 # Build checks
 # Abort git submodule init && git submodule update has not been ran.
@@ -113,11 +112,13 @@ ADD_SUBDIRECTORY(src)
 # Build tools
 IF (GLHCK_BUILD_TOOLS)
    ADD_SUBDIRECTORY(3rdparty)
+   MESSAGE("Building GLhck with tools")
 ENDIF ()
 
 # Build examples
 IF (GLHCK_BUILD_EXAMPLES)
    ADD_SUBDIRECTORY(example)
+   MESSAGE("Building GLhck with examples")
 ENDIF ()
 
 #
