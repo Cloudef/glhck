@@ -55,10 +55,8 @@ static __GLHCKtraceChannel _traceChannels[] =
 static int _glhckTraceIsActive(const char *name)
 {
    int i;
-   for (i = 0; GLHCKT()->channel[i].name; ++i)
-      if (!_glhckStrupcmp(GLHCKT()->channel[i].name, name))
-            return GLHCKT()->channel[i].active;
-   return 0;
+   for (i = 0; GLHCKT()->channel[i].name && !strcmp(GLHCKT()->channel[i].name, name); ++i);
+   return GLHCKT()->channel[i].active;
 }
 
 /* \brief set channel active or not */
@@ -162,8 +160,9 @@ void _glhckPassDebug(const char *file, int line, const char *func,
    if (!GLHCKT()->debugHook) {
       /* by default, we assume debug prints are
        * useless if tracing. */
-      if (_glhckTraceIsActive(GLHCK_CHANNEL_TRACE) ||
-            !_glhckTraceIsActive(channel)) return;
+      if (_glhckTraceIsActive(GLHCK_CHANNEL_TRACE) || !_glhckTraceIsActive(channel))
+         return;
+
       _glhckPrintf(DBG_FMT, line, file, buffer);
       return;
    }
