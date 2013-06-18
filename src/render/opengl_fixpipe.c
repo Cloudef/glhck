@@ -101,7 +101,7 @@ static void rLightSetup(glhckLight *light)
    GL_CALL(glLightfv(GL_LIGHT0, GL_POSITION, (GLfloat[]){pos->x, pos->y, pos->z, glhckLightGetPointLightFactor(light)}));
    GL_CALL(glLightfv(GL_LIGHT0, GL_CONSTANT_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->x));
    GL_CALL(glLightfv(GL_LIGHT0, GL_LINEAR_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->y));
-   GL_CALL(glLightfv(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->z))
+   GL_CALL(glLightfv(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, (GLfloat*)&glhckLightGetAtten(light)->z));
    GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, (GLfloat*)glhckObjectGetTarget(object)));
 #if 0
    GL_CALL(glLightfv(GL_LIGHT0, GL_SPOT_CUTOFF, (GLfloat*)&glhckLightGetCutout(light)->x));
