@@ -29,14 +29,14 @@
  * 5. Base cast of vector's units
  * 6. Vector magic constant */
 #define glhckMagicDefine(namev2, namev3, castv2, castv3, bcast, magic)                    \
-inline static void namev2(                                                                \
+static void namev2(                                                                       \
    castv2 *vb, const glhckVector3f *vh,                                                   \
    glhckVector3f *max, glhckVector3f *min)                                                \
 {                                                                                         \
    vb->x = (bcast)floorf(((vh->x - min->x) / (max->x - min->x)) * magic + 0.5f);          \
    vb->y = (bcast)floorf(((vh->y - min->y) / (max->y - min->y)) * magic + 0.5f);          \
 }                                                                                         \
-inline static void namev3(                                                                \
+static void namev3(                                                                       \
    castv3 *vb, const glhckVector3f *vh,                                                   \
    glhckVector3f *max, glhckVector3f *min)                                                \
 {                                                                                         \

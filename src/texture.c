@@ -35,7 +35,7 @@ nothing:
 }
 
 /* \brief assign texture to draw list */
-inline void _glhckTextureInsertToQueue(glhckTexture *object)
+void _glhckTextureInsertToQueue(glhckTexture *object)
 {
    __GLHCKtextureQueue *textures;
    glhckTexture **queue;
@@ -66,7 +66,7 @@ inline void _glhckTextureInsertToQueue(glhckTexture *object)
 }
 
 /* \brief guess size for texture */
-inline int _glhckSizeForTexture(glhckTextureTarget target, int width, int height, int depth, glhckTextureFormat format, glhckDataType type)
+int _glhckSizeForTexture(glhckTextureTarget target, int width, int height, int depth, glhckTextureFormat format, glhckDataType type)
 {
    int size = 0;
    size_t b = 0;
@@ -110,7 +110,7 @@ inline int _glhckSizeForTexture(glhckTextureTarget target, int width, int height
 }
 
 /* \brief returns 1, if format contains alpha */
-inline int _glhckHasAlpha(glhckTextureFormat format)
+int _glhckHasAlpha(glhckTextureFormat format)
 {
    switch (format) {
       case GLHCK_RG:
@@ -138,7 +138,7 @@ inline int _glhckHasAlpha(glhckTextureFormat format)
 }
 
 /* \brief returns number of channels needed for texture format */
-inline unsigned int _glhckNumChannels(glhckTextureFormat format)
+unsigned int _glhckNumChannels(glhckTextureFormat format)
 {
    switch (format) {
       case GLHCK_RED:
@@ -168,7 +168,7 @@ inline unsigned int _glhckNumChannels(glhckTextureFormat format)
 }
 
 /* \brief returns if format is compressed format */
-inline int _glhckIsCompressedFormat(glhckTextureFormat format)
+int _glhckIsCompressedFormat(glhckTextureFormat format)
 {
    switch (format) {
       case GLHCK_COMPRESSED_RGB_DXT1:

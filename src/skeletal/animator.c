@@ -30,7 +30,7 @@ static void _glhckAnimatorInterpolateVectorKeys(kmVec3 *out, float time, float d
 }
 
 /* \brief interpolate beetwen two quartenions keys */
-static inline void _glhckAnimatorInterpolateQuaternionKeys(kmQuaternion *out, float time, float duration,
+static void _glhckAnimatorInterpolateQuaternionKeys(kmQuaternion *out, float time, float duration,
       const glhckAnimationQuaternionKey *current, const glhckAnimationQuaternionKey *next)
 {
    float interp;
@@ -48,7 +48,7 @@ static inline void _glhckAnimatorInterpolateQuaternionKeys(kmQuaternion *out, fl
 }
 
 /* \brief update bone structure's transformed matrices */
-static inline void _glhckAnimatorUpdateBones(glhckAnimator *object)
+static void _glhckAnimatorUpdateBones(glhckAnimator *object)
 {
    glhckBone *bone, *parent;
    unsigned int n;

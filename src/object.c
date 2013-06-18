@@ -11,7 +11,7 @@
       function(parent->childs[_cbc_], ##__VA_ARGS__); }
 
 /* \brief assign object to draw list */
-inline void _glhckObjectInsertToQueue(glhckObject *object)
+void _glhckObjectInsertToQueue(glhckObject *object)
 {
    __GLHCKobjectQueue *objects;
    glhckObject **queue;
@@ -42,7 +42,7 @@ inline void _glhckObjectInsertToQueue(glhckObject *object)
 }
 
 /* update target from rotation */
-static inline void _glhckObjectUpdateTargetFromRotation(glhckObject *object)
+static void _glhckObjectUpdateTargetFromRotation(glhckObject *object)
 {
    kmVec3 rotToDir;
    const kmVec3 forwards = { 0, 0, 1 };
@@ -55,7 +55,7 @@ static inline void _glhckObjectUpdateTargetFromRotation(glhckObject *object)
 }
 
 /* update rotation from target */
-static inline void _glhckObjectUpdateRotationFromTarget(glhckObject *object)
+static void _glhckObjectUpdateRotationFromTarget(glhckObject *object)
 {
    kmVec3 toTarget;
    CALL(2, "%p", object);
@@ -67,7 +67,7 @@ static inline void _glhckObjectUpdateRotationFromTarget(glhckObject *object)
 }
 
 /* stub draw function */
-static inline void _glhckObjectStubDraw(const glhckObject *object)
+static void _glhckObjectStubDraw(const glhckObject *object)
 {
    if (object->geometry && object->geometry->vertexType != GLHCK_VERTEX_NONE) {
       DEBUG(GLHCK_DBG_WARNING, "Stub draw function called for object which actually has vertexdata!");
@@ -162,7 +162,7 @@ static void _glhckObjectBuildParent(glhckObject *object, kmMat4 *parentMatrix)
 }
 
 /* \brief update bounding boxes of object */
-inline void _glhckObjectUpdateBoxes(glhckObject *object)
+void _glhckObjectUpdateBoxes(glhckObject *object)
 {
    kmVec3 min, max;
    kmVec3 mixxyz, mixyyz, mixyzz;
@@ -229,7 +229,7 @@ inline void _glhckObjectUpdateBoxes(glhckObject *object)
 }
 
 /* \brief update view matrix of object */
-static inline void _glhckObjectUpdateMatrix(glhckObject *object)
+static void _glhckObjectUpdateMatrix(glhckObject *object)
 {
    unsigned int i;
    kmMat4 translation, rotation, scaling, parentMatrix;

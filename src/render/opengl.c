@@ -297,7 +297,7 @@ fail:
 }
 
 /* \brief set needed starte from object data */
-static inline void rObjectState(const glhckObject *object)
+static void rObjectState(const glhckObject *object)
 {
    /* always draw vertices */
    GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
@@ -335,7 +335,7 @@ static inline void rObjectState(const glhckObject *object)
 }
 
 /* \brief set needed state from material data */
-static inline void rMaterialState(const glhckMaterial *material)
+static void rMaterialState(const glhckMaterial *material)
 {
    /* need texture? */
    GLPOINTER()->state.flags |= (material->texture?GL_STATE_TEXTURE:0);
@@ -355,7 +355,7 @@ static inline void rMaterialState(const glhckMaterial *material)
 }
 
 /* \brief set needed state from pass data */
-static inline void rPassState(void)
+static void rPassState(void)
 {
    /* front face */
    GLPOINTER()->state.frontFace = GLHCKRP()->frontFace;
@@ -422,7 +422,7 @@ static inline void rPassState(void)
                sizeof(type), &geometry->vertices.tunion[0].color));
 
 /* \brief pass interleaved vertex data to OpenGL nicely. */
-static inline void rGeometryPointer(const glhckGeometry *geometry)
+static void rGeometryPointer(const glhckGeometry *geometry)
 {
    // printf("%s dd) : %u\n", glhckVertexTypeString(geometry->vertexType), geometry->vertexCount, geometry->textureRange);
 
@@ -469,7 +469,7 @@ static inline void rGeometryPointer(const glhckGeometry *geometry)
 #undef geometryV3ToOpenGL
 
 /* \brief render frustum */
-static inline void rFrustumRender(glhckFrustum *frustum)
+static void rFrustumRender(glhckFrustum *frustum)
 {
    GLuint i = 0;
    kmVec3 *near = frustum->nearCorners;
@@ -526,7 +526,7 @@ static inline void rFrustumRender(glhckFrustum *frustum)
 
 
 /* \brief render object's oriented bounding box */
-static inline void rOBBRender(const glhckObject *object)
+static void rOBBRender(const glhckObject *object)
 {
    GLuint i = 0;
    kmVec3 min = object->view.bounding.min;
@@ -579,7 +579,7 @@ static inline void rOBBRender(const glhckObject *object)
 }
 
 /* \brief render object's axis-aligned bounding box */
-static inline void rAABBRender(const glhckObject *object)
+static void rAABBRender(const glhckObject *object)
 {
    GLuint i = 0;
    kmVec3 min = object->view.aabb.min;
@@ -634,7 +634,7 @@ static inline void rAABBRender(const glhckObject *object)
 }
 
 /* \brief render object's bones */
-static inline void rBonesRender(const glhckObject *object)
+static void rBonesRender(const glhckObject *object)
 {
    unsigned int i;
    const kmVec3 zero = {0,0,0};
@@ -656,7 +656,7 @@ static inline void rBonesRender(const glhckObject *object)
    glhckShaderUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){255,0,0,255}));
-   GL_CALL(glDrawArrays(GL_POINTS, 0, object->numBones))
+   GL_CALL(glDrawArrays(GL_POINTS, 0, object->numBones));
    GL_CALL(glEnable(GL_DEPTH_TEST));
 }
 
@@ -664,7 +664,7 @@ static inline void rBonesRender(const glhckObject *object)
 #define GL_STATE_CHANGED(x) ((GLPOINTER()->state.flags & x) != (old.flags & x))
 
 /* \brief begin object render */
-static inline void rObjectStart(const glhckObject *object)
+static void rObjectStart(const glhckObject *object)
 {
    GLuint i;
    __OpenGLstate old = GLPOINTER()->state;
@@ -808,7 +808,7 @@ static inline void rObjectStart(const glhckObject *object)
 }
 
 /* \brief end object render */
-static inline void rObjectEnd(const glhckObject *object)
+static void rObjectEnd(const glhckObject *object)
 {
    glhckGeometryType type = object->geometry->type;
 
@@ -843,7 +843,7 @@ static inline void rObjectEnd(const glhckObject *object)
 #undef GL_STATE_CHANGED
 
 /* \brief render single 3d object */
-static inline void rObjectRender(const glhckObject *object)
+static void rObjectRender(const glhckObject *object)
 {
    CALL(2, "%p", object);
 
@@ -858,7 +858,7 @@ static inline void rObjectRender(const glhckObject *object)
 }
 
 /* \brief render text */
-static inline void rTextRender(const glhckText *text)
+static void rTextRender(const glhckText *text)
 {
    __GLHCKtextTexture *texture;
    CALL(2, "%p", text);

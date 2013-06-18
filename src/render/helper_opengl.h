@@ -13,7 +13,7 @@
 #  define GL_CALL(x) x
 #else
 #  define GL_CALL(x) x; GL_ERROR(__LINE__, __func__, __STRING(x));
-static inline void GL_ERROR(unsigned int line, const char *func, const char *glfunc)
+static void GL_ERROR(unsigned int line, const char *func, const char *glfunc)
 {
    GLenum error;
    if ((error = glGetError()) != GL_NO_ERROR)
@@ -42,7 +42,7 @@ static inline void GL_ERROR(unsigned int line, const char *func, const char *glf
 #  define GL_CHECK(x) x
 #else
 #  define GL_CHECK(x) GL_CHECK_ERROR(__func__, __STRING(x), x)
-static inline GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum error)
+static GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum error)
 {
    if (error != GL_NO_ERROR &&
        error != GL_FRAMEBUFFER_COMPLETE)

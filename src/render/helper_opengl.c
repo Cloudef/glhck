@@ -1420,7 +1420,7 @@ void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, 
    GL_CALL(glDrawElements(glGeometryType, geometry->indexCount, iprec, &geometry->indices.tunion[0]))
 
 /* \brief draw interleaved geometry */
-inline void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type)
+void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type)
 {
    GLenum glGeometryType;
    // printf("%s (%d)\n", glhckIndexTypeString(geometry->indexType), geometry->indexCount);
