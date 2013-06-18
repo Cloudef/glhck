@@ -171,8 +171,10 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
    _glhckSetBacktrace();
 #endif
 
+#ifndef GLHCK_DISABLE_TRACE
    /* init trace system */
    _glhckTraceInit(argc, _argv);
+#endif
 
    /* set default global precision for glhck to use with geometry
     * NOTE: _NONE means that glhck and importers choose the best precision. */
@@ -212,8 +214,10 @@ GLHCKAPI void glhckContextTerminate(void)
    _glhckTrackTerminate();
 #endif
 
+#ifndef GLHCK_DISABLE_TRACE
    /* terminate trace system */
    _glhckTraceTerminate();
+#endif
 
    /* finally remove the context */
    free(_glhckContext);

@@ -10,6 +10,7 @@ OPTION(GLHCK_BUILD_TOOLS "Build tools" OFF)
 OPTION(GLHCK_USE_GLES1 "Build for OpenGL ES 1.x" OFF)
 OPTION(GLHCK_USE_GLES2 "Build for OpenGL ES 2.x" OFF)
 OPTION(GLHCK_KAZMATH_DOUBLE "Define kmScalar as double" OFF)
+OPTION(GLHCK_DISABLE_TRACE "Disable GLhck's tracing functionality" OFF)
 
 # Build importers dynamically?
 # FIXME: Not implemented
@@ -38,6 +39,12 @@ ENDIF (PANDORA)
 IF (GLHCK_KAZMATH_DOUBLE)
    MESSAGE("Building GLhck with double precision")
    ADD_DEFINITIONS(-DUSE_DOUBLE_PRECISION)
+ENDIF ()
+
+# Disable tracing functionality
+IF (GLHCK_DISABLE_TRACE)
+   MESSAGE("Building GLhck without tracing (EXPERIMENTAL)")
+   ADD_DEFINITIONS(-DGLHCK_DISABLE_TRACE)
 ENDIF ()
 
 # These are propably temporary

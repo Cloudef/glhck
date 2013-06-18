@@ -244,7 +244,7 @@ void _glhckFree(void *ptr)
 GLHCKAPI void glhckMemoryGraph(void)
 {
    TRACE(0);
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(GLHCK_DISABLE_TRACE)
    __GLHCKalloc *data;
    __GLHCKtraceChannel *trace;
    unsigned int i;
