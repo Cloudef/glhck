@@ -799,7 +799,6 @@ GLHCKAPI void glhckObjectMaterial(glhckObject *object, glhckMaterial *material);
 GLHCKAPI glhckMaterial* glhckObjectGetMaterial(const glhckObject *object);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
-GLHCKAPI void glhckObjectRender2D(glhckObject *object);
 
 /* object animation */
 GLHCKAPI int glhckObjectInsertBones(glhckObject *object, glhckBone **bones, unsigned int memb);
