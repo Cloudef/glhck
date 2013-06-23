@@ -55,7 +55,7 @@ static __GLHCKtraceChannel _traceChannels[] =
 static int _glhckTraceIsActive(const char *name)
 {
    int i;
-   for (i = 0; GLHCKT()->channel[i].name && !strcmp(GLHCKT()->channel[i].name, name); ++i);
+   for (i = 0; GLHCKT()->channel[i].name && strcmp(GLHCKT()->channel[i].name, name); ++i);
    return GLHCKT()->channel[i].active;
 }
 
