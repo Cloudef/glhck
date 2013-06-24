@@ -2,6 +2,8 @@ TODO
 ====
 
 ---
+Overdraw debugging (FBO texture)
+---
 Scale down textures bigger than GL_MAX_TEXTURE_SIZE by rendering parts to target size FBO
 ---
 Have multiple draw queues, and but the object on specific queue depending on it's state.
