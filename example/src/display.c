@@ -383,7 +383,7 @@ int main(int argc, char **argv)
 
 #if SHADOW
          glhckRenderBlendFunc(GLHCK_ZERO, GLHCK_ZERO);
-         glhckRenderPassFlags(GLHCK_PASS_DEPTH | GLHCK_PASS_CULL);
+         glhckRenderPass(GLHCK_PASS_DEPTH | GLHCK_PASS_CULL);
          glhckRenderPassShader(depthShader);
 
          glhckObjectDraw(cube);
@@ -405,7 +405,7 @@ int main(int argc, char **argv)
          glhckCameraRange(camera, 1.0f, 1000.0f);
          glhckCameraUpdate(camera);
 
-         glhckRenderPassFlags(GLHCK_PASS_DEFAULTS);
+         glhckRenderPass(GLHCK_PASS_DEFAULTS);
          glhckRenderPassShader(shader);
 #else
          glhckLightBeginProjectionWithCamera(light[li], camera);
