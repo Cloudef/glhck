@@ -169,6 +169,7 @@ typedef enum glhckRenderPassFlags {
    GLHCK_PASS_DRAW_WIREFRAME = 128,
    GLHCK_PASS_LIGHTING       = 256,
    GLHCK_PASS_DEFAULTS       = 512,
+   GLHCK_PASS_OVERDRAW       = 1024,
 } glhckRenderPassFlags;
 
 /* geometry type */

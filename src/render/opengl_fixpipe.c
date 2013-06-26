@@ -16,6 +16,8 @@
 #include "helper_opengl.h"
 #include "helper_stub.h"
 
+static const glhckColorb overdrawColor = {25,25,25,255};
+
 static const GLenum _glhckAttribName[] = {
    GL_VERTEX_ARRAY,
    GL_TEXTURE_COORD_ARRAY,
@@ -34,6 +36,7 @@ enum {
    GL_STATE_DRAW_SKELETON  = 64,
    GL_STATE_DRAW_WIREFRAME = 128,
    GL_STATE_LIGHTING       = 256,
+   GL_STATE_OVERDRAW       = 512,
 };
 
 /* global data */
@@ -237,6 +240,18 @@ static void rPassState(void)
       GLPOINTER()->state.flags |= GL_STATE_BLEND;
       GLPOINTER()->state.blenda = GLHCKRP()->blenda;
       GLPOINTER()->state.blendb = GLHCKRP()->blendb;
+   }
+
+   /* overdraw state */
+   if (!(GLHCKRP()->flags & GLHCK_PASS_OVERDRAW)) {
+      GLPOINTER()->state.flags &= ~GL_STATE_OVERDRAW;
+   } else {
+      GLPOINTER()->state.flags &= ~GL_STATE_TEXTURE;
+      GLPOINTER()->state.flags &= ~GL_STATE_LIGHTING;
+      GLPOINTER()->state.flags |= GL_STATE_OVERDRAW;
+      GLPOINTER()->state.flags |= GL_STATE_BLEND;
+      GLPOINTER()->state.blenda = GLHCK_ONE;
+      GLPOINTER()->state.blendb = GLHCK_ONE;
    }
 }
 
@@ -654,6 +669,7 @@ static void rObjectStart(const glhckObject *object) {
    /* reset color */
    glhckColorb diffuse = {255,255,255,255};
    if (object->material) memcpy(&diffuse, &object->material->diffuse, sizeof(glhckColorb));
+   if (GL_HAS_STATE(GL_STATE_OVERDRAW)) memcpy(&diffuse, &overdrawColor, sizeof(glhckColorb));
    GL_CALL(glColor4ub(diffuse.r, diffuse.g, diffuse.b, diffuse.a));
 
    /* load view matrix */
@@ -719,28 +735,34 @@ static void rTextRender(const glhckText *text)
       GL_CALL(glDisable(GL_LIGHTING));
    }
 
-   if (!GL_HAS_STATE(GL_STATE_BLEND)) {
-      GLPOINTER()->state.flags |= GL_STATE_BLEND;
-      GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
-      GLPOINTER()->state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
-      GL_CALL(glEnable(GL_BLEND));
-      GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
-   } else if (GLPOINTER()->state.blenda != GLHCK_SRC_ALPHA ||
-              GLPOINTER()->state.blendb != GLHCK_ONE_MINUS_SRC_ALPHA) {
-      GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
-      GLPOINTER()->state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
-      GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
+   if (!GL_HAS_STATE(GL_STATE_OVERDRAW)) {
+      if (!GL_HAS_STATE(GL_STATE_BLEND)) {
+         GLPOINTER()->state.flags |= GL_STATE_BLEND;
+         GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
+         GLPOINTER()->state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
+         GL_CALL(glEnable(GL_BLEND));
+         GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
+      } else if (GLPOINTER()->state.blenda != GLHCK_SRC_ALPHA ||
+            GLPOINTER()->state.blendb != GLHCK_ONE_MINUS_SRC_ALPHA) {
+         GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
+         GLPOINTER()->state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
+         GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
+      }
    }
 
    if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
       glhFrontFace(GLHCK_FACE_CCW);
    }
 
-   if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
-      GLPOINTER()->state.flags |= GL_STATE_TEXTURE;
-      GLPOINTER()->state.attrib[1] = 1;
-      GL_CALL(glEnable(GL_TEXTURE_2D));
-      GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
+   if (!GL_HAS_STATE(GL_STATE_OVERDRAW)) {
+      if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
+         GLPOINTER()->state.flags |= GL_STATE_TEXTURE;
+         GLPOINTER()->state.attrib[1] = 1;
+         GL_CALL(glEnable(GL_TEXTURE_2D));
+         GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
+      }
+   } else {
+      glhckTextureUnbind(GLHCK_TEXTURE_2D);
    }
 
    if (!GLPOINTER()->state.attrib[0]) {
@@ -768,14 +790,17 @@ static void rTextRender(const glhckText *text)
    GL_CALL(glMatrixMode(GL_MODELVIEW));
    GL_CALL(glLoadIdentity());
 
-   GL_CALL(glColor4ub(text->color.r, text->color.b, text->color.g, text->color.a));
+   glhckColorb diffuse = text->color;
+   if (GL_HAS_STATE(GL_STATE_OVERDRAW)) memcpy(&diffuse, &overdrawColor, sizeof(glhckColorb));
+   GL_CALL(glColor4ub(diffuse.r, diffuse.b, diffuse.g, diffuse.a));
 
    GL_CALL(glMatrixMode(GL_TEXTURE));
    for (texture = text->textureCache; texture;
         texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
-      glhckTextureBind(texture->texture);
+
+      if (GL_HAS_STATE(GL_STATE_TEXTURE)) glhckTextureBind(texture->texture);
       GL_CALL(glLoadIdentity());
       GL_CALL(glScalef(texture->texture->internalScale.x, texture->texture->internalScale.y, 1.0f));
       GL_CALL(glVertexPointer(2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),

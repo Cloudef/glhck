@@ -80,6 +80,8 @@ static const char *_glhckBaseShader =
 "  GlhckFragColor = GlhckMaterial.Diffuse/255.0 * Diffuse.aaaa;"
 "}\n";
 
+static const glhckColorb overdrawColor = {25,25,25,255};
+
 /* state flags */
 enum {
    GL_STATE_DEPTH          = 1,
@@ -91,6 +93,7 @@ enum {
    GL_STATE_DRAW_SKELETON  = 64,
    GL_STATE_DRAW_WIREFRAME = 128,
    GL_STATE_LIGHTING       = 256,
+   GL_STATE_OVERDRAW       = 512,
 };
 
 /* internal shaders */
@@ -389,6 +392,18 @@ static void rPassState(void)
       GLPOINTER()->state.flags |= GL_STATE_BLEND;
       GLPOINTER()->state.blenda = GLHCKRP()->blenda;
       GLPOINTER()->state.blendb = GLHCKRP()->blendb;
+   }
+
+   /* overdraw state */
+   if (!(GLHCKRP()->flags & GLHCK_PASS_OVERDRAW)) {
+      GLPOINTER()->state.flags &= ~GL_STATE_OVERDRAW;
+   } else {
+      GLPOINTER()->state.flags &= ~GL_STATE_TEXTURE;
+      GLPOINTER()->state.flags &= ~GL_STATE_LIGHTING;
+      GLPOINTER()->state.flags |= GL_STATE_OVERDRAW;
+      GLPOINTER()->state.flags |= GL_STATE_BLEND;
+      GLPOINTER()->state.blenda = GLHCK_ONE;
+      GLPOINTER()->state.blendb = GLHCK_ONE;
    }
 }
 
@@ -769,6 +784,7 @@ static void rObjectStart(const glhckObject *object)
 
    glhckColorb diffuse = {255,255,255,255};
    if (object->material) memcpy(&diffuse, &object->material->diffuse, sizeof(glhckColorb));
+   if (GL_HAS_STATE(GL_STATE_OVERDRAW)) memcpy(&diffuse, &overdrawColor, sizeof(glhckColorb));
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
          &((GLfloat[]){diffuse.r, diffuse.g, diffuse.b, diffuse.a}));
 
@@ -863,27 +879,33 @@ static void rTextRender(const glhckText *text)
    __GLHCKtextTexture *texture;
    CALL(2, "%p", text);
 
-   if (!GL_HAS_STATE(GL_STATE_BLEND)) {
-      GLPOINTER()->state.flags |= GL_STATE_BLEND;
-      GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
-      GLPOINTER()->state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
-      GL_CALL(glEnable(GL_BLEND));
-      GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
-   } else if (GLPOINTER()->state.blenda != GLHCK_SRC_ALPHA ||
-              GLPOINTER()->state.blendb != GLHCK_ONE_MINUS_SRC_ALPHA) {
-      GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
-      GLPOINTER()->state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
-      GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
+   if (!GL_HAS_STATE(GL_STATE_OVERDRAW)) {
+      if (!GL_HAS_STATE(GL_STATE_BLEND)) {
+         GLPOINTER()->state.flags |= GL_STATE_BLEND;
+         GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
+         GLPOINTER()->state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
+         GL_CALL(glEnable(GL_BLEND));
+         GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
+      } else if (GLPOINTER()->state.blenda != GLHCK_SRC_ALPHA ||
+            GLPOINTER()->state.blendb != GLHCK_ONE_MINUS_SRC_ALPHA) {
+         GLPOINTER()->state.blenda = GLHCK_SRC_ALPHA;
+         GLPOINTER()->state.blendb = GLHCK_ONE_MINUS_SRC_ALPHA;
+         GL_CALL(glhBlendFunc(GLPOINTER()->state.blenda, GLPOINTER()->state.blendb));
+      }
    }
 
    if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
       glhFrontFace(GLHCK_FACE_CCW);
    }
 
-   if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
-      GLPOINTER()->state.flags |= GL_STATE_TEXTURE;
-      GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = 1;
-      GL_CALL(glEnableVertexAttribArray(GLHCK_ATTRIB_TEXTURE));
+   if (!GL_HAS_STATE(GL_STATE_OVERDRAW)) {
+      if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
+         GLPOINTER()->state.flags |= GL_STATE_TEXTURE;
+         GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = 1;
+         GL_CALL(glEnableVertexAttribArray(GLHCK_ATTRIB_TEXTURE));
+      }
+   } else {
+      glhckTextureUnbind(GLHCK_TEXTURE_2D);
    }
 
    if (!GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX]) {
@@ -907,23 +929,28 @@ static void rTextRender(const glhckText *text)
 
    if (text->shader) glhckShaderBind(text->shader);
    else glhckShaderBind(GLPOINTER()->shader[GL_SHADER_TEXT]);
-   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
-         &((GLfloat[]){text->color.r, text->color.g, text->color.b, text->color.a}));
 
-   for (texture = text->textureCache; texture;
-        texture = texture->next) {
+   glhckColorb diffuse = text->color;
+   if (GL_HAS_STATE(GL_STATE_OVERDRAW)) memcpy(&diffuse, &overdrawColor, sizeof(glhckColorb));
+   glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
+         &((GLfloat[]){diffuse.r, diffuse.g, diffuse.b, diffuse.a}));
+
+   for (texture = text->textureCache; texture; texture = texture->next) {
       if (!texture->geometry.vertexCount)
          continue;
-      glhckTextureBind(texture->texture);
+
+      if (GL_HAS_STATE(GL_STATE_TEXTURE)) glhckTextureBind(texture->texture);
       glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureScale", 1, &texture->texture->internalScale);
 
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT), 0,
                (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
                &texture->geometry.vertexData[0].vertex));
+
       GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
                (GLHCK_TEXT_FLOAT_PRECISION?0:1),
                (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
                &texture->geometry.vertexData[0].coord));
+
       GL_CALL(glDrawArrays(GLHCK_TRISTRIP?GL_TRIANGLE_STRIP:GL_TRIANGLES,
                0, texture->geometry.vertexCount));
    }
@@ -1107,17 +1134,17 @@ static int renderInit(void)
    GLPOINTER()->shader[GL_SHADER_COLOR_LIGHTING] = glhckShaderNew(NULL, ".GLhck.Color.Lighting.Fragment", _glhckBaseShader);
    GLPOINTER()->shader[GL_SHADER_TEXT] = glhckShaderNew(".GLhck.Text.Vertex", ".GLhck.Text.Fragment", _glhckBaseShader);
 
-   for (i = 0; i != GL_SHADER_LAST; ++i)
+   /* create UBO from shader */
+   glhckHwBufferCreateUniformBufferFromShader(GLPOINTER()->sharedUBO,
+         GLPOINTER()->shader[GL_SHADER_BASE], "GlhckUBO", GLHCK_BUFFER_DYNAMIC_DRAW);
+
+   /* append UBO information from other shaders */
+   for (i = 1; i != GL_SHADER_LAST; ++i) {
       if (!GLPOINTER()->shader[i]) goto fail;
+      glhckHwBufferAppendInformationFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[i]);
+   }
 
-   /* initialize the UBO from shaders */
-   glhckHwBufferCreateUniformBufferFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_BASE], "GlhckUBO", GLHCK_BUFFER_DYNAMIC_DRAW);
-   glhckHwBufferAppendInformationFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_COLOR]);
-   glhckHwBufferAppendInformationFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_BASE_LIGHTING]);
-   glhckHwBufferAppendInformationFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_COLOR_LIGHTING]);
-   glhckHwBufferAppendInformationFromShader(GLPOINTER()->sharedUBO, GLPOINTER()->shader[GL_SHADER_TEXT]);
    DEBUG(GLHCK_DBG_CRAP, "GLHCK UBO SIZE: %d", GLPOINTER()->sharedUBO->size);
-
    glhckHwBufferBindRange(GLPOINTER()->sharedUBO, 0, 0, GLPOINTER()->sharedUBO->size);
 
    RET(0, "%d", RETURN_OK);
