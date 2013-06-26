@@ -405,7 +405,7 @@ int main(int argc, char **argv)
          glhckCameraRange(camera, 1.0f, 1000.0f);
          glhckCameraUpdate(camera);
 
-         glhckRenderPass(GLHCK_PASS_DEFAULTS);
+         glhckRenderPass(glhckRenderPassDefaults());
          glhckRenderPassShader(shader);
 #else
          glhckLightBeginProjectionWithCamera(light[li], camera);

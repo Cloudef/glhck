@@ -190,7 +190,7 @@ GLHCKAPI void glhckRenderStatePush2D(int width, int height, kmScalar near, kmSca
    GLHCK_INITIALIZED();
    TRACE(2);
    glhckRenderStatePush();
-   glhckRenderPass(GLHCK_PASS_DEFAULTS & ~GLHCK_PASS_DEPTH);
+   glhckRenderPass(glhckRenderGetPass() & ~GLHCK_PASS_DEPTH);
    glhckRenderProjection2D(width, height, near, far);
 }
 
@@ -218,22 +218,25 @@ GLHCKAPI void glhckRenderStatePop(void)
    GLHCKR()->stack = newState;
 }
 
+/* \brief default render pass flags */
+GLHCKAPI unsigned int glhckRenderPassDefaults(void)
+{
+   return (GLHCK_PASS_DEPTH          |
+           GLHCK_PASS_CULL           |
+           GLHCK_PASS_BLEND          |
+           GLHCK_PASS_TEXTURE        |
+           GLHCK_PASS_DRAW_OBB       |
+           GLHCK_PASS_DRAW_AABB      |
+           GLHCK_PASS_DRAW_SKELETON  |
+           GLHCK_PASS_DRAW_WIREFRAME |
+           GLHCK_PASS_LIGHTING);
+}
+
 /* \brief set render pass flags */
 GLHCKAPI void glhckRenderPass(unsigned int flags)
 {
    GLHCK_INITIALIZED();
    CALL(2, "%u", flags);
-   if (flags & GLHCK_PASS_DEFAULTS) {
-      flags  = GLHCK_PASS_DEPTH;
-      flags |= GLHCK_PASS_CULL;
-      flags |= GLHCK_PASS_BLEND;
-      flags |= GLHCK_PASS_TEXTURE;
-      flags |= GLHCK_PASS_DRAW_OBB;
-      flags |= GLHCK_PASS_DRAW_AABB;
-      flags |= GLHCK_PASS_DRAW_SKELETON;
-      flags |= GLHCK_PASS_DRAW_WIREFRAME;
-      flags |= GLHCK_PASS_LIGHTING;
-   }
    GLHCKRP()->flags = flags;
 }
 

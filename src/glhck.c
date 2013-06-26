@@ -291,7 +291,7 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    GLHCKR()->type = renderType;
 
    /* default render pass bits */
-   glhckRenderPass(GLHCK_PASS_DEFAULTS);
+   glhckRenderPass(glhckRenderPassDefaults());
 
    /* default cull face */
    glhckRenderCullFace(GLHCK_CULL_BACK);

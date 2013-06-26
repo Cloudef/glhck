@@ -168,8 +168,7 @@ typedef enum glhckRenderPassFlags {
    GLHCK_PASS_DRAW_SKELETON  = 64,
    GLHCK_PASS_DRAW_WIREFRAME = 128,
    GLHCK_PASS_LIGHTING       = 256,
-   GLHCK_PASS_DEFAULTS       = 512,
-   GLHCK_PASS_OVERDRAW       = 1024,
+   GLHCK_PASS_OVERDRAW       = 512,
 } glhckRenderPassFlags;
 
 /* geometry type */
@@ -730,6 +729,7 @@ GLHCKAPI void glhckRenderViewporti(int x, int y, int width, int height);
 GLHCKAPI void glhckRenderStatePush(void);
 GLHCKAPI void glhckRenderStatePush2D(int width, int height, kmScalar near, kmScalar far);
 GLHCKAPI void glhckRenderStatePop(void);
+GLHCKAPI unsigned int glhckRenderPassDefaults(void);
 GLHCKAPI void glhckRenderPass(unsigned int flags);
 GLHCKAPI unsigned int glhckRenderGetPass(void);
 GLHCKAPI void glhckRenderTime(float time);
