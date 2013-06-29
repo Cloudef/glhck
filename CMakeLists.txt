@@ -30,9 +30,9 @@ OPTION(GLHCK_IMPORT_JPEG "Enable JPEG importer" ON)
 # Pandora related build options
 IF (PANDORA)
     ADD_DEFINITIONS(-DPANDORA)
-    SET(GLHCK_USE_GLES1 ON CACHE BOOL)
-    SET(GLHCK_USE_GLES2 OFF CACHE BOOL)
-    SET(GLHCK_USE_OPENCTM OFF CACHE BOOL)
+    SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
+    SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
+    SET(GLHCK_USE_OPENCTM OFF CACHE BOOL "Turn OFF OpenCTM (Linker errors)")
 ENDIF (PANDORA)
 
 # Use double-precision floating point math on kazmath and glhck
