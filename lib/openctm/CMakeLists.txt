@@ -11,6 +11,6 @@ SET(OPENCTM_SRC
    src/lib/liblzma/LzmaEnc.c
    src/lib/liblzma/LzmaLib.c)
 INCLUDE_DIRECTORIES(src/lib/liblzma)
-ADD_DEFINITIONS(-fPIC)
+ADD_DEFINITIONS(-fPIC -std=c99)
 ADD_LIBRARY(openctm ${OPENCTM_SRC})
 TARGET_LINK_LIBRARIES(openctm)
