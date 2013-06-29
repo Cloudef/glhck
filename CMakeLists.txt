@@ -4,6 +4,14 @@ SET(GLHCK_NAME "GLhck")
 SET(GLHCK_DESCRIPTION "A dead simple OpenGL(ES) framework")
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${glhck_SOURCE_DIR}/CMake/modules)
 
+# OpenPandora hacks
+IF (PANDORA)
+    ADD_DEFINITIONS(-DPANDORA)
+    SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
+    SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
+    SET(GLHCK_USE_OPENCTM OFF CACHE BOOL "Turn OFF OpenCTM (Linker errors)")
+ENDIF ()
+
 # General build options
 OPTION(GLHCK_BUILD_EXAMPLES "Build examples" ON)
 OPTION(GLHCK_BUILD_TOOLS "Build tools" OFF)
@@ -26,14 +34,6 @@ OPTION(GLHCK_IMPORT_BMP "Enable BMP importer" ON)
 OPTION(GLHCK_IMPORT_PNG "Enable PNG importer" ON)
 OPTION(GLHCK_IMPORT_TGA "Enable TGA importer" ON)
 OPTION(GLHCK_IMPORT_JPEG "Enable JPEG importer" ON)
-
-# Pandora related build options
-IF (PANDORA)
-    ADD_DEFINITIONS(-DPANDORA)
-    SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
-    SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
-    SET(GLHCK_USE_OPENCTM OFF CACHE BOOL "Turn OFF OpenCTM (Linker errors)")
-ENDIF (PANDORA)
 
 # Use double-precision floating point math on kazmath and glhck
 IF (GLHCK_KAZMATH_DOUBLE)
