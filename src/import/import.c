@@ -3,7 +3,10 @@
 #include <stdio.h>  /* for fopen    */
 #include <unistd.h> /* for access   */
 #include <libgen.h> /* for dirname  */
-#include "tc.h"
+
+#if GLHCK_TRISTRIP
+#  include "tc.h"
+#endif
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT

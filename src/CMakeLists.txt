@@ -51,6 +51,14 @@ ELSE ()
    MESSAGE("Building GLhck with the OpenGL fixed pipeline renderer")
 ENDIF ()
 
+# Use ACTC for triangle stripping
+IF (GLHCK_TRISTRIP)
+   LIST(APPEND OPT_LIBS actc)
+   LIST(APPEND OPT_INCL ${actc_SOURCE_DIR}/src)
+   MESSAGE("Building GLhck with tristripping support")
+   ADD_DEFINITIONS(-DGLHCK_TRISTRIP=1)
+ENDIF ()
+
 # Setup importers
 IF (GLHCK_IMPORT_OPENCTM)
    ADD_DEFINITIONS(-DGLHCK_IMPORT_OPENCTM)
@@ -106,7 +114,6 @@ INCLUDE_DIRECTORIES(
    ${glhck_SOURCE_DIR}/include
    ${glew-glhck_SOURCE_DIR}/include
    ${kazmath_SOURCE_DIR}/src
-   ${actc_SOURCE_DIR}/src
    ${IMGHCK_SOURCE_DIR}/src
    ${GLSW_SOURCE_DIR}/src
    ${GLHCK_INCL}
@@ -115,5 +122,5 @@ INCLUDE_DIRECTORIES(
 
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck kazmath imghck actc glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
+TARGET_LINK_LIBRARIES(glhck kazmath imghck glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
 INSTALL(TARGETS glhck DESTINATION lib)

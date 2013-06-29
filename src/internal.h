@@ -11,7 +11,10 @@
 #include "helper/common.h" /* for macros, etc */
 #include <string.h> /* for strrchr */
 
-/* check compile time options */
+/* check compile time options
+ * these are supposed to make compile
+ * without cmake bit more painless */
+
 #ifndef GLHCK_USE_GLES1
 #  define GLHCK_USE_GLES1 0
 #endif
@@ -39,8 +42,34 @@
 #ifndef GLHCK_IMPORT_JPEG
 #  define GLHCK_IMPORT_JPEG 0
 #endif
+#ifndef GLHCK_TRISTRIP
+#  define GLHCK_TRISTRIP 0
+#endif
+#ifndef GLHCK_IMPORT_DYNAMIC
+#  define GLHCK_IMPORT_DYNAMIC 0
+#endif
+#ifndef GLHCK_TEXT_FLOAT_PRECISION
+#  define GLHCK_TEXT_FLOAT_PRECISION 0
+#endif
+#ifndef GLHCK_DISABLE_TRACE
+#  define GLHCK_DISABLE_TRACE 0
+#endif
 #ifndef USE_DOUBLE_PRECISION
 #  define USE_DOUBLE_PRECISION 0
+#endif
+
+/* renderer checks */
+
+#ifndef GLHCK_HAS_OPENGL_FIXED_PIPELINE
+#  if !GLHCK_USE_GLES2
+#     define GLHCK_HAS_OPENGL_FIXED_PIPELINE
+#  endif
+#endif
+
+#ifndef GLHCK_HAS_OPENGL
+#  if !GLHCK_USE_GLES1
+#     define GLHCK_HAS_OPENGL 1
+#  endif
 #endif
 
 /* tracing channels */
@@ -71,15 +100,6 @@
 #define GLHCK_CHANNEL_DRAW          "DRAW"
 #define GLHCK_CHANNEL_ALL           "ALL"
 #define GLHCK_CHANNEL_SWITCH        "DEBUG"
-
-/* build importers as seperate dynamic libraries? */
-#define GLHCK_IMPORT_DYNAMIC 0
-
-/* enable triangle stripping? */
-#define GLHCK_TRISTRIP 0
-
-/* floating point precision text? */
-#define GLHCK_TEXT_FLOAT_PRECISION 1
 
 /* internal glhck flip matrix
  * every model matrix is multiplied with this when glhckRenderFlip(1) is used */

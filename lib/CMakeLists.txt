@@ -8,14 +8,13 @@ ADD_SUBDIRECTORY(kazmath)
 # Helps a lot, thanks GLEW devs
 ADD_SUBDIRECTORY(glew-glhck)
 
-# Used for shader wrangling on OpenGL 3.x+
-# renderer.
+# Used for shader wrangling on OpenGL 3.x+ renderer.
 ADD_SUBDIRECTORY(glsw)
 
 # Used for triangle stripping
-# FIXME: Add GLHCK_TRIANGLE_STRIP option
-# so this can be turned off.
-ADD_SUBDIRECTORY(actc)
+IF (GLHCK_TRISTRIP)
+   ADD_SUBDIRECTORY(actc)
+ENDIF ()
 
 # Examples
 IF (GLHCK_BUILD_EXAMPLES)

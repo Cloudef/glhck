@@ -16,6 +16,7 @@ OPTION(GLHCK_BUILD_EXAMPLES "Build examples" ON)
 OPTION(GLHCK_BUILD_TOOLS "Build tools" OFF)
 OPTION(GLHCK_USE_GLES1 "Build for OpenGL ES 1.x" OFF)
 OPTION(GLHCK_USE_GLES2 "Build for OpenGL ES 2.x" OFF)
+OPTION(GLHCK_TRISTRIP "Build GLhck with tristripping support" OFF)
 OPTION(GLHCK_KAZMATH_DOUBLE "Define kmScalar as double" OFF)
 OPTION(GLHCK_DISABLE_TRACE "Disable GLhck's tracing functionality (EXPERIMENTAL)" OFF)
 
@@ -37,14 +38,18 @@ OPTION(GLHCK_IMPORT_JPEG "Enable JPEG importer" ON)
 # Use double-precision floating point math on kazmath and glhck
 IF (GLHCK_KAZMATH_DOUBLE)
    MESSAGE("Building GLhck with double precision")
-   ADD_DEFINITIONS(-DUSE_DOUBLE_PRECISION)
+   ADD_DEFINITIONS(-DUSE_DOUBLE_PRECISION=1)
 ENDIF ()
 
 # Disable tracing functionality
 IF (GLHCK_DISABLE_TRACE)
    MESSAGE("Building GLhck without tracing (EXPERIMENTAL)")
-   ADD_DEFINITIONS(-DGLHCK_DISABLE_TRACE)
+   ADD_DEFINITIONS(-DGLHCK_DISABLE_TRACE=1)
 ENDIF ()
+
+# Other unimplemented features
+# -DGLHCK_IMPORT_DYNAMIC
+# -DGLHCK_TEXT_FLOAT_PRECISION
 
 # These are propably temporary
 # In the end make renderers load this stuff dynamically(?)
