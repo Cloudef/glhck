@@ -1565,23 +1565,17 @@ int glhCheckSupport(const char *renderName)
       return RETURN_FAIL;
    }
 
-   /* map OES_framebuffer_object functions */
-   /* TODO: try fix glew-glhck for this */
-
-   // Broken on Pandora(?)
-   // Provide own implementation using framebuffers?
-   // glGenerateMipmap = (void*)eglGetProcAddress("glGenerateMipmapOES");
-
-   glBindFramebuffer = (void*)eglGetProcAddress("glBindFramebufferOES");
-   glGenFramebuffers = (void*)eglGetProcAddress("glGenFramebuffersOES");
-   glDeleteFramebuffers = (void*)eglGetProcAddress("glDeleteFramebuffersOES");
-   glFramebufferTexture2D = (void*)eglGetProcAddress("glFramebufferTexture2DOES");
-   glCheckFramebufferStatus = (void*)eglGetProcAddress("glCheckFramebufferStatusOES");
-   glFramebufferRenderbuffer = (void*)eglGetProcAddress("glFramebufferRenderbufferOES");
-   glBindRenderbuffer = (void*)eglGetProcAddress("glBindRenderbufferOES");
-   glGenRenderbuffers = (void*)eglGetProcAddress("glGenRenderbuffersOES");
-   glDeleteRenderbuffers = (void*)eglGetProcAddress("glDeleteRenderbuffersOES");
-   glRenderbufferStorage = (void*)eglGetProcAddress("glRenderbufferStorageOES");
+   glGenerateMipmap = glGenerateMipmapOES;
+   glBindFramebuffer = glBindFramebufferOES;
+   glGenFramebuffers = glGenFramebuffersOES;
+   glDeleteFramebuffers = glDeleteFramebuffersOES;
+   glFramebufferTexture2D = glFramebufferTexture2DOES;
+   glCheckFramebufferStatus = glCheckFramebufferStatusOES;
+   glFramebufferRenderbuffer = glFramebufferRenderbufferOES;
+   glBindRenderbuffer = glBindRenderbufferOES;
+   glGenRenderbuffers = glGenRenderbuffersOES;
+   glDeleteRenderbuffers = glDeleteRenderbuffersOES;
+   glRenderbufferStorage = glRenderbufferStorageOES;
 #endif
 
    /* fill the renderer's features struct */

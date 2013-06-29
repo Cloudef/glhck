@@ -2,6 +2,12 @@
 #define __glhck_opengl_helper_h__
 
 #include "../internal.h"
+
+#if GLHCK_USE_GLES1
+#  define GLEW_USE_LIB_ES11
+#elif GLHCK_USE_GLES2
+#  define GLEW_USE_LIB_ES20
+#endif
 #include "GL/glew.h"
 
 #ifndef GLchar
