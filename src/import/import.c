@@ -1,7 +1,6 @@
 #include "../internal.h"
 #include "import.h"
 #include <stdio.h>  /* for fopen    */
-#include <limits.h> /* for PATH_MAX */
 #include <unistd.h> /* for access   */
 #include <libgen.h> /* for dirname  */
 #include "tc.h"
@@ -309,7 +308,7 @@ char *gnu_basename(char *path)
 char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_path)
 {
    char *textureFile, *modelFolder, *modelPath;
-   char textureInModelFolder[PATH_MAX];
+   char textureInModelFolder[2048];
    CALL(0, "%s, %s", odd_texture_path, model_path);
 
    /* these are must to check */
@@ -344,7 +343,7 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
    modelFolder = dirname(modelPath);
 
    /* ok, maybe the texture is in same folder as the model? */
-   snprintf(textureInModelFolder, PATH_MAX-1, "%s/%s", modelFolder, textureFile);
+   snprintf(textureInModelFolder, sizeof(textureInModelFolder)-1, "%s/%s", modelFolder, textureFile);
 
    /* free this */
    _glhckFree(modelPath);
