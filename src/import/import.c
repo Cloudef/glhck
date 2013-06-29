@@ -5,7 +5,8 @@
 #include <libgen.h> /* for dirname  */
 
 #if GLHCK_TRISTRIP
-#  include "tc.h"
+#  include <limits.h> /* for INT_MAX  */
+#  include "tc.h" /* for ACTC */
 #endif
 
 /* tracing channel for this file */

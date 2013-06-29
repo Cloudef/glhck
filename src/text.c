@@ -1029,7 +1029,7 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size
 
       vcount = texture->geometry.vertexCount;
 #if GLHCK_TRISTRIP
-      newVcount = (vcount?vcount+6:4)
+      newVcount = (vcount?vcount+6:4);
 #else
       newVcount = vcount+6;
 #endif
