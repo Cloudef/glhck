@@ -55,7 +55,7 @@ ENDIF ()
 IF (GLHCK_TRISTRIP)
    LIST(APPEND OPT_LIBS actc)
    LIST(APPEND OPT_INCL ${actc_SOURCE_DIR}/src)
-   MESSAGE("Building GLhck with tristripping support")
+   MESSAGE("Building GLhck with ACTC triangle stripping support")
    ADD_DEFINITIONS(-DGLHCK_TRISTRIP=1)
 ENDIF ()
 
