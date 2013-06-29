@@ -859,7 +859,7 @@ typedef struct __GLHCKcontext {
 #define CALL_FMT(fmt) "\2%4d\1: \5%-20s \4%s\2(\5"fmt"\2)"
 #define RET_FMT(fmt)  "\2%4d\1: \5%-20s \4%s\2()\3 => \2(\5"fmt"\2)"
 
-#ifndef GLHCK_DISABLE_TRACE
+#if !GLHCK_DISABLE_TRACE
 #  define DEBUG(level, fmt, ...) _glhckPassDebug(THIS_FILE, __LINE__, __func__, level, GLHCK_CHANNEL, fmt, ##__VA_ARGS__)
 #  define TRACE(level) _glhckTrace(level, GLHCK_CHANNEL, __func__, TRACE_FMT,      __LINE__, THIS_FILE, __func__)
 #  define CALL(level, args, ...) _glhckTrace(level, GLHCK_CHANNEL, __func__, CALL_FMT(args), __LINE__, THIS_FILE, __func__, ##__VA_ARGS__)

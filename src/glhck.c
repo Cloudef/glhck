@@ -171,7 +171,7 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
    _glhckSetBacktrace();
 #endif
 
-#ifndef GLHCK_DISABLE_TRACE
+#if !GLHCK_DISABLE_TRACE
    /* init trace system */
    _glhckTraceInit(argc, _argv);
 #endif
@@ -214,7 +214,7 @@ GLHCKAPI void glhckContextTerminate(void)
    _glhckTrackTerminate();
 #endif
 
-#ifndef GLHCK_DISABLE_TRACE
+#if !GLHCK_DISABLE_TRACE
    /* terminate trace system */
    _glhckTraceTerminate();
 #endif

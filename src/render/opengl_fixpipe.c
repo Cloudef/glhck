@@ -129,6 +129,7 @@ static void rSetProjection(const kmMat4 *m)
 static void rSetView(const kmMat4 *m)
 {
    CALL(2, "%p", m);
+   (void)m;
    /* do nothing, we multiply against model */
 }
 
@@ -136,6 +137,7 @@ static void rSetView(const kmMat4 *m)
 static void rSetOrthographic(const kmMat4 *m)
 {
    CALL(2, "%p", m);
+   (void)m;
    /* do nothing, ... */
 }
 
