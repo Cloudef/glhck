@@ -116,7 +116,7 @@ int main(int argc, char **argv)
    if (features.render.opengl) {
       glfwWindowHint(GLFW_DEPTH_BITS, 24);
    }
-   if (!(window = glfwCreateWindow(WIDTH, HEIGHT, "display test", glfwGetPrimaryMonitor(), NULL)))
+   if (!(window = glfwCreateWindow(WIDTH, HEIGHT, "display test", NULL, NULL)))
       return EXIT_FAILURE;
 
    glfwMakeContextCurrent(window);
