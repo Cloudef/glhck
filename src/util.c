@@ -4,7 +4,6 @@
 #include <ctype.h>  /* for toupper  */
 #include <stdarg.h> /* for va_list  */
 #include <string.h> /* for strdup   */
-#include <limits.h> /* for LINE_MAX */
 
 #ifdef __APPLE__
 #   include <malloc/malloc.h>
@@ -135,11 +134,11 @@ void _glhckPuts(const char *buffer)
 void _glhckPrintf(const char *fmt, ...)
 {
    va_list args;
-   char buffer[LINE_MAX];
+   char buffer[2048];
 
-   memset(buffer, 0, LINE_MAX);
+   memset(buffer, 0, sizeof(buffer));
    va_start(args, fmt);
-   vsnprintf(buffer, LINE_MAX-1, fmt, args);
+   vsnprintf(buffer, sizeof(buffer)-1, fmt, args);
    va_end(args);
 
    _glhckPuts(buffer);

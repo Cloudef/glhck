@@ -1,7 +1,6 @@
 #include "internal.h"
 #include <stdio.h>  /* for printf   */
 #include <stdarg.h> /* for va_start */
-#include <limits.h> /* for LINE_MAX */
 
 #ifdef _WIN32
 #  include <windows.h>
@@ -123,7 +122,7 @@ void _glhckTraceTerminate(void)
 void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...)
 {
    va_list args;
-   char buffer[LINE_MAX];
+   char buffer[2048];
    (void)function;
 
    if (!GLHCKT()->channel) return;
@@ -137,9 +136,9 @@ void _glhckTrace(int level, const char *channel, const char *function, const cha
    if (!_glhckTraceIsActive(channel))
       return;
 
-   memset(buffer, 0, LINE_MAX);
+   memset(buffer, 0, sizeof(buffer));
    va_start(args, fmt);
-   vsnprintf(buffer, LINE_MAX-1, fmt, args);
+   vsnprintf(buffer, sizeof(buffer)-1, fmt, args);
    va_end(args);
 
    _glhckPuts(buffer);
@@ -150,11 +149,11 @@ void _glhckPassDebug(const char *file, int line, const char *func,
       glhckDebugLevel level, const char *channel, const char *fmt, ...)
 {
    va_list args;
-   char buffer[LINE_MAX];
+   char buffer[2048];
 
-   memset(buffer, 0, LINE_MAX);
+   memset(buffer, 0, sizeof(buffer));
    va_start(args, fmt);
-   vsnprintf(buffer, LINE_MAX-1, fmt, args);
+   vsnprintf(buffer, sizeof(buffer)-1, fmt, args);
    va_end(args);
 
    if (!GLHCKT()->debugHook) {

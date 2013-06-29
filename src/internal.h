@@ -1,10 +1,6 @@
 #ifndef __glhck_internal_h__
 #define __glhck_internal_h__
 
-#ifndef LINE_MAX
-#  define LINE_MAX 2048
-#endif
-
 #if defined(_glhck_c_)
 #  define GLHCKGLOBAL
 #else
