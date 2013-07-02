@@ -118,7 +118,6 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
 {
    glhckCamera *object;
 
-
    /* allocate camera */
    if (!(object = _glhckCalloc(1, sizeof(glhckCamera))))
       goto fail;
@@ -232,7 +231,7 @@ GLHCKAPI void glhckCameraReset(glhckCamera *object)
    kmVec3Fill(&object->view.upVector, 0, 1, 0);
    kmVec3Fill(&object->object->view.rotation, 0, 0, 0);
    kmVec3Fill(&object->object->view.target, 0, 0, 0);
-   kmVec3Fill(&object->object->view.translation, 0, 0, 0);
+   kmVec3Fill(&object->object->view.translation, 0, 0, 1);
    memset(&object->view.viewport, 0, sizeof(glhckRect));
    object->view.viewport.w = GLHCKR()->width;
    object->view.viewport.h = GLHCKR()->height;
