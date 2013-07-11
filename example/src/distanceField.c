@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef GLHCK_USE_GLES1
+#if GLHCK_USE_GLES1
 #  define GLFW_INCLUDE_ES1
-#endif
-#ifdef GLHCK_USE_GLES2
+#elif GLHCK_USE_GLES2
 #  define GLFW_INCLUDE_ES2
 #endif
 #include "GLFW/glfw3.h"
