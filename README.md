@@ -48,6 +48,7 @@ Move on.
 * [Assimp][] - Open Asset Import Library
 * [OpenCTM][] - Open Compressed Triangle Mesh file format
 * [Imlib2][] - GLhck's image format loaders are based on imlib2
+* [Kakwafont][] - GLhck's builtin font
 
 [nethck]: https://github.com/Cloudef/nethck
 [anglhck]: https://github.com/bzar/anglhck
@@ -68,3 +69,4 @@ Move on.
 [Assimp]: http://assimp.sourceforge.net/
 [OpenCTM]: http://openctm.sourceforge.net/
 [Imlib2]: http://docs.enlightenment.org/api/imlib2/html/
+[Kakwafont]: http://carpenti.iiens.net/kakwafont/
