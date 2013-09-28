@@ -282,7 +282,7 @@ void _glhckObjectFile(glhckObject *object, const char *file)
  ***/
 
 /* \brief new object */
-GLHCKAPI glhckObject *glhckObjectNew(void)
+GLHCKAPI glhckObject* glhckObjectNew(void)
 {
    glhckObject *object;
    TRACE(0);
@@ -883,8 +883,7 @@ GLHCKAPI void glhckObjectMove(glhckObject *object, const kmVec3 *move)
    CALL(2, "%p, "VEC3S, object, VEC3(move));
    assert(object && move);
 
-   kmVec3Add(&object->view.translation,
-         &object->view.translation, move);
+   kmVec3Add(&object->view.translation, &object->view.translation, move);
    object->view.update = 1;
 }
 
