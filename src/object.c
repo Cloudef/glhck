@@ -620,10 +620,19 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
 /* \brief render object */
 GLHCKAPI void glhckObjectRender(glhckObject *object)
 {
+   glhckObject *parent;
    CALL(2, "%p", object);
    assert(object);
 
-   /* does view matrix need update? */
+   /* does parents view matrices need updating? */
+   for (parent = object->parent; parent; parent = parent->parent) {
+      if (parent->view.update || parent->view.wasFlipped != GLHCKRD()->view.flippedProjection) {
+         _glhckObjectUpdateMatrix(parent);
+         parent->view.wasFlipped = GLHCKRD()->view.flippedProjection;
+      }
+   }
+
+   /* does our view matrix need update? */
    if (object->view.update || object->view.wasFlipped != GLHCKRD()->view.flippedProjection) {
       _glhckObjectUpdateMatrix(object);
       object->view.wasFlipped = GLHCKRD()->view.flippedProjection;
