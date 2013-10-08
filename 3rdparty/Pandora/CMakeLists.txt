@@ -1,0 +1,9 @@
+PROJECT(disablexi)
+
+SET(DISABLEXI_SRC
+   src/libdisablexi.c)
+
+ADD_DEFINITIONS(-fPIC)
+ADD_LIBRARY(disablexi SHARED ${DISABLEXI_SRC})
+TARGET_LINK_LIBRARIES(disablexi)
+INSTALL(TARGETS disablexi DESTINATION preload)
