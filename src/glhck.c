@@ -1,4 +1,3 @@
-#define _glhck_c_
 #include "internal.h"
 #include "render/render.h"
 #include <stdlib.h> /* for abort */
@@ -25,6 +24,9 @@ int feenableexcept(int excepts);
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GLHCK
+
+/* thread-local storage glhck context (see internal.h for more) */
+_GLHCK_TLS struct __GLHCKcontext *_glhckContext = NULL;
 
 /* dirty debug build stuff */
 #ifndef NDEBUG
@@ -149,6 +151,12 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
 {
    glhckContext *ctx, *oldCtx;
    const char ** _argv = (const char **)argv;
+
+#ifndef _GLHCK_TLS_FOUND
+   fprintf(stderr, "-!- Thread-local storage support in compiler was not detected.\n");
+   fprintf(stderr, "-!- Using multiple glhck contextes in different threads may cause unexpected behaviour.\n");
+   fprintf(stderr, "-!- If your compiler supports TLS, file a bug report!\n");
+#endif
 
    /* allocate glhck context */
    if (!(ctx = calloc(1, sizeof(glhckContext))))

@@ -1,10 +1,16 @@
 #ifndef __glhck_internal_h__
 #define __glhck_internal_h__
 
-#if defined(_glhck_c_)
-#  define GLHCKGLOBAL
+/* thread local storage attribute macro */
+#if defined(_MSC_VER)
+#  define _GLHCK_TLS __declspec(thread)
+#  define _GLHCK_TLS_FOUND
+#elif defined(__GNUC__)
+#  define _GLHCK_TLS __thread
+#  define _GLHCK_TLS_FOUND
 #else
-#  define GLHCKGLOBAL extern
+#  define _GLHCK_TLS
+#  warning "No Thread-local storage! Multi-context glhck applications may have unexpected behaviour!"
 #endif
 
 #include "glhck/glhck.h"
@@ -100,10 +106,6 @@
 #define GLHCK_CHANNEL_DRAW          "DRAW"
 #define GLHCK_CHANNEL_ALL           "ALL"
 #define GLHCK_CHANNEL_SWITCH        "DEBUG"
-
-/* internal glhck flip matrix
- * every model matrix is multiplied with this when glhckRenderFlip(1) is used */
-extern const kmMat4 _glhckFlipMatrix;
 
 /* return variables used throughout library */
 typedef enum _glhckReturnValue {
@@ -823,12 +825,13 @@ typedef struct __GLHCKcontext {
 #endif
 } __GLHCKcontext;
 
-/* define global object */
-#if defined(_glhck_c_)
-   struct __GLHCKcontext *_glhckContext = NULL;
-#else
-   GLHCKGLOBAL struct __GLHCKcontext *_glhckContext;
-#endif
+/* thread-local storage glhck context, allows in theory to use opengl on different threads.
+ * (as long as each thread has own gl context as well) */
+extern _GLHCK_TLS struct __GLHCKcontext *_glhckContext;
+
+/* internal glhck flip matrix
+ * every model matrix is multiplied with this when glhckRenderFlip(1) is used */
+extern const kmMat4 _glhckFlipMatrix;
 
 /* api check macro
  * don't use with internal api
