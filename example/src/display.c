@@ -184,6 +184,7 @@ int main(int argc, char **argv)
 #else
 //#  define ASSIMP_PATH "example/media/chaosgate/chaosgate.obj"
 //#  define ASSIMP_PATH "example/media/room/room.obj"
+//#  define ASSIMP_PATH "example/media/alletine.x"
 #  define ASSIMP_PATH "example/media/player.x"
 #endif
 
@@ -303,8 +304,6 @@ int main(int argc, char **argv)
       if ((animator = glhckAnimatorNew())) {
          glhckAnimatorAnimation(animator, glhckObjectAnimations(cube, NULL)[0]);
          glhckAnimatorInsertBones(animator, bones, numBones);
-         glhckAnimatorUpdate(animator, xspin);
-         glhckAnimatorTransform(animator, cube);
       }
    }
 
