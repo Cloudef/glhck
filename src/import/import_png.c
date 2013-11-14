@@ -140,7 +140,7 @@ int _glhckImportPNG(const char *file, _glhckImportImageStruct *import)
    if (!(lines = _glhckMalloc(h*sizeof(unsigned char*))))
       goto out_of_memory;
 
-   for (i = 0; i != h; ++i)
+   for (i = 0; i < h; ++i)
       lines[h-i-1] = (unsigned char*)importData+i*w*4;
 
    png_read_image(png, lines);
