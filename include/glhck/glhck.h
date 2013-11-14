@@ -800,14 +800,18 @@ GLHCKAPI void glhckObjectMaterial(glhckObject *object, glhckMaterial *material);
 GLHCKAPI glhckMaterial* glhckObjectGetMaterial(const glhckObject *object);
 GLHCKAPI void glhckObjectDraw(glhckObject *object);
 GLHCKAPI void glhckObjectRender(glhckObject *object);
+GLHCKAPI void glhckObjectRenderAll(glhckObject *object);
 
 /* object animation */
 GLHCKAPI int glhckObjectInsertBones(glhckObject *object, glhckBone **bones, unsigned int memb);
 GLHCKAPI glhckBone** glhckObjectBones(glhckObject *object, unsigned int *memb);
+GLHCKAPI glhckBone* glhckObjectGetBone(glhckObject *object, const char *name);
 GLHCKAPI int glhckObjectInsertAnimations(glhckObject *object, glhckAnimation **animations, unsigned int memb);
 GLHCKAPI glhckAnimation** glhckObjectAnimations(glhckObject *object, unsigned int *memb);
 
 /* object drawing options */
+GLHCKAPI void glhckObjectVertexColors(glhckObject *object, int vertexColors);
+GLHCKAPI int glhckObjectGetVertexColors(glhckObject *object);
 GLHCKAPI void glhckObjectCull(glhckObject *object, int cull);
 GLHCKAPI int glhckObjectGetCull(const glhckObject *object);
 GLHCKAPI void glhckObjectDepth(glhckObject *object, int depth);

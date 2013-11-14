@@ -614,7 +614,9 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
    }
 
    /* draw childs as well */
-   PERFORM_ON_CHILDS(object, glhckObjectDraw);
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectDraw);
+   }
 }
 
 /* \brief render object */
@@ -641,6 +643,38 @@ GLHCKAPI void glhckObjectRender(glhckObject *object)
    /* render */
    assert(object->drawFunc);
    object->drawFunc(object);
+}
+
+/* \brief render object and its children */
+GLHCKAPI void glhckObjectRenderAll(glhckObject *object)
+{
+   CALL(2, "%p", object);
+   assert(object);
+   glhckObjectRender(object);
+   PERFORM_ON_CHILDS(object, glhckObjectRender);
+}
+
+/* \brief set whether object should use vertex colors */
+GLHCKAPI void glhckObjectVertexColors(glhckObject *object, int vertexColors)
+{
+   CALL(2, "%p, %d", object, vertexColors);
+   assert(object);
+   if (vertexColors) object->flags |= GLHCK_OBJECT_VERTEX_COLOR;
+   else object->flags &= ~GLHCK_OBJECT_VERTEX_COLOR;
+
+   /* perform on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, glhckObjectVertexColors, vertexColors);
+   }
+}
+
+/* \brief get whether object should use vertex colors */
+GLHCKAPI int glhckObjectGetVertexColors(glhckObject *object)
+{
+   CALL(2, "%p", object);
+   assert(object);
+   RET(2, "%d", object->flags & GLHCK_OBJECT_VERTEX_COLOR);
+   return object->flags & GLHCK_OBJECT_VERTEX_COLOR;
 }
 
 /* \brief set whether object should be culled */
