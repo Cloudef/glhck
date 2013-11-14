@@ -278,7 +278,7 @@ static int processBonesAndAnimations(glhckObject *object, const struct aiScene *
    }
 
    /* store all bones in root object */
-   if (numBones) glhckObjectInsertBones(object, bones+oldNumBones, numBones-oldNumBones);
+   if (numBones) glhckObjectInsertBones(object, bones, numBones);
    _glhckFree(bones);
 
    /* import animations */
