@@ -30,6 +30,10 @@ int _glhckImportModel(glhckObject *object, const char *file, const glhckImportMo
 
 #if !GLHCK_IMPORT_DYNAMIC
 
+int _glhckImportGlhckm(glhckObject *object, const char *file, const glhckImportModelParameters *params,
+      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+int _glhckFormatGlhckm(const char *file);
+
 #if GLHCK_IMPORT_OPENCTM
 /* OpenCTM http://openctm.sourceforge.net/ */
 int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImportModelParameters *params,

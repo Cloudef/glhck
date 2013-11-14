@@ -99,6 +99,7 @@
 #define GLHCK_CHANNEL_FRAMEBUFFER   "FRAMEBUFFER"
 #define GLHCK_CHANNEL_HWBUFFER      "HWBUFFER"
 #define GLHCK_CHANNEL_SHADER        "SHADER"
+#define GLHCK_CHANNEL_MEMBUFFER     "MEMBUFFER"
 #define GLHCK_CHANNEL_ALLOC         "ALLOC"
 #define GLHCK_CHANNEL_RENDER        "RENDER"
 #define GLHCK_CHANNEL_TRACE         "TRACE"
@@ -252,6 +253,13 @@ typedef enum _glhckShaderVariableType {
    GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY,
    GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER,
 } _glhckShaderVariableType;
+
+/* glhck memory buffer endianess */
+typedef enum _glhckBufferEndianType {
+   GLHCK_BUFFER_ENDIAN_LITTLE = 0,
+   GLHCK_BUFFER_ENDIAN_BIG    = 1,
+   GLHCK_BUFFER_ENDIAN_NATIVE = 2,
+} _glhckBufferEndianType;
 
 /* mark internal type reference counted.
  * takes variable names refCounter and next in struct.
@@ -548,6 +556,14 @@ typedef struct _glhckShader {
    REFERENCE_COUNTED(_glhckShader);
    unsigned int program;
 } _glhckShader;
+
+/* glhck memory buffer */
+typedef struct _glhckBuffer {
+   size_t size;
+   void *buffer, *curpos;
+   char endianess;
+   char freeBuffer;
+} _glhckBuffer;
 
 #undef REFERENCE_COUNTED
 
@@ -909,6 +925,20 @@ void _glhckStrsplitClear(char ***dst);
 char* _glhckStrupstr(const char *hay, const char *needle);
 int _glhckStrupcmp(const char *hay, const char *needle);
 int _glhckStrnupcmp(const char *hay, const char *needle, size_t len);
+
+/* memory buffers */
+_glhckBuffer* _glhckBufferNewFromPointer(void *ptr, size_t size, _glhckBufferEndianType endianess);
+_glhckBuffer* _glhckBufferNew(size_t size, _glhckBufferEndianType endianess);
+void _glhckBufferFree(_glhckBuffer *buf);
+int _glhckBufferIsNativeEndian(_glhckBuffer *buf);
+size_t _glhckBufferRead(void *dst, size_t size, size_t memb, _glhckBuffer *buf);
+int _glhckBufferReadUInt8(_glhckBuffer *buf, unsigned char *i);
+int _glhckBufferReadInt8(_glhckBuffer *buf, char *i);
+int _glhckBufferReadUInt16(_glhckBuffer *buf, unsigned short *i);
+int _glhckBufferReadInt16(_glhckBuffer *buf, short *i);
+int _glhckBufferReadUInt32(_glhckBuffer *buf, unsigned int *i);
+int _glhckBufferReadInt32(_glhckBuffer *buf, int *i);
+int _glhckBufferReadString(_glhckBuffer *buf, size_t bytes, char **str);
 
 /* texture packing functions */
 void _glhckTexturePackerCount(_glhckTexturePacker *tp, short textureCount);

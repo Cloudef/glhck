@@ -16,6 +16,7 @@ SET(GLHCK_SRC
    framebuffer.c
    hwbuffer.c
    shader.c
+   membuffer.c
    texture_packer.c
    geometry/cube.c
    geometry/sphere.c
@@ -27,7 +28,8 @@ SET(GLHCK_SRC
    render/render.c
    render/helper_stub.c
    render/stub.c
-   import/import.c)
+   import/import.c
+   import/import_glhck.c)
 
 IF (GLHCK_USE_GLES1)
    MESSAGE("Building GLhck with the OpenGL fixed pipeline renderer")

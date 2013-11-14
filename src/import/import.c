@@ -18,6 +18,10 @@ typedef enum _glhckFormat {
    FORMAT_OCTM,
    FORMAT_PMD,
    FORMAT_ASSIMP,
+   FORMAT_GLHCKM,
+
+   /* animations */
+   FORMAT_GLHCKA,
 
    /* images */
    FORMAT_PNG,
@@ -61,6 +65,7 @@ typedef struct _glhckImageImporter
 
 /* Model importers */
 static _glhckModelImporter modelImporters[] = {
+   REGISTER_IMPORTER(FORMAT_GLHCKM, _glhckFormatGlhckm, _glhckImportGlhckm, "glhckImportGlhckm"),
 #if GLHCK_IMPORT_OPENCTM
    REGISTER_IMPORTER(FORMAT_OCTM, _glhckFormatOpenCTM, _glhckImportOpenCTM, "glhckImportOpenCTM"),
 #endif
