@@ -186,7 +186,7 @@ int _glhckImportTGA(const char *file, _glhckImportImageStruct *import)
 
    /* non RLE compressed data */
    if (!rle) {
-      for (i = 0; i != h*w && bufptr+bpp/8 <= bufend; ++i) {
+      for (i = 0; i < h*w && bufptr+bpp/8 <= bufend; ++i) {
          switch (bpp) {
             /* 32-bit BGRA */
             case 32:
@@ -229,7 +229,7 @@ int _glhckImportTGA(const char *file, _glhckImportImageStruct *import)
       for (i = 0; i*2 < h; ++i) {
          int index1 = i*w*4;
          int index2 = (h-1-i)*w*4;
-         for (i2 = w*4; i2 != 0; --i2) {
+         for (i2 = w*4; i2 > 0; --i2) {
             unsigned char temp = importData[index1];
             importData[index1] = importData[index2];
             importData[index2] = temp;
@@ -270,7 +270,7 @@ bad_dimensions:
    DEBUG(GLHCK_DBG_ERROR, "TGA image has invalid dimension %dx%d", w, h);
 fail:
    IFDO(fclose, f);
-   IFDO(_glhckFree, import);
+   IFDO(_glhckFree, importData);
    IFDO(_glhckFree, seg);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
