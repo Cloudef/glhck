@@ -1,5 +1,6 @@
 /* JPEG loader taken from imlib2 */
 
+#define _XOPEN_SOURCE
 #include "../internal.h"
 #include "import.h"
 #include <stdio.h>
@@ -38,7 +39,7 @@ static void _JPEGErrorHandler2(j_common_ptr cinfo, int msg_level)
 /* \brief check if file is JPEG */
 int _glhckFormatJPEG(const char *file)
 {
-   FILE *f;
+   FILE *f = NULL;
    jpegErrorStruct jerr;
    struct jpeg_decompress_struct cinfo;
    CALL(0, "%s", file);
@@ -93,7 +94,7 @@ fail:
 /* \brief import JPEG images */
 int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
 {
-   FILE *f;
+   FILE *f = NULL;
    char decompress = 0;
    unsigned int w = 0, h = 0, loc = 0, i, i2;
    unsigned char *importData = NULL;
@@ -148,9 +149,9 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
       goto out_of_memory;
 
    /* read scanlines */
-   while (cinfo.output_scanline != cinfo.output_height)  {
+   while (cinfo.output_scanline < cinfo.output_height)  {
       jpeg_read_scanlines(&cinfo, &row_pointer, 1);
-      for (i = 0; i != (w * cinfo.output_components); ++i) {
+      for (i = 0; i < (w * cinfo.output_components); ++i) {
          importData[loc++] = row_pointer[i];
       }
    }
@@ -159,7 +160,7 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
    for (i = 0; i*2 < h; ++i) {
       int index1 = i*w*cinfo.output_components;
       int index2 = (h-1-i)*w*cinfo.output_components;
-      for (i2 = w*cinfo.output_components; i2 != 0; --i2) {
+      for (i2 = w*cinfo.output_components; i2 > 0; --i2) {
          unsigned char temp = importData[index1];
          importData[index1] = importData[index2];
          importData[index2] = temp;
@@ -203,7 +204,7 @@ fail:
       jpeg_destroy_decompress(&cinfo);
    }
    IFDO(_glhckFree, row_pointer);
-   IFDO(_glhckFree, import);
+   IFDO(_glhckFree, importData);
    IFDO(fclose, f);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
