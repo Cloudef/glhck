@@ -188,7 +188,7 @@ static void compute_color_line_STDEV(
       int channels,
       float point[3], float direction[3])
 {
-   unsigned int i;
+   int i;
    const float inv_16 = 1.0f / 16.0f;
    float sum_r = 0.0f, sum_g = 0.0f, sum_b = 0.0f;
    float sum_rr = 0.0f, sum_gg = 0.0f, sum_bb = 0.0f;
