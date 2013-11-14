@@ -263,7 +263,12 @@ static int processBonesAndAnimations(glhckObject *object, const struct aiScene *
 
    for (i = 0; i != sc->mNumMeshes; ++i) {
       mesh = sc->mMeshes[i];
-      if (!(child = findObject(object, mesh->mName.data))) continue;
+
+      /* FIXME: UGLY */
+      char pointer[16];
+      snprintf(pointer, sizeof(pointer), "%p", mesh);
+      if (!(child = findObject(object, pointer))) continue;
+
       if (mesh->mNumBones)  {
          oldNumBones = numBones;
          processBones(sc->mRootNode, sc->mRootNode, mesh, bones, &numBones);
@@ -558,7 +563,12 @@ static int processModel(const char *file, glhckObject *object,
          /* build model */
          if (buildModel(current, numIndices,  numVertices,
                   indices, vertexData, itype, vtype) == RETURN_OK) {
-            _glhckObjectFile(current, mesh->mName.data);
+
+            /* FIXME: UGLY */
+            char pointer[16];
+            snprintf(pointer, sizeof(pointer), "%p", mesh);
+            _glhckObjectFile(current, pointer);
+
             if (material) glhckObjectMaterial(current, material);
             if (!(current = glhckObjectNew())) goto fail;
             glhckObjectAddChild(object, current);
