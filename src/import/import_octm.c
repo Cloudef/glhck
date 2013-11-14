@@ -121,7 +121,7 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImport
       }
    }
 
-   for (i = 0; i != numAttribs; ++i) {
+   for (i = 0; i < numAttribs; ++i) {
       attribName = ctmGetAttribMapString(context, CTM_ATTRIB_MAP_1 + i, CTM_NAME);
       if (!strcmp(attribName, "Color")) {
          colors = CTM_CALL(context, ctmGetFloatArray(context, CTM_ATTRIB_MAP_1 + i));
@@ -136,7 +136,7 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImport
    if (!(vertexData = _glhckCalloc(num_vertices, sizeof(glhckImportVertexData))))
       goto fail;
 
-   for (i = 0; i != numTriangles; ++i) {
+   for (i = 0; i < numTriangles; ++i) {
       ix = indices[i];
 
       vertexData[ix].vertex.x = vertices[ix*3+0];
