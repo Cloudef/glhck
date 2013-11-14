@@ -928,6 +928,9 @@ void _glhckObjectFile(_glhckObject *object, const char *file);
 void _glhckObjectInsertToQueue(_glhckObject *object);
 void _glhckObjectUpdateBoxes(glhckObject *object);
 
+/* bones */
+void _glhckBoneTransformObject(glhckObject *object, int updateBones);
+
 /* camera */
 void _glhckCameraWorldUpdate(int width, int height);
 

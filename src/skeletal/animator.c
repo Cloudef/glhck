@@ -4,29 +4,19 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_ANIMATOR
 
-#define PERFORM_ON_CHILDS(animator, parent, function, ...) \
-   { unsigned int _cbc_;                                   \
-   for (_cbc_ = 0; _cbc_ != parent->numChilds; ++_cbc_)    \
-      function(animator, parent->childs[_cbc_], ##__VA_ARGS__); }
+/* TODO: Eventually do interpolation using splines for even smoother animation
+ * We can also safe some keyframes in glhckm format by doing this. */
 
 /* \brief interpolate beetwen two vector keys */
 static void _glhckAnimatorInterpolateVectorKeys(kmVec3 *out, float time, float duration,
       const glhckAnimationVectorKey *current, const glhckAnimationVectorKey *next)
 {
    float interp;
-   float diffTime = next->time - current->time;
    assert(out);
-
-   /* TODO: fix interpolation */
-   if (diffTime < 0.0f) diffTime += duration;
-   if (0 && diffTime > 0.0f) {
-      interp = (time - current->time)/diffTime;
-      out->x = current->vector.x + (next->vector.x - current->vector.x) * interp;
-      out->y = current->vector.y + (next->vector.y - current->vector.y) * interp;
-      out->z = current->vector.z + (next->vector.z - current->vector.z) * interp;
-   } else {
-      memcpy(out, &current->vector, sizeof(kmVec3));
-   }
+   interp = (time < next->time ? time/next->time : time/(duration+next->time));
+   out->x = current->vector.x + (next->vector.x - current->vector.x) * interp;
+   out->y = current->vector.y + (next->vector.y - current->vector.y) * interp;
+   out->z = current->vector.z + (next->vector.z - current->vector.z) * interp;
 }
 
 /* \brief interpolate beetwen two quartenions keys */
@@ -34,46 +24,17 @@ static void _glhckAnimatorInterpolateQuaternionKeys(kmQuaternion *out, float tim
       const glhckAnimationQuaternionKey *current, const glhckAnimationQuaternionKey *next)
 {
    float interp;
-   float diffTime = next->time - current->time;
    assert(out);
-
-   /* TODO: fix interpolation */
-   if (diffTime < 0.0f) diffTime += duration;
-   if (0 && diffTime > 0.0f) {
-      interp = (time - current->time)/diffTime;
-      kmQuaternionSlerp(out, &current->quaternion, &next->quaternion, interp);
-   } else {
-      memcpy(out, &current->quaternion, sizeof(kmQuaternion));
-   }
-}
-
-/* \brief update bone structure's transformed matrices */
-static void _glhckAnimatorUpdateBones(glhckAnimator *object)
-{
-   glhckBone *bone, *parent;
-   unsigned int n;
-   assert(object);
-
-   /* 1. Transform bone to 0,0,0 using offset matrix so we can transform it locally
-    * 2. Apply all transformations from bones and their parent bones
-    * 3. We'll end up back to bone space with the transformed matrix */
-
-   for (n = 0; n != object->numBones; ++n) {
-      bone = parent = object->bones[n];
-      memcpy(&bone->transformedMatrix, &bone->offsetMatrix, sizeof(kmMat4));
-      for (; parent; parent = parent->parent)
-         kmMat4Multiply(&bone->transformedMatrix, &parent->transformationMatrix, &bone->transformedMatrix);
-   }
+   interp = (time < next->time ? time/next->time : time/(duration+next->time));
+   kmQuaternionSlerp(out, &current->quaternion, &next->quaternion, interp);
 }
 
 /* \brief lookup bone from animator */
 static glhckBone* _glhckAnimatorLookupBone(glhckAnimator *object, const char *name)
 {
    unsigned int i;
-   for (i = 0; i != object->numBones; ++i) {
-      if (!strcmp(object->bones[i]->name, name)) return object->bones[i];
-   }
-   return NULL;
+   for (i = 0; i != object->numBones && strcmp(object->bones[i]->name, name); ++i);
+   return (i<object->numBones?object->bones[i]:NULL);
 }
 
 /* \brief resetup animation after bone/animation change */
@@ -81,9 +42,8 @@ static void _glhckAnimatorSetupAnimation(glhckAnimator *object)
 {
    unsigned int i;
    if (!object->bones || !object->animation) return;
-   for (i = 0; i != object->animation->numNodes; ++i) {
+   for (i = 0; i != object->animation->numNodes; ++i)
       object->previousNodes[i].bone = _glhckAnimatorLookupBone(object, object->animation->nodes[i]->boneName);
-   }
    object->lastTime = FLT_MAX;
 }
 
@@ -226,12 +186,6 @@ GLHCKAPI glhckBone** glhckAnimatorBones(glhckAnimator *object, unsigned int *mem
 /* \brief transform object with the animation */
 GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject)
 {
-   glhckBone *bone;
-   unsigned int i, w;
-   glhckVertexWeight *weight;
-   kmMat4 bias, scale, transformedVertex;
-   kmMat3 transformedNormal;
-   glhckVector3f zero, bindVertex, bindNormal, currentVertex, currentNormal;
    CALL(2, "%p, %p", object, gobject);
    assert(object && gobject);
 
@@ -239,66 +193,12 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
    if (gobject->transformedGeometryTime == object->lastTime)
       return;
 
-   /* we are root, perform this transform on childs as well */
-   if (gobject->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, gobject, glhckAnimatorTransform);
-   }
-
-   /* ah, we can't do this ;_; */
-   if (!gobject->geometry || !gobject->bones) return;
-
-   /* update bone transformations */
-   if (object->dirty) {
-      _glhckAnimatorUpdateBones(object);
-      object->dirty = 0;
-   }
-
-   /* CPU transformation path.
-    * Since glhck supports multiple vertex formats, this path is bit more expensive than usual.
-    * GPU transformation should be cheaper. */
-
-   /* NOTE: at the moment CPU transformation only works with floating point vertex types */
-
-   memset(&zero, 0, sizeof(glhckVector3f));
-   if (!gobject->bindGeometry) gobject->bindGeometry = _glhckGeometryCopy(gobject->geometry);
-   for (i = 0; i != (unsigned int)gobject->geometry->vertexCount; ++i) {
-      glhckGeometrySetVertexDataForIndex(gobject->geometry, i, &zero, &zero, NULL, NULL);
-   }
-
-   kmMat4Translation(&bias, gobject->geometry->bias.x, gobject->geometry->bias.y, gobject->geometry->bias.z);
-   kmMat4Scaling(&scale, gobject->geometry->scale.x, gobject->geometry->scale.y, gobject->geometry->scale.z);
-   for (i = 0; i != gobject->numBones; ++i) {
-      bone = gobject->bones[i];
-      kmMat4Multiply(&transformedVertex, &scale, &bone->transformedMatrix);
-      kmMat4Multiply(&transformedVertex, &transformedVertex, &bias);
-      kmMat3AssignMat4(&transformedNormal, &transformedVertex);
-      for (w = 0; w != bone->numWeights; ++w) {
-         weight = &bone->weights[w];
-         glhckGeometryGetVertexDataForIndex(gobject->bindGeometry, weight->vertexIndex, &bindVertex,
-               &bindNormal, NULL, NULL);
-         glhckGeometryGetVertexDataForIndex(gobject->geometry, weight->vertexIndex, &currentVertex,
-               &currentNormal, NULL, NULL);
-         kmVec3MultiplyMat4((kmVec3*)&bindVertex, (kmVec3*)&bindVertex, &transformedVertex);
-         kmVec3MultiplyMat3((kmVec3*)&bindNormal, (kmVec3*)&bindNormal, &transformedNormal);
-
-         currentVertex.x += bindVertex.x * weight->weight;
-         currentVertex.y += bindVertex.y * weight->weight;
-         currentVertex.z += bindVertex.z * weight->weight;
-         currentNormal.x += bindNormal.x * weight->weight;
-         currentNormal.y += bindNormal.y * weight->weight;
-         currentNormal.z += bindNormal.z * weight->weight;
-
-         glhckGeometrySetVertexDataForIndex(gobject->geometry, weight->vertexIndex, &currentVertex,
-               &currentNormal, NULL, NULL);
-      }
-   }
-
-   /* update bounding box for object */
-   glhckGeometryCalculateBB(gobject->geometry, &gobject->view.bounding);
-   _glhckObjectUpdateBoxes(gobject);
+   /* transform the object */
+   _glhckBoneTransformObject(gobject, object->dirty);
 
    /* store the time for transformation */
    gobject->transformedGeometryTime = object->lastTime;
+   object->dirty = 0;
 }
 
 /* \brief update the skeletal animation to next tick */
@@ -340,14 +240,13 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
 
       /* reset */
       memset(&currentTranslation, 0, sizeof(kmVec3));
-      memset(&currentScaling, 0, sizeof(kmVec3));
+      kmVec3Fill(&currentScaling, 1.0f, 1.0f, 1.0f);
       kmQuaternionIdentity(&currentRotation);
 
       /* translate using translation keys */
       if (node->translations) {
          frame = (time >= object->lastTime?lastNode->translationFrame:0);
-         for (; frame < node->numTranslations-1; ++frame)
-            if (time < node->translations[frame].time) break;
+         for (; frame < node->numTranslations-1 && time > node->translations[frame].time; ++frame);
 
          nextFrame = (frame+1)%node->numTranslations;
          _glhckAnimatorInterpolateVectorKeys(&currentTranslation, time, duration,
@@ -358,8 +257,7 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
       /* scale using scaling keys */
       if (node->scalings) {
          frame = (time >= object->lastTime?lastNode->scalingFrame:0);
-         for (; frame < node->numScalings-1; ++frame)
-            if (time < node->scalings[frame].time) break;
+         for (; frame < node->numScalings-1 && time > node->scalings[frame].time; ++frame);
 
          nextFrame = (frame+1)%node->numScalings;
          _glhckAnimatorInterpolateVectorKeys(&currentScaling, time, duration,
@@ -370,8 +268,7 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
       /* rotate using rotation keys */
       if (node->rotations) {
          frame = (time >= object->lastTime?lastNode->rotationFrame:0);
-         for (; frame < node->numRotations-1; ++frame)
-            if (time < node->rotations[frame].time) break;
+         for (; frame < node->numRotations-1 && time > node->rotations[frame].time; ++frame);
 
          nextFrame = (frame+1)%node->numRotations;
          _glhckAnimatorInterpolateQuaternionKeys(&currentRotation, time, duration,

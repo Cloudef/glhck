@@ -3,6 +3,97 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_BONE
 
+#define PERFORM_ON_CHILDS(parent, function, ...) \
+   { unsigned int _cbc_;                                   \
+   for (_cbc_ = 0; _cbc_ != parent->numChilds; ++_cbc_)    \
+      function(parent->childs[_cbc_], ##__VA_ARGS__); }
+
+/* \brief update bone structure's transformed matrices */
+static void _glhckBoneUpdateBones(glhckBone **bones, unsigned int memb)
+{
+   glhckBone *parent;
+   unsigned int n;
+   assert(bones);
+
+   /* 1. Transform bone to 0,0,0 using offset matrix so we can transform it locally
+    * 2. Apply all transformations from parent bones
+    * 3. We'll end up back to bone space with the transformed matrix */
+
+   for (n = 0; n != memb; ++n) {
+      memcpy(&bones[n]->transformedMatrix, &bones[n]->transformationMatrix, sizeof(kmMat4));
+      for (parent = bones[n]->parent; parent; parent = parent->parent)
+         kmMat4Multiply(&bones[n]->transformedMatrix, &parent->transformationMatrix, &bones[n]->transformedMatrix);
+   }
+}
+
+/* \brief transform object with it's bones */
+void _glhckBoneTransformObject(glhckObject *object, int updateBones)
+{
+   glhckBone *bone;
+   unsigned int i, w;
+   glhckVertexWeight *weight;
+   kmMat3 transformedNormal;
+   kmMat4 bias, scale, transformedVertex, boneMatrix;
+   glhckVector3f bindVertex, bindNormal, currentVertex, currentNormal;
+   static glhckVector3f zero = {0,0,0};
+
+   /* we are root, perform this transform on childs as well */
+   if (object->flags & GLHCK_OBJECT_ROOT) {
+      PERFORM_ON_CHILDS(object, _glhckBoneTransformObject, updateBones);
+   }
+
+   /* ah, we can't do this ;_; */
+   if (!object->geometry || !object->bones) return;
+
+   /* update bones, if requested */
+   if (updateBones) _glhckBoneUpdateBones(object->bones, object->numBones);
+
+   /* CPU transformation path.
+    * Since glhck supports multiple vertex formats, this path is bit more expensive than usual.
+    * GPU transformation should be cheaper. */
+
+   /* NOTE: at the moment CPU transformation only works with floating point vertex types */
+
+   if (!object->bindGeometry) object->bindGeometry = _glhckGeometryCopy(object->geometry);
+   for (i = 0; i != (unsigned int)object->geometry->vertexCount; ++i) {
+      glhckGeometrySetVertexDataForIndex(object->geometry, i, &zero, &zero, NULL, NULL);
+   }
+
+   kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
+   kmMat4Scaling(&scale, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
+   for (i = 0; i != object->numBones; ++i) {
+      bone = object->bones[i];
+      kmMat4Multiply(&boneMatrix, &bone->transformedMatrix, &bone->offsetMatrix);
+      kmMat4Multiply(&transformedVertex, &scale, &boneMatrix);
+      kmMat4Multiply(&transformedVertex, &transformedVertex, &bias);
+      kmMat3AssignMat4(&transformedNormal, &transformedVertex);
+      for (w = 0; w != bone->numWeights; ++w) {
+         weight = &bone->weights[w];
+
+         glhckGeometryGetVertexDataForIndex(object->bindGeometry, weight->vertexIndex, &bindVertex,
+               &bindNormal, NULL, NULL);
+         glhckGeometryGetVertexDataForIndex(object->geometry, weight->vertexIndex, &currentVertex,
+               &currentNormal, NULL, NULL);
+         kmVec3MultiplyMat4((kmVec3*)&bindVertex, (kmVec3*)&bindVertex, &transformedVertex);
+         kmVec3MultiplyMat3((kmVec3*)&bindNormal, (kmVec3*)&bindNormal, &transformedNormal);
+
+         currentVertex.x += bindVertex.x * weight->weight;
+         currentVertex.y += bindVertex.y * weight->weight;
+         currentVertex.z += bindVertex.z * weight->weight;
+         currentNormal.x += bindNormal.x * weight->weight;
+         currentNormal.y += bindNormal.y * weight->weight;
+         currentNormal.z += bindNormal.z * weight->weight;
+
+         glhckGeometrySetVertexDataForIndex(object->geometry, weight->vertexIndex, &currentVertex,
+               &currentNormal, NULL, NULL);
+      }
+   }
+
+   /* update bounding box for object */
+   glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
+   _glhckObjectUpdateBoxes(object);
+}
+
 /* \brief allocate new bone object */
 GLHCKAPI glhckBone* glhckBoneNew(void)
 {
@@ -148,7 +239,6 @@ GLHCKAPI void glhckBoneOffsetMatrix(glhckBone *object, const kmMat4 *offsetMatri
    CALL(2, "%p, %p", object, offsetMatrix);
    assert(object && offsetMatrix);
    memcpy(&object->offsetMatrix, offsetMatrix, sizeof(kmMat4));
-   memcpy(&object->transformedMatrix, offsetMatrix, sizeof(kmMat4));
 }
 
 /* \brief get offset matrix from bone */

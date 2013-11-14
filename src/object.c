@@ -409,7 +409,6 @@ GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
    glhckObjectMaterial(object, NULL);
 
    /* free geometry */
-   IFDO(_glhckGeometryFree, object->bindGeometry);
    IFDO(_glhckGeometryFree, object->geometry);
 
    /* remove from world */
@@ -1065,6 +1064,9 @@ GLHCKAPI int glhckObjectInsertBones(glhckObject *object, glhckBone **bones, unsi
    if (object->bones) {
       for (i = 0; i != object->numBones; ++i)
          glhckBoneRef(object->bones[i]);
+      _glhckBoneTransformObject(object, 1);
+   } else {
+      IFDO(_glhckGeometryFree, object->bindGeometry);
    }
 
    RET(0, "%d", RETURN_OK);
@@ -1082,6 +1084,14 @@ GLHCKAPI glhckBone** glhckObjectBones(glhckObject *object, unsigned int *memb)
    if (memb) *memb = object->numBones;
    RET(2, "%p", object->bones);
    return object->bones;
+}
+
+/* \brief get bone by name */
+GLHCKAPI glhckBone* glhckObjectGetBone(glhckObject *object, const char *name)
+{
+   unsigned int i;
+   for (i = 0; i != object->numBones && strcmp(glhckBoneGetName(object->bones[i]), name); ++i);
+   return (i<object->numBones?object->bones[i]:NULL);
 }
 
 /* \brief insert animations to object */

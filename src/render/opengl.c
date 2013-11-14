@@ -652,17 +652,22 @@ static void rAABBRender(const glhckObject *object)
 static void rBonesRender(const glhckObject *object)
 {
    unsigned int i;
-   const kmVec3 zero = {0,0,0};
-   if (!object->bones || !object->geometry) return;
-   kmVec3 points[object->numBones];
-
    kmMat4 bias, scale, transform;
+   kmVec3 *points;
+
+   if (!object->bones || !object->geometry) return;
+
+   if (!(points = _glhckMalloc(object->numBones * sizeof(kmVec3))))
+      return;
+
    kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
    kmMat4Scaling(&transform, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
    kmMat4Inverse(&scale, &transform);
    for (i = 0; i != object->numBones; ++i) {
       kmMat4Multiply(&transform, &scale, &object->bones[i]->transformedMatrix);
-      kmVec3Transform(&points[i], &zero, &transform);
+      points[i].x = transform.mat[12];
+      points[i].y = transform.mat[13];
+      points[i].z = transform.mat[14];
    }
 
    GL_CALL(glPointSize(5.0f));
@@ -673,6 +678,8 @@ static void rBonesRender(const glhckObject *object)
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){255,0,0,255}));
    GL_CALL(glDrawArrays(GL_POINTS, 0, object->numBones));
    GL_CALL(glEnable(GL_DEPTH_TEST));
+
+   _glhckFree(points);
 }
 
 /* helper for checking state changes */
