@@ -77,7 +77,6 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
 
    /* store bone name */
    glhckBoneName(bone, boneNd->mName.data);
-   printf(":: BONE: %s\n", glhckBoneGetName(bone));
 
    /* skip this part by creating dummy bone, if this information is not found */
    if ((assimpBone = findBone(mesh, bone->name))) {
@@ -171,7 +170,6 @@ static int processAnimations(glhckObject *object, const struct aiScene *sc)
       glhckAnimationTicksPerSecond(animation, assimpAnimation->mTicksPerSecond);
       glhckAnimationDuration(animation, assimpAnimation->mDuration);
       glhckAnimationName(animation, assimpAnimation->mName.data);
-      printf(":: ANIMATION: %s\n", glhckAnimationGetName(animation));
 
       glhckAnimationNode *nodes[assimpAnimation->mNumChannels];
       for (n = 0, numNodes = 0; n != assimpAnimation->mNumChannels; ++n) {
