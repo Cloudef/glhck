@@ -3,37 +3,68 @@
 
 #include "../internal.h"
 #include "import.h"
-#include <stdio.h>
+#include <stdio.h>  /* for FILE */
+#include <stdint.h> /* for standard integers */
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
+
+/* \brief read BMP header */
+int _readBMPHeader(FILE *f, int *w, int *h, unsigned short *bpp, size_t *dataSize)
+{
+   static const size_t headerSize = 2 + 16 + sizeof(int32_t) + sizeof(int32_t) + sizeof(uint16_t) + sizeof(uint16_t);
+   _glhckBuffer *buf;
+   assert(f && w && h && bpp && dataSize);
+
+   if (!(buf = _glhckBufferNew(headerSize, GLHCK_BUFFER_ENDIAN_LITTLE)))
+      goto fail;
+
+   if (fread(buf->buffer, 1, headerSize, f) != headerSize)
+      goto fail;
+
+   if (memcmp(buf->buffer, "BM", 2) != 0)
+      goto fail;
+
+   /* FIXME: maybe do function _glhckBufferSeek? */
+   buf->curpos += 2 + 16;
+
+   if (_glhckBufferReadInt32(buf, w) != RETURN_OK)
+      goto fail;
+
+   if (_glhckBufferReadInt32(buf, h) != RETURN_OK)
+      goto fail;
+
+   buf->curpos += sizeof(uint16_t);
+
+   if (_glhckBufferReadUInt16(buf, bpp) != RETURN_OK)
+      goto fail;
+
+   *dataSize = *w * *h * 3;
+   NULLDO(_glhckBufferFree, buf);
+   return RETURN_OK;
+
+fail:
+   IFDO(_glhckBufferFree, buf);
+   return RETURN_FAIL;
+}
 
 /* \brief check if file is BMP */
 int _glhckFormatBMP(const char *file)
 {
    FILE *f;
+   int w, h;
    unsigned short bpp;
-   unsigned char header[2];
+   size_t dataSize;
    CALL(0, "%s", file);
 
    /* open BMP */
    if (!(f = fopen(file, "rb")))
       goto read_fail;
 
-   /* check header */
-   memset(header, 0, sizeof(header));
-   if (fread(header, 1, 2, f) != 2)
+   if (_readBMPHeader(f, &w, &h, &bpp, &dataSize) != RETURN_OK)
       goto fail;
 
-   if (header[0] != 'B' || header[1] != 'M')
-      goto fail;
-
-   /* check bpp */
-   fseek(f, 16+4+4+2, SEEK_CUR);
-   if (fread(&bpp, 2, 1, f) != 1)
-      goto fail;
-
-   if (bpp != 24)
-      goto fail;
+   if (!IMAGE_DIMENSIONS_OK(w, h) || bpp != 24 || dataSize <= 0)
+      goto bmp_not_supported;
 
    /* close file */
    NULLDO(fclose, f);
@@ -41,6 +72,9 @@ int _glhckFormatBMP(const char *file)
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
+bmp_not_supported:
+   DEBUG(GLHCK_DBG_ERROR, "BMP format (%dx%dx%d) not supported", w, h, bpp);
+   goto fail;
 read_fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s", file);
 fail:
@@ -53,27 +87,22 @@ fail:
 int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
 {
    FILE *f;
-   int i, i2, w, h, dataSize;
+   size_t dataSize, i, i2;
+   int w, h;
    unsigned short bpp;
    unsigned char bgr[3], *importData = NULL;
+   _glhckBuffer *buf = NULL;
    CALL(0, "%s, %p", file, import);
 
    /* open BMP */
    if (!(f = fopen(file, "rb")))
       goto read_fail;
 
-   fseek(f, 18, SEEK_CUR);
-   if (fread(&w, 4, 1, f) != 1)
-      goto not_possible;
-   if (fread(&h, 4, 1, f) != 1)
-      goto not_possible;
-   fseek(f, 2, SEEK_CUR);
-   if (fread(&bpp, 2, 1, f) != 1)
-      goto not_possible;
-   fseek(f, 24, SEEK_CUR);
+   if (_readBMPHeader(f, &w, &h, &bpp, &dataSize) != RETURN_OK)
+      goto fail;
 
-   if (bpp != 24) goto not_24bpp;
-   dataSize = w*h*3;
+   if (bpp != 24 || dataSize <= 0)
+      goto bmp_not_supported;
 
    if (!IMAGE_DIMENSIONS_OK(w, h))
       goto bad_dimensions;
@@ -81,9 +110,15 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
    if (!(importData = _glhckMalloc(w*h*4)))
       goto out_of_memory;
 
+   if (!(buf = _glhckBufferNew(dataSize, GLHCK_BUFFER_ENDIAN_LITTLE)))
+      goto out_of_memory;
+
+   if (fread(buf->buffer, 1, dataSize, f) != dataSize)
+      goto not_possible;
+
    /* read 24 bpp BMP data */
    for (i = 0, i2 = 0; i+3 <= dataSize; i+=3) {
-      if (fread(bgr, 1, 3, f) != 3)
+      if (_glhckBufferRead(bgr, 1, 3, buf) != 3)
          goto not_possible;
 
       importData[i2+0] = bgr[2];
@@ -93,12 +128,14 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
       i2+=4;
    }
 
+   NULLDO(_glhckBufferFree, buf);
+
 #if 0
    /* invert */
    for (i = 0; i*2 < h; ++i) {
       int index1 = i*w*4;
       int index2 = (h-1-i)*w*4;
-      for (i2 = w*4; i2 != 0; --i2) {
+      for (i2 = w*4; i2 > 0; --i2) {
          unsigned char temp = importData[index1];
          importData[index1] = importData[index2];
          importData[index2] = temp;
@@ -121,11 +158,11 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
 read_fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s", file);
    goto fail;
+bmp_not_supported:
+   DEBUG(GLHCK_DBG_ERROR, "BMP format (%dx%dx%d) not supported", w, h, bpp);
+   goto fail;
 not_possible:
    DEBUG(GLHCK_DBG_ERROR, "Assumed BMP file '%s' has too small filesize", file);
-   goto fail;
-not_24bpp:
-   DEBUG(GLHCK_DBG_ERROR, "BMP loader only supports 24bpp bmps");
    goto fail;
 out_of_memory:
    DEBUG(GLHCK_DBG_ERROR, "Out of memory, won't load file: %s", file);
@@ -133,7 +170,8 @@ out_of_memory:
 bad_dimensions:
    DEBUG(GLHCK_DBG_ERROR, "BMP image has invalid dimension %dx%d", w, h);
 fail:
-   IFDO(_glhckFree, import);
+   IFDO(_glhckBufferFree, buf);
+   IFDO(_glhckFree, importData);
    IFDO(fclose, f);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
