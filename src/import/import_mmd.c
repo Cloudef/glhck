@@ -12,22 +12,27 @@
 int _glhckFormatPMD(const char *file)
 {
    FILE *f;
-   mmd_header header;
+   mmd_data *mmd = NULL;
    CALL(0, "%s", file);
 
    if (!(f = fopen(file, "rb")))
       goto read_fail;
 
-   if (mmd_read_header(f, &header) != 0)
+   if (!(mmd = mmd_new(f)))
+      goto fail;
+
+   if (mmd_read_header(mmd) != 0)
       goto fail;
 
    /* close file */
+   NULLDO(mmd_free, mmd);
    NULLDO(fclose, f);
    return RETURN_OK;
 
 read_fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s", file);
 fail:
+   IFDO(mmd_free, mmd);
    IFDO(fclose, f);
    return RETURN_FAIL;
 }
@@ -38,7 +43,6 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
 {
    FILE *f;
    char *texturePath;
-   mmd_header header;
    mmd_data *mmd = NULL;
    glhckAtlas *atlas = NULL;
    glhckMaterial *material = NULL;
@@ -52,19 +56,19 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
    if (!(f = fopen(file, "rb")))
       goto read_fail;
 
-   if (mmd_read_header(f, &header) != 0)
-      goto mmd_import_fail;
-
-   if (!(mmd = mmd_new()))
+   if (!(mmd = mmd_new(f)))
       goto mmd_no_memory;
 
-   if (mmd_read_vertex_data(f, mmd) != 0)
+   if (mmd_read_header(mmd) != 0)
       goto mmd_import_fail;
 
-   if (mmd_read_index_data(f, mmd) != 0)
+   if (mmd_read_vertex_data(mmd) != 0)
       goto mmd_import_fail;
 
-   if (mmd_read_material_data(f, mmd) != 0)
+   if (mmd_read_index_data(mmd) != 0)
+      goto mmd_import_fail;
+
+   if (mmd_read_material_data(mmd) != 0)
       goto mmd_import_fail;
 
    /* close file */
@@ -87,7 +91,9 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
 
    /* add all textures to atlas packer */
    for (i = 0; i < mmd->num_materials; ++i) {
-      if (!(texturePath = _glhckImportTexturePath(mmd->texture[i].file, file)))
+      if (!mmd->materials[i].texture) continue;
+
+      if (!(texturePath = _glhckImportTexturePath(mmd->materials[i].texture, file)))
          continue;
 
       if ((texture = glhckTextureNewFromFile(texturePath, NULL, NULL))) {
@@ -112,23 +118,23 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
 
    /* assign data */
    for (i = 0, start = 0; i < mmd->num_materials; ++i) {
-      numFaces = mmd->face[i];
+      numFaces = mmd->materials[i].face;
       for (i2 = start; i2 < start + numFaces; ++i2) {
          ix = mmd->indices[i2];
 
          /* vertices */
-         vertexData[ix].vertex.x = mmd->vertices[ix * 3 + 0];
-         vertexData[ix].vertex.y = mmd->vertices[ix * 3 + 1];
-         vertexData[ix].vertex.z = mmd->vertices[ix * 3 + 2];
+         vertexData[ix].vertex.x = mmd->vertices[ix*3+0];
+         vertexData[ix].vertex.y = mmd->vertices[ix*3+1];
+         vertexData[ix].vertex.z = mmd->vertices[ix*3+2];
 
          /* normals */
-         vertexData[ix].normal.x = mmd->normals[ix * 3 + 0];
-         vertexData[ix].normal.y = mmd->normals[ix * 3 + 1];
-         vertexData[ix].normal.z = mmd->normals[ix * 3 + 2];
+         vertexData[ix].normal.x = mmd->normals[ix*3+0];
+         vertexData[ix].normal.y = mmd->normals[ix*3+1];
+         vertexData[ix].normal.z = mmd->normals[ix*3+2];
 
          /* texture coords */
-         vertexData[ix].coord.x = mmd->coords[ix * 2 + 0];
-         vertexData[ix].coord.y = mmd->coords[ix * 2 + 1]*-1;
+         vertexData[ix].coord.x = mmd->coords[ix*2+0];
+         vertexData[ix].coord.y = mmd->coords[ix*2+1] * -1;
 
          /* fix coords */
          if (vertexData[ix].coord.x < 0.0f)

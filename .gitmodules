@@ -15,3 +15,6 @@
 [submodule "lib/assimp/src"]
 	path = lib/assimp/src
 	url = git://github.com/assimp/assimp.git
+[submodule "lib/mmd/src"]
+	path = lib/mmd/src
+	url = git://github.com/Cloudef/libmmd.git
