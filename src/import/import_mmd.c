@@ -85,11 +85,8 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
    if (!(atlas = glhckAtlasNew()))
       goto mmd_no_memory;
 
-   if (!(material = glhckMaterialNew(NULL)))
-      goto mmd_no_memory;
-
    /* add all textures to atlas packer */
-   for (i = 0; i != mmd->num_materials; ++i) {
+   for (i = 0; i < mmd->num_materials; ++i) {
       if (!(texturePath = _glhckImportTexturePath(mmd->texture[i].file, file)))
          continue;
 
@@ -102,14 +99,21 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
       _glhckFree(texturePath);
    }
 
-   /* pack textures */
-   if (glhckAtlasPack(atlas, GLHCK_RGBA, 1, 0, glhckTextureDefaultParameters()) != RETURN_OK)
-      goto fail;
+   for (i = 0; i < mmd->num_materials && !textureList[i]; ++i);
+   if (i >= mmd->num_materials) {
+      /* no textures found */
+      NULLDO(glhckAtlasFree, atlas);
+      NULLDO(_glhckFree, textureList);
+   } else {
+      /* pack textures */
+      if (glhckAtlasPack(atlas, GLHCK_RGBA, 1, 0, glhckTextureDefaultParameters()) != RETURN_OK)
+         goto fail;
+   }
 
    /* assign data */
-   for (i = 0, start = 0; i != mmd->num_materials; ++i) {
+   for (i = 0, start = 0; i < mmd->num_materials; ++i) {
       numFaces = mmd->face[i];
-      for (i2 = start; i2 != start + numFaces; ++i2) {
+      for (i2 = start; i2 < start + numFaces; ++i2) {
          ix = mmd->indices[i2];
 
          /* vertices */
@@ -133,7 +137,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
             vertexData[ix].coord.y += 1;
 
          /* if there is packed texture */
-         if (textureList[i]) {
+         if (atlas && textureList[i]) {
             kmVec2 coord;
             coord.x = vertexData[ix].coord.x;
             coord.y = vertexData[ix].coord.y;
@@ -147,14 +151,15 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
       start += numFaces;
    }
 
-   /* assign texture to material */
-   glhckMaterialTexture(material, glhckAtlasGetTexture(atlas));
-   glhckObjectMaterial(object, material);
+   if (atlas) {
+      if (!(material = glhckMaterialNew(glhckAtlasGetTexture(atlas))))
+         goto mmd_no_memory;
 
-   /* we don't need atlas packer anymore */
-   NULLDO(glhckMaterialFree, material);
-   NULLDO(glhckAtlasFree, atlas);
-   NULLDO(_glhckFree, textureList);
+      glhckObjectMaterial(object, material);
+      NULLDO(glhckMaterialFree, material);
+      NULLDO(glhckAtlasFree, atlas);
+      NULLDO(_glhckFree, textureList);
+   }
 
    /* triangle strip geometry */
    if (!(stripIndices = _glhckTriStrip(indices, mmd->num_indices, &numIndices))) {
