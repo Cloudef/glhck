@@ -1,6 +1,6 @@
 #include "internal.h"
 #include "import/import.h"
-#include "imghck.h"
+#include "texhck.h"
 #include <stdio.h>            /* for file io */
 #include <assert.h>           /* for assert */
 
@@ -622,21 +622,21 @@ GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int wid
    if (compression == GLHCK_COMPRESSION_DXT) {
       if ((_glhckNumChannels(format) & 1) == 1) {
          /* RGB */
-         if (!(compressed = malloc(imghckSizeForDXT1(width, height))))
+         if (!(compressed = malloc(texhckSizeForDXT1(width, height))))
             goto out_of_memory;
 
-         imghckConvertToDXT1(compressed, data, width, height, _glhckNumChannels(format));
-         if (size)      *size      = imghckSizeForDXT1(width, height);
+         texhckConvertToDXT1(compressed, data, width, height, _glhckNumChannels(format));
+         if (size)      *size      = texhckSizeForDXT1(width, height);
          if (outFormat) *outFormat = GLHCK_COMPRESSED_RGB_DXT1;
          if (outType)   *outType   = GLHCK_DATA_UNSIGNED_BYTE;
          DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT1");
       } else {
          /* RGBA */
-         if (!(compressed = malloc(imghckSizeForDXT5(width, height))))
+         if (!(compressed = malloc(texhckSizeForDXT5(width, height))))
             goto out_of_memory;
 
-         imghckConvertToDXT5(compressed, data, width, height, _glhckNumChannels(format));
-         if (size)      *size      = imghckSizeForDXT5(width, height);
+         texhckConvertToDXT5(compressed, data, width, height, _glhckNumChannels(format));
+         if (size)      *size      = texhckSizeForDXT5(width, height);
          if (outFormat) *outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
          if (outType)   *outType   = GLHCK_DATA_UNSIGNED_BYTE;
          DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT5");

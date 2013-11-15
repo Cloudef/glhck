@@ -1,5 +1,5 @@
 # Image texture compression library
-ADD_SUBDIRECTORY(imghck)
+ADD_SUBDIRECTORY(texhck)
 
 # Math library
 ADD_SUBDIRECTORY(kazmath)
