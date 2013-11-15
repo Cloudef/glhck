@@ -438,6 +438,15 @@ def blender_object_to_data(context, bobj, options):
     materials = []
     skin_bones = []
 
+    if bobj.type == 'EMPTY' or bobj.data is None:
+        return {'vertices':vertices,
+                'normals':normals,
+                'uvs':uvs,
+                'vertex_colors':vertex_colors,
+                'indices':indices,
+                'materials':materials,
+                'skin_bones':skin_bones}
+
     if options['use_bones']:
         skin_bones = skin_bones_from_blender_object(bobj)
         vertex_group_map = {group.index : bone

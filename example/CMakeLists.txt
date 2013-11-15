@@ -1,6 +1,7 @@
 SET(EXAMPLE_EXE
    display
-   distanceField)
+   distanceField
+   game)
 
 FOREACH (example ${EXAMPLE_EXE})
    PROJECT(${example})
