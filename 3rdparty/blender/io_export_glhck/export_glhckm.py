@@ -1340,9 +1340,10 @@ def save(context, filepath,
     exporter.write(context, filepath, options)
 
     print("")
-    print("::::::::::::::::::::::::")
-    print(":: Finished in {:.4f} ::".format(time.time() - time_start))
-    print("::::::::::::::::::::::::")
+    print("::::::::::::::::::::::::::::")
+    print(":: {}".format(filepath))
+    print(":: Finished in {:.4f}".format(time.time() - time_start))
+    print("::::::::::::::::::::::::::::")
     print("")
     return {'FINISHED'}
 
