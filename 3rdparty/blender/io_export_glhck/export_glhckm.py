@@ -1050,9 +1050,12 @@ class GlhckExporter:
             if options['split_animations']:
                 if file is not None:
                     file.close()
-                file = open(filepath, 'wb')
+                path = os.path.dirname(filepath) + "/" + eanm.name + ".glhcka"
+                print(path)
+                file = open(path, 'wb')
                 file.write(bytes(GLHCKA_HEADER, 'ascii'))
                 file.write(struct.pack(">BB", *GLHCKM_VERSION))
+                write_block(file, "ANH", 1) # header block
             eanm.write(context, file, options)
 
         file.close()
