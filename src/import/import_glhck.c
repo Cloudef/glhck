@@ -742,7 +742,6 @@ read_fail:
 /* \brief compare file header */
 static int _glhckCmpHeader(FILE *f, const char *header, uint8_t *outVersion)
 {
-   int ret;
    char *buffer;
    uint8_t version[2];
    assert(f && header);
@@ -752,8 +751,10 @@ static int _glhckCmpHeader(FILE *f, const char *header, uint8_t *outVersion)
       goto fail;
 
    fread(buffer, 1, strlen(header), f);
-   ret = (memcmp(buffer, header, strlen(header)) == 0);
-   _glhckFree(buffer);
+   if (memcmp(buffer, header, strlen(header)) != 0)
+      goto fail;
+
+   NULLDO(_glhckFree, buffer);
 
    fread(version, 1, 2, f);
    if ((version[0] > GLHCKM_VERSION_NEWEST[0]  ||
@@ -763,11 +764,12 @@ static int _glhckCmpHeader(FILE *f, const char *header, uint8_t *outVersion)
       goto version_not_supported;
 
    if (outVersion) memcpy(outVersion, version, sizeof(version));
-   return ret;
+   return RETURN_OK;
 
 version_not_supported:
    DEBUG(GLHCK_DBG_ERROR, "%s version (%u.%u) not supported", header, version[0], version[1]);
 fail:
+   IFDO(_glhckFree, buffer);
    return 0;
 }
 
