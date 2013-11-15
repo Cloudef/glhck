@@ -905,17 +905,27 @@ class GlhckExporter:
             whitelist = ['EMPTY', 'MESH']
 
         if options['use_selection']:
+            # Selected objects only
             export_list = list(context.selected_objects)
-
-            def add_children(bobj):
-                export_list.extend(bobj.children)
-                for bchd in bobj.children:
-                    add_children(bchd)
-
-            for bobj in export_list:
-                add_children(bobj)
         else:
-            export_list = list(context.scene.objects)
+            # What you see, is what you get (check your layers)
+            export_list = list(context.selectable_objects)
+
+        # Add children and missing armatures to export_list
+        def add_children(bobj):
+            armatures = [modifier.object for modifier in bobj.modifiers
+                    if modifier.type == 'ARMATURE' and modifier.show_viewport]
+            for arm in armatures:
+                if arm not in export_list:
+                    export_list.append(arm)
+            for bchd in bobj.children:
+                if bchd not in export_list:
+                    export_list.append(bchd)
+                add_children(bchd)
+
+        # We mutate this list
+        for bobj in export_list[:]:
+            add_children(bobj)
 
         # Should now contain filtered list of all objects or selected objects
         # and their children
