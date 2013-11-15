@@ -287,6 +287,8 @@ class Material:
 
     @staticmethod
     def _get_texture_images(mtl):
+        """Get relevant images from material"""
+
         images = {'diffuse':None,
                   'normal':None,
                   'displacement':None,
@@ -419,6 +421,8 @@ def blender_object_to_mesh(context, bobj, options, has_bones=False):
     return mesh
 
 def blender_object_to_data(context, bobj, options):
+    """Turn blender object to bunch of data usable for our export"""
+
     vertices = []
     normals = []
     uvs = []
@@ -1050,12 +1054,15 @@ class GlhckExporter:
         if not options['split_animations'] and anh > 0:
             write_block(file, "ANH", anh) # header block
 
+        # Export bones
         for eobj in self.lists['ARMATURE']:
             eobj.write(context, file, options)
 
+        # Export objects
         for eobj in self.lists['OBJECT']:
             eobj.write(context, file, options)
 
+        # Export animations
         for eanm in self.lists['ANIMATION']:
             if options['split_animations']:
                 if file is not None:
@@ -1070,7 +1077,7 @@ class GlhckExporter:
 
         file.close()
 
-        # copy all collected files from export
+        # Copy all collected files from export
         path_reference_copy(options['copy_set'])
 
 
