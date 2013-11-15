@@ -42,7 +42,6 @@ static __GLHCKtraceChannel _traceChannels[] =
    { GLHCK_CHANNEL_FRAMEBUFFER,     0 },
    { GLHCK_CHANNEL_HWBUFFER,        0 },
    { GLHCK_CHANNEL_SHADER,          0 },
-   { GLHCK_CHANNEL_MEMBUFFER,       0 },
 
    /* trace channel */
    { GLHCK_CHANNEL_TRACE,  0 },

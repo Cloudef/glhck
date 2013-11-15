@@ -1,3 +1,6 @@
+# Chck utilities
+ADD_SUBDIRECTORY(chck)
+
 # Image texture compression library
 ADD_SUBDIRECTORY(texhck)
 

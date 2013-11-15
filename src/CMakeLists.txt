@@ -16,7 +16,6 @@ SET(GLHCK_SRC
    framebuffer.c
    hwbuffer.c
    shader.c
-   membuffer.c
    texture_packer.c
    geometry/cube.c
    geometry/sphere.c
@@ -117,6 +116,7 @@ INCLUDE_DIRECTORIES(
    ${glew-glhck_SOURCE_DIR}/include
    ${kazmath_SOURCE_DIR}/src
    ${GLSW_SOURCE_DIR}/src
+   ${chck_SOURCE_DIR}/src
    ${texhck_SOURCE_DIR}
    ${GLHCK_INCL}
    ${OPT_INCL}
@@ -124,5 +124,5 @@ INCLUDE_DIRECTORIES(
 
 ADD_DEFINITIONS(-fPIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck kazmath texhck glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
+TARGET_LINK_LIBRARIES(glhck chck texhck kazmath glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
 INSTALL(TARGETS glhck DESTINATION lib)

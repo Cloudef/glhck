@@ -3,6 +3,7 @@
 
 #include "../internal.h"
 #include "import.h"
+#include "buffer/buffer.h"
 #include <stdio.h>  /* for FILE */
 #include <stdint.h> /* for standard integers */
 
@@ -12,10 +13,10 @@
 int _readBMPHeader(FILE *f, int *w, int *h, unsigned short *bpp, size_t *dataSize)
 {
    static const size_t headerSize = 2 + 16 + sizeof(int32_t) + sizeof(int32_t) + sizeof(uint16_t) + sizeof(uint16_t);
-   _glhckBuffer *buf;
+   chckBuffer *buf;
    assert(f && w && h && bpp && dataSize);
 
-   if (!(buf = _glhckBufferNew(headerSize, GLHCK_BUFFER_ENDIAN_LITTLE)))
+   if (!(buf = chckBufferNew(headerSize, CHCK_BUFFER_ENDIAN_LITTLE)))
       goto fail;
 
    if (fread(buf->buffer, 1, headerSize, f) != headerSize)
@@ -24,26 +25,26 @@ int _readBMPHeader(FILE *f, int *w, int *h, unsigned short *bpp, size_t *dataSiz
    if (memcmp(buf->buffer, "BM", 2) != 0)
       goto fail;
 
-   /* FIXME: maybe do function _glhckBufferSeek? */
+   /* FIXME: maybe do function chckBufferSeek? */
    buf->curpos += 2 + 16;
 
-   if (_glhckBufferReadInt32(buf, w) != RETURN_OK)
+   if (chckBufferReadInt32(buf, w) != RETURN_OK)
       goto fail;
 
-   if (_glhckBufferReadInt32(buf, h) != RETURN_OK)
+   if (chckBufferReadInt32(buf, h) != RETURN_OK)
       goto fail;
 
    buf->curpos += sizeof(uint16_t);
 
-   if (_glhckBufferReadUInt16(buf, bpp) != RETURN_OK)
+   if (chckBufferReadUInt16(buf, bpp) != RETURN_OK)
       goto fail;
 
    *dataSize = *w * *h * 3;
-   NULLDO(_glhckBufferFree, buf);
+   NULLDO(chckBufferFree, buf);
    return RETURN_OK;
 
 fail:
-   IFDO(_glhckBufferFree, buf);
+   IFDO(chckBufferFree, buf);
    return RETURN_FAIL;
 }
 
@@ -91,7 +92,7 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
    int w, h;
    unsigned short bpp;
    unsigned char bgr[3], *importData = NULL;
-   _glhckBuffer *buf = NULL;
+   chckBuffer *buf = NULL;
    CALL(0, "%s, %p", file, import);
 
    /* open BMP */
@@ -110,7 +111,7 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
    if (!(importData = _glhckMalloc(w*h*4)))
       goto out_of_memory;
 
-   if (!(buf = _glhckBufferNew(dataSize, GLHCK_BUFFER_ENDIAN_LITTLE)))
+   if (!(buf = chckBufferNew(dataSize, CHCK_BUFFER_ENDIAN_LITTLE)))
       goto out_of_memory;
 
    if (fread(buf->buffer, 1, dataSize, f) != dataSize)
@@ -118,7 +119,7 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
 
    /* read 24 bpp BMP data */
    for (i = 0, i2 = 0; i+3 <= dataSize; i+=3) {
-      if (_glhckBufferRead(bgr, 1, 3, buf) != 3)
+      if (chckBufferRead(bgr, 1, 3, buf) != 3)
          goto not_possible;
 
       importData[i2+0] = bgr[2];
@@ -128,7 +129,7 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
       i2+=4;
    }
 
-   NULLDO(_glhckBufferFree, buf);
+   NULLDO(chckBufferFree, buf);
 
 #if 0
    /* invert */
@@ -170,7 +171,7 @@ out_of_memory:
 bad_dimensions:
    DEBUG(GLHCK_DBG_ERROR, "BMP image has invalid dimension %dx%d", w, h);
 fail:
-   IFDO(_glhckBufferFree, buf);
+   IFDO(chckBufferFree, buf);
    IFDO(_glhckFree, importData);
    IFDO(fclose, f);
    RET(0, "%d", RETURN_FAIL);

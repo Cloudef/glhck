@@ -1,5 +1,6 @@
 #include "../internal.h"
 #include "import.h"
+#include "buffer/buffer.h"
 #include <stdio.h>     /* for scanf */
 #include <arpa/inet.h> /* for ntohl */
 #include <stdint.h>    /* for standard integers */
@@ -12,12 +13,12 @@ static const char *GLHCKM_HEADER = "glhckm";
 static const char *GLHCKA_HEADER = "glhcka";
 
 /* \brief read float from buffer */
-static int _glhckBufferReadStringFloat(_glhckBuffer *buf, float *flt)
+static int chckBufferReadStringFloat(chckBuffer *buf, float *flt)
 {
    char *str;
    assert(flt);
 
-   if (_glhckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
+   if (chckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
       return RETURN_FAIL;
 
    sscanf(str, "%f", flt);
@@ -26,12 +27,12 @@ static int _glhckBufferReadStringFloat(_glhckBuffer *buf, float *flt)
 }
 
 /* \brief read vector2 from buffer */
-static int _glhckBufferReadStringVector2(_glhckBuffer *buf, glhckVector2f *vec)
+static int chckBufferReadStringVector2(chckBuffer *buf, glhckVector2f *vec)
 {
    char *str;
    assert(vec);
 
-   if (_glhckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
+   if (chckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
       return RETURN_FAIL;
 
    sscanf(str, "%f,%f", &vec->x, &vec->y);
@@ -40,12 +41,12 @@ static int _glhckBufferReadStringVector2(_glhckBuffer *buf, glhckVector2f *vec)
 }
 
 /* \brief read vector3 from buffer */
-static int _glhckBufferReadStringVector3(_glhckBuffer *buf, glhckVector3f *vec)
+static int chckBufferReadStringVector3(chckBuffer *buf, glhckVector3f *vec)
 {
    char *str;
    assert(vec);
 
-   if (_glhckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
+   if (chckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
       return RETURN_FAIL;
 
    sscanf(str, "%f,%f,%f", &vec->x, &vec->y, &vec->z);
@@ -54,12 +55,12 @@ static int _glhckBufferReadStringVector3(_glhckBuffer *buf, glhckVector3f *vec)
 }
 
 /* \brief read quaternion from buffer */
-static int _glhckBufferReadStringQuaternion(_glhckBuffer *buf, kmQuaternion *quat)
+static int chckBufferReadStringQuaternion(chckBuffer *buf, kmQuaternion *quat)
 {
    char *str;
    assert(quat);
 
-   if (_glhckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
+   if (chckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
       return RETURN_FAIL;
 
    sscanf(str, "%f,%f,%f,%f", &quat->x, &quat->y, &quat->z, &quat->w);
@@ -68,12 +69,12 @@ static int _glhckBufferReadStringQuaternion(_glhckBuffer *buf, kmQuaternion *qua
 }
 
 /* \brief read matrix4 from buffer */
-static int _glhckBufferReadStringMatrix4(_glhckBuffer *buf, kmMat4 *matrix)
+static int chckBufferReadStringMatrix4(chckBuffer *buf, kmMat4 *matrix)
 {
    char *str;
    assert(matrix);
 
-   if (_glhckBufferReadString(buf, sizeof(uint16_t), &str) != RETURN_OK || !str)
+   if (chckBufferReadString(buf, sizeof(uint16_t), &str) != RETURN_OK || !str)
       return RETURN_FAIL;
 
    sscanf(str, "%f,%f,%f,%f %f,%f,%f,%f %f,%f,%f,%f %f,%f,%f,%f",
@@ -86,12 +87,12 @@ static int _glhckBufferReadStringMatrix4(_glhckBuffer *buf, kmMat4 *matrix)
 }
 
 /* \brief read color3 from buffer */
-static int _glhckBufferReadColor3(_glhckBuffer *buf, glhckColorb *color)
+static int chckBufferReadColor3(chckBuffer *buf, glhckColorb *color)
 {
    uint8_t colors[3];
    assert(color);
 
-   if (_glhckBufferRead(colors, 1, sizeof(colors), buf) != sizeof(colors))
+   if (chckBufferRead(colors, 1, sizeof(colors), buf) != sizeof(colors))
       return RETURN_FAIL;
 
    color->r = colors[0];
@@ -102,12 +103,12 @@ static int _glhckBufferReadColor3(_glhckBuffer *buf, glhckColorb *color)
 }
 
 /* \brief read color4 from buffer */
-static int _glhckBufferReadColor4(_glhckBuffer *buf, glhckColorb *color)
+static int chckBufferReadColor4(chckBuffer *buf, glhckColorb *color)
 {
    uint8_t colors[4];
    assert(color);
 
-   if (_glhckBufferRead(colors, 1, sizeof(colors), buf) != sizeof(colors))
+   if (chckBufferRead(colors, 1, sizeof(colors), buf) != sizeof(colors))
       return RETURN_FAIL;
 
    color->r = colors[0];
@@ -136,7 +137,7 @@ static int _glhckReadBND(uint8_t *version, FILE *f, glhckObject *root, const glh
    unsigned int i, size;
    unsigned short boneCount;
    glhckBone **bones = NULL;
-   _glhckBuffer *buf = NULL;
+   chckBuffer *buf = NULL;
    unsigned short *parents = NULL;
    char *str;
    assert(version && f && root && params);
@@ -148,7 +149,7 @@ static int _glhckReadBND(uint8_t *version, FILE *f, glhckObject *root, const glh
       return (fseek(f, size, SEEK_CUR) == 0 ? RETURN_OK : RETURN_FAIL);
 
    /* create buffer for the size and hope it fits memory \o/ */
-   if (!(buf = _glhckBufferNew(size, GLHCK_BUFFER_ENDIAN_BIG)))
+   if (!(buf = chckBufferNew(size, CHCK_BUFFER_ENDIAN_BIG)))
       goto fail;
 
    /* read whole block to buffer */
@@ -156,7 +157,7 @@ static int _glhckReadBND(uint8_t *version, FILE *f, glhckObject *root, const glh
       goto fail;
 
    /* uint16_t: boneCount */
-   if (_glhckBufferReadUInt16(buf, &boneCount) != RETURN_OK)
+   if (chckBufferReadUInt16(buf, &boneCount) != RETURN_OK)
       goto fail;
 
    if (!(bones = _glhckCalloc(boneCount, sizeof(glhckBone*))))
@@ -173,18 +174,18 @@ static int _glhckReadBND(uint8_t *version, FILE *f, glhckObject *root, const glh
          goto fail;
 
       /* STRING: name */
-      if (_glhckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
+      if (chckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
          goto fail;
 
       glhckBoneName(bones[i], str);
       _glhckFree(str);
 
       /* MATRIX4x4: transformationMatrix */
-      if (_glhckBufferReadStringMatrix4(buf, &matrix) != RETURN_OK)
+      if (chckBufferReadStringMatrix4(buf, &matrix) != RETURN_OK)
          goto fail;
 
       /* uint16_t: parent */
-      if (_glhckBufferReadUInt16(buf, &parents[i]) != RETURN_OK)
+      if (chckBufferReadUInt16(buf, &parents[i]) != RETURN_OK)
          goto fail;
 
       glhckBoneTransformationMatrix(bones[i], &matrix);
@@ -203,7 +204,7 @@ static int _glhckReadBND(uint8_t *version, FILE *f, glhckObject *root, const glh
       NULLDO(_glhckFree, bones);
    }
 
-   NULLDO(_glhckBufferFree, buf);
+   NULLDO(chckBufferFree, buf);
    return RETURN_OK;
 
 fail:
@@ -213,7 +214,7 @@ fail:
       _glhckFree(bones);
    }
    IFDO(_glhckFree, parents);
-   IFDO(_glhckBufferFree, buf);
+   IFDO(chckBufferFree, buf);
    return RETURN_FAIL;
 }
 
@@ -231,7 +232,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
    glhckMaterial **materials = NULL;
    glhckBone **bones = NULL;
    glhckVertexWeight *weights = NULL;
-   _glhckBuffer *buf = NULL;
+   chckBuffer *buf = NULL;
    char *str;
 
    enum {
@@ -247,7 +248,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       goto fail;
 
    /* create buffer for the size and hope it fits memory \o/ */
-   if (!(buf = _glhckBufferNew(size, GLHCK_BUFFER_ENDIAN_BIG)))
+   if (!(buf = chckBufferNew(size, CHCK_BUFFER_ENDIAN_BIG)))
       goto fail;
 
    /* create object where we store the data */
@@ -259,7 +260,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       goto fail;
 
    /* STRING: name */
-   if (_glhckBufferReadString(buf, 1, &str) != RETURN_OK)
+   if (chckBufferReadString(buf, 1, &str) != RETURN_OK)
       goto fail;
 
    if (str) {
@@ -268,35 +269,35 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
    }
 
    /* MATRIX4x4: transformationMatrix */
-   if (_glhckBufferReadStringMatrix4(buf, &matrix) != RETURN_OK)
+   if (chckBufferReadStringMatrix4(buf, &matrix) != RETURN_OK)
       goto fail;
 
    /* uint8_t: geometryType */
-   if (_glhckBufferReadUInt8(buf, &geometryType) != RETURN_OK)
+   if (chckBufferReadUInt8(buf, &geometryType) != RETURN_OK)
       goto fail;
 
    /* uint8_t: vertexDataFlags */
-   if (_glhckBufferReadUInt8(buf, &vertexDataFlags) != RETURN_OK)
+   if (chckBufferReadUInt8(buf, &vertexDataFlags) != RETURN_OK)
       goto fail;
 
    /* int32_t: indexCount (note, signed because that's how OGL likes it, we just read to uint though) */
-   if (_glhckBufferReadUInt32(buf, &indexCount) != RETURN_OK)
+   if (chckBufferReadUInt32(buf, &indexCount) != RETURN_OK)
       goto fail;
 
    /* int32_t: vertexCount (note, read above) */
-   if (_glhckBufferReadUInt32(buf, &vertexCount) != RETURN_OK)
+   if (chckBufferReadUInt32(buf, &vertexCount) != RETURN_OK)
       goto fail;
 
    /* int16_t: materialCount */
-   if (_glhckBufferReadUInt16(buf, &materialCount) != RETURN_OK)
+   if (chckBufferReadUInt16(buf, &materialCount) != RETURN_OK)
       goto fail;
 
    /* int16_t: skinBoneCount */
-   if (_glhckBufferReadUInt16(buf, &skinBoneCount) != RETURN_OK)
+   if (chckBufferReadUInt16(buf, &skinBoneCount) != RETURN_OK)
       goto fail;
 
    /* int16_t: childCount */
-   if (_glhckBufferReadUInt16(buf, &childCount) != RETURN_OK)
+   if (chckBufferReadUInt16(buf, &childCount) != RETURN_OK)
       goto fail;
 
    /* compile time check. If you ever hit this, report a bug. */
@@ -307,11 +308,11 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       goto fail;
 
    /* uint32_t: indices[indexCount] */
-   if (indexCount && _glhckBufferRead(indices, sizeof(uint32_t), indexCount, buf) != indexCount)
+   if (indexCount && chckBufferRead(indices, sizeof(uint32_t), indexCount, buf) != indexCount)
       goto fail;
 
    /* flip endian, if needed */
-   for (i = 0; !_glhckBufferIsNativeEndian(buf) && i < indexCount; ++i) indices[i] = ntohl(indices[i]);
+   for (i = 0; !chckBufferIsNativeEndian(buf) && i < indexCount; ++i) indices[i] = ntohl(indices[i]);
 
    if (indices) {
       glhckObjectInsertIndices(object, itype, indices, indexCount);
@@ -324,7 +325,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
    /* VERTEXDATA: vertices[vertexCount] */
    for (i = 0; i < vertexCount; ++i) {
       /* VECTOR3: vertex */
-      if (_glhckBufferReadStringVector3(buf, &vertexData[i].vertex) != RETURN_OK)
+      if (chckBufferReadStringVector3(buf, &vertexData[i].vertex) != RETURN_OK)
          goto fail;
 
       /* transform vertices, actually decompose and position the objects later */
@@ -332,19 +333,19 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
 
       if (vertexDataFlags & HAS_NORMALS) {
          /* VECTOR3: normal */
-         if (_glhckBufferReadStringVector3(buf, &vertexData[i].normal) != RETURN_OK)
+         if (chckBufferReadStringVector3(buf, &vertexData[i].normal) != RETURN_OK)
             goto fail;
       }
 
       if (vertexDataFlags & HAS_UV) {
          /* VECTOR2: uv */
-         if (_glhckBufferReadStringVector2(buf, &vertexData[i].coord) != RETURN_OK)
+         if (chckBufferReadStringVector2(buf, &vertexData[i].coord) != RETURN_OK)
             goto fail;
       }
 
       if (vertexDataFlags & HAS_VERTEX_COLORS) {
          /* COLOR4: color */
-         if (_glhckBufferReadColor4(buf, &vertexData[i].color) != RETURN_OK)
+         if (chckBufferReadColor4(buf, &vertexData[i].color) != RETURN_OK)
             goto fail;
       }
    }
@@ -373,7 +374,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
          goto fail;
 
       /* STRING: name */
-      if (_glhckBufferReadString(buf, 1, &str) != RETURN_OK)
+      if (chckBufferReadString(buf, 1, &str) != RETURN_OK)
          goto fail;
 
       if (str) {
@@ -382,32 +383,32 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       }
 
       /* COLOR3: ambient */
-      if (_glhckBufferReadColor3(buf, &materials[i]->ambient) != RETURN_OK)
+      if (chckBufferReadColor3(buf, &materials[i]->ambient) != RETURN_OK)
          goto fail;
 
       /* COLOR4: diffuse */
-      if (_glhckBufferReadColor4(buf, &materials[i]->diffuse) != RETURN_OK)
+      if (chckBufferReadColor4(buf, &materials[i]->diffuse) != RETURN_OK)
          goto fail;
 
       /* COLOR4: specular */
-      if (_glhckBufferReadColor4(buf, &materials[i]->specular) != RETURN_OK)
+      if (chckBufferReadColor4(buf, &materials[i]->specular) != RETURN_OK)
          goto fail;
 
       /* uint16_t: shininess (range 1 - 511) */
-      if (_glhckBufferReadUInt16(buf, &shininess) != RETURN_OK)
+      if (chckBufferReadUInt16(buf, &shininess) != RETURN_OK)
          goto fail;
 
       materials[i]->shininess = (float)shininess/511;
 
       /* uint8_t: materialFlags */
-      if (_glhckBufferReadUInt8(buf, &materialFlags) != RETURN_OK)
+      if (chckBufferReadUInt8(buf, &materialFlags) != RETURN_OK)
          goto fail;
 
       if (materialFlags & LIGHTING)
          materials[i]->flags |= GLHCK_MATERIAL_LIGHTING;
 
       /* LONGSTRING: diffuseTexture */
-      if (_glhckBufferReadString(buf, sizeof(uint16_t), &str) != RETURN_OK)
+      if (chckBufferReadString(buf, sizeof(uint16_t), &str) != RETURN_OK)
          goto fail;
 
       if (str) {
@@ -438,7 +439,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       unsigned int weightCount, w;
 
       /* STRING: name */
-      if (_glhckBufferReadString(buf, 1, &str) != RETURN_OK)
+      if (chckBufferReadString(buf, 1, &str) != RETURN_OK)
          goto fail;
 
       if (str) {
@@ -447,11 +448,11 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       }
 
       /* MATRIX4x4: offsetMatrix */
-      if (_glhckBufferReadStringMatrix4(buf, &matrix) != RETURN_OK)
+      if (chckBufferReadStringMatrix4(buf, &matrix) != RETURN_OK)
          goto fail;
 
       /* int32_t: weightCount */
-      if (_glhckBufferReadUInt32(buf, &weightCount) != RETURN_OK)
+      if (chckBufferReadUInt32(buf, &weightCount) != RETURN_OK)
          goto fail;
 
       if (weightCount && !(weights = _glhckMalloc(weightCount * sizeof(glhckVertexWeight))))
@@ -460,11 +461,11 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       /* WEIGHT: weights[weightCount] */
       for (w = 0; w < weightCount; ++w) {
          /* int32_t: vertexIndex */
-         if (_glhckBufferReadUInt32(buf, &weights[w].vertexIndex) != RETURN_OK)
+         if (chckBufferReadUInt32(buf, &weights[w].vertexIndex) != RETURN_OK)
             goto fail;
 
          /* FLOAT: weight */
-         if (_glhckBufferReadStringFloat(buf, &weights[w].weight) != RETURN_OK)
+         if (chckBufferReadStringFloat(buf, &weights[w].weight) != RETURN_OK)
             goto fail;
       }
 
@@ -497,7 +498,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
 
    glhckObjectAddChild(parent, object);
    NULLDO(glhckObjectFree, object);
-   NULLDO(_glhckBufferFree, buf);
+   NULLDO(chckBufferFree, buf);
    return RETURN_OK;
 
 fail:
@@ -511,7 +512,7 @@ fail:
    IFDO(_glhckFree, weights);
    IFDO(_glhckFree, vertexData);
    IFDO(_glhckFree, indices);
-   IFDO(_glhckBufferFree, buf);
+   IFDO(chckBufferFree, buf);
    return RETURN_FAIL;
 }
 
@@ -525,7 +526,7 @@ static int _glhckReadAND(uint8_t *version, FILE *f, glhckObject *root, uint32_t 
    glhckAnimationVectorKey *vectorKeys = NULL;
    glhckAnimationNode **nodes = NULL;
    glhckAnimation *animation = NULL, **animations = NULL;
-   _glhckBuffer *buf = NULL;
+   chckBuffer *buf = NULL;
    char *str, block[3];
    assert(version && f && root && params);
 
@@ -536,7 +537,7 @@ static int _glhckReadAND(uint8_t *version, FILE *f, glhckObject *root, uint32_t 
       return (fseek(f, size, SEEK_CUR) == 0 ? RETURN_OK : RETURN_FAIL);
 
    /* create buffer for the size and hope it fits memory \o/ */
-   if (!(buf = _glhckBufferNew(size, GLHCK_BUFFER_ENDIAN_BIG)))
+   if (!(buf = chckBufferNew(size, CHCK_BUFFER_ENDIAN_BIG)))
       goto fail;
 
    /* create animation where we store the data */
@@ -548,7 +549,7 @@ static int _glhckReadAND(uint8_t *version, FILE *f, glhckObject *root, uint32_t 
       goto fail;
 
    /* STRING: name */
-   if (_glhckBufferReadString(buf, 1, &str) != RETURN_OK)
+   if (chckBufferReadString(buf, 1, &str) != RETURN_OK)
       goto fail;
 
    if (str) {
@@ -557,7 +558,7 @@ static int _glhckReadAND(uint8_t *version, FILE *f, glhckObject *root, uint32_t 
    }
 
    /* uint32_t: nodeCount */
-   if (_glhckBufferReadUInt32(buf, &nodeCount) != RETURN_OK)
+   if (chckBufferReadUInt32(buf, &nodeCount) != RETURN_OK)
       goto fail;
 
    if (nodeCount && !(nodes = _glhckCalloc(nodeCount, sizeof(glhckAnimationNode*))))
@@ -571,22 +572,22 @@ static int _glhckReadAND(uint8_t *version, FILE *f, glhckObject *root, uint32_t 
          goto fail;
 
       /* STRING: name */
-      if (_glhckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
+      if (chckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
          goto fail;
 
       glhckAnimationNodeBoneName(nodes[i], str);
       _glhckFree(str);
 
       /* uint32_t: rotationCount */
-      if (_glhckBufferReadUInt32(buf, &rotationCount) != RETURN_OK)
+      if (chckBufferReadUInt32(buf, &rotationCount) != RETURN_OK)
          goto fail;
 
       /* uint32_t: scalingCount */
-      if (_glhckBufferReadUInt32(buf, &scalingCount) != RETURN_OK)
+      if (chckBufferReadUInt32(buf, &scalingCount) != RETURN_OK)
          goto fail;
 
       /* uint32_t: translationCount */
-      if (_glhckBufferReadUInt32(buf, &translationCount) != RETURN_OK)
+      if (chckBufferReadUInt32(buf, &translationCount) != RETURN_OK)
          goto fail;
 
       if (rotationCount && !(quaternionKeys = _glhckMalloc(rotationCount * sizeof(glhckAnimationQuaternionKey))))
@@ -597,11 +598,11 @@ static int _glhckReadAND(uint8_t *version, FILE *f, glhckObject *root, uint32_t 
          unsigned int frame;
 
          /* uint32_t: frame */
-         if (_glhckBufferReadUInt32(buf, &frame) != RETURN_OK)
+         if (chckBufferReadUInt32(buf, &frame) != RETURN_OK)
             goto fail;
 
          /* QUATERNION: quaternion */
-         if (_glhckBufferReadStringQuaternion(buf, &quaternionKeys[k].quaternion) != RETURN_OK)
+         if (chckBufferReadStringQuaternion(buf, &quaternionKeys[k].quaternion) != RETURN_OK)
             goto fail;
 
          quaternionKeys[k].time = frame;
@@ -624,11 +625,11 @@ static int _glhckReadAND(uint8_t *version, FILE *f, glhckObject *root, uint32_t 
          glhckVector3f vector;
 
          /* uint32_t: frame */
-         if (_glhckBufferReadUInt32(buf, &frame) != RETURN_OK)
+         if (chckBufferReadUInt32(buf, &frame) != RETURN_OK)
             goto fail;
 
          /* VECTOR3: vector */
-         if (_glhckBufferReadStringVector3(buf, &vector) != RETURN_OK)
+         if (chckBufferReadStringVector3(buf, &vector) != RETURN_OK)
             goto fail;
 
          vectorKeys[k].time = frame;
@@ -655,7 +656,7 @@ static int _glhckReadAND(uint8_t *version, FILE *f, glhckObject *root, uint32_t 
    }
 
    glhckAnimationDuration(animation, longestTime);
-   NULLDO(_glhckBufferFree, buf);
+   NULLDO(chckBufferFree, buf);
 
    /* read rest of AND blocks here, this won't recurse since the other reads won't enter this branch */
    if (!outAnimation) {
@@ -700,7 +701,7 @@ fail:
    IFDO(_glhckFree, quaternionKeys);
    IFDO(_glhckFree, vectorKeys);
    IFDO(glhckAnimationFree, animation);
-   IFDO(_glhckBufferFree, buf);
+   IFDO(chckBufferFree, buf);
    return RETURN_FAIL;
 }
 
