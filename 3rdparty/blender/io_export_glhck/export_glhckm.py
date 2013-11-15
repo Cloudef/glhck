@@ -377,7 +377,8 @@ def skin_bones_from_blender_object(bobj):
 
     # Although multiple armature objects are gathered, support for
     # multiple armatures per mesh is not complete
-    armature_objects = [modifier.object for modifier in armature_modifier_list]
+    armature_objects = [modifier.object for modifier in armature_modifier_list
+            if modifier.object is not None]
 
     skin_bones = []
     for aobj in armature_objects:
@@ -963,7 +964,8 @@ class GlhckExporter:
         # Add children and missing armatures to export_list
         def add_children(bobj):
             armatures = [modifier.object for modifier in bobj.modifiers
-                    if modifier.type == 'ARMATURE' and modifier.show_viewport]
+                    if modifier.type == 'ARMATURE' and modifier.show_viewport
+                    and modifier.object is not None]
             for arm in armatures:
                 if arm not in export_list:
                     export_list.append(arm)
