@@ -551,29 +551,70 @@ class ExportAnimation:
         return "[ExportAnimation: {}]".format(self.name)
 
     def add_object(self, eobj):
+        """Add object relevant to this animation, this also
+           means child objects! ExportAnimation should never
+           enumerate each object's children"""
+
         if eobj not in self.objects:
             self.objects.append(eobj)
 
     def _generate_nodes(self, context, options):
         """Generate nodes for animation"""
 
-        baked_action = self.action
+        # We bake only the selected objects!
+        # Thus select the objects relevant to this animation
         if options['bake_animations']:
-            from bpy_extras.anim_utils import bake_action as bake
-            baked_action = bake(self.first_frame, self.last_frame, 1,
-                    only_selected=False,
-                    do_pose=True,
-                    do_object=False,
-                    do_visual_keying=True,
-                    do_constraint_clear=True,
-                    do_parents_clear=False,
-                    do_clean=True,
-                    action=None)
+            old_layers = context.scene.layers[:]
+            old_active = bpy.context.scene.objects.active
+            old_selection = context.selected_objects
 
-        if baked_action is None:
-            return []
+            # Select all relevant objects
+            context.scene.layers = [True for l in old_layers]
+            for bobj in old_selection:
+                bobj.select = False
+            for eobj in self.objects:
+                if eobj.bobj.type != 'ARMATURE':
+                    # Only armatures need baking(?)
+                    eobj.baked_action = eobj.action
+                    continue
+
+                eobj.bobj.select = True
+                bpy.context.scene.objects.active = eobj.bobj
+                eobj.bobj.animation_data.action = self.action
+
+                from bpy_extras.anim_utils import bake_action as bake
+                eobj.baked_action = bake(self.first_frame, self.last_frame, 1,
+                        only_selected=False,
+                        do_pose=True,
+                        do_object=False,
+                        do_visual_keying=True,
+                        do_constraint_clear=False,
+                        do_parents_clear=False,
+                        do_clean=True,
+                        action=None)
+
+                eobj.bobj.select = False
+
+            # Restore selection and layers
+            for bobj in old_selection:
+                bobj.select = True
+            bpy.context.scene.objects.active = old_active
+            context.scene.layers = old_layers
+
+        # No baking
+        if not options['bake_animations']:
+            for eobj in self.objects:
+                eobj.baked_action = self.action
+
+        # Something failed, fallback
+        for eobj in self.objects:
+            if eobj.baked_action is None:
+                for eobj2 in self.objects:
+                    eobj2.bobj.animation_data.action = eobj2.action
+                return []
 
         def generate_nodes_from_armature(eobj):
+            """Generate nodes for animation from Armature ExportObject"""
             nodes = [Node(eobj.name + "_" + bone.name)
                     for bone in eobj.bobj.pose.bones]
 
@@ -614,14 +655,13 @@ class ExportAnimation:
 
             for bone in eobj.bobj.pose.bones:
                 bone.rotation_mode = old_rotation_mode[bone.name]
+
             return nodes
 
         def generate_nodes_from_object(eobj):
-            nodes = []
-            old_rotation_mode = eobj.bobj.rotation_mode
-            eobj.bobj.rotation_mode = 'QUATERNION'
-            eobj.bobj.animation_data.action = baked_action
+            """Generate nodes for animation from Object ExportObject"""
 
+            nodes = []
             old_rotation = [1, 0, 0, 0]
             old_scaling = [1, 1, 1]
             old_translation = [0, 0, 0]
@@ -647,22 +687,26 @@ class ExportAnimation:
                     node.translation_keys.append([frame, translation])
                     old_translation = translation
 
-            if eobj.bobj.type == 'ARMATURE':
-                nodes.extend(generate_nodes_from_armature(eobj))
-
-            for child in eobj.children:
-                nodes.extend(generate_nodes_from_object(child))
-
-            eobj.bobj.animation_data.action = eobj.action
-            eobj.bobj.rotation_mode = old_rotation_mode
             return nodes
 
         nodes = []
         for eobj in self.objects:
-            nodes.extend(generate_nodes_from_object(eobj))
+            old_rotation_mode = eobj.bobj.rotation_mode
+            eobj.bobj.rotation_mode = 'QUATERNION'
+            eobj.bobj.animation_data.action = eobj.baked_action
 
-        if baked_action is not self.action:
-            bpy.data.actions.remove(baked_action)
+            if eobj.bobj.type == 'ARMATURE':
+                nodes.extend(generate_nodes_from_armature(eobj))
+            else:
+                nodes.extend(generate_nodes_from_object(eobj))
+
+            eobj.bobj.animation_data.action = eobj.action
+            eobj.bobj.rotation_mode = old_rotation_mode
+
+            if eobj.baked_action is not self.action:
+                bpy.data.actions.remove(eobj.baked_action)
+            eobj.baked_action = None
+
         return nodes
 
     def write(self, context, file, options):
@@ -703,6 +747,7 @@ class ExportObject:
         # when you run bake_action it seems to set the baked action active
         if bobj.animation_data is not None:
             self.action = bobj.animation_data.action
+            self.baked_action = None
 
     def __repr__(self):
         return "[ExportObject: {} '{}']".format(self.name, self.bobj.type)
