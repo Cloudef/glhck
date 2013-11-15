@@ -235,13 +235,19 @@ def r3d(vec, num=6):
 def rqt(qat, num=6):
     return r3d(qat) + (round(qat[3], num),)
 
+# Clamp to range
+def clamp(val, minimum, maximum):
+    return max(minimum, min(val, maximum))
+
 # Blender color to RGB unsigned byte color
 def bc3b(bcol):
-    return round(bcol[0] * 255), round(bcol[1] * 255), round(bcol[2] * 255)
+    return clamp(round(bcol[0] * 255), 0, 255), \
+           clamp(round(bcol[1] * 255), 0, 255), \
+           clamp(round(bcol[2] * 255), 0, 255)
 
 # Blender color to RGBA unsigned byte color
 def bc4b(bcol):
-    return bc3b(bcol) + (round(bcol[3] * 255),)
+    return bc3b(bcol) + (clamp(round(bcol[3] * 255), 0, 255),)
 
 # Sort list with each element name field
 def sort_by_name_field(lst):
