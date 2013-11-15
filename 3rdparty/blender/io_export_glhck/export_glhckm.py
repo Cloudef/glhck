@@ -60,11 +60,11 @@ def strflt(flt):
 
 # Binary size of string
 def sz_string(string):
-    return SZ_INT8 + len(string)
+    return SZ_INT8 + len(string.encode('UTF-8'))
 
 # Binary size of long string
 def sz_longstring(string):
-    return SZ_INT16 + len(string)
+    return SZ_INT16 + len(string.encode('UTF-8'))
 
 # Binary size of string float
 def sz_float(flt):
@@ -135,12 +135,12 @@ def write_color4(file, color):
 
 # Write string with binary length
 def write_string(file, string):
-    file.write(struct.pack(">B", len(string))) # length
+    file.write(struct.pack(">B", len(string.encode('UTF-8')))) # length
     file.write(bytes(string, 'UTF-8')) # char array
 
 # Write long string with binary length
 def write_longstring(file, string):
-    file.write(struct.pack(">H", len(string))) # length
+    file.write(struct.pack(">H", len(string.encode('UTF-8')))) # length
     file.write(bytes(string, 'UTF-8')) # char array
 
 # Write float to file as string
