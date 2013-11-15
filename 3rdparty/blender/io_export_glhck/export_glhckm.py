@@ -1158,6 +1158,7 @@ class GlhckExporter:
 ##     - Matrices are in column-major
 ##     - Quaternions are in order x,y,z,w
 ##     - Floats, Vectors, Quaternions, Matrices are packed as strings
+##     - Strings for names and textures filepaths are UTF-8
 ##
 ## Glhck files start with either glhckm or glhcka header text followed by
 ## version (major, minor) serialized as two uint8_t.
