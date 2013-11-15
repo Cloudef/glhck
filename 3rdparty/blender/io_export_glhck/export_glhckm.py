@@ -824,7 +824,7 @@ class ExportObject:
         block_size += material_data_size # materials
         block_size += bone_data_size # skinBones
 
-        print("struct OB (size: {}) {{".format(block_size))
+        print("struct OBD (size: {}) {{".format(block_size))
         print("   name          = {} (size: {})".format(self.name, sz_string(self.name)))
         print("   transformMat  = stripped (size: {})".format(sz_matrix4x4(matrix)))
         print("   geometryType  = {} (size: {})".format(geometry_type, SZ_INT8))
@@ -896,7 +896,7 @@ class ExportObject:
         block_size += SZ_INT16 # root bone parent
         block_size += bone_data_size # bones
 
-        print("struct BN (size: {}) {{".format(block_size))
+        print("struct BND (size: {}) {{".format(block_size))
         print("   boneCount     = {} (size: {})".format(len(self.bobj.data.bones)+1, SZ_INT16))
         print("   bones         = stripped (size: {})".format(bone_data_size))
         print("};")
