@@ -118,7 +118,7 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
       goto not_possible;
 
    /* read 24 bpp BMP data */
-   for (i = 0, i2 = 0; i+3 <= dataSize; i+=3) {
+   for (i = 0, i2 = 0; i < dataSize; i+=3, i2+=4) {
       if (chckBufferRead(bgr, 1, 3, buf) != 3)
          goto not_possible;
 
@@ -126,7 +126,6 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
       importData[i2+1] = bgr[1];
       importData[i2+2] = bgr[0];
       importData[i2+3] = 255;
-      i2+=4;
    }
 
    NULLDO(chckBufferFree, buf);
