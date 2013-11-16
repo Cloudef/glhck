@@ -123,24 +123,24 @@ def sz_node(node):
 # Write block header
 def write_block(file, block_name, block_size):
     file.write(bytes(block_name, 'ascii')) # header
-    file.write(struct.pack(">I", block_size)) # block size
+    file.write(struct.pack("<I", block_size)) # block size
 
 # Write color3 as binary
 def write_color3(file, color):
-    file.write(struct.pack(">BBB", *color)) # rgb
+    file.write(struct.pack("<BBB", *color)) # rgb
 
 # Write color4 as binary
 def write_color4(file, color):
-    file.write(struct.pack(">BBBB", *color)) # rgba
+    file.write(struct.pack("<BBBB", *color)) # rgba
 
 # Write string with binary length
 def write_string(file, string):
-    file.write(struct.pack(">B", len(string.encode('UTF-8')))) # length
+    file.write(struct.pack("<B", len(string.encode('UTF-8')))) # length
     file.write(bytes(string, 'UTF-8')) # char array
 
 # Write long string with binary length
 def write_longstring(file, string):
-    file.write(struct.pack(">H", len(string.encode('UTF-8')))) # length
+    file.write(struct.pack("<H", len(string.encode('UTF-8')))) # length
     file.write(bytes(string, 'UTF-8')) # char array
 
 # Write float to file as string
@@ -174,39 +174,39 @@ def write_material(file, mtl):
     write_color3(file, mtl.ambient) # ambient
     write_color4(file, mtl.diffuse) # diffuse
     write_color4(file, mtl.specular) # specular
-    file.write(struct.pack(">H", mtl.shininess)) # shininess
-    file.write(struct.pack(">B", mtl.flags)) # materialFlags
+    file.write(struct.pack("<H", mtl.shininess)) # shininess
+    file.write(struct.pack("<B", mtl.flags)) # materialFlags
     write_longstring(file, mtl.textures['diffuse']) # diffuse
 
 # Write skinbone to file as binary
 def write_skinbone(file, bone):
     write_string(file, bone.aobj.name + "_" + bone.name) # name
     write_matrix4x4(file, bone.offset_matrix) # offsetMatrix
-    file.write(struct.pack(">I", len(bone.weights))) # weightCount
+    file.write(struct.pack("<I", len(bone.weights))) # weightCount
     for index, weight in zip_longest(bone.indices, bone.weights): # weights
-        file.write(struct.pack(">I", index)) # vertexIndex
+        file.write(struct.pack("<I", index)) # vertexIndex
         write_float(file, weight) # weight
 
 # Write node to file as binary
 def write_node(file, node):
     write_string(file, node.name) # name
-    file.write(struct.pack(">I", len(node.rotation_keys))) # rotationCount
-    file.write(struct.pack(">I", len(node.scaling_keys))) # scalingCount
-    file.write(struct.pack(">I", len(node.translation_keys))) # translationCount
+    file.write(struct.pack("<I", len(node.rotation_keys))) # rotationCount
+    file.write(struct.pack("<I", len(node.scaling_keys))) # scalingCount
+    file.write(struct.pack("<I", len(node.translation_keys))) # translationCount
 
     # quaternionKeys
     for frame, key in node.rotation_keys:
-        file.write(struct.pack(">I", frame)) # frame
+        file.write(struct.pack("<I", frame)) # frame
         write_quaternion(file, key) # quaternion
 
     # scalingKeys
     for frame, key in node.scaling_keys:
-        file.write(struct.pack(">I", frame)) # frame
+        file.write(struct.pack("<I", frame)) # frame
         write_vector3(file, key) # vector
 
     # translationKeys
     for frame, key in node.translation_keys:
-        file.write(struct.pack(">I", frame)) # frame
+        file.write(struct.pack("<I", frame)) # frame
         write_vector3(file, key) # vector
 
 # Almost equality check of floating point
@@ -748,7 +748,7 @@ class ExportAnimation:
 
         write_block(file, "AND", block_size) # header
         write_string(file, self.name) # name
-        file.write(struct.pack(">I", len(nodes))) # nodeCount
+        file.write(struct.pack("<I", len(nodes))) # nodeCount
         for node in nodes:
             write_node(file, node) # nodes
 
@@ -843,17 +843,17 @@ class ExportObject:
         write_block(file, "OBD", block_size) # header
         write_string(file, self.name) # name
         write_matrix4x4(file, matrix) # transformationMatrix
-        file.write(struct.pack(">B", geometry_type)) # geometryType
-        file.write(struct.pack(">B", vertex_data_flags)) # vertexDataFlags
-        file.write(struct.pack(">i", len(indices)*3)) # indexCount
-        file.write(struct.pack(">i", len(vertices))) # vertexCount
-        file.write(struct.pack(">H", len(materials))) # materialCount
-        file.write(struct.pack(">H", len(skin_bones))) # skinBoneCount
-        file.write(struct.pack(">H", len(self.children))) # childCount
+        file.write(struct.pack("<B", geometry_type)) # geometryType
+        file.write(struct.pack("<B", vertex_data_flags)) # vertexDataFlags
+        file.write(struct.pack("<i", len(indices)*3)) # indexCount
+        file.write(struct.pack("<i", len(vertices))) # vertexCount
+        file.write(struct.pack("<H", len(materials))) # materialCount
+        file.write(struct.pack("<H", len(skin_bones))) # skinBoneCount
+        file.write(struct.pack("<H", len(self.children))) # childCount
 
         # indices
         for index in indices:
-            file.write(struct.pack(">III", *index)) # index
+            file.write(struct.pack("<III", *index)) # index
 
         # vertices
         for idx in range(len(vertices)):
@@ -902,12 +902,12 @@ class ExportObject:
         print("};")
 
         write_block(file, "BND", block_size) # header
-        file.write(struct.pack(">H", len(self.bobj.data.bones)+1)) # boneCount
+        file.write(struct.pack("<H", len(self.bobj.data.bones)+1)) # boneCount
 
         # root bone (actually part of bones)
         write_string(file, self.name) # name
         write_matrix4x4(file, self.bobj.matrix_local) # transformationMatrix
-        file.write(struct.pack(">H", 0)) # parent
+        file.write(struct.pack("<H", 0)) # parent
 
         # bones
         for bone, matrix in zip_longest(self.bobj.data.bones, bone_matrices):
@@ -923,7 +923,7 @@ class ExportObject:
             parent = get_parent_idx()
             write_string(file, self.name + "_" + bone.name) # name
             write_matrix4x4(file, matrix) # transformationMatrix
-            file.write(struct.pack(">H", parent)) # parent
+            file.write(struct.pack("<H", parent)) # parent
 
     def write(self, context, file, options):
         """Write object/armature data to file"""
@@ -1107,7 +1107,7 @@ class GlhckExporter:
         if bnh > 0 or obh > 0 or (anh > 0 and not options['split_animations']):
             file = open(filepath, 'wb')
             file.write(bytes(GLHCKM_HEADER, 'ascii'))
-            file.write(struct.pack(">BB", *GLHCKM_VERSION))
+            file.write(struct.pack("<BB", *GLHCKM_VERSION))
 
         if bnh > 0:
             write_block(file, "BNH", bnh) # header block
@@ -1133,7 +1133,7 @@ class GlhckExporter:
                 print(path)
                 file = open(path, 'wb')
                 file.write(bytes(GLHCKA_HEADER, 'ascii'))
-                file.write(struct.pack(">BB", *GLHCKM_VERSION))
+                file.write(struct.pack("<BB", *GLHCKM_VERSION))
                 write_block(file, "ANH", 1) # header block
             eanm.write(context, file, options)
 
@@ -1154,7 +1154,7 @@ class GlhckExporter:
 ## Text is used to serialize floats and block headers.
 ##
 ## Some major points of the format:
-##     - Everything is in network-byte-order (read using ntohl/ntohs)
+##     - Everything is little-endian
 ##     - Matrices are in column-major
 ##     - Quaternions are in order x,y,z,w
 ##     - Floats, Vectors, Quaternions, Matrices are packed as strings
