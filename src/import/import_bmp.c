@@ -12,21 +12,20 @@
 /* \brief read BMP header */
 int _readBMPHeader(FILE *f, int *w, int *h, unsigned short *bpp, size_t *dataSize)
 {
-   static const size_t headerSize = 2 + 16 + sizeof(int32_t) + sizeof(int32_t) + sizeof(uint16_t) + sizeof(uint16_t);
    chckBuffer *buf;
+   static const size_t headerSize = 2 + 16 + sizeof(int32_t) + sizeof(int32_t) + sizeof(uint16_t) + sizeof(uint16_t);
    assert(f && w && h && bpp && dataSize);
 
    if (!(buf = chckBufferNew(headerSize, CHCK_BUFFER_ENDIAN_LITTLE)))
       goto fail;
 
-   if (fread(buf->buffer, 1, headerSize, f) != headerSize)
+   if (chckBufferFillFromFile(f, 1, headerSize, buf) != headerSize)
       goto fail;
 
-   if (memcmp(buf->buffer, "BM", 2) != 0)
+   if (memcmp(chckBufferGetPointer(buf), "BM", 2) != 0)
       goto fail;
 
-   /* FIXME: maybe do function chckBufferSeek? */
-   buf->curpos += 2 + 16;
+   chckBufferSeek(buf, 2 + 16, SEEK_CUR);
 
    if (chckBufferReadInt32(buf, w) != RETURN_OK)
       goto fail;
@@ -34,7 +33,7 @@ int _readBMPHeader(FILE *f, int *w, int *h, unsigned short *bpp, size_t *dataSiz
    if (chckBufferReadInt32(buf, h) != RETURN_OK)
       goto fail;
 
-   buf->curpos += sizeof(uint16_t);
+   chckBufferSeek(buf, sizeof(uint16_t), SEEK_CUR);
 
    if (chckBufferReadUInt16(buf, bpp) != RETURN_OK)
       goto fail;

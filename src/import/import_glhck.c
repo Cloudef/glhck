@@ -2,7 +2,6 @@
 #include "import.h"
 #include "buffer/buffer.h"
 #include <stdio.h>     /* for scanf */
-#include <arpa/inet.h> /* for ntohl */
 #include <stdint.h>    /* for standard integers */
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
@@ -127,7 +126,8 @@ static int _glhckReadHeader(uint8_t *version, FILE *f, unsigned int *i)
    if (fread(&r, sizeof(r), 1, f) != 1)
       return RETURN_FAIL;
 
-   *i = ntohl(r);
+   if(chckBufferIsBigEndian()) chckBufferSwap(&r, sizeof(uint32_t), 1);
+   if (i) *i = r;
    return RETURN_OK;
 }
 
@@ -149,11 +149,11 @@ static int _glhckReadBND(uint8_t *version, FILE *f, glhckObject *root, const glh
       return (fseek(f, size, SEEK_CUR) == 0 ? RETURN_OK : RETURN_FAIL);
 
    /* create buffer for the size and hope it fits memory \o/ */
-   if (!(buf = chckBufferNew(size, CHCK_BUFFER_ENDIAN_BIG)))
+   if (!size || !(buf = chckBufferNew(size, CHCK_BUFFER_ENDIAN_LITTLE)))
       goto fail;
 
    /* read whole block to buffer */
-   if (fread(buf->buffer, 1, size, f) != size)
+   if (chckBufferFillFromFile(f, 1, size, buf) != size)
       goto fail;
 
    /* uint16_t: boneCount */
@@ -248,7 +248,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       goto fail;
 
    /* create buffer for the size and hope it fits memory \o/ */
-   if (!(buf = chckBufferNew(size, CHCK_BUFFER_ENDIAN_BIG)))
+   if (!size || !(buf = chckBufferNew(size, CHCK_BUFFER_ENDIAN_LITTLE)))
       goto fail;
 
    /* create object where we store the data */
@@ -256,7 +256,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       goto fail;
 
    /* read whole block to buffer */
-   if (fread(buf->buffer, 1, size, f) != size)
+   if (chckBufferFillFromFile(f, 1, size, buf) != size)
       goto fail;
 
    /* STRING: name */
@@ -312,7 +312,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       goto fail;
 
    /* flip endian, if needed */
-   for (i = 0; !chckBufferIsNativeEndian(buf) && i < indexCount; ++i) indices[i] = ntohl(indices[i]);
+   if (!chckBufferIsNativeEndian(buf)) chckBufferSwap(indices, sizeof(uint32_t), indexCount);
 
    if (indices) {
       glhckObjectInsertIndices(object, itype, indices, indexCount);
@@ -537,7 +537,7 @@ static int _glhckReadAND(uint8_t *version, FILE *f, glhckObject *root, uint32_t 
       return (fseek(f, size, SEEK_CUR) == 0 ? RETURN_OK : RETURN_FAIL);
 
    /* create buffer for the size and hope it fits memory \o/ */
-   if (!(buf = chckBufferNew(size, CHCK_BUFFER_ENDIAN_BIG)))
+   if (!size || !(buf = chckBufferNew(size, CHCK_BUFFER_ENDIAN_LITTLE)))
       goto fail;
 
    /* create animation where we store the data */
@@ -545,7 +545,7 @@ static int _glhckReadAND(uint8_t *version, FILE *f, glhckObject *root, uint32_t 
       goto fail;
 
    /* read whole block to buffer */
-   if (fread(buf->buffer, 1, size, f) != size)
+   if (chckBufferFillFromFile(f, 1, size, buf) != size)
       goto fail;
 
    /* STRING: name */
