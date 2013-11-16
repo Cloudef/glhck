@@ -111,6 +111,9 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
    if (!(importData = _glhckMalloc(w*h*4)))
       goto out_of_memory;
 
+   /* skip non important data */
+   fseek(f, 24, SEEK_CUR);
+
    if (!(buf = chckBufferNew(dataSize, CHCK_BUFFER_ENDIAN_LITTLE)))
       goto out_of_memory;
 
