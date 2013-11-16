@@ -74,8 +74,10 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
    /* close file */
    NULLDO(fclose, f);
 
-   DEBUG(GLHCK_DBG_CRAP, "V: %d", mmd->num_vertices);
-   DEBUG(GLHCK_DBG_CRAP, "I: %d", mmd->num_indices);
+   if (mmd->header.name) {
+      DEBUG(GLHCK_DBG_CRAP, "%s\n", mmd->header.name);
+   }
+   if (mmd->header.comment) printf("%s\n\n", mmd->header.comment);
 
    if (!(vertexData = _glhckCalloc(mmd->num_vertices, sizeof(glhckImportVertexData))))
       goto mmd_no_memory;
