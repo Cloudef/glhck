@@ -119,7 +119,7 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
    }
 
    /* assign data */
-   for (i = 0, start = 0; i < mmd->num_materials; ++i) {
+   for (i = 0, start = 0; i < mmd->num_materials; ++i, start += numFaces) {
       numFaces = mmd->materials[i].face;
       for (i2 = start; i2 < start + numFaces; ++i2) {
          ix = mmd->indices[i2];
@@ -140,9 +140,9 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
 
          /* fix coords */
          if (vertexData[ix].coord.x < 0.0f)
-            vertexData[ix].coord.x += 1;
+            vertexData[ix].coord.x += 1.0f;
          if (vertexData[ix].coord.y < 0.0f)
-            vertexData[ix].coord.y += 1;
+            vertexData[ix].coord.y += 1.0f;
 
          /* if there is packed texture */
          if (atlas && textureList[i]) {
@@ -156,7 +156,6 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
 
          indices[i2] = ix;
       }
-      start += numFaces;
    }
 
    if (atlas) {
