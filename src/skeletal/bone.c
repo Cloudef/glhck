@@ -8,6 +8,94 @@
    for (_cbc_ = 0; _cbc_ != parent->numChilds; ++_cbc_)    \
       function(parent->childs[_cbc_], ##__VA_ARGS__); }
 
+/* \brief transform V3F object */
+static void _glhckBoneTransformObjectV3F(glhckObject *object)
+{
+   glhckBone *bone;
+   unsigned int i, w;
+   glhckVertexWeight *weight;
+   kmMat3 transformedNormal;
+   kmMat4 bias, scale, transformedVertex, boneMatrix;
+   glhckVector3f bindVertex, bindNormal;
+   static glhckVector3f zero = {0,0,0};
+
+   kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
+   kmMat4Scaling(&scale, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
+
+   for (i = 0; i != (unsigned int)object->geometry->vertexCount; ++i) {
+      memcpy(&object->geometry->vertices.v3f[i].vertex, &zero, sizeof(glhckVector3f));
+      memcpy(&object->geometry->vertices.v3f[i].normal, &zero, sizeof(glhckVector3f));
+   }
+
+   for (i = 0; i != object->numBones; ++i) {
+      bone = object->bones[i];
+      kmMat4Multiply(&boneMatrix, &bone->transformedMatrix, &bone->offsetMatrix);
+      kmMat4Multiply(&transformedVertex, &scale, &boneMatrix);
+      kmMat4Multiply(&transformedVertex, &transformedVertex, &bias);
+      kmMat3AssignMat4(&transformedNormal, &transformedVertex);
+
+      for (w = 0; w != bone->numWeights; ++w) {
+         weight = &bone->weights[w];
+
+         memcpy(&bindVertex, &object->bindGeometry->vertices.v3f[weight->vertexIndex].vertex, sizeof(glhckVector3f));
+         memcpy(&bindNormal, &object->bindGeometry->vertices.v3f[weight->vertexIndex].normal, sizeof(glhckVector3f));
+         kmVec3MultiplyMat4((kmVec3*)&bindVertex, (kmVec3*)&bindVertex, &transformedVertex);
+         kmVec3MultiplyMat3((kmVec3*)&bindNormal, (kmVec3*)&bindNormal, &transformedNormal);
+
+         object->geometry->vertices.v3f[weight->vertexIndex].vertex.x += bindVertex.x * weight->weight;
+         object->geometry->vertices.v3f[weight->vertexIndex].vertex.y += bindVertex.y * weight->weight;
+         object->geometry->vertices.v3f[weight->vertexIndex].vertex.z += bindVertex.z * weight->weight;
+         object->geometry->vertices.v3f[weight->vertexIndex].normal.x += bindNormal.x * weight->weight;
+         object->geometry->vertices.v3f[weight->vertexIndex].normal.y += bindNormal.y * weight->weight;
+         object->geometry->vertices.v3f[weight->vertexIndex].normal.z += bindNormal.z * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V3FS object */
+static void _glhckBoneTransformObjectV3FS(glhckObject *object)
+{
+   glhckBone *bone;
+   unsigned int i, w;
+   glhckVertexWeight *weight;
+   kmMat3 transformedNormal;
+   kmMat4 bias, scale, transformedVertex, boneMatrix;
+   glhckVector3f bindVertex, bindNormal;
+   static glhckVector3f zero = {0,0,0};
+
+   kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
+   kmMat4Scaling(&scale, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
+
+   for (i = 0; i != (unsigned int)object->geometry->vertexCount; ++i) {
+      memcpy(&object->geometry->vertices.v3fs[i].vertex, &zero, sizeof(glhckVector3f));
+      memcpy(&object->geometry->vertices.v3fs[i].normal, &zero, sizeof(glhckVector3f));
+   }
+
+   for (i = 0; i != object->numBones; ++i) {
+      bone = object->bones[i];
+      kmMat4Multiply(&boneMatrix, &bone->transformedMatrix, &bone->offsetMatrix);
+      kmMat4Multiply(&transformedVertex, &scale, &boneMatrix);
+      kmMat4Multiply(&transformedVertex, &transformedVertex, &bias);
+      kmMat3AssignMat4(&transformedNormal, &transformedVertex);
+
+      for (w = 0; w != bone->numWeights; ++w) {
+         weight = &bone->weights[w];
+
+         memcpy(&bindVertex, &object->bindGeometry->vertices.v3fs[weight->vertexIndex].vertex, sizeof(glhckVector3f));
+         memcpy(&bindNormal, &object->bindGeometry->vertices.v3fs[weight->vertexIndex].normal, sizeof(glhckVector3f));
+         kmVec3MultiplyMat4((kmVec3*)&bindVertex, (kmVec3*)&bindVertex, &transformedVertex);
+         kmVec3MultiplyMat3((kmVec3*)&bindNormal, (kmVec3*)&bindNormal, &transformedNormal);
+
+         object->geometry->vertices.v3fs[weight->vertexIndex].vertex.x += bindVertex.x * weight->weight;
+         object->geometry->vertices.v3fs[weight->vertexIndex].vertex.y += bindVertex.y * weight->weight;
+         object->geometry->vertices.v3fs[weight->vertexIndex].vertex.z += bindVertex.z * weight->weight;
+         object->geometry->vertices.v3fs[weight->vertexIndex].normal.x += bindNormal.x * weight->weight;
+         object->geometry->vertices.v3fs[weight->vertexIndex].normal.y += bindNormal.y * weight->weight;
+         object->geometry->vertices.v3fs[weight->vertexIndex].normal.z += bindNormal.z * weight->weight;
+      }
+   }
+}
+
 /* \brief update bone structure's transformed matrices */
 static void _glhckBoneUpdateBones(glhckBone **bones, unsigned int memb)
 {
@@ -26,17 +114,10 @@ static void _glhckBoneUpdateBones(glhckBone **bones, unsigned int memb)
    }
 }
 
+
 /* \brief transform object with it's bones */
 void _glhckBoneTransformObject(glhckObject *object, int updateBones)
 {
-   glhckBone *bone;
-   unsigned int i, w;
-   glhckVertexWeight *weight;
-   kmMat3 transformedNormal;
-   kmMat4 bias, scale, transformedVertex, boneMatrix;
-   glhckVector3f bindVertex, bindNormal, currentVertex, currentNormal;
-   static glhckVector3f zero = {0,0,0};
-
    /* we are root, perform this transform on childs as well */
    if (object->flags & GLHCK_OBJECT_ROOT) {
       PERFORM_ON_CHILDS(object, _glhckBoneTransformObject, updateBones);
@@ -55,39 +136,8 @@ void _glhckBoneTransformObject(glhckObject *object, int updateBones)
    /* NOTE: at the moment CPU transformation only works with floating point vertex types */
 
    if (!object->bindGeometry) object->bindGeometry = _glhckGeometryCopy(object->geometry);
-   for (i = 0; i != (unsigned int)object->geometry->vertexCount; ++i) {
-      glhckGeometrySetVertexDataForIndex(object->geometry, i, &zero, &zero, NULL, NULL);
-   }
-
-   kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
-   kmMat4Scaling(&scale, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
-   for (i = 0; i != object->numBones; ++i) {
-      bone = object->bones[i];
-      kmMat4Multiply(&boneMatrix, &bone->transformedMatrix, &bone->offsetMatrix);
-      kmMat4Multiply(&transformedVertex, &scale, &boneMatrix);
-      kmMat4Multiply(&transformedVertex, &transformedVertex, &bias);
-      kmMat3AssignMat4(&transformedNormal, &transformedVertex);
-      for (w = 0; w != bone->numWeights; ++w) {
-         weight = &bone->weights[w];
-
-         glhckGeometryGetVertexDataForIndex(object->bindGeometry, weight->vertexIndex, &bindVertex,
-               &bindNormal, NULL, NULL);
-         glhckGeometryGetVertexDataForIndex(object->geometry, weight->vertexIndex, &currentVertex,
-               &currentNormal, NULL, NULL);
-         kmVec3MultiplyMat4((kmVec3*)&bindVertex, (kmVec3*)&bindVertex, &transformedVertex);
-         kmVec3MultiplyMat3((kmVec3*)&bindNormal, (kmVec3*)&bindNormal, &transformedNormal);
-
-         currentVertex.x += bindVertex.x * weight->weight;
-         currentVertex.y += bindVertex.y * weight->weight;
-         currentVertex.z += bindVertex.z * weight->weight;
-         currentNormal.x += bindNormal.x * weight->weight;
-         currentNormal.y += bindNormal.y * weight->weight;
-         currentNormal.z += bindNormal.z * weight->weight;
-
-         glhckGeometrySetVertexDataForIndex(object->geometry, weight->vertexIndex, &currentVertex,
-               &currentNormal, NULL, NULL);
-      }
-   }
+   if (object->geometry->vertexType == GLHCK_VERTEX_V3F) _glhckBoneTransformObjectV3F(object);
+   if (object->geometry->vertexType == GLHCK_VERTEX_V3FS) _glhckBoneTransformObjectV3FS(object);
 
    /* update bounding box for object */
    glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
