@@ -91,8 +91,7 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
    size_t dataSize, i, i2;
    int w, h;
    unsigned short bpp;
-   unsigned char bgr[3], *importData = NULL;
-   chckBuffer *buf = NULL;
+   unsigned char *importData = NULL, *bgr = NULL;
    CALL(0, "%s, %p", file, import);
 
    /* open BMP */
@@ -108,30 +107,24 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
    if (!IMAGE_DIMENSIONS_OK(w, h))
       goto bad_dimensions;
 
-   if (!(importData = _glhckMalloc(w*h*4)))
+   if (!(importData = _glhckMalloc(w*h*4)) || !(bgr =_glhckMalloc(dataSize)))
       goto out_of_memory;
 
    /* skip non important data */
    fseek(f, 24, SEEK_CUR);
 
-   if (!(buf = chckBufferNew(dataSize, CHCK_BUFFER_ENDIAN_LITTLE)))
-      goto out_of_memory;
-
-   if (fread(buf->buffer, 1, dataSize, f) != dataSize)
+   if (fread(bgr, 1, dataSize, f) != dataSize)
       goto not_possible;
 
    /* read 24 bpp BMP data */
    for (i = 0, i2 = 0; i < dataSize; i+=3, i2+=4) {
-      if (chckBufferRead(bgr, 1, 3, buf) != 3)
-         goto not_possible;
-
-      importData[i2+0] = bgr[2];
-      importData[i2+1] = bgr[1];
-      importData[i2+2] = bgr[0];
+      importData[i2+0] = bgr[i+2];
+      importData[i2+1] = bgr[i+1];
+      importData[i2+2] = bgr[i+0];
       importData[i2+3] = 255;
    }
 
-   NULLDO(chckBufferFree, buf);
+   NULLDO(_glhckFree, bgr);
 
 #if 0
    /* invert */
@@ -173,8 +166,8 @@ out_of_memory:
 bad_dimensions:
    DEBUG(GLHCK_DBG_ERROR, "BMP image has invalid dimension %dx%d", w, h);
 fail:
-   IFDO(chckBufferFree, buf);
    IFDO(_glhckFree, importData);
+   IFDO(_glhckFree, bgr);
    IFDO(fclose, f);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
