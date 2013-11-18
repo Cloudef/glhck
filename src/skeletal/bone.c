@@ -19,9 +19,17 @@ static void _glhckBoneTransformObjectV3F(glhckObject *object)
    kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
    kmMat4Inverse(&biasinv, &bias);
 
-   for (i = 0; i != (unsigned int)object->geometry->vertexCount; ++i) {
-      memcpy(&object->geometry->vertices.v3f[i].vertex, &zero, sizeof(glhckVector3f));
-      memcpy(&object->geometry->vertices.v3f[i].normal, &zero, sizeof(glhckVector3f));
+   for (i = 0; i != object->numBones; ++i) {
+      glhckBone *bone = object->bones[i];
+      for (w = 0; w != bone->numWeights; ++w) {
+         glhckVertexWeight *weight = &bone->weights[w];
+
+         if (weight->vertexIndex >= (glhckIndexi)object->geometry->vertexCount)
+            continue;
+
+         memcpy(&object->geometry->vertices.v3f[weight->vertexIndex].vertex, &zero, sizeof(glhckVector3f));
+         memcpy(&object->geometry->vertices.v3f[weight->vertexIndex].normal, &zero, sizeof(glhckVector3f));
+      }
    }
 
    for (i = 0; i != object->numBones; ++i) {
@@ -37,6 +45,9 @@ static void _glhckBoneTransformObjectV3F(glhckObject *object)
       for (w = 0; w != bone->numWeights; ++w) {
          glhckVector3f bindVertex, bindNormal;
          glhckVertexWeight *weight = &bone->weights[w];
+
+         if (weight->vertexIndex >= (glhckIndexi)object->geometry->vertexCount)
+            continue;
 
          memcpy(&bindVertex, &object->bindGeometry->vertices.v3f[weight->vertexIndex].vertex, sizeof(glhckVector3f));
          memcpy(&bindNormal, &object->bindGeometry->vertices.v3f[weight->vertexIndex].normal, sizeof(glhckVector3f));
@@ -65,9 +76,17 @@ static void _glhckBoneTransformObjectV3FS(glhckObject *object)
    kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
    kmMat4Inverse(&biasinv, &bias);
 
-   for (i = 0; i != (unsigned int)object->geometry->vertexCount; ++i) {
-      memcpy(&object->geometry->vertices.v3fs[i].vertex, &zero3f, sizeof(glhckVector3f));
-      memcpy(&object->geometry->vertices.v3fs[i].normal, &zero3s, sizeof(glhckVector3s));
+   for (i = 0; i != object->numBones; ++i) {
+      glhckBone *bone = object->bones[i];
+      for (w = 0; w != bone->numWeights; ++w) {
+         glhckVertexWeight *weight = &bone->weights[w];
+
+         if (weight->vertexIndex >= (glhckIndexi)object->geometry->vertexCount)
+            continue;
+
+         memcpy(&object->geometry->vertices.v3fs[weight->vertexIndex].vertex, &zero3f, sizeof(glhckVector3f));
+         memcpy(&object->geometry->vertices.v3fs[weight->vertexIndex].normal, &zero3s, sizeof(glhckVector3s));
+      }
    }
 
    for (i = 0; i != object->numBones; ++i) {
@@ -83,6 +102,9 @@ static void _glhckBoneTransformObjectV3FS(glhckObject *object)
       for (w = 0; w != bone->numWeights; ++w) {
          glhckVector3f bindVertex, bindNormal;
          glhckVertexWeight *weight = &bone->weights[w];
+
+         if (weight->vertexIndex >= (glhckIndexi)object->geometry->vertexCount)
+            continue;
 
          memcpy(&bindVertex, &object->bindGeometry->vertices.v3fs[weight->vertexIndex].vertex, sizeof(glhckVector3f));
          glhckSetV3(&bindNormal, &object->bindGeometry->vertices.v3fs[weight->vertexIndex].normal);
@@ -167,6 +189,10 @@ static void _glhckBoneTransformObjectV3B(glhckObject *object)
       glhckBone *bone = object->bones[i];
       for (w = 0; w != bone->numWeights; ++w) {
          glhckVertexWeight *weight = &bone->weights[w];
+
+         if (weight->vertexIndex >= (glhckIndexi)object->geometry->vertexCount)
+            continue;
+
          memcpy(&object->geometry->vertices.v3b[weight->vertexIndex].vertex, &zero, sizeof(glhckVector3s));
          memcpy(&object->geometry->vertices.v3b[weight->vertexIndex].normal, &zero, sizeof(glhckVector3s));
       }
@@ -187,6 +213,9 @@ static void _glhckBoneTransformObjectV3B(glhckObject *object)
       for (w = 0; w != bone->numWeights; ++w) {
          glhckVector3f bindVertex, bindNormal;
          glhckVertexWeight *weight = &bone->weights[w];
+
+         if (weight->vertexIndex >= (glhckIndexi)object->geometry->vertexCount)
+            continue;
 
          glhckSetV3(&bindVertex, &object->bindGeometry->vertices.v3b[weight->vertexIndex].vertex);
          glhckSetV3(&bindNormal, &object->bindGeometry->vertices.v3b[weight->vertexIndex].normal);
