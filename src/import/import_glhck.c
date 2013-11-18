@@ -486,9 +486,28 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
             goto fail;
       }
 
+      /* FIXME: we need glhckSkinBone that points to bones[b]
+       * Why? SkinBones each have own offsetMatrix and weights. */
       if (bones[b]) {
+         unsigned int newWeightCount;
+         glhckVertexWeight *newWeights = weights;
+         const glhckVertexWeight *oldWeights;
+
+         if ((oldWeights = glhckBoneWeights(bones[b], &newWeightCount))) {
+            if (!(newWeights = _glhckCalloc(newWeightCount + weightCount, sizeof(glhckVertexWeight))))
+               goto fail;
+
+
+            memcpy(newWeights, oldWeights, newWeightCount * sizeof(glhckVertexWeight));
+            memcpy(newWeights, weights, weightCount * sizeof(glhckVertexWeight));
+            NULLDO(_glhckFree, weights);
+            newWeightCount += weightCount;
+         } else {
+            newWeightCount = weightCount;
+         }
+
          glhckBoneOffsetMatrix(bones[b], &matrix);
-         glhckBoneInsertWeights(bones[b], weights, weightCount);
+         glhckBoneInsertWeights(bones[b], newWeights, newWeightCount);
          ++b;
       }
 
