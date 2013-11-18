@@ -23,7 +23,11 @@ int feenableexcept(int excepts);
 #endif
 
 #if defined(__linux__)
-#  include <sys/prctl.h> /* for yama */
+#  include <linux/version.h>
+#  if LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0)
+#     include <sys/prctl.h> /* for yama */
+#     define HAS_YAMA_PRCTL 1
+#  endif
 #endif
 
 /* tracing channel for this file */
@@ -84,7 +88,7 @@ static void _glhckBacktrace(int signal)
    pid_t dying_pid = getpid();
    pid_t child_pid = fork();
 
-#if defined(__linux__)
+#if HAS_YAMA_PRCTL
    /* tell yama that we allow our child_pid to trace our process */
    if (child_pid > 0) prctl(PR_SET_PTRACER, child_pid);
 #endif
