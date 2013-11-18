@@ -310,7 +310,8 @@ class Material:
         # Create a list of textures that have type 'IMAGE'
         textures = [mtl.texture_slots[tslot]
                 for tslot in mtl.texture_slots.keys()
-                if mtl.texture_slots[tslot].texture.type == 'IMAGE']
+                if mtl.texture_slots[tslot].texture is not None
+                and mtl.texture_slots[tslot].texture.type == 'IMAGE']
         textures = [tex for tex in textures if tex.texture.image is not None]
 
         for tex in textures:
@@ -1012,6 +1013,9 @@ class GlhckExporter:
                 return False
 
             if not options['use_animations']:
+                return
+
+            if eobj.bobj.animation_data is None:
                 return
 
             for action in bpy.data.actions:
