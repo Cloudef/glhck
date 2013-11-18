@@ -22,6 +22,10 @@ int feenableexcept(int excepts);
 #  include <sys/wait.h>
 #endif
 
+#if defined(__linux__)
+#  include <sys/prctl.h> /* for yama */
+#endif
+
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GLHCK
 
@@ -80,13 +84,18 @@ static void _glhckBacktrace(int signal)
    pid_t dying_pid = getpid();
    pid_t child_pid = fork();
 
+#if defined(__linux__)
+   /* tell yama that we allow our child_pid to trace our process */
+   if (child_pid > 0) prctl(PR_SET_PTRACER, child_pid);
+#endif
+
    if (child_pid < 0) {
       _glhckPuts("\1fork failed for gdb backtrace.");
    } else if (child_pid == 0) {
-      sprintf(buf, "gdb -p %d -batch -ex bt 2>/dev/null | "
-                   "sed '0,/<signal handler/d'", dying_pid);
+      snprintf(buf, sizeof(buf)-1, "gdb -p %d -batch -ex bt 2>/dev/null | sed '0,/<signal handler/d'", dying_pid);
       const char* argv[] = { "sh", "-c", buf, NULL };
       execve("/bin/sh", (char**)argv, NULL);
+      _glhckPuts("\1failed to launch gdb for backtrace.");
       _exit(EXIT_FAILURE);
    } else {
       waitpid(child_pid, NULL, 0);
