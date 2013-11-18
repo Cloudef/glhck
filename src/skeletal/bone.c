@@ -11,16 +11,13 @@
 /* \brief transform V3F object */
 static void _glhckBoneTransformObjectV3F(glhckObject *object)
 {
-   glhckBone *bone;
    unsigned int i, w;
-   glhckVertexWeight *weight;
-   kmMat3 transformedNormal;
-   kmMat4 bias, scale, transformedVertex, boneMatrix;
-   glhckVector3f bindVertex, bindNormal;
+   kmMat4 bias, biasinv;
    static glhckVector3f zero = {0,0,0};
 
+   /* scale is always 1.0f, we can skip it */
    kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
-   kmMat4Scaling(&scale, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
 
    for (i = 0; i != (unsigned int)object->geometry->vertexCount; ++i) {
       memcpy(&object->geometry->vertices.v3f[i].vertex, &zero, sizeof(glhckVector3f));
@@ -28,14 +25,18 @@ static void _glhckBoneTransformObjectV3F(glhckObject *object)
    }
 
    for (i = 0; i != object->numBones; ++i) {
-      bone = object->bones[i];
-      kmMat4Multiply(&boneMatrix, &bone->transformedMatrix, &bone->offsetMatrix);
-      kmMat4Multiply(&transformedVertex, &scale, &boneMatrix);
-      kmMat4Multiply(&transformedVertex, &transformedVertex, &bias);
+      kmMat3 transformedNormal;
+      kmMat4 transformedVertex, transformedMatrix, offsetMatrix;
+      glhckBone *bone = object->bones[i];
+
+      kmMat4Multiply(&transformedMatrix, &biasinv, &bone->transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &bone->offsetMatrix, &bias);
+      kmMat4Multiply(&transformedVertex, &transformedMatrix, &offsetMatrix);
       kmMat3AssignMat4(&transformedNormal, &transformedVertex);
 
       for (w = 0; w != bone->numWeights; ++w) {
-         weight = &bone->weights[w];
+         glhckVector3f bindVertex, bindNormal;
+         glhckVertexWeight *weight = &bone->weights[w];
 
          memcpy(&bindVertex, &object->bindGeometry->vertices.v3f[weight->vertexIndex].vertex, sizeof(glhckVector3f));
          memcpy(&bindNormal, &object->bindGeometry->vertices.v3f[weight->vertexIndex].normal, sizeof(glhckVector3f));
@@ -55,34 +56,36 @@ static void _glhckBoneTransformObjectV3F(glhckObject *object)
 /* \brief transform V3FS object */
 static void _glhckBoneTransformObjectV3FS(glhckObject *object)
 {
-   glhckBone *bone;
    unsigned int i, w;
-   glhckVertexWeight *weight;
-   kmMat3 transformedNormal;
-   kmMat4 bias, scale, transformedVertex, boneMatrix;
-   glhckVector3f bindVertex, bindNormal;
-   static glhckVector3f zero = {0,0,0};
+   kmMat4 bias, biasinv;
+   static glhckVector3f zero3f = {0,0,0};
+   static glhckVector3s zero3s = {0,0,0};
 
+   /* scale is always 1.0f, we can skip it */
    kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
-   kmMat4Scaling(&scale, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
 
    for (i = 0; i != (unsigned int)object->geometry->vertexCount; ++i) {
-      memcpy(&object->geometry->vertices.v3fs[i].vertex, &zero, sizeof(glhckVector3f));
-      memcpy(&object->geometry->vertices.v3fs[i].normal, &zero, sizeof(glhckVector3f));
+      memcpy(&object->geometry->vertices.v3fs[i].vertex, &zero3f, sizeof(glhckVector3f));
+      memcpy(&object->geometry->vertices.v3fs[i].normal, &zero3s, sizeof(glhckVector3s));
    }
 
    for (i = 0; i != object->numBones; ++i) {
-      bone = object->bones[i];
-      kmMat4Multiply(&boneMatrix, &bone->transformedMatrix, &bone->offsetMatrix);
-      kmMat4Multiply(&transformedVertex, &scale, &boneMatrix);
-      kmMat4Multiply(&transformedVertex, &transformedVertex, &bias);
+      kmMat3 transformedNormal;
+      kmMat4 transformedVertex, transformedMatrix, offsetMatrix;
+      glhckBone *bone = object->bones[i];
+
+      kmMat4Multiply(&transformedMatrix, &biasinv, &bone->transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &bone->offsetMatrix, &bias);
+      kmMat4Multiply(&transformedVertex, &transformedMatrix, &offsetMatrix);
       kmMat3AssignMat4(&transformedNormal, &transformedVertex);
 
       for (w = 0; w != bone->numWeights; ++w) {
-         weight = &bone->weights[w];
+         glhckVector3f bindVertex, bindNormal;
+         glhckVertexWeight *weight = &bone->weights[w];
 
          memcpy(&bindVertex, &object->bindGeometry->vertices.v3fs[weight->vertexIndex].vertex, sizeof(glhckVector3f));
-         memcpy(&bindNormal, &object->bindGeometry->vertices.v3fs[weight->vertexIndex].normal, sizeof(glhckVector3f));
+         glhckSetV3(&bindNormal, &object->bindGeometry->vertices.v3fs[weight->vertexIndex].normal);
          kmVec3MultiplyMat4((kmVec3*)&bindVertex, (kmVec3*)&bindVertex, &transformedVertex);
          kmVec3MultiplyMat3((kmVec3*)&bindNormal, (kmVec3*)&bindNormal, &transformedNormal);
 
@@ -92,6 +95,110 @@ static void _glhckBoneTransformObjectV3FS(glhckObject *object)
          object->geometry->vertices.v3fs[weight->vertexIndex].normal.x += bindNormal.x * weight->weight;
          object->geometry->vertices.v3fs[weight->vertexIndex].normal.y += bindNormal.y * weight->weight;
          object->geometry->vertices.v3fs[weight->vertexIndex].normal.z += bindNormal.z * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V3S object */
+static void _glhckBoneTransformObjectV3S(glhckObject *object)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   static glhckVector3s zero = {0,0,0};
+
+   kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
+   kmMat4Scaling(&scale, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
+
+   for (i = 0; i != object->numBones; ++i) {
+      glhckBone *bone = object->bones[i];
+      for (w = 0; w != bone->numWeights; ++w) {
+         glhckVertexWeight *weight = &bone->weights[w];
+         memcpy(&object->geometry->vertices.v3s[weight->vertexIndex].vertex, &zero, sizeof(glhckVector3s));
+         memcpy(&object->geometry->vertices.v3s[weight->vertexIndex].normal, &zero, sizeof(glhckVector3s));
+      }
+   }
+
+   for (i = 0; i != object->numBones; ++i) {
+      kmMat3 transformedNormal;
+      kmMat4 transformedVertex, transformedMatrix, offsetMatrix;
+      glhckBone *bone = object->bones[i];
+
+      kmMat4Multiply(&transformedMatrix, &biasinv, &bone->transformedMatrix);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &bone->offsetMatrix, &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(&transformedVertex, &transformedMatrix, &offsetMatrix);
+      kmMat3AssignMat4(&transformedNormal, &transformedVertex);
+
+      for (w = 0; w != bone->numWeights; ++w) {
+         glhckVector3f bindVertex, bindNormal;
+         glhckVertexWeight *weight = &bone->weights[w];
+
+         glhckSetV3(&bindVertex, &object->bindGeometry->vertices.v3s[weight->vertexIndex].vertex);
+         glhckSetV3(&bindNormal, &object->bindGeometry->vertices.v3s[weight->vertexIndex].normal);
+         kmVec3MultiplyMat4((kmVec3*)&bindVertex, (kmVec3*)&bindVertex, &transformedVertex);
+         kmVec3MultiplyMat3((kmVec3*)&bindNormal, (kmVec3*)&bindNormal, &transformedNormal);
+
+         object->geometry->vertices.v3s[weight->vertexIndex].vertex.x += bindVertex.x * weight->weight;
+         object->geometry->vertices.v3s[weight->vertexIndex].vertex.y += bindVertex.y * weight->weight;
+         object->geometry->vertices.v3s[weight->vertexIndex].vertex.z += bindVertex.z * weight->weight;
+         object->geometry->vertices.v3s[weight->vertexIndex].normal.x += bindNormal.x * weight->weight;
+         object->geometry->vertices.v3s[weight->vertexIndex].normal.y += bindNormal.y * weight->weight;
+         object->geometry->vertices.v3s[weight->vertexIndex].normal.z += bindNormal.z * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V3B object */
+static void _glhckBoneTransformObjectV3B(glhckObject *object)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   static glhckVector3b zero = {0,0,0};
+
+   kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
+   kmMat4Scaling(&scale, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
+
+   for (i = 0; i != object->numBones; ++i) {
+      glhckBone *bone = object->bones[i];
+      for (w = 0; w != bone->numWeights; ++w) {
+         glhckVertexWeight *weight = &bone->weights[w];
+         memcpy(&object->geometry->vertices.v3b[weight->vertexIndex].vertex, &zero, sizeof(glhckVector3s));
+         memcpy(&object->geometry->vertices.v3b[weight->vertexIndex].normal, &zero, sizeof(glhckVector3s));
+      }
+   }
+
+   for (i = 0; i != object->numBones; ++i) {
+      kmMat3 transformedNormal;
+      kmMat4 transformedVertex, transformedMatrix, offsetMatrix;
+      glhckBone *bone = object->bones[i];
+
+      kmMat4Multiply(&transformedMatrix, &biasinv, &bone->transformedMatrix);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &bone->offsetMatrix, &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(&transformedVertex, &transformedMatrix, &offsetMatrix);
+      kmMat3AssignMat4(&transformedNormal, &transformedVertex);
+
+      for (w = 0; w != bone->numWeights; ++w) {
+         glhckVector3f bindVertex, bindNormal;
+         glhckVertexWeight *weight = &bone->weights[w];
+
+         glhckSetV3(&bindVertex, &object->bindGeometry->vertices.v3b[weight->vertexIndex].vertex);
+         glhckSetV3(&bindNormal, &object->bindGeometry->vertices.v3b[weight->vertexIndex].normal);
+         kmVec3MultiplyMat4((kmVec3*)&bindVertex, (kmVec3*)&bindVertex, &transformedVertex);
+         kmVec3MultiplyMat3((kmVec3*)&bindNormal, (kmVec3*)&bindNormal, &transformedNormal);
+
+         object->geometry->vertices.v3b[weight->vertexIndex].vertex.x += bindVertex.x * weight->weight;
+         object->geometry->vertices.v3b[weight->vertexIndex].vertex.y += bindVertex.y * weight->weight;
+         object->geometry->vertices.v3b[weight->vertexIndex].vertex.z += bindVertex.z * weight->weight;
+         object->geometry->vertices.v3b[weight->vertexIndex].normal.x += bindNormal.x * weight->weight;
+         object->geometry->vertices.v3b[weight->vertexIndex].normal.y += bindNormal.y * weight->weight;
+         object->geometry->vertices.v3b[weight->vertexIndex].normal.z += bindNormal.z * weight->weight;
       }
    }
 }
@@ -136,8 +243,18 @@ void _glhckBoneTransformObject(glhckObject *object, int updateBones)
    /* NOTE: at the moment CPU transformation only works with floating point vertex types */
 
    if (!object->bindGeometry) object->bindGeometry = _glhckGeometryCopy(object->geometry);
+
+   /* TODO: Fix internal vertextype system by using table.
+    * 1. we avoid branching like this.
+    * 2. code will be much cleaner.
+    * 3. library user can register his own vertex types
+    * 4. we can drop V3FS since it can be registered by user anyways (or introduce it later when glhck is famous)
+    * 5. we probably gain a lot of performance since branching happens in quite tight loops.
+    */
    if (object->geometry->vertexType == GLHCK_VERTEX_V3F) _glhckBoneTransformObjectV3F(object);
    if (object->geometry->vertexType == GLHCK_VERTEX_V3FS) _glhckBoneTransformObjectV3FS(object);
+   if (object->geometry->vertexType == GLHCK_VERTEX_V3S) _glhckBoneTransformObjectV3S(object);
+   if (object->geometry->vertexType == GLHCK_VERTEX_V3B) _glhckBoneTransformObjectV3B(object);
 
    /* update bounding box for object */
    glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
@@ -270,8 +387,7 @@ GLHCKAPI void glhckBoneParentBone(glhckBone *object, glhckBone *parentBone)
 {
    CALL(0, "%p, %p", object, parentBone);
    assert(object);
-   IFDO(glhckBoneFree, object->parent);
-   object->parent = (parentBone?glhckBoneRef(parentBone):NULL);
+   object->parent = parentBone;
 }
 
 /* \brief return parent bone index of this bone */

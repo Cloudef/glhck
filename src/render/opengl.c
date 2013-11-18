@@ -661,10 +661,13 @@ static void rBonesRender(const glhckObject *object)
       return;
 
    kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
-   kmMat4Scaling(&transform, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
-   kmMat4Inverse(&scale, &transform);
+   kmMat4Scaling(&scale, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
+   kmMat4Inverse(&bias, &bias);
+   kmMat4Inverse(&scale, &scale);
+
    for (i = 0; i != object->numBones; ++i) {
-      kmMat4Multiply(&transform, &scale, &object->bones[i]->transformedMatrix);
+      kmMat4Multiply(&transform, &bias, &object->bones[i]->transformedMatrix);
+      kmMat4Multiply(&transform, &scale, &transform);
       points[i].x = transform.mat[12];
       points[i].y = transform.mat[13];
       points[i].z = transform.mat[14];
