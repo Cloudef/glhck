@@ -40,7 +40,7 @@ _GLHCK_TLS struct __GLHCKcontext *_glhckContext = NULL;
 static void _glhckFpeHandler(int signal)
 {
    (void)signal;
-   _glhckPuts("\4SIGFPE \1signal received!");
+   _glhckPuts("\n\4SIGFPE \1signal received!");
    _glhckPuts("Run the program again with DEBUG=2,+all,+trace to catch where it happens.");
    _glhckPuts("Or optionally run the program with GDB.");
    abort();
@@ -92,7 +92,9 @@ static void _glhckBacktrace(int signal)
    if (child_pid < 0) {
       _glhckPuts("\1fork failed for gdb backtrace.");
    } else if (child_pid == 0) {
-      snprintf(buf, sizeof(buf)-1, "gdb -p %d -batch -ex bt 2>/dev/null | sed '0,/<signal handler/d'", dying_pid);
+      /* sed -n '/bar/h;/bar/!H;$!b;x;p' (another way, if problems) */
+      printf("\n---- gdb ----\n");
+      snprintf(buf, sizeof(buf)-1, "gdb -p %d -batch -ex bt 2>/dev/null | sed -n '/<signal handler/{n;x;b};H;${x;p}'", dying_pid);
       const char* argv[] = { "sh", "-c", buf, NULL };
       execve("/bin/sh", (char**)argv, NULL);
       _glhckPuts("\1failed to launch gdb for backtrace.");
