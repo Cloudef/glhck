@@ -438,6 +438,7 @@ def blender_object_to_data(context, bobj, options):
     indices = []
     materials = []
     skin_bones = []
+    used_bones = []
 
     if bobj.type == 'EMPTY' or bobj.data is None:
         return {'vertices':vertices,
@@ -524,6 +525,8 @@ def blender_object_to_data(context, bobj, options):
                     for vertex_group in mesh.vertices[vidx].groups:
                         bone = vertex_group_map.get(vertex_group.group)
                         if bone is not None:
+                            if bone not in used_bones:
+                                used_bones.append(bone)
                             weight = vertex_group.weight / weight_total
                             bone.add_vertex(vertex_count, weight)
 
@@ -547,7 +550,7 @@ def blender_object_to_data(context, bobj, options):
             'vertex_colors':vertex_colors,
             'indices':indices,
             'materials':materials,
-            'skin_bones':skin_bones}
+            'skin_bones':used_bones}
 
 class Node:
     def __init__(self, name):
