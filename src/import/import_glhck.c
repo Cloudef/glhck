@@ -199,9 +199,26 @@ static int _glhckReadBND(uint8_t *version, FILE *f, glhckObject *root, const glh
    IFDO(_glhckFree, parents);
 
    if (bones) {
-      glhckObjectInsertBones(root, bones, boneCount);
-      for (i = 0; i < boneCount; ++i) glhckBoneFree(bones[i]);
-      NULLDO(_glhckFree, bones);
+      glhckBone **allBones = bones, **rootBones;
+      unsigned int rootBoneCount;
+
+      /* merge bones */
+      if ((rootBones = glhckObjectBones(root, &rootBoneCount))) {
+         if (!(allBones = _glhckCalloc(rootBoneCount + boneCount, sizeof(glhckBone*))))
+            goto fail;
+
+         for (i = 0; i < rootBoneCount; ++i) glhckBoneRef(rootBones[i]);
+         memcpy(allBones, rootBones, rootBoneCount * sizeof(glhckBone*));
+         memcpy(&allBones[rootBoneCount], bones, boneCount * sizeof(glhckBone*));
+         NULLDO(_glhckFree, bones);
+         rootBoneCount += boneCount;
+      } else {
+         rootBoneCount = boneCount;
+      }
+
+      glhckObjectInsertBones(root, allBones, rootBoneCount);
+      for (i = 0; i < rootBoneCount; ++i) glhckBoneFree(allBones[i]);
+      NULLDO(_glhckFree, allBones);
    }
 
    NULLDO(chckBufferFree, buf);
