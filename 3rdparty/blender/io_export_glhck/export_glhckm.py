@@ -382,8 +382,6 @@ def skin_bones_from_blender_object(bobj):
     armature_modifier_list = [modifier for modifier in bobj.modifiers
         if modifier.type == 'ARMATURE' and modifier.show_viewport]
 
-    # Although multiple armature objects are gathered, support for
-    # multiple armatures per mesh is not complete
     armature_objects = [modifier.object for modifier in armature_modifier_list
             if modifier.object is not None]
 
@@ -451,10 +449,16 @@ def blender_object_to_data(context, bobj, options):
 
     if options['use_bones']:
         skin_bones = skin_bones_from_blender_object(bobj)
-        vertex_group_map = {group.index : bone
-                for group in bobj.vertex_groups
-                for bone in skin_bones
-                if group.name == bone.name}
+        vertex_group_map = {group.index : group for group in bobj.vertex_groups}
+
+    # helper function for getting all the skin bones for vertex group
+    def get_skin_bones_for_vgroup(vgroup):
+        bones = []
+        vertex_group = vertex_group_map[vgroup.group]
+        for bone in skin_bones:
+            if vertex_group.name == bone.name:
+                bones.append(bone)
+        return bones
 
     mesh = blender_object_to_mesh(context, bobj, options, len(skin_bones))
 
@@ -498,11 +502,11 @@ def blender_object_to_data(context, bobj, options):
             # Get total weight for vertex and number of influences
             influences = 0
             weight_total = 0.0
-            if options['use_bones']:
-                for vertex_group in mesh.vertices[vidx].groups:
-                    bone = vertex_group_map.get(vertex_group.group)
-                    if bone is not None:
-                        weight_total += vertex_group.weight
+            if len(skin_bones):
+                for vgroup in mesh.vertices[vidx].groups:
+                    bones = get_skin_bones_for_vgroup(vgroup)
+                    for bone in bones:
+                        weight_total += vgroup.weight
                         influences += 1
 
             # Check for duplicate vertex
@@ -521,13 +525,13 @@ def blender_object_to_data(context, bobj, options):
                     vertex_colors.append(color)
 
                 # Add vertex to BoneGroup if it's in any
-                if options['use_bones']:
-                    for vertex_group in mesh.vertices[vidx].groups:
-                        bone = vertex_group_map.get(vertex_group.group)
-                        if bone is not None:
+                if influences:
+                    for vgroup in mesh.vertices[vidx].groups:
+                        bones = get_skin_bones_for_vgroup(vgroup)
+                        for bone in bones:
                             if bone not in used_bones:
                                 used_bones.append(bone)
-                            weight = vertex_group.weight / weight_total
+                            weight = vgroup.weight / weight_total
                             bone.add_vertex(vertex_count, weight)
 
                 tmp_faces.append(vertex_count)
