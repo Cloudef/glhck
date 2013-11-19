@@ -2,6 +2,16 @@ TODO
 ====
 
 ---
+We need some sort of assest library with hashed tables
+This way we can reuse assets and not already load new ones..
+That's not the only saving, we can remove some pointers from glhckObject
+as well, and provide user functions like
+glhckGetSkeleton("skeleton name"); etc..
+---
+Spline animation interpolation
+---
+Fix internal vertextype system use tables, and remove all branches related to vertextype
+---
 Scale down textures bigger than GL_MAX_TEXTURE_SIZE by rendering parts to target size FBO
 ---
 Have multiple draw queues, and but the object on specific queue depending on it's state.
