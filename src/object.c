@@ -405,6 +405,9 @@ GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
    /* free bones */
    glhckObjectInsertBones(object, NULL, 0);
 
+   /* free skin bones */
+   glhckObjectInsertSkinBones(object, NULL, 0);
+
    /* free material */
    glhckObjectMaterial(object, NULL);
 
@@ -1061,13 +1064,8 @@ GLHCKAPI int glhckObjectInsertBones(glhckObject *object, glhckBone **bones, unsi
    object->numBones = (bonesCopy?memb:0);
 
    /* reference new bones */
-   if (object->bones) {
-      for (i = 0; i != object->numBones; ++i)
-         glhckBoneRef(object->bones[i]);
-      _glhckBoneTransformObject(object, 1);
-   } else {
-      IFDO(_glhckGeometryFree, object->bindGeometry);
-   }
+   for (i = 0; object->bones && i != object->numBones; ++i)
+      glhckBoneRef(object->bones[i]);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -1094,6 +1092,65 @@ GLHCKAPI glhckBone* glhckObjectGetBone(glhckObject *object, const char *name)
    return (i<object->numBones?object->bones[i]:NULL);
 }
 
+/* \brief insert skin bones to object */
+GLHCKAPI int glhckObjectInsertSkinBones(glhckObject *object, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i;
+   glhckSkinBone **skinBonesCopy = NULL;
+   CALL(0, "%p, %p, %u", object, skinBones, memb);
+   assert(object);
+
+   /* copy skin bones, if they exist */
+   if (skinBones && !(skinBonesCopy = _glhckCopy(skinBones, memb * sizeof(glhckSkinBone*))))
+      goto fail;
+
+   /* free old skin bones */
+   if (object->skinBones) {
+      for (i = 0; i != object->numSkinBones; ++i)
+         glhckSkinBoneFree(object->skinBones[i]);
+      _glhckFree(object->skinBones);
+   }
+
+   object->skinBones = skinBonesCopy;
+   object->numSkinBones = (skinBonesCopy?memb:0);
+
+   /* reference new skin bones */
+   if (object->skinBones) {
+      for (i = 0; i != object->numSkinBones; ++i)
+         glhckSkinBoneRef(object->skinBones[i]);
+      _glhckSkinBoneTransformObject(object, 1);
+   } else {
+      IFDO(_glhckGeometryFree, object->bindGeometry);
+   }
+
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
+
+fail:
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
+}
+
+/* \brief get skin bones assigned to this object */
+GLHCKAPI glhckSkinBone** glhckObjectSkinBones(glhckObject *object, unsigned int *memb)
+{
+   CALL(2, "%p, %p", object, memb);
+   if (memb) *memb = object->numSkinBones;
+   RET(2, "%p", object->skinBones);
+   return object->skinBones;
+}
+
+/* \brief get skin bone by name */
+GLHCKAPI glhckSkinBone* glhckObjectGetSkinBone(glhckObject *object, const char *name)
+{
+   unsigned int i;
+   for (i = 0; i != object->numSkinBones; ++i) {
+      if (object->skinBones[i]->bone && !strcmp(glhckBoneGetName(object->skinBones[i]->bone), name))
+         break;
+   }
+   return (i<object->numSkinBones?object->skinBones[i]:NULL);
+}
+
 /* \brief insert animations to object */
 GLHCKAPI int glhckObjectInsertAnimations(glhckObject *object, glhckAnimation **animations, unsigned int memb)
 {
@@ -1117,10 +1174,8 @@ GLHCKAPI int glhckObjectInsertAnimations(glhckObject *object, glhckAnimation **a
    object->numAnimations = (animationsCopy?memb:0);
 
    /* reference new animations */
-   if (object->animations) {
-      for (i = 0; i != object->numAnimations; ++i)
-         glhckAnimationRef(object->animations[i]);
-   }
+   for (i = 0; object->animations && i != object->numAnimations; ++i)
+      glhckAnimationRef(object->animations[i]);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;

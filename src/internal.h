@@ -84,6 +84,7 @@
 #define GLHCK_CHANNEL_IMPORT        "IMPORT"
 #define GLHCK_CHANNEL_OBJECT        "OBJECT"
 #define GLHCK_CHANNEL_BONE          "BONE"
+#define GLHCK_CHANNEL_SKINBONE      "SKINBONE"
 #define GLHCK_CHANNEL_ANIMATION     "ANIMATION"
 #define GLHCK_CHANNEL_ANIMATOR      "ANIMATOR"
 #define GLHCK_CHANNEL_TEXT          "TEXT"
@@ -338,6 +339,7 @@ typedef struct _glhckObject {
    struct _glhckObject *parent;
    struct _glhckObject **childs;
    struct _glhckBone **bones;
+   struct _glhckSkinBone **skinBones;
    struct _glhckAnimation **animations;
    struct glhckGeometry *geometry;
    struct glhckGeometry *bindGeometry; /* used on CPU transformation path, has the original geometry copied */
@@ -347,6 +349,7 @@ typedef struct _glhckObject {
    float transformedGeometryTime; /* stores skeletal animated transformation time (to avoid retransform) */
    unsigned int numChilds;
    unsigned int numBones;
+   unsigned int numSkinBones;
    unsigned int numAnimations;
    unsigned char affectionFlags; /* flags how parent affects us */
    unsigned char flags;
@@ -354,15 +357,21 @@ typedef struct _glhckObject {
 
 /* bone container */
 typedef struct _glhckBone {
-   kmMat4 offsetMatrix; /* bone -> mesh space transformation */
    kmMat4 transformationMatrix; /* local transformation of bone  */
    kmMat4 transformedMatrix; /* final bone space transformation */
-   struct glhckVertexWeight *weights;
    struct _glhckBone *parent;
    char *name;
    REFERENCE_COUNTED(_glhckBone);
-   unsigned int numWeights;
 } _glhckBone;
+
+/* skinbone container */
+typedef struct _glhckSkinBone {
+   kmMat4 offsetMatrix; /* bone -> mesh space transformation */
+   struct glhckVertexWeight *weights;
+   struct _glhckBone *bone;
+   REFERENCE_COUNTED(_glhckSkinBone);
+   unsigned int numWeights;
+} _glhckSkinBone;
 
 /* animation node container
  * contains keys for each bone (translation, rotation, scaling) */
@@ -769,6 +778,7 @@ typedef struct __GLHCKrender {
 typedef struct __GLHCKworld {
    struct _glhckObject           *object;
    struct _glhckBone             *bone;
+   struct _glhckSkinBone         *skinBone;
    struct _glhckAnimationNode    *animationNode;
    struct _glhckAnimation        *animation;
    struct _glhckAnimator         *animator;
@@ -928,8 +938,8 @@ void _glhckObjectFile(_glhckObject *object, const char *file);
 void _glhckObjectInsertToQueue(_glhckObject *object);
 void _glhckObjectUpdateBoxes(glhckObject *object);
 
-/* bones */
-void _glhckBoneTransformObject(glhckObject *object, int updateBones);
+/* skin bones */
+void _glhckSkinBoneTransformObject(glhckObject *object, int updateBones);
 
 /* camera */
 void _glhckCameraWorldUpdate(int width, int height);

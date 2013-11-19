@@ -50,10 +50,11 @@ glhckObject* findObject(glhckObject *object, const char *name)
 }
 
 static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode *nd, const struct aiMesh *mesh,
-      glhckBone **bones, unsigned int *numBones)
+      glhckBone **bones, glhckSkinBone **skinBones, unsigned int *numBones)
 {
    kmMat4 matrix, transposed;
    glhckBone *bone = NULL, *child;
+   glhckSkinBone *skinBone = NULL;
    const struct aiBone *assimpBone;
    unsigned int i;
    assert(boneNd && nd);
@@ -61,22 +62,26 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
    assert(numBones);
 
    /* something went wrong */
-   if (!numBones || *numBones >= ASSIMP_BONES_MAX) return NULL;
+   if (!numBones || *numBones >= ASSIMP_BONES_MAX)
+      goto fail;
 
    /* don't allow duplicates */
    for (i = 0; i != *numBones; ++i)
-      if (!strcmp(glhckBoneGetName(bones[i]), boneNd->mName.data)) return NULL;
+      if (!strcmp(glhckBoneGetName(bones[i]), boneNd->mName.data))
+         goto fail;
 
    /* create new bone */
-   if (!(bone = glhckBoneNew()))
-      return NULL;
+   if (!(bone = glhckBoneNew()) || !(skinBone = glhckSkinBoneNew()))
+      goto fail;
 
    /* set bone to list */
    bones[*numBones] = bone;
+   skinBones[*numBones] = skinBone;
    *numBones = *numBones+1;
 
    /* store bone name */
    glhckBoneName(bone, boneNd->mName.data);
+   glhckSkinBoneBone(skinBone, bone);
 
    /* skip this part by creating dummy bone, if this information is not found */
    if ((assimpBone = findBone(mesh, bone->name))) {
@@ -111,8 +116,8 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
 
       /* assimp is row-major, kazmath is column-major */
       kmMat4Transpose(&transposed, &matrix);
-      glhckBoneOffsetMatrix(bone, &transposed);
-      glhckBoneInsertWeights(bone, weights, assimpBone->mNumWeights);
+      glhckSkinBoneOffsetMatrix(skinBone, &transposed);
+      glhckSkinBoneInsertWeights(skinBone, weights, assimpBone->mNumWeights);
    }
 
    /* get transformation matrix */
@@ -142,10 +147,15 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
 
    /* process children bones */
    for (i = 0; i != boneNd->mNumChildren; ++i) {
-      child = processBones(findNode(nd, boneNd->mChildren[i]->mName.data), nd, mesh, bones, numBones);
+      child = processBones(findNode(nd, boneNd->mChildren[i]->mName.data), nd, mesh, bones, skinBones, numBones);
       if (child) glhckBoneParentBone(child, bone);
    }
    return bone;
+
+fail:
+   IFDO(glhckBoneFree, bone);
+   IFDO(glhckSkinBoneFree, skinBone);
+   return RETURN_FAIL;
 }
 
 static int processAnimations(glhckObject *object, const struct aiScene *sc)
@@ -252,13 +262,16 @@ static int processAnimations(glhckObject *object, const struct aiScene *sc)
 
 static int processBonesAndAnimations(glhckObject *object, const struct aiScene *sc)
 {
-   unsigned int i, b, numBones = 0, oldNumBones;
+   unsigned int i, b,  numBones = 0, oldNumBones;
    const struct aiMesh *mesh;
    glhckObject *child;
-   glhckBone **bones;
+   glhckBone **bones = NULL;
+   glhckSkinBone **skinBones = NULL;
 
    /* import bones */
    if (!(bones = _glhckCalloc(ASSIMP_BONES_MAX, sizeof(glhckBone*))))
+      goto fail;
+   if (!(skinBones = _glhckCalloc(ASSIMP_BONES_MAX, sizeof(glhckSkinBone*))))
       goto fail;
 
    for (i = 0; i != sc->mNumMeshes; ++i) {
@@ -271,15 +284,19 @@ static int processBonesAndAnimations(glhckObject *object, const struct aiScene *
 
       if (mesh->mNumBones)  {
          oldNumBones = numBones;
-         processBones(sc->mRootNode, sc->mRootNode, mesh, bones, &numBones);
-         if (numBones) glhckObjectInsertBones(child, bones+oldNumBones, numBones-oldNumBones);
-         for (b = oldNumBones; b < numBones; ++b) glhckBoneFree(bones[b]);
+         processBones(sc->mRootNode, sc->mRootNode, mesh, bones, skinBones, &numBones);
+         if (numBones) glhckObjectInsertSkinBones(child, skinBones+oldNumBones, numBones-oldNumBones);
+         for (b = oldNumBones; b < numBones; ++b) glhckSkinBoneFree(skinBones[b]);
       }
    }
 
+   /* we don't need skin bones anymore */
+   NULLDO(_glhckFree, skinBones);
+
    /* store all bones in root object */
    if (numBones) glhckObjectInsertBones(object, bones, numBones);
-   _glhckFree(bones);
+   for (b = 0; b < numBones; ++b) glhckBoneFree(bones[b]);
+   NULLDO(_glhckFree, bones);
 
    /* import animations */
    if (sc->mNumAnimations && processAnimations(object, sc) != RETURN_OK)
@@ -288,6 +305,16 @@ static int processBonesAndAnimations(glhckObject *object, const struct aiScene *
    return RETURN_OK;
 
 fail:
+   if (bones) {
+      for (i = 0; i < ASSIMP_BONES_MAX; ++i)
+         if (bones[i]) glhckBoneFree(bones[i]);
+      _glhckFree(bones);
+   }
+   if (skinBones) {
+      for (i = 0; i < ASSIMP_BONES_MAX; ++i)
+         if (skinBones[i]) glhckSkinBoneFree(skinBones[i]);
+      _glhckFree(skinBones);
+   }
    return RETURN_FAIL;
 }
 

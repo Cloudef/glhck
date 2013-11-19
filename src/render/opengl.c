@@ -655,9 +655,9 @@ static void rBonesRender(const glhckObject *object)
    kmMat4 bias, scale, transform;
    kmVec3 *points;
 
-   if (!object->bones || !object->geometry) return;
+   if (!object->skinBones || !object->geometry) return;
 
-   if (!(points = _glhckMalloc(object->numBones * sizeof(kmVec3))))
+   if (!(points = _glhckMalloc(object->numSkinBones * sizeof(kmVec3))))
       return;
 
    kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
@@ -665,8 +665,9 @@ static void rBonesRender(const glhckObject *object)
    kmMat4Inverse(&bias, &bias);
    kmMat4Inverse(&scale, &scale);
 
-   for (i = 0; i != object->numBones; ++i) {
-      kmMat4Multiply(&transform, &bias, &object->bones[i]->transformedMatrix);
+   for (i = 0; i != object->numSkinBones; ++i) {
+      if (!object->skinBones[i]->bone) continue;
+      kmMat4Multiply(&transform, &bias, &object->skinBones[i]->bone->transformedMatrix);
       kmMat4Multiply(&transform, &scale, &transform);
       points[i].x = transform.mat[12];
       points[i].y = transform.mat[13];
@@ -679,7 +680,7 @@ static void rBonesRender(const glhckObject *object)
    glhckShaderUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){255,0,0,255}));
-   GL_CALL(glDrawArrays(GL_POINTS, 0, object->numBones));
+   GL_CALL(glDrawArrays(GL_POINTS, 0, object->numSkinBones));
    GL_CALL(glEnable(GL_DEPTH_TEST));
 
    _glhckFree(points);

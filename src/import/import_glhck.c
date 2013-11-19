@@ -247,7 +247,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
    glhckImportVertexData *vertexData = NULL;
    glhckObject *object = NULL;
    glhckMaterial **materials = NULL;
-   glhckBone **bones = NULL;
+   glhckSkinBone **bones = NULL;
    glhckVertexWeight *weights = NULL;
    chckBuffer *buf = NULL;
    char *str;
@@ -448,19 +448,20 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       NULLDO(_glhckFree, materials);
    }
 
-   if (skinBoneCount && !(bones = _glhckCalloc(skinBoneCount, sizeof(glhckBone*))))
+   if (skinBoneCount && !(bones = _glhckCalloc(skinBoneCount, sizeof(glhckSkinBone*))))
       goto fail;
 
    /* SKINBONE: skinBones[skinBoneCount] */
    for (i = 0, b = 0; i < skinBoneCount; ++i) {
       unsigned int weightCount, w;
+      glhckBone *bone = NULL;
 
       /* STRING: name */
       if (chckBufferReadString(buf, 1, &str) != RETURN_OK)
          goto fail;
 
       if (str) {
-         bones[b] = glhckObjectGetBone(root, str);
+         bone = glhckObjectGetBone(root, str);
          _glhckFree(str);
       }
 
@@ -486,28 +487,12 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
             goto fail;
       }
 
-      /* FIXME: we need glhckSkinBone that points to bones[b]
-       * Why? SkinBones each have own offsetMatrix and weights. */
-      if (bones[b]) {
-         unsigned int newWeightCount;
-         glhckVertexWeight *newWeights = weights;
-         const glhckVertexWeight *oldWeights;
-
-         if ((oldWeights = glhckBoneWeights(bones[b], &newWeightCount))) {
-            if (!(newWeights = _glhckCalloc(newWeightCount + weightCount, sizeof(glhckVertexWeight))))
-               goto fail;
-
-
-            memcpy(newWeights, oldWeights, newWeightCount * sizeof(glhckVertexWeight));
-            memcpy(newWeights, weights, weightCount * sizeof(glhckVertexWeight));
-            NULLDO(_glhckFree, weights);
-            newWeightCount += weightCount;
-         } else {
-            newWeightCount = weightCount;
-         }
-
-         glhckBoneOffsetMatrix(bones[b], &matrix);
-         glhckBoneInsertWeights(bones[b], newWeights, newWeightCount);
+      if (bone) {
+         if (!(bones[b] = glhckSkinBoneNew()))
+            goto fail;
+         glhckSkinBoneBone(bones[b], bone);
+         glhckSkinBoneOffsetMatrix(bones[b], &matrix);
+         glhckSkinBoneInsertWeights(bones[b], weights, weightCount);
          ++b;
       }
 
@@ -515,7 +500,8 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
    }
 
    if (bones) {
-      if (b) glhckObjectInsertBones(object, bones, b);
+      if (b) glhckObjectInsertSkinBones(object, bones, b);
+      for (i = 0; i < b; ++i) glhckSkinBoneFree(bones[i]);
       NULLDO(_glhckFree, bones);
    }
 

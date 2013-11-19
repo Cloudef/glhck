@@ -22,6 +22,7 @@ SET(GLHCK_SRC
    geometry/plane.c
    geometry/model.c
    skeletal/bone.c
+   skeletal/skinbone.c
    skeletal/animation.c
    skeletal/animator.c
    render/render.c

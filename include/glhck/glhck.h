@@ -684,6 +684,7 @@ typedef struct _glhckRenderbuffer      glhckRenderbuffer;
 typedef struct _glhckFramebuffer       glhckFramebuffer;
 typedef struct _glhckObject            glhckObject;
 typedef struct _glhckBone              glhckBone;
+typedef struct _glhckSkinBone          glhckSkinBone;
 typedef struct _glhckAnimation         glhckAnimation;
 typedef struct _glhckAnimationNode     glhckAnimationNode;
 typedef struct _glhckAnimator          glhckAnimator;
@@ -806,6 +807,9 @@ GLHCKAPI void glhckObjectRenderAll(glhckObject *object);
 GLHCKAPI int glhckObjectInsertBones(glhckObject *object, glhckBone **bones, unsigned int memb);
 GLHCKAPI glhckBone** glhckObjectBones(glhckObject *object, unsigned int *memb);
 GLHCKAPI glhckBone* glhckObjectGetBone(glhckObject *object, const char *name);
+GLHCKAPI int glhckObjectInsertSkinBones(glhckObject *object, glhckSkinBone **skinBones, unsigned int memb);
+GLHCKAPI glhckSkinBone** glhckObjectSkinBones(glhckObject *object, unsigned int *memb);
+GLHCKAPI glhckSkinBone* glhckObjectGetSkinBone(glhckObject *object, const char *name);
 GLHCKAPI int glhckObjectInsertAnimations(glhckObject *object, glhckAnimation **animations, unsigned int memb);
 GLHCKAPI glhckAnimation** glhckObjectAnimations(glhckObject *object, unsigned int *memb);
 
@@ -874,15 +878,23 @@ GLHCKAPI glhckBone* glhckBoneRef(glhckBone *object);
 GLHCKAPI unsigned int glhckBoneFree(glhckBone *object);
 GLHCKAPI void glhckBoneName(glhckBone *object, const char *name);
 GLHCKAPI const char* glhckBoneGetName(glhckBone *object);
-GLHCKAPI int glhckBoneInsertWeights(glhckBone *object, const glhckVertexWeight *weights, unsigned int memb);
-GLHCKAPI const glhckVertexWeight* glhckBoneWeights(glhckBone *object, unsigned int *memb);
 GLHCKAPI void glhckBoneParentBone(glhckBone *object, glhckBone *parentBone);
 GLHCKAPI glhckBone* glhckBoneGetParentBone(glhckBone *object);
-GLHCKAPI void glhckBoneOffsetMatrix(glhckBone *object, const kmMat4 *offsetMatrix);
-GLHCKAPI const kmMat4* glhckBoneGetOffsetMatrix(glhckBone *object);
 GLHCKAPI void glhckBoneTransformationMatrix(glhckBone *object, const kmMat4 *transformationMatrix);
 GLHCKAPI const kmMat4* glhckBoneGetTransformationMatrix(glhckBone *object);
 GLHCKAPI const kmMat4* glhckBoneGetTransformedMatrix(glhckBone *object);
+
+/* skin bones (for skinning \o/) */
+GLHCKAPI glhckSkinBone* glhckSkinBoneNew(void);
+GLHCKAPI glhckSkinBone* glhckSkinBoneRef(glhckSkinBone *object);
+GLHCKAPI unsigned int glhckSkinBoneFree(glhckSkinBone *object);
+GLHCKAPI void glhckSkinBoneBone(glhckSkinBone *object, glhckBone *bone);
+GLHCKAPI glhckBone* glhckSkinBoneGetBone(glhckSkinBone *object);
+GLHCKAPI const char* glhckSkineBoneGetName(glhckSkinBone *object);
+GLHCKAPI int glhckSkinBoneInsertWeights(glhckSkinBone *object, const glhckVertexWeight *weights, unsigned int memb);
+GLHCKAPI const glhckVertexWeight* glhckSkinBoneWeights(glhckSkinBone *object, unsigned int *memb);
+GLHCKAPI void glhckSkinBoneOffsetMatrix(glhckSkinBone *object, const kmMat4 *offsetMatrix);
+GLHCKAPI const kmMat4* glhckSkinBoneGetOffsetMatrix(glhckSkinBone *object);
 
 /* animation nodes */
 GLHCKAPI glhckAnimationNode* glhckAnimationNodeNew(void);

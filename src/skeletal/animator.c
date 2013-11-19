@@ -194,7 +194,7 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
       return;
 
    /* transform the object */
-   _glhckBoneTransformObject(gobject, object->dirty);
+   _glhckSkinBoneTransformObject(gobject, object->dirty);
 
    /* store the time for transformation */
    gobject->transformedGeometryTime = object->lastTime;

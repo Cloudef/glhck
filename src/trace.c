@@ -26,6 +26,7 @@ static __GLHCKtraceChannel _traceChannels[] =
    { GLHCK_CHANNEL_IMPORT,          0 },
    { GLHCK_CHANNEL_OBJECT,          0 },
    { GLHCK_CHANNEL_BONE,            0 },
+   { GLHCK_CHANNEL_SKINBONE,        0 },
    { GLHCK_CHANNEL_ANIMATION,       0 },
    { GLHCK_CHANNEL_ANIMATOR,        0 },
    { GLHCK_CHANNEL_TEXT,            0 },
