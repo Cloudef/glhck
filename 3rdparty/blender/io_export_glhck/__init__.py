@@ -146,8 +146,7 @@ class ExportGlhck(bpy.types.Operator, ExportHelper):
 
         global_matrix = (Matrix.Scale(self.global_scale, 4) *
                          axis_conversion(to_forward=self.axis_forward,
-                                         to_up=self.axis_up,
-                                         ).to_4x4())
+                                         to_up=self.axis_up).to_4x4())
 
         keywords["global_matrix"] = global_matrix
 

@@ -425,7 +425,10 @@ def blender_object_to_mesh(context, bobj, options, has_bones=False):
         mesh = bobj.to_mesh(context.scene, False, 'PREVIEW')
 
     # finally transform
-    mesh.transform(bobj.matrix_world)
+    if has_bones:
+        mesh.transform(bobj.matrix_world)
+    else:
+        mesh.transform(bobj.matrix_world * options['global_matrix'])
     return mesh
 
 def blender_object_to_data(context, bobj, options):
@@ -895,7 +898,7 @@ class ExportObject:
             bone_data_size += sz_bone(self, bone, matrix)
             bone_matrices.append(matrix)
 
-        matrix = self.bobj.matrix_local # root bone matrix
+        matrix = self.bobj.matrix_local * options['global_matrix'] # root bone matrix
 
         block_size  = SZ_INT16 # boneCount
         block_size += sz_string(self.name) # root bone name
