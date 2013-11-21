@@ -352,7 +352,7 @@ def materials_from_blender_mesh(mesh, options):
     return materials
 
 class SkinBone:
-    def __init__(self, bobj, aobj, name):
+    def __init__(self, bobj, aobj, name, options):
         self.aobj = aobj
         self.name = name
         self.bone = aobj.data.bones[name]
@@ -368,15 +368,16 @@ class SkinBone:
         # This way, when matrix is transformed by the bone's Frame matrix,
         # the vertices will be in their final world position.
 
+        amat = options['global_matrix'] * aobj.matrix_world
         self.offset_matrix = self.bone.matrix_local.inverted()
-        self.offset_matrix *= (bobj.matrix_local * aobj.matrix_world).inverted()
+        self.offset_matrix *= (bobj.matrix_local * amat).inverted()
         self.offset_matrix *= bobj.matrix_local
 
     def add_vertex(self, index, weight):
         self.indices.append(index)
         self.weights.append(weight)
 
-def skin_bones_from_blender_object(bobj):
+def skin_bones_from_blender_object(bobj, options):
     """Get bone vertex groups from blender object"""
 
     armature_modifier_list = [modifier for modifier in bobj.modifiers
@@ -393,7 +394,7 @@ def skin_bones_from_blender_object(bobj):
         used_bone_names = set(pose_bone_names).intersection(vertex_group_names)
 
         # Create a SkinBone for each group name
-        skin_bones.extend([SkinBone(bobj, aobj, bone_name)
+        skin_bones.extend([SkinBone(bobj, aobj, bone_name, options)
             for bone_name in used_bone_names])
 
     return skin_bones
@@ -425,10 +426,7 @@ def blender_object_to_mesh(context, bobj, options, has_bones=False):
         mesh = bobj.to_mesh(context.scene, False, 'PREVIEW')
 
     # finally transform
-    if has_bones:
-        mesh.transform(bobj.matrix_world)
-    else:
-        mesh.transform(options['global_matrix'] * bobj.matrix_world)
+    mesh.transform(options['global_matrix'] * bobj.matrix_world)
     return mesh
 
 def blender_object_to_data(context, bobj, options):
@@ -453,7 +451,7 @@ def blender_object_to_data(context, bobj, options):
                 'skin_bones':skin_bones}
 
     if options['use_bones']:
-        skin_bones = skin_bones_from_blender_object(bobj)
+        skin_bones = skin_bones_from_blender_object(bobj, options)
         vertex_group_map = {group.index : group for group in bobj.vertex_groups}
 
     # helper function for getting all the skin bones for vertex group
