@@ -239,7 +239,6 @@ fail:
 static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObject *root, glhckObject *parent,
       const glhckImportModelParameters *params, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
 {
-   kmMat4 matrix;
    unsigned char geometryType, vertexDataFlags;
    unsigned short materialCount, skinBoneCount, childCount;
    unsigned int size, vertexCount, indexCount, i, b;
@@ -284,10 +283,6 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       _glhckObjectFile(object, str);
       _glhckFree(str);
    }
-
-   /* MATRIX4x4: transformationMatrix */
-   if (chckBufferReadStringMatrix4(buf, &matrix) != RETURN_OK)
-      goto fail;
 
    /* uint8_t: geometryType */
    if (chckBufferReadUInt8(buf, &geometryType) != RETURN_OK)
@@ -344,9 +339,6 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       /* VECTOR3: vertex */
       if (chckBufferReadStringVector3(buf, &vertexData[i].vertex) != RETURN_OK)
          goto fail;
-
-      /* transform vertices, actually decompose and position the objects later */
-      kmVec3MultiplyMat4((kmVec3*)&vertexData[i].vertex, (kmVec3*)&vertexData[i].vertex, &matrix);
 
       if (vertexDataFlags & HAS_NORMALS) {
          /* VECTOR3: normal */
@@ -455,6 +447,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
    for (i = 0, b = 0; i < skinBoneCount; ++i) {
       unsigned int weightCount, w;
       glhckBone *bone = NULL;
+      kmMat4 matrix;
 
       /* STRING: name */
       if (chckBufferReadString(buf, 1, &str) != RETURN_OK)

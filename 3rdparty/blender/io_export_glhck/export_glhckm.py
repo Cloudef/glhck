@@ -369,8 +369,8 @@ class SkinBone:
         # the vertices will be in their final world position.
 
         self.offset_matrix = self.bone.matrix_local.inverted()
-        self.offset_matrix *= aobj.matrix_world.inverted()
-        self.offset_matrix *= bobj.matrix_world
+        self.offset_matrix *= (bobj.matrix_local * aobj.matrix_world).inverted()
+        self.offset_matrix *= bobj.matrix_local
 
     def add_vertex(self, index, weight):
         self.indices.append(index)
@@ -424,6 +424,8 @@ def blender_object_to_mesh(context, bobj, options, has_bones=False):
     else:
         mesh = bobj.to_mesh(context.scene, False, 'PREVIEW')
 
+    # finally transform
+    mesh.transform(bobj.matrix_world)
     return mesh
 
 def blender_object_to_data(context, bobj, options):
@@ -816,10 +818,7 @@ class ExportObject:
         for bone in skin_bones:
             bone_data_size += sz_skinbone(bone)
 
-        matrix = self.bobj.matrix_local
-
         block_size  = sz_string(self.name) # name
-        block_size += sz_matrix4x4(matrix) # transformationMatrix
         block_size += SZ_INT8 # geometryType
         block_size += SZ_INT8 # vertexDataFlags
         block_size += SZ_INT32 # indexCount
@@ -834,7 +833,6 @@ class ExportObject:
 
         print("struct OBD (size: {}) {{".format(block_size))
         print("   name          = {} (size: {})".format(self.name, sz_string(self.name)))
-        print("   transformMat  = stripped (size: {})".format(sz_matrix4x4(matrix)))
         print("   geometryType  = {} (size: {})".format(geometry_type, SZ_INT8))
         print("   vrtxDataFlags = {} (size: {})".format(vertex_data_flags, SZ_INT8))
         print("   indexCount    = {} (size: {})".format(len(indices)*3, SZ_INT32))
@@ -850,7 +848,6 @@ class ExportObject:
 
         write_block(file, "OBD", block_size) # header
         write_string(file, self.name) # name
-        write_matrix4x4(file, matrix) # transformationMatrix
         file.write(struct.pack("<B", geometry_type)) # geometryType
         file.write(struct.pack("<B", vertex_data_flags)) # vertexDataFlags
         file.write(struct.pack("<i", len(indices)*3)) # indexCount
@@ -898,9 +895,11 @@ class ExportObject:
             bone_data_size += sz_bone(self, bone, matrix)
             bone_matrices.append(matrix)
 
+        matrix = self.bobj.matrix_local # root bone matrix
+
         block_size  = SZ_INT16 # boneCount
         block_size += sz_string(self.name) # root bone name
-        block_size += sz_matrix4x4(self.bobj.matrix_local) # root bone matrix
+        block_size += sz_matrix4x4(matrix) # root bone matrix
         block_size += SZ_INT16 # root bone parent
         block_size += bone_data_size # bones
 
@@ -914,7 +913,7 @@ class ExportObject:
 
         # root bone (actually part of bones)
         write_string(file, self.name) # name
-        write_matrix4x4(file, self.bobj.matrix_local) # transformationMatrix
+        write_matrix4x4(file, matrix) # transformationMatrix
         file.write(struct.pack("<H", 0)) # parent
 
         # bones
@@ -1157,6 +1156,17 @@ class GlhckExporter:
 ##
 ## GLhck Model Export v0.1
 ##
+## NOTE: This format is not yet considered "final"
+##       Drastic changes can happen, and maintaining easy backwards
+##       compatibility thus is not yet a goal.
+##
+## Planned changes:
+##     - MAD block for materials
+##     - Reference to MAD blocks from OBD blocks
+##     - DBD blocks for duplicate objects
+##     - EBD blocks for empty objects
+##     - Optional zlib (.gz) compression
+##
 ## Version history:
 ##     -- 0.1 (Thu Nov 14 00:42:23 UTC 2013)
 ##         First release
@@ -1298,7 +1308,6 @@ class GlhckExporter:
 ##     // Repeated until there is no children and their children
 ##     struct OBD {
 ##        STRING name; // should not be empty, if used for animation (unique)
-##        MATRIX4x4 transformationMatrix;
 ##        geometryTypeEnum geometryType; // uint8_t
 ##        uint8_t vertexDataFlags;
 ##        int32_t indexCount;
@@ -1307,8 +1316,8 @@ class GlhckExporter:
 ##        uint16_t skinBoneCount;
 ##        uint16_t childCount;
 ##        uint32_t indices[indexCount];
-##        MATERIAL materials[materialCount]; // <no-known-size>
 ##        VERTEXDATA vertices[vertexCount]; // <no-known-size>
+##        MATERIAL materials[materialCount]; // <no-known-size>
 ##        SKINBONE skinBones[skinBoneCount]; // <no-known-size>
 ##        OB children[childCount]; // <no-known-size>
 ##     };
