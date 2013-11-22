@@ -17,6 +17,7 @@ SET(GLHCK_SRC
    hwbuffer.c
    shader.c
    texture_packer.c
+   collision.c
    geometry/cube.c
    geometry/sphere.c
    geometry/plane.c
