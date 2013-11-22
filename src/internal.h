@@ -437,7 +437,7 @@ typedef struct __GLHCKtextTexture {
    struct __GLHCKtextGeometry geometry;
    struct __GLHCKtextTextureRow *rows;
    struct __GLHCKtextTexture *next;
-   glhckTexture *texture;
+   struct _glhckTexture *texture;
    float internalWidth, internalHeight;
    int rowsCount, allocatedCount;
 } __GLHCKtextTexture;
