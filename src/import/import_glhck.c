@@ -424,8 +424,9 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
          glhckTexture *texture;
          char *texturePath;
 
+         /* TODO: read texture parameters and don't use just SpriteParameters */
          if ((texturePath = _glhckImportTexturePath(str, file))) {
-            if ((texture = glhckTextureNewFromFile(texturePath, NULL, NULL)))
+            if ((texture = glhckTextureNewFromFile(texturePath, NULL, glhckTextureDefaultSpriteParameters())))
                glhckMaterialTexture(materials[i], texture);
             _glhckFree(texturePath);
          }
