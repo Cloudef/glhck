@@ -653,7 +653,7 @@ GLHCKAPI void glhckObjectRenderAll(glhckObject *object)
    CALL(2, "%p", object);
    assert(object);
    glhckObjectRender(object);
-   PERFORM_ON_CHILDS(object, glhckObjectRender);
+   PERFORM_ON_CHILDS(object, glhckObjectRenderAll);
 }
 
 /* \brief set whether object should use vertex colors */
