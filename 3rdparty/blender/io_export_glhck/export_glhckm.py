@@ -272,14 +272,19 @@ class Material:
                 self.textures[key] = path_reference(images[key].filepath,
                         src_dir, dst_dir, options['path_mode'], "",
                         options['copy_set'], images[key].library)
+                if self.textures[key] == '.':
+                    self.textures[key] = ''
             else:
                 self.textures[key] = ''
 
         self.ambient = bc3b(bmtl.ambient * bmtl.diffuse_color)
 
-        self.diffuse = list(bmtl.diffuse_intensity * bmtl.diffuse_color)
-        self.diffuse.append(bmtl.alpha)
-        self.diffuse = bc4b(self.diffuse)
+        if self.textures['diffuse'] != '':
+            self.diffuse = (255, 255, 255, 255)
+        else:
+            self.diffuse = list(bmtl.diffuse_intensity * bmtl.diffuse_color)
+            self.diffuse.append(bmtl.alpha)
+            self.diffuse = bc4b(self.diffuse)
 
         self.specular = list(bmtl.specular_intensity * bmtl.specular_color)
         self.specular.append(bmtl.specular_alpha)
