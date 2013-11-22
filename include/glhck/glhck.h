@@ -883,6 +883,8 @@ GLHCKAPI glhckBone* glhckBoneGetParentBone(glhckBone *object);
 GLHCKAPI void glhckBoneTransformationMatrix(glhckBone *object, const kmMat4 *transformationMatrix);
 GLHCKAPI const kmMat4* glhckBoneGetTransformationMatrix(glhckBone *object);
 GLHCKAPI const kmMat4* glhckBoneGetTransformedMatrix(glhckBone *object);
+GLHCKAPI void glhckBoneGetPositionRelativeOnObject(glhckBone *object, glhckObject *gobject, kmVec3 *outPosition);
+GLHCKAPI void glhckBoneGetPositionAbsoluteOnObject(glhckBone *object, glhckObject *gobject, kmVec3 *outPosition);
 
 /* skin bones (for skinning \o/) */
 GLHCKAPI glhckSkinBone* glhckSkinBoneNew(void);

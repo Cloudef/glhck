@@ -138,4 +138,26 @@ GLHCKAPI const kmMat4* glhckBoneGetTransformedMatrix(glhckBone *object)
    return &object->transformedMatrix;
 }
 
+/* \brief get relative position of transformed bone in object */
+GLHCKAPI void glhckBoneGetPositionRelativeOnObject(glhckBone *object, glhckObject *gobject, kmVec3 *outPosition)
+{
+   CALL(2, "%p, %p, %p", object, gobject, outPosition);
+   assert(object && gobject && outPosition);
+   outPosition->x = object->transformedMatrix.mat[12] * gobject->view.scaling.x;
+   outPosition->y = object->transformedMatrix.mat[13] * gobject->view.scaling.y;
+   outPosition->z = object->transformedMatrix.mat[14] * gobject->view.scaling.z;
+}
+
+/* \brief get absolute position of transformed bone in object */
+GLHCKAPI void glhckBoneGetPositionAbsoluteOnObject(glhckBone *object, glhckObject *gobject, kmVec3 *outPosition)
+{
+   kmMat4 matrix;
+   CALL(2, "%p, %p, %p", object, gobject, outPosition);
+   assert(object && gobject && outPosition);
+   kmMat4Multiply(&matrix, &gobject->view.matrix, &object->transformedMatrix);
+   outPosition->x = matrix.mat[12];
+   outPosition->y = matrix.mat[13];
+   outPosition->z = matrix.mat[14];
+}
+
 /* vim: set ts=8 sw=3 tw=0 :*/
