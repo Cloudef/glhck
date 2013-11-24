@@ -6,7 +6,7 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
 #ifdef NDEBUG
-#  define CTM_CALL(x) x
+#  define CTM_CALL(ctx, x) x
 #else
 #  define CTM_CALL(ctx, x) x; CTM_ERROR(ctx, __LINE__, __func__, __STRING(x));
 static void CTM_ERROR(CTMcontext context, unsigned int line, const char *func, const char *ctmfunc)
