@@ -105,6 +105,8 @@ void __glhckTrackSteal(const char *channel, void *ptr)
    __GLHCKalloc *data = glhckContextGet()->alloc;
    for (; data && data->ptr != ptr; data = data->next);
    if (data) data->channel = channel;
+#else
+   (void)channel, (void)ptr;
 #endif /* NDEBUG */
 }
 

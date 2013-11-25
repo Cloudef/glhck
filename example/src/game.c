@@ -380,7 +380,7 @@ static GameWindow* gameWindowNew(int argc, char **argv)
    for (i = 0; i < numChilds; ++i)
       glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), childs[i]);
 
-   for (i = 0; i < 0; ++i) gameActorNew(window);
+   for (i = 0; i < 1; ++i) gameActorNew(window);
 
    window->running = 1;
    glfwSetWindowUserPointer(window->handle, window);

@@ -122,6 +122,7 @@ static int _glhckReadHeader(uint8_t *version, FILE *f, unsigned int *i)
 {
    uint32_t r;
    assert(version && f && i);
+   (void)version;
 
    if (fread(&r, sizeof(r), 1, f) != 1)
       return RETURN_FAIL;

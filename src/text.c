@@ -424,6 +424,9 @@ static int _getQuad(glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph *
    float scale = 1.0f;
    assert(object && font && glyph);
    assert(x && y && q);
+#if GLHCK_TEXT_FLOAT_PRECISION
+   (void)object;
+#endif
 
    if (font->type == GLHCK_FONT_BMP) scale = (float)isize/(glyph->size*10.0f);
 
