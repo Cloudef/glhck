@@ -105,6 +105,165 @@ static void _glhckImportVertexDataMaxMin(const glhckImportVertexData *import, in
    vmin->x--; vmin->y--; vmin->z--;
 }
 
+/* \brief transform V2B */
+static void _glhckGeometryTransformV2B(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   glhckVertexData3b *internal = geometry->vertices;
+
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
+
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData2b *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData2b);
+         glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
+         kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V3B */
+static void _glhckGeometryTransformV3B(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   glhckVertexData3b *internal = geometry->vertices;
+
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
+
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData3b *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData3b);
+         glhckSetV3(&v1, &bdata->vertex);
+         kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
+         internal[weight->vertexIndex].vertex.z += v1.z * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V2S */
+static void _glhckGeometryTransformV2S(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   glhckVertexData2s *internal = geometry->vertices;
+
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
+
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData2s *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData2s);
+         glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
+         kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V3S */
+static void _glhckGeometryTransformV3S(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   glhckVertexData3s *internal = geometry->vertices;
+
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
+
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData3s *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData3s);
+         glhckSetV3(&v1, &bdata->vertex);
+         kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
+         internal[weight->vertexIndex].vertex.z += v1.z * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V2F */
+static void _glhckGeometryTransformV2F(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv;
+   glhckVertexData2f *internal = geometry->vertices;
+
+   /* scale is always 1.0f, we can skip it */
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Inverse(&biasinv, &bias);
+
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData2f *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData2f);
+         glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
+         kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
+      }
+   }
+}
+
 /* \brief transform V3F */
 static void _glhckGeometryTransformV3F(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
@@ -534,6 +693,7 @@ int _glhckGeometryInit(void)
    /* UINT */
    {
       glhckIndexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckIndexTypeFunctionMap));
       map.convert = _glhckGeometryConvertIUI;
       if (glhckGeometryAddIndexType(&map, GLHCK_UNSIGNED_INT) != GLHCK_IDX_UINT)
          goto fail;
@@ -542,6 +702,7 @@ int _glhckGeometryInit(void)
    /* USHRT */
    {
       glhckIndexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckIndexTypeFunctionMap));
       map.convert = _glhckGeometryConvertIUS;
       if (glhckGeometryAddIndexType(&map, GLHCK_UNSIGNED_SHORT) != GLHCK_IDX_USHRT)
          goto fail;
@@ -550,6 +711,7 @@ int _glhckGeometryInit(void)
    /* UBYTE */
    {
       glhckIndexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckIndexTypeFunctionMap));
       map.convert = _glhckGeometryConvertIUB;
       if (glhckGeometryAddIndexType(&map, GLHCK_UNSIGNED_BYTE) != GLHCK_IDX_UBYTE)
          goto fail;
@@ -566,6 +728,7 @@ int _glhckGeometryInit(void)
       char memb[4] = { 3, 3, 2, 4 };
       glhckDataType dataType[4] = { GLHCK_FLOAT, GLHCK_FLOAT, GLHCK_FLOAT, GLHCK_UNSIGNED_BYTE };
       glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
       map.convert = _glhckGeometryConvertV3F;
       map.minMax = _glhckGeometryMinMaxV3F;
       map.transform = _glhckGeometryTransformV3F;
@@ -584,8 +747,10 @@ int _glhckGeometryInit(void)
       char memb[4] = { 2, 3, 2, 4 };
       glhckDataType dataType[4] = { GLHCK_FLOAT, GLHCK_FLOAT, GLHCK_FLOAT, GLHCK_UNSIGNED_BYTE };
       glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
       map.convert = _glhckGeometryConvertV2F;
       map.minMax = _glhckGeometryMinMaxV2F;
+      map.transform = _glhckGeometryTransformV2F;
       if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData2f)) != GLHCK_VTX_V2F)
          goto fail;
    }
@@ -601,8 +766,10 @@ int _glhckGeometryInit(void)
       char memb[4] = { 3, 3, 2, 4 };
       glhckDataType dataType[4] = { GLHCK_SHORT, GLHCK_SHORT, GLHCK_SHORT, GLHCK_UNSIGNED_BYTE };
       glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
       map.convert = _glhckGeometryConvertV3S;
       map.minMax = _glhckGeometryMinMaxV3S;
+      map.transform = _glhckGeometryTransformV3S;
       if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData3s)) != GLHCK_VTX_V3S)
          goto fail;
    }
@@ -618,8 +785,10 @@ int _glhckGeometryInit(void)
       char memb[4] = { 2, 3, 2, 4 };
       glhckDataType dataType[4] = { GLHCK_SHORT, GLHCK_SHORT, GLHCK_SHORT, GLHCK_UNSIGNED_BYTE };
       glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
       map.convert = _glhckGeometryConvertV2S;
       map.minMax = _glhckGeometryMinMaxV2S;
+      map.transform = _glhckGeometryTransformV2S;
       if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData2s)) != GLHCK_VTX_V2S)
          goto fail;
    }
@@ -635,8 +804,10 @@ int _glhckGeometryInit(void)
       char memb[4] = { 3, 3, 2, 4 };
       glhckDataType dataType[4] = { GLHCK_BYTE, GLHCK_SHORT, GLHCK_SHORT, GLHCK_UNSIGNED_BYTE };
       glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
       map.convert = _glhckGeometryConvertV3B;
       map.minMax = _glhckGeometryMinMaxV3B;
+      map.transform = _glhckGeometryTransformV3B;
       if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData3b)) != GLHCK_VTX_V3B)
          goto fail;
    }
@@ -652,8 +823,10 @@ int _glhckGeometryInit(void)
       char memb[4] = { 2, 3, 2, 4 };
       glhckDataType dataType[4] = { GLHCK_BYTE, GLHCK_SHORT, GLHCK_SHORT, GLHCK_UNSIGNED_BYTE };
       glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
       map.convert = _glhckGeometryConvertV2B;
       map.minMax = _glhckGeometryMinMaxV2B;
+      map.transform = _glhckGeometryTransformV2B;
       if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData2b)) != GLHCK_VTX_V2B)
          goto fail;
    }
