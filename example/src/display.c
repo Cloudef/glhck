@@ -192,14 +192,14 @@ int main(int argc, char **argv)
    memcpy(&animatedParams, glhckImportDefaultModelParameters(), sizeof(glhckImportModelParameters));
    animatedParams.animated = 1;
 
-   if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, NULL, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   if ((cube = glhckModelNewEx(MMD_PATH, 1.0f, NULL, GLHCK_IDX_USHRT, GLHCK_VTX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
-   } else if ((cube = glhckModelNewEx(OCTM_PATH, 5.0f, NULL, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(OCTM_PATH, 5.0f, NULL, GLHCK_IDX_USHRT, GLHCK_VTX_V3S))) {
       cameraPos.y =  10.0f;
       cameraPos.z = -40.0f;
       glhckObjectPositionf(cube, 0.0f, 5.0f, 0.0f);
-   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, &animatedParams, GLHCK_INDEX_SHORT, GLHCK_VERTEX_V3S))) {
+   } else if ((cube = glhckModelNewEx(ASSIMP_PATH, 0.1f, &animatedParams, GLHCK_IDX_USHRT, GLHCK_VTX_V3S))) {
       glhckMaterial *mat;
       glhckTexture *tex;
       if ((tex = glhckTextureNewFromFile("example/media/texture-b.png", NULL, NULL))) {
@@ -391,7 +391,7 @@ int main(int argc, char **argv)
          glhckLightBeginProjectionWithCamera(light[li], camera);
          glhckLightBind(light[li]);
          glhckFramebufferBegin(fbo);
-         glhckRenderClear(GLHCK_DEPTH_BUFFER | GLHCK_COLOR_BUFFER);
+         glhckRenderClear(GLHCK_DEPTH_BUFFER_BIT | GLHCK_COLOR_BUFFER_BIT);
          glhckRender();
          glhckFramebufferEnd(fbo);
          glhckLightEndProjectionWithCamera(light[li], camera);
@@ -473,7 +473,7 @@ int main(int argc, char **argv)
 
       /* actual swap and clear */
       glfwSwapBuffers(window);
-      glhckRenderClear(GLHCK_COLOR_BUFFER | GLHCK_DEPTH_BUFFER);
+      glhckRenderClear(GLHCK_COLOR_BUFFER_BIT | GLHCK_DEPTH_BUFFER_BIT);
 
       /* fps calc */
       if (fpsDelay < now) {

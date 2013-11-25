@@ -91,7 +91,6 @@
 #define GLHCK_CHANNEL_FRUSTUM       "FRUSTUM"
 #define GLHCK_CHANNEL_CAMERA        "CAMERA"
 #define GLHCK_CHANNEL_GEOMETRY      "GEOMETRY"
-#define GLHCK_CHANNEL_VDATA         "VERTEXDATA"
 #define GLHCK_CHANNEL_MATERIAL      "MATERIAL"
 #define GLHCK_CHANNEL_TEXTURE       "TEXTURE"
 #define GLHCK_CHANNEL_ATLAS         "ATLAS"
@@ -332,9 +331,15 @@ typedef struct __GLHCKobjectView {
    char wasFlipped; /* was drawn last time using flipped projection? */
 } __GLHCKobjectView;
 
+typedef struct __GLHCKgeometrySkinning {
+   void *vertices; /* copy of the vertices from geometry */
+   void *zero; /* zeroed vertex data for initial state */
+} __GLHCKgeometrySkinning;
+
 /* object container */
 typedef void (*__GLHCKobjectDraw) (const struct _glhckObject *object);
 typedef struct _glhckObject {
+   void *bind, *zero; /* temporary for skinning, will be removed */
    struct __GLHCKobjectView view;
    struct _glhckMaterial *material;
    struct _glhckObject *parent;
@@ -343,7 +348,6 @@ typedef struct _glhckObject {
    struct _glhckSkinBone **skinBones;
    struct _glhckAnimation **animations;
    struct glhckGeometry *geometry;
-   struct glhckGeometry *bindGeometry; /* used on CPU transformation path, has the original geometry copied */
    __GLHCKobjectDraw drawFunc;
    char *file, *name;
    REFERENCE_COUNTED(_glhckObject);
@@ -775,6 +779,23 @@ typedef struct __GLHCKrender {
    glhckDriverType driver;
 } __GLHCKrender;
 
+/* internal vertex type */
+typedef struct __GLHCKvertexType {
+   glhckVertexTypeFunctionMap api;
+   size_t size, max[4], offset[4];
+   glhckDataType dataType[4];
+   char memb[4], normalized[4];
+   unsigned char msize[4];
+} __GLHCKvertexType;
+
+/* internal index type */
+typedef struct __GLHCKindexType {
+   glhckIndexTypeFunctionMap api;
+   size_t max;
+   glhckDataType dataType;
+   unsigned char size;
+} __GLHCKindexType;
+
 /* context's world */
 typedef struct __GLHCKworld {
    struct _glhckObject           *object;
@@ -793,6 +814,9 @@ typedef struct __GLHCKworld {
    struct _glhckText             *text;
    struct _glhckHwBuffer         *hwbuffer;
    struct _glhckShader           *shader;
+   struct __GLHCKvertexType      *vertexType;
+   struct __GLHCKindexType       *indexType;
+   unsigned char numVertexTypes, numIndexTypes;
 } __GLHCKworld;
 
 /* context trace channel */
@@ -820,8 +844,7 @@ typedef struct __GLHCKalloc {
 
 /* misc context options */
 typedef struct __GLHCKmisc {
-   glhckGeometryIndexType globalIndexType;
-   glhckGeometryVertexType globalVertexType;
+   unsigned char globalIndexType, globalVertexType;
    char coloredLog;
 } __GLHCKmisc;
 
@@ -858,6 +881,8 @@ extern const kmMat4 _glhckFlipMatrix;
 #define GLHCKW() (&glhckContextGet()->world)
 #define GLHCKT() (&glhckContextGet()->trace)
 #define GLHCKM() (&glhckContextGet()->misc)
+#define GLHCKVT(x) (&glhckContextGet()->world.vertexType[x])
+#define GLHCKIT(x) (&glhckContextGet()->world.indexType[x])
 
 /* tracking allocation macros */
 #define _glhckMalloc(x)       __glhckMalloc(GLHCK_CHANNEL, x)
@@ -960,17 +985,13 @@ void _glhckTrace(int level, const char *channel, const char *function, const cha
 void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *channel, const char *fmt, ...);
 
 /* internal geometry vertexdata */
+int _glhckGeometryInit(void);
+void _glhckGeometryTerminate(void);
 glhckGeometry *_glhckGeometryNew(void);
 glhckGeometry *_glhckGeometryCopy(glhckGeometry *src);
 void _glhckGeometryFree(glhckGeometry *geometry);
-int _glhckGeometryInsertVertices(
-      glhckGeometry *geometry, int memb,
-      glhckGeometryVertexType type,
-      const glhckImportVertexData *vertices);
-int _glhckGeometryInsertIndices(
-      glhckGeometry *geometry, int memb,
-      glhckGeometryIndexType type,
-      const glhckImportIndexData *indices);
+int _glhckGeometryInsertVertices(glhckGeometry *geometry, int memb, unsigned char type, const glhckImportVertexData *vertices);
+int _glhckGeometryInsertIndices(glhckGeometry *geometry, int memb, unsigned char type, const glhckImportIndexData *indices);
 
 #endif /* __glhck_internal_h__ */
 

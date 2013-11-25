@@ -31,8 +31,7 @@ typedef enum _glhckFormat {
 } _glhckFormat;
 
 /* Function typedefs */
-typedef int (*_glhckModelImportFunc)(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+typedef int (*_glhckModelImportFunc)(glhckObject *object, const char *file, const glhckImportModelParameters *params, unsigned char itype, unsigned char vtype);
 typedef int (*_glhckImageImportFunc)(const char *file, _glhckImportImageStruct *import);
 typedef int (*_glhckFormatFunc)(const char *file);
 
@@ -159,8 +158,7 @@ GLHCKAPI const glhckImportModelParameters* glhckImportDefaultModelParameters(voi
  */
 
 /* \brief import model file */
-int _glhckImportModel(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+int _glhckImportModel(glhckObject *object, const char *file, const glhckImportModelParameters *params, unsigned char itype, unsigned char vtype)
 {
    _glhckModelImporter *importer;
    int importReturn;

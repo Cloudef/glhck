@@ -39,7 +39,7 @@ fail:
 
 /* \brief import MikuMikuDance PMD file */
 int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+      unsigned char itype, unsigned char vtype)
 {
    FILE *f;
    char *texturePath;

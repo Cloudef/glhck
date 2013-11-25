@@ -87,10 +87,10 @@ fail:
 int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
 {
    FILE *f;
-   size_t dataSize, i, i2;
+   size_t dataSize, i;
    int w, h;
    unsigned short bpp;
-   unsigned char *importData = NULL, *bgr = NULL;
+   unsigned char *importData = NULL;
    CALL(0, "%s, %p", file, import);
 
    /* open BMP */
@@ -106,38 +106,22 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
    if (!IMAGE_DIMENSIONS_OK(w, h))
       goto bad_dimensions;
 
-   if (!(importData = _glhckMalloc(w*h*4)) || !(bgr =_glhckMalloc(dataSize)))
+   if (!(importData = _glhckMalloc(dataSize)))
       goto out_of_memory;
 
    /* skip non important data */
    fseek(f, 24, SEEK_CUR);
 
-   if (fread(bgr, 1, dataSize, f) != dataSize)
+   if (fread(importData, 1, dataSize, f) != dataSize)
       goto not_possible;
 
    /* read 24 bpp BMP data */
-   for (i = 0, i2 = 0; i < dataSize; i+=3, i2+=4) {
-      importData[i2+0] = bgr[i+2];
-      importData[i2+1] = bgr[i+1];
-      importData[i2+2] = bgr[i+0];
-      importData[i2+3] = 255;
+   for (i = 0; i < dataSize; i+=3) {
+      unsigned char bgr[] = { importData[i+0], importData[i+1], importData[i+2] };
+      importData[i+0] = bgr[2];
+      importData[i+1] = bgr[1];
+      importData[i+2] = bgr[0];
    }
-
-   NULLDO(_glhckFree, bgr);
-
-#if 0
-   /* invert */
-   for (i = 0; i*2 < h; ++i) {
-      int index1 = i*w*4;
-      int index2 = (h-1-i)*w*4;
-      for (i2 = w*4; i2 > 0; --i2) {
-         unsigned char temp = importData[index1];
-         importData[index1] = importData[index2];
-         importData[index2] = temp;
-         ++index1; ++index2;
-      }
-   }
-#endif
 
    /* close file */
    NULLDO(fclose, f);
@@ -145,8 +129,8 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
    import->width  = w;
    import->height = h;
    import->data   = importData;
-   import->format = GLHCK_RGBA;
-   import->type   = GLHCK_DATA_UNSIGNED_BYTE;
+   import->format = GLHCK_RGB;
+   import->type   = GLHCK_UNSIGNED_BYTE;
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
@@ -166,7 +150,6 @@ bad_dimensions:
    DEBUG(GLHCK_DBG_ERROR, "BMP image has invalid dimension %dx%d", w, h);
 fail:
    IFDO(_glhckFree, importData);
-   IFDO(_glhckFree, bgr);
    IFDO(fclose, f);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;

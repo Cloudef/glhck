@@ -18,12 +18,14 @@ static float FONT_SIZE[FONT_LAST] = { 12 };
 static const char *WINDOW_TITLE = "THE GAME";
 
 typedef struct GameBullet {
+   kmAABB aabb;
    kmVec3 position;
    struct GameBullet *next;
    float angle, liveTime;
 } GameBullet;
 
 typedef struct GameActor {
+   kmAABB aabb;
    glhckObject *object, *muzzle;
    glhckBone *muzzleBone;
    glhckAnimator *animator;
@@ -197,11 +199,22 @@ static GameActor* gameActorNew(GameWindow *window)
    if (!(actor->muzzle = glhckModelNew("example/media/area/muzzle.glhckm", 1.0f, NULL)))
       goto fail;
 
+   if (window->player) {
+      char r = (size_t)actor % 255;
+      char g = (size_t)actor->object % 255;
+      char b = (size_t)actor->muzzle % 255;
+      glhckMaterialDiffuseb(glhckObjectGetMaterial(glhckObjectChildren(actor->object, NULL)[0]), r, g, b, 255);
+   }
+
    glhckObjectCull(actor->muzzle, 0);
    glhckObjectScalef(actor->muzzle, 0.0f, 0.0f, 0.0f);
    glhckObjectAddChild(actor->object, actor->muzzle);
 
-   actor->position.y = 30;
+   glhckCollisionWorldAddAABBRef(window->collisionWorld, &actor->aabb, actor->object);
+
+   actor->position.x = rand() % 30 - 15;
+   actor->position.z = rand() % 30 - 15;
+   actor->position.y = 100;
 
    unsigned int i, numChilds;
    glhckObject **childs = glhckObjectChildren(actor->muzzle, &numChilds);
@@ -343,7 +356,31 @@ static GameWindow* gameWindowNew(int argc, char **argv)
    for (i = 0; i < numChilds; ++i)
       glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), childs[i]);
 
-   gameActorNew(window);
+   glhckObject *obj = glhckModelNew("example/media/area/area.glhckm", 8.0f, NULL);
+   glhckObjectAddChild(window->world, obj);
+   glhckObjectMovef(obj, 76.8f, 0.0f, 0.0f);
+   glhckObjectRotationf(obj, 0.0f, 90.0f, 0.0f);
+   childs = glhckObjectChildren(obj, &numChilds);
+   for (i = 0; i < numChilds; ++i)
+      glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), childs[i]);
+
+   obj = glhckModelNew("example/media/area/area.glhckm", 8.0f, NULL);
+   glhckObjectAddChild(window->world, obj);
+   glhckObjectMovef(obj, 0.0f, 0.0f, -76.8f);
+   glhckObjectRotationf(obj, 0.0f, 270.0f, 0.0f);
+   childs = glhckObjectChildren(obj, &numChilds);
+   for (i = 0; i < numChilds; ++i)
+      glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), childs[i]);
+
+   obj = glhckModelNew("example/media/area/area.glhckm", 8.0f, NULL);
+   glhckObjectAddChild(window->world, obj);
+   glhckObjectMovef(obj, 76.8f, 0.0f, -76.8f);
+   glhckObjectRotationf(obj, 0.0f, 180.0f, 0.0f);
+   childs = glhckObjectChildren(obj, &numChilds);
+   for (i = 0; i < numChilds; ++i)
+      glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), childs[i]);
+
+   for (i = 0; i < 0; ++i) gameActorNew(window);
 
    window->running = 1;
    glfwSetWindowUserPointer(window->handle, window);
@@ -361,11 +398,13 @@ fail:
 static void gameWindowUpdateTitle(GameWindow *window)
 {
    char *title;
+   float msec = (glfwGetTime()-window->time.now)*1000.0f;
+   int perc = (msec*100)/(1000.0f/60);
 
-   if (!(title = malloc(snprintf(NULL, 0, "%s [%d]", WINDOW_TITLE, window->time.fps)+1)))
+   if (!(title = malloc(snprintf(NULL, 0, "%s [%dFPS] [%.2fms] [%d%%]", WINDOW_TITLE, window->time.fps, msec, perc)+1)))
       return;
 
-   sprintf(title, "%s [%d]", WINDOW_TITLE, window->time.fps);
+   sprintf(title, "%s [%dFPS] [%.2fms] [%d%%]", WINDOW_TITLE, window->time.fps, msec, perc);
    glfwSetWindowTitle(window->handle, title);
 
    if (window->title) free(window->title);
@@ -413,10 +452,35 @@ static GameBullet* gameBulletLogic(GameWindow *window, GameBullet *bullet)
       return next;
    }
 
+   kmVec3 lastPosition, velocity;
+   kmVec3Assign(&lastPosition, &bullet->position);
+
    bullet->liveTime -= 1.0f * window->time.delta;
    bullet->position.x -= cos((bullet->angle + 90) * kmPIOver180) * spd * window->time.delta;
    bullet->position.z += sin((bullet->angle + 90) * kmPIOver180) * spd * window->time.delta;
+
+   glhckCollisionInData colData;
+   memset(&colData, 0, sizeof(colData));
+   kmVec3Subtract(&velocity, &bullet->position, &lastPosition);
+   colData.velocity = &velocity;
+   colData.userData = bullet;
+
+   bullet->aabb.min.x = bullet->position.x - 0.1;
+   bullet->aabb.min.y = bullet->position.y - 0.1;
+   bullet->aabb.min.z = bullet->position.z - 0.1;
+   bullet->aabb.max.x = bullet->position.x + 0.1;
+   bullet->aabb.max.y = bullet->position.y + 0.1;
+   bullet->aabb.max.z = bullet->position.z + 0.1;
+   if (glhckCollisionWorldCollideAABB(window->collisionWorld, &bullet->aabb, &colData))
+      bullet->liveTime = 0.0f;
+
    return next;
+}
+
+static int gameActorTest(const glhckCollisionInData *data, const glhckCollisionPrimitive *collider)
+{
+   GameActor *actor = data->userData;
+   return (actor->object != glhckCollisionPrimitiveGetUserData(collider));
 }
 
 static void gameActorResponse(const glhckCollisionOutData *collision)
@@ -449,12 +513,14 @@ static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *play
       if (glfwGetKey(window->handle, GLFW_KEY_RIGHT) == GLFW_PRESS) flags |= RT;
       if (glfwGetKey(window->handle, GLFW_KEY_Q)     == GLFW_PRESS) flags |= ST;
    } else {
+      int rand = (int)window->time.now + ((size_t)actor >> 3) - ((size_t)actor->next >> 4);
       if (actor->position.z < player->position.z-10) flags |= UP;
       if (actor->position.z > player->position.z+10) flags |= DN;
       if (actor->position.x < player->position.x-10) flags |= LT;
       if (actor->position.x > player->position.x+10) flags |= RT;
-      if (((int)window->time.now % 8) == 0) flags |= ST;
-      if (((int)window->time.now % 4) == 0) flags = (UP|DN|LT|RT) - flags;
+      if (rand % 8 == 0) flags |= ST;
+      if (rand % 2 == 0) flags |= (1 << rand%4);
+      if (!flags) flags = actor->flags;
    }
 
    rotation = actor->rotation.y;
@@ -503,18 +569,18 @@ static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *play
    memset(&colData, 0, sizeof(colData));
    kmVec3Subtract(&velocity, &actor->position, &lastPosition);
    colData.velocity = &velocity;
+   colData.test = gameActorTest;
    colData.response = gameActorResponse;
    colData.userData = actor;
 
 #if 1
-   kmAABB aabb;
-   aabb.min.x = actor->position.x - 3;
-   aabb.min.y = actor->position.y - 6;
-   aabb.min.z = actor->position.z - 3;
-   aabb.max.x = actor->position.x + 3;
-   aabb.max.y = actor->position.y + 6;
-   aabb.max.z = actor->position.z + 3;
-   glhckCollisionWorldCollideAABB(window->collisionWorld, &aabb, &colData);
+   actor->aabb.min.x = actor->position.x - 3;
+   actor->aabb.min.y = actor->position.y - 6;
+   actor->aabb.min.z = actor->position.z - 3;
+   actor->aabb.max.x = actor->position.x + 3;
+   actor->aabb.max.y = actor->position.y + 5;
+   actor->aabb.max.z = actor->position.z + 3;
+   glhckCollisionWorldCollideAABB(window->collisionWorld, &actor->aabb, &colData);
 #endif
 
 #if 0
@@ -566,6 +632,7 @@ static void gameWindowRender(GameWindow *window)
    GameBullet *b;
 
    glhckObjectRenderAll(window->world);
+
    for (a = window->actor; a; a = a->next) {
       glhckObjectScalef(a->muzzle, 0.0f, 0.0f, 0.0f);
       if (a->animator && a->flags && a->flags != 1<<4) {
@@ -595,8 +662,9 @@ static void gameWindowRender(GameWindow *window)
    gameTextStash(window->text, FONT_DEFAULT, 0, FONT_SIZE[FONT_DEFAULT], window->title);
    glhckTextRender(window->text->handle);
    glhckTextClear(window->text->handle);
+
    glfwSwapBuffers(window->handle);
-   glhckRenderClear(GLHCK_COLOR_BUFFER | GLHCK_DEPTH_BUFFER);
+   glhckRenderClear(GLHCK_COLOR_BUFFER_BIT | GLHCK_DEPTH_BUFFER_BIT);
 }
 
 static int gameWindowRun(GameWindow *window)

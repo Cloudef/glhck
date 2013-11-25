@@ -755,6 +755,9 @@ typedef struct _glhckCollisionShape {
 
    /* type of shape */
    _glhckCollisionType type;
+
+   /* is the shape a reference? */
+   char reference;
 } _glhckCollisionShape;
 
 typedef struct _glhckCollisionPrimitive {
@@ -1066,6 +1069,9 @@ static unsigned int _glhckCollisionWorldCollide(glhckCollisionWorld *world, _glh
 
 static void _glhckCollisionShapeFree(_glhckCollisionShape *shape)
 {
+   /* don't free references */
+   if (shape->reference) return;
+
    switch (shape->type) {
       default:
          IFDO(_glhckFree, shape->any);
@@ -1158,6 +1164,18 @@ fail:
    IFDO(_glhckFree, primitive);
    IFDO(_glhckFree, ellipseCopy);
    return NULL;
+}
+
+GLHCKAPI glhckCollisionPrimitive* glhckCollisionWorldAddAABBRef(glhckCollisionWorld *object, const kmAABB *aabb, void *userData)
+{
+   glhckCollisionPrimitive *primitive = NULL;
+   assert(object && aabb);
+
+   if (!(primitive = _glhckCollisionWorldAddPrimitive(object, GLHCK_COLLISION_AABB, (kmAABB*)aabb, userData)))
+      return NULL;
+
+   primitive->shape.reference = 1;
+   return primitive;
 }
 
 GLHCKAPI glhckCollisionPrimitive* glhckCollisionWorldAddAABB(glhckCollisionWorld *object, const kmAABB *aabb, void *userData)
@@ -1314,3 +1332,5 @@ GLHCKAPI void* glhckCollisionPrimitiveGetUserData(const glhckCollisionPrimitive 
    assert(object);
    return object->userData;
 }
+
+/* vim: set ts=8 sw=3 tw=0 :*/

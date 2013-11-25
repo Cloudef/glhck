@@ -10,7 +10,7 @@ GLHCKAPI glhckObject* glhckSphereNew(kmScalar size)
 }
 
 /* \brief create new sphere object (specify precision) */
-GLHCKAPI glhckObject* glhckSphereNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+GLHCKAPI glhckObject* glhckSphereNewEx(kmScalar size, unsigned char itype, unsigned char vtype)
 {
    return glhckEllipsoidNewEx(size, size, size, itype, vtype);
 }
@@ -18,16 +18,15 @@ GLHCKAPI glhckObject* glhckSphereNewEx(kmScalar size, glhckGeometryIndexType ity
 /* \brief create new ellipsoid object */
 GLHCKAPI glhckObject* glhckEllipsoidNew(kmScalar rx, kmScalar ry, kmScalar rz)
 {
-   glhckGeometryIndexType itype;
-   glhckGeometryVertexType vtype;
+   unsigned char itype, vtype;
    glhckGetGlobalPrecision(&itype, &vtype);
-   if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V3F;
-   if (itype == GLHCK_INDEX_NONE) itype = GLHCK_INDEX_INTEGER;
+   if (vtype == GLHCK_VTX_AUTO) vtype = GLHCK_VTX_V3F;
+   if (itype == GLHCK_IDX_AUTO) itype = GLHCK_IDX_UINT;
    return glhckEllipsoidNewEx(rx, ry, rz, itype, vtype);
 }
 
 /* \brief create new ellipsoid object (specify precision) */
-GLHCKAPI glhckObject* glhckEllipsoidNewEx(kmScalar rx, kmScalar ry, kmScalar rz, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+GLHCKAPI glhckObject* glhckEllipsoidNewEx(kmScalar rx, kmScalar ry, kmScalar rz, unsigned char itype, unsigned char vtype)
 {
    const int bandPower = 4;
    const int bandPoints = bandPower*bandPower;
@@ -38,7 +37,7 @@ GLHCKAPI glhckObject* glhckEllipsoidNewEx(kmScalar rx, kmScalar ry, kmScalar rz,
    glhckObject *object;
    unsigned int i;
    kmScalar x, y;
-   CALL(0, "%f, %f, %f, %d, %d", rx, ry, rz, itype, vtype);
+   CALL(0, "%f, %f, %f, %u, %u", rx, ry, rz, itype, vtype);
 
    /* generate ellipsoid tristrip */
    glhckImportVertexData vertices[totalPoints];
@@ -64,8 +63,7 @@ GLHCKAPI glhckObject* glhckEllipsoidNewEx(kmScalar rx, kmScalar ry, kmScalar rz,
       goto fail;
 
    /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertices(object, vtype,
-            &vertices[0], totalPoints) != RETURN_OK)
+   if (glhckObjectInsertVertices(object, vtype, &vertices[0], totalPoints) != RETURN_OK)
       goto fail;
 
    RET(0, "%p", object);

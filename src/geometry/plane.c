@@ -9,18 +9,17 @@
 /* \brief create new plane object */
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height)
 {
-   glhckGeometryVertexType vtype;
+   unsigned char vtype;
    glhckGetGlobalPrecision(NULL, &vtype);
-   if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V2B;
-   return glhckPlaneNewEx(width, height, GLHCK_INDEX_NONE, vtype);
+   if (vtype == GLHCK_VTX_AUTO) vtype = GLHCK_VTX_V2B;
+   return glhckPlaneNewEx(width, height, GLHCK_IDX_AUTO, vtype);
 }
 
 /* \brief create new plane object (precision specify) */
-GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height, unsigned char itype, unsigned char vtype)
 {
    glhckObject *object;
-   CALL(0, "%f, %f, %d, %d", width, height, itype, vtype);
+   CALL(0, "%f, %f, %u, %u", width, height, itype, vtype);
 
    static const glhckImportVertexData vertices[] = {
       {
@@ -51,8 +50,7 @@ GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height,
       goto fail;
 
    /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertices(object, vtype,
-            &vertices[0], LENGTH(vertices)) != RETURN_OK)
+   if (glhckObjectInsertVertices(object, vtype, &vertices[0], LENGTH(vertices)) != RETURN_OK)
       goto fail;
 
    /* assigning indices would be waste
@@ -100,7 +98,7 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmSc
    float w, h;
    glhckObject *object = NULL;
    glhckMaterial *material = NULL;
-   glhckGeometryVertexType vtype;
+   unsigned char vtype;
    CALL(0, "%p, %f, %f", texture, width, height);
 
    w = (float)(width>0.0f?width:texture->width)*0.5f;
@@ -139,18 +137,22 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmSc
 
    /* choose optimal precision */
    glhckGetGlobalPrecision(NULL, &vtype);
-   if (vtype == GLHCK_VERTEX_NONE) {
-      vtype = glhckVertexTypeGetV2Counterpart(glhckVertexTypeForSize(texture->width, texture->height));
+   if (vtype == GLHCK_VTX_AUTO) {
+      unsigned int i;
+      kmScalar max = (texture->width>texture->height?texture->width:texture->height);
+      for (vtype = GLHCK_VTX_V2F, i = 0; i < GLHCKW()->numVertexTypes; ++i) {
+         if (i == vtype || GLHCKVT(i)->memb[0] != 2) continue;
+         if (GLHCKVT(i)->max[0] >= max && GLHCKVT(i)->max[0] < GLHCKVT(vtype)->max[0])
+            vtype = i;
+      }
    }
 
    /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertices(object, vtype,
-            &vertices[0], LENGTH(vertices)) != RETURN_OK)
+   if (glhckObjectInsertVertices(object, vtype, &vertices[0], LENGTH(vertices)) != RETURN_OK)
       goto fail;
 
    /* don't make things humongous */
-   w = 1.0f-(1.0f/(texture->width>texture->height?
-            texture->width:texture->height));
+   w = 1.0f-(1.0f/(texture->width>texture->height?texture->width:texture->height));
 
    /* scale keeping aspect ratio */
    glhckObjectScalef(object, w, w, w);

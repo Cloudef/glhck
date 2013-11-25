@@ -75,6 +75,25 @@ static GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum error)
 }
 #endif
 
+/*** mapping tables ***/
+extern GLenum glhckCullFaceTypeToGL[];
+extern GLenum glhckFaceOrientationToGL[];
+extern GLenum glhckGeometryTypeToGL[];
+extern GLenum glhckFramebufferTargetToGL[];
+extern GLenum glhckFramebufferAttachmentTypeToGL[];
+extern GLenum glhckHwBufferTargetToGL[];
+extern GLenum glhckHwBufferStoreTypeToGL[];
+extern GLenum glhckHwBufferAccessTypeToGL[];
+extern GLenum glhckShaderTypeToGL[];
+extern GLenum glhckTextureWrapToGL[];
+extern GLenum glhckTextureFilterToGL[];
+extern GLenum glhckTextureCompareModeToGL[];
+extern GLenum glhckCompareFuncToGL[];
+extern GLenum glhckTextureTargetToGL[];
+extern GLenum glhckTextureFormatToGL[];
+extern GLenum glhckDataTypeToGL[];
+extern GLenum glhckBlendingModeToGL[];
+
 /*** check if driver setup is supported ***/
 int glhCheckSupport(const char *renderName);
 
@@ -91,23 +110,7 @@ void glhHwBufferFill(glhckHwBufferTarget target, GLintptr offset, GLsizeiptr siz
 void* glhHwBufferMap(glhckHwBufferTarget target, glhckHwBufferAccessType access);
 void glhHwBufferUnmap(glhckHwBufferTarget target);
 
-/*** glhck mapping functions ***/
-GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property);
-GLenum glhFaceOrientationForGlhckOrientation(glhckFaceOrientation orientation);
-GLenum glhCullFaceTypeForGlhckType(glhckCullFaceType type);
-GLenum glhGeometryTypeForGlhckType(glhckGeometryType type);
-GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format);
-GLenum glhDataTypeForGlhckType(glhckDataType type);
-GLenum glhTextureCompareModeForGlhckMode(glhckTextureCompareMode mode);
-GLenum glhCompareFuncForGlhckFunc(glhckCompareFunc mode);
-GLenum glhTextureWrapModeForGlhckMode(glhckTextureWrap wrap);
-GLenum glhTextureFilterModeForGlhckMode(glhckTextureFilter filter);
-GLenum glhBlendingModeForGlhckMode(glhckBlendingMode mode);
-GLenum glhAttachmentTypeForGlhckType(glhckFramebufferAttachmentType type);
-GLenum glhHwBufferTargetForGlhckType(glhckHwBufferTarget target);
-GLenum glhHwBufferStoreTypeForGlhckType(glhckHwBufferStoreType type);
-GLenum glhHwBufferAccessTypeForGlhckType(glhckHwBufferAccessType type);
-GLenum glhShaderTypeForGlhckType(glhckShaderType type);
+/*** shader mapping functions ***/
 GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type);
 _glhckShaderVariableType glhGlhckShaderVariableTypeForOpenGLType(GLenum type);
 const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type);
@@ -138,3 +141,5 @@ void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type);
 void glhSetupDebugOutput(void);
 
 #endif /* __glhck_opengl_helper_h__ */
+
+/* vim: set ts=8 sw=3 tw=0 :*/

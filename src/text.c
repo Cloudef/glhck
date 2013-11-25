@@ -266,7 +266,7 @@ static __GLHCKtextTexture* _glhckTextGetTextureCache(glhckText *object, int gw, 
    br = NULL;
    rh = (gh+7) & ~7;
    if (!(texture = object->textureCache)) {
-      if (_glhckTextTextureNew(object, GLHCK_ALPHA, GLHCK_DATA_UNSIGNED_BYTE, NULL) != RETURN_OK)
+      if (_glhckTextTextureNew(object, GLHCK_ALPHA, GLHCK_UNSIGNED_BYTE, NULL) != RETURN_OK)
          return NULL;
       texture = object->textureCache;
    }
@@ -274,7 +274,7 @@ static __GLHCKtextTexture* _glhckTextGetTextureCache(glhckText *object, int gw, 
       /* skip textures with INT_MAX rows (these are either really big text blobs or bitmap fonts) */
       while (texture && texture->rowsCount == INT_MAX) {
          if (!texture->next) {
-            if (_glhckTextTextureNew(object, GLHCK_ALPHA, GLHCK_DATA_UNSIGNED_BYTE, NULL) != RETURN_OK)
+            if (_glhckTextTextureNew(object, GLHCK_ALPHA, GLHCK_UNSIGNED_BYTE, NULL) != RETURN_OK)
                return NULL;
          }
          texture = texture->next;
@@ -311,7 +311,7 @@ static __GLHCKtextTexture* _glhckTextGetTextureCache(glhckText *object, int gw, 
             }
 
             /* as last resort create new texture, if this was used */
-            if (_glhckTextTextureNew(object, GLHCK_ALPHA, GLHCK_DATA_UNSIGNED_BYTE, NULL) != RETURN_OK)
+            if (_glhckTextTextureNew(object, GLHCK_ALPHA, GLHCK_UNSIGNED_BYTE, NULL) != RETURN_OK)
                return NULL;
 
             /* cycle and hope for best */
@@ -408,7 +408,7 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font, u
    if ((data = _glhckMalloc(gw*gh))) {
       stbtt_MakeGlyphBitmap(&font->font, data, gw, gh, gw, scale, scale, gid);
       glhckTextureFill(texture->texture, 0, glyph->x1, glyph->y1, 0, gw, gh, 0,
-            GLHCK_ALPHA, GLHCK_DATA_UNSIGNED_BYTE, gw*gh, data);
+            GLHCK_ALPHA, GLHCK_UNSIGNED_BYTE, gw*gh, data);
       _glhckFree(data);
    }
 
@@ -1136,7 +1136,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
    glhckTextStash(object, font_id, size, 0, size+descender*size, s, &linew);
 
    if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, linew, size, 0, 0,
-            GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
+            GLHCK_RGBA, GLHCK_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
       goto fail;
 
    memcpy(&nparams, (params?params:glhckTextureDefaultLinearParameters()), sizeof(glhckTextureParameters));
@@ -1152,7 +1152,7 @@ GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, flo
    glhckFramebufferBegin(fbo);
    glhckRenderPass(GLHCK_PASS_TEXTURE);
    glhckRenderClearColorb(0,0,0,0);
-   glhckRenderClear(GLHCK_COLOR_BUFFER);
+   glhckRenderClear(GLHCK_COLOR_BUFFER_BIT);
    glhckTextRender(object);
    glhckFramebufferEnd(fbo);
 

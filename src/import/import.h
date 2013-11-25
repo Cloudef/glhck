@@ -26,32 +26,32 @@ int _glhckUnloadImporters(void);
  * 3. 1 = import animation data, 0 = don't import
  */
 int _glhckImportModel(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      unsigned char itype, unsigned char vtype);
 
 #if !GLHCK_IMPORT_DYNAMIC
 
 int _glhckImportGlhckm(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      unsigned char itype, unsigned char vtype);
 int _glhckFormatGlhckm(const char *file);
 
 #if GLHCK_IMPORT_OPENCTM
 /* OpenCTM http://openctm.sourceforge.net/ */
 int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      unsigned char itype, unsigned char vtype);
 int _glhckFormatOpenCTM(const char *file);
 #endif
 
 #if GLHCK_IMPORT_MMD
 /* MikuMikuDance PMD */
 int _glhckImportPMD(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      unsigned char itype, unsigned char vtype);
 int _glhckFormatPMD(const char *file);
 #endif
 
 #if GLHCK_IMPORT_ASSIMP
 /* Assimp Wrapper http://assimp.sourceforge.net/ */
 int _glhckImportAssimp(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      unsigned char itype, unsigned char vtype);
 int _glhckFormatAssimp(const char *file);
 #endif
 

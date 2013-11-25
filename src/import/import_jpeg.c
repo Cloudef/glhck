@@ -184,7 +184,7 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
    import->height = h;
    import->data   = importData;
    import->format = GLHCK_RGB;
-   import->type   = GLHCK_DATA_UNSIGNED_BYTE;
+   import->type   = GLHCK_UNSIGNED_BYTE;
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 

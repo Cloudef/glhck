@@ -60,7 +60,7 @@ fail:
 
 /* \brief import OpenCTM file */
 int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+      unsigned char itype, unsigned char vtype)
 {
    FILE *f;
    unsigned int i, ix, *stripIndices = NULL, numIndices = 0;

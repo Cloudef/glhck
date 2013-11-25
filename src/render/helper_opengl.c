@@ -13,330 +13,186 @@
 #  define GLEW_OES_framebuffer_object 0
 #endif
 
-/*
- * glhck to OpenGL mappings
- */
+GLenum glhckCullFaceTypeToGL[] = {
+   GL_BACK, /* GLHCK_BACK */
+   GL_FRONT, /* GLHCK_FRONT */
+};
 
-/* \brief map glhck render property to OpenGL render property */
-GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property)
-{
-   switch (property) {
-      case GLHCK_MAX_TEXTURE_SIZE:return GL_MAX_TEXTURE_SIZE;
-      case GLHCK_MAX_CUBE_MAP_TEXTURE_SIZE:return GL_MAX_CUBE_MAP_TEXTURE_SIZE;
-      case GLHCK_MAX_VERTEX_ATTRIBS:return GL_MAX_VERTEX_ATTRIBS;
-      case GLHCK_MAX_VERTEX_UNIFORM_VECTORS:return GL_MAX_VERTEX_UNIFORM_VECTORS;
-      case GLHCK_MAX_VARYING_VECTORS:return GL_MAX_VARYING_VECTORS;
-      case GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS:return GL_MAX_FRAGMENT_UNIFORM_VECTORS;
-      case GLHCK_MAX_COMBINED_TEXTURE_IMAGE_UNITS:return GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS;
-      case GLHCK_MAX_VERTEX_TEXTURE_IMAGE_UNITS:return GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS;
-      case GLHCK_MAX_TEXTURE_IMAGE_UNITS:return GL_MAX_TEXTURE_IMAGE_UNITS;
-      case GLHCK_MAX_RENDERBUFFER_SIZE:return GL_MAX_RENDERBUFFER_SIZE;
-      case GLHCK_MAX_VIEWPORT_DIMS:return GL_MAX_VIEWPORT_DIMS;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckFaceOrientationToGL[] = {
+   GL_CW, /* GLHCK_CW */
+   GL_CCW, /* GLHCK_CCW */
+};
 
-/* \brief map glhck face orientation to OpenGL face orientation */
-GLenum glhFaceOrientationForGlhckOrientation(glhckFaceOrientation orientation)
-{
-   switch (orientation) {
-      case GLHCK_FACE_CW:return GL_CW;
-      case GLHCK_FACE_CCW:return GL_CCW;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckGeometryTypeToGL[] = {
+   GL_POINTS, /* GLHCK_POINTS */
+   GL_LINES, /* GLHCK_LINES */
+   GL_LINE_LOOP, /* GLHCK_LINE_LOOP */
+   GL_LINE_STRIP, /* GLHCK_LINE_STRIP */
+   GL_TRIANGLES, /* GLHCK_TRIANGLES */
+   GL_TRIANGLE_STRIP, /* GLHCK_TRIANGLE_STRIP */
+};
 
-/* \brief map glhck face type to OpenGL face type */
-GLenum glhCullFaceTypeForGlhckType(glhckCullFaceType type)
-{
-   switch (type) {
-      case GLHCK_CULL_FRONT:return GL_FRONT;
-      case GLHCK_CULL_BACK:return GL_BACK;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckFramebufferTargetToGL[] = {
+   GL_FRAMEBUFFER, /* GLHCK_FRAMEBUFFER */
+   GL_READ_FRAMEBUFFER, /* GLHCK_FRAMEBUFFER_READ */
+   GL_DRAW_FRAMEBUFFER, /* GLHCK_FRAMEBUFFER_DRAW */
+};
 
-/* \brief map glhck geometry constant to OpenGL geometry constant */
-GLenum glhGeometryTypeForGlhckType(glhckGeometryType type)
-{
-   switch (type) {
-      case GLHCK_POINTS:return GL_POINTS;
-      case GLHCK_LINES:return GL_LINES;
-      case GLHCK_LINE_LOOP:return GL_LINE_LOOP;
-      case GLHCK_LINE_STRIP:return GL_LINE_STRIP;
-      case GLHCK_TRIANGLES:return GL_TRIANGLES;
-      case GLHCK_TRIANGLE_STRIP:return GL_TRIANGLE_STRIP;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckFramebufferAttachmentTypeToGL[] = {
+   GL_COLOR_ATTACHMENT0, /* GLHCK_COLOR_ATTACHMENT0 */
+   GL_COLOR_ATTACHMENT1, /* GLHCK_COLOR_ATTACHMENT1 */
+   GL_COLOR_ATTACHMENT2, /* GLHCK_COLOR_ATTACHMENT2 */
+   GL_COLOR_ATTACHMENT3, /* GLHCK_COLOR_ATTACHMENT3 */
+   GL_COLOR_ATTACHMENT4, /* GLHCK_COLOR_ATTACHMENT4 */
+   GL_COLOR_ATTACHMENT5, /* GLHCK_COLOR_ATTACHMENT5 */
+   GL_COLOR_ATTACHMENT6, /* GLHCK_COLOR_ATTACHMENT6 */
+   GL_COLOR_ATTACHMENT7, /* GLHCK_COLOR_ATTACHMENT7 */
+   GL_COLOR_ATTACHMENT8, /* GLHCK_COLOR_ATTACHMENT8 */
+   GL_COLOR_ATTACHMENT9, /* GLHCK_COLOR_ATTACHMENT9 */
+   GL_COLOR_ATTACHMENT10, /* GLHCK_COLOR_ATTACHMENT10 */
+   GL_COLOR_ATTACHMENT11, /* GLHCK_COLOR_ATTACHMENT11 */
+   GL_COLOR_ATTACHMENT12, /* GLHCK_COLOR_ATTACHMENT12 */
+   GL_COLOR_ATTACHMENT13, /* GLHCK_COLOR_ATTACHMENT13 */
+   GL_COLOR_ATTACHMENT14, /* GLHCK_COLOR_ATTACHMENT14 */
+   GL_COLOR_ATTACHMENT15, /* GLHCK_COLOR_ATTACHMENT15 */
+   GL_DEPTH_ATTACHMENT, /* GLHCK_DEPTH_ATTACHMENT */
+   GL_STENCIL_ATTACHMENT, /* GLHCK_STENCIL_ATTACHMENT */
+};
 
-/* \brief map glhck texture format to OpenGL texture format */
-GLenum glhTextureTargetForGlhckType(glhckTextureTarget target)
-{
-   switch (target) {
-      case GLHCK_TEXTURE_1D:return GL_TEXTURE_1D;
-      case GLHCK_TEXTURE_2D:return GL_TEXTURE_2D;
-      case GLHCK_TEXTURE_3D:return GL_TEXTURE_3D;
-      case GLHCK_TEXTURE_CUBE_MAP:return GL_TEXTURE_CUBE_MAP;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckHwBufferTargetToGL[] = {
+   GL_ARRAY_BUFFER, /* GLHCK_ARRAY_BUFFER */
+   GL_COPY_READ_BUFFER, /* GLHCK_COPY_READ_BUFFER */
+   GL_COPY_WRITE_BUFFER, /* GLHCK_COPY_WRITE_BUFFER */
+   GL_ELEMENT_ARRAY_BUFFER, /* GLHCK_ELEMENT_ARRAY_BUFFER */
+   GL_PIXEL_PACK_BUFFER, /* GLHCK_PIXEL_PACK_BUFFER */
+   GL_PIXEL_UNPACK_BUFFER, /* GLHCK_PIXEL_UNPACK_BUFFER */
+   GL_TEXTURE_BUFFER, /* GLHCK_TEXTURE_BUFFER */
+   GL_TRANSFORM_FEEDBACK_BUFFER, /* GLHCK_TRANSFORM_FEEDBACK_BUFFER */
+   GL_UNIFORM_BUFFER, /* GLHCK_UNIFORM_BUFFER */
+   GL_SHADER_STORAGE_BUFFER, /* GLHCK_SHADER_STORAGE_BUFFER */
+   GL_ATOMIC_COUNTER_BUFFER, /* GLHCK_ATOMIC_COUNTER_BUFFER */
+};
 
-/* \brief map glhck texture format to OpenGL texture format */
-GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format)
-{
-   switch (format) {
-      case GLHCK_RED:return GL_RED;
-      case GLHCK_RG:return GL_RG;
-      case GLHCK_ALPHA:return GL_ALPHA;
-      case GLHCK_LUMINANCE:return GL_LUMINANCE;
-      case GLHCK_LUMINANCE_ALPHA:return GL_LUMINANCE_ALPHA;
-      case GLHCK_RGB:return GL_RGB;
-      case GLHCK_BGR:return GL_BGR;
-      case GLHCK_RGBA:return GL_RGBA;
-      case GLHCK_BGRA:return GL_BGRA;
-      case GLHCK_DEPTH_COMPONENT:return GL_DEPTH_COMPONENT;
-      case GLHCK_DEPTH_COMPONENT16:return GL_DEPTH_COMPONENT16;
-      case GLHCK_DEPTH_COMPONENT24:return GL_DEPTH_COMPONENT24;
-      case GLHCK_DEPTH_COMPONENT32:return GL_DEPTH_COMPONENT32;
-      case GLHCK_DEPTH_STENCIL:return GL_DEPTH_STENCIL;
-      case GLHCK_COMPRESSED_RGBA_DXT5:return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-      case GLHCK_COMPRESSED_RGB_DXT1:return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckHwBufferStoreTypeToGL[] = {
+   GL_STREAM_DRAW, /* GLHCK_BUFFER_STREAM_DRAW */
+   GL_STREAM_READ, /* GLHCK_BUFFER_STREAM_READ */
+   GL_STREAM_COPY, /* GLHCK_BUFFER_STREAM_COPY */
+   GL_STATIC_DRAW, /* GLHCK_BUFFER_STATIC_DRAW */
+   GL_STATIC_READ, /* GLHCK_BUFFER_STATIC_READ */
+   GL_STATIC_COPY, /* GLHCK_BUFFER_STATIC_COPY */
+   GL_DYNAMIC_DRAW, /* GLHCK_BUFFER_DYNAMIC_DRAW */
+   GL_DYNAMIC_READ, /* GLHCK_BUFFER_DYNAMIC_READ */
+   GL_DYNAMIC_COPY, /* GLHCK_BUFFER_DYNAMIC_COPY */
+};
 
-/* \brief map glhck data type to OpenGL data type */
-GLenum glhDataTypeForGlhckType(glhckDataType type){
-   switch (type) {
-      case GLHCK_DATA_COMPRESSED:
-      case GLHCK_DATA_UNSIGNED_BYTE:
-         return GL_UNSIGNED_BYTE;
-      case GLHCK_DATA_BYTE:return GL_BYTE;
-      case GLHCK_DATA_UNSIGNED_SHORT:return GL_UNSIGNED_SHORT;
-      case GLHCK_DATA_SHORT:return GL_SHORT;
-      case GLHCK_DATA_UNSIGNED_INT:return GL_UNSIGNED_INT;
-      case GLHCK_DATA_INT:return GL_INT;
-      case GLHCK_DATA_FLOAT:return GL_FLOAT;
-      case GLHCK_DATA_UNSIGNED_BYTE_3_3_2:return GL_UNSIGNED_BYTE_3_3_2;
-      case GLHCK_DATA_UNSIGNED_BYTE_2_3_3_REV:return GL_UNSIGNED_BYTE_2_3_3_REV;
-      case GLHCK_DATA_UNSIGNED_SHORT_5_6_5:return GL_UNSIGNED_SHORT_5_6_5;
-      case GLHCK_DATA_UNSIGNED_SHORT_5_6_5_REV:return GL_UNSIGNED_SHORT_5_6_5_REV;
-      case GLHCK_DATA_UNSIGNED_SHORT_4_4_4_4:return GL_UNSIGNED_SHORT_4_4_4_4;
-      case GLHCK_DATA_UNISNGED_SHORT_4_4_4_4_REV:return GL_UNSIGNED_SHORT_4_4_4_4_REV;
-      case GLHCK_DATA_UNISGNED_SHORT_5_5_5_1:return GL_UNSIGNED_SHORT_5_5_5_1;
-      case GLHCK_DATA_UNSIGNED_SHORT_1_5_5_5_REV:return GL_UNSIGNED_SHORT_1_5_5_5_REV;
-      case GLHCK_DATA_UNSIGNED_INT_8_8_8_8:return GL_UNSIGNED_INT_8_8_8_8;
-      case GLHCK_DATA_UNSIGNED_INT_8_8_8_8_REV:return GL_UNSIGNED_INT_8_8_8_8_REV;
-      case GLHCK_DATA_UNSIGNED_INT_10_10_10_2:return GL_UNSIGNED_INT_10_10_10_2;
-      case GLHCK_DATA_UNSIGNED_INT_2_10_10_10_REV:return GL_UNSIGNED_INT_2_10_10_10_REV;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckHwBufferAccessTypeToGL[] = {
+   GL_READ_ONLY, /* GLHCK_BUFFER_READ_ONLY */
+   GL_WRITE_ONLY, /* GLHCK_BUFFER_WRITE_ONLY */
+   GL_READ_WRITE, /* GLHCK_BUFFER_READ_WRITE */
+};
 
-/* \brief map glhck texture compare mode to OpenGL texture compare mode */
-GLenum glhTextureCompareModeForGlhckMode(glhckTextureCompareMode mode)
-{
-   switch (mode) {
-      case GLHCK_COMPARE_NONE:return GL_NONE;
-      case GLHCK_COMPARE_REF_TO_TEXTURE:return GL_COMPARE_REF_TO_TEXTURE;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckShaderTypeToGL[] = {
+   GL_VERTEX_SHADER, /* GLHCK_VERTEX_SHADER */
+   GL_FRAGMENT_SHADER, /* GLHCK_FRAGMENT_SHADER */
+};
 
-/* \brief map glhck compare func to OpenGL texture compare func */
-GLenum glhCompareFuncForGlhckFunc(glhckCompareFunc mode)
-{
-   switch (mode) {
-      case GLHCK_COMPARE_LEQUAL:return GL_LEQUAL;
-      case GLHCK_COMPARE_GEQUAL:return GL_GEQUAL;
-      case GLHCK_COMPARE_LESS:return GL_LESS;
-      case GLHCK_COMPARE_GREATER:return GL_GREATER;
-      case GLHCK_COMPARE_EQUAL:return GL_EQUAL;
-      case GLHCK_COMPARE_NOTEQUAL:return GL_NOTEQUAL;
-      case GLHCK_COMPARE_ALWAYS:return GL_ALWAYS;
-      case GLHCK_COMPARE_NEVER:return GL_NEVER;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckTextureWrapToGL[] = {
+   GL_REPEAT, /* GLHCK_REPEAT */
+   GL_MIRRORED_REPEAT, /* GLHCK_MIRRORED_REPEAT */
+   GL_CLAMP_TO_EDGE, /* GLHCK_CLAMP_TO_EDGE */
+   GL_CLAMP_TO_BORDER, /* GLHCK_CLAMP_TO_BORDER */
+};
 
-/* \brief map glhck texture wrap mode to OpenGL texture wrap mode */
-GLenum glhTextureWrapModeForGlhckMode(glhckTextureWrap wrap)
-{
-   switch (wrap) {
-      case GLHCK_WRAP_REPEAT:return GL_REPEAT;
-      case GLHCK_WRAP_CLAMP_TO_EDGE:return GL_CLAMP_TO_EDGE;
-      case GLHCK_WRAP_MIRRORED_REPEAT:return GL_MIRRORED_REPEAT;
-      case GLHCK_WRAP_CLAMP_TO_BORDER:return GL_CLAMP_TO_BORDER;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckTextureFilterToGL[] = {
+   GL_NEAREST, /* GLHCK_NEAREST */
+   GL_LINEAR, /* GLHCK_LINEAR */
+   GL_NEAREST_MIPMAP_NEAREST, /* GLHCK_NEAREST_MIPMAP_NEAREST */
+   GL_LINEAR_MIPMAP_NEAREST, /* GLHCK_LINEAR_MIPMAP_NEAREST */
+   GL_NEAREST_MIPMAP_LINEAR, /* GLHCK_NEAREST_MIPMAP_LINEAR */
+   GL_LINEAR_MIPMAP_LINEAR, /* GLHCK_LINEAR_MIPMAP_LINEAR */
+};
 
-/* \brief map glhck texture filter mode to OpenGL texture filter mode */
-GLenum glhTextureFilterModeForGlhckMode(glhckTextureFilter filter)
-{
-   switch (filter) {
-      case GLHCK_FILTER_NEAREST:return GL_NEAREST;
-      case GLHCK_FILTER_LINEAR:return GL_LINEAR;
-      case GLHCK_FILTER_NEAREST_MIPMAP_NEAREST:return GL_NEAREST_MIPMAP_NEAREST;
-      case GLHCK_FILTER_LINEAR_MIPMAP_NEAREST:return GL_LINEAR_MIPMAP_NEAREST;
-      case GLHCK_FILTER_NEAREST_MIPMAP_LINEAR:return GL_NEAREST_MIPMAP_LINEAR;
-      case GLHCK_FILTER_LINEAR_MIPMAP_LINEAR:return GL_LINEAR_MIPMAP_LINEAR;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckTextureCompareModeToGL[] = {
+   0, /* GLHCK_COMPARE_NONE */
+   GL_COMPARE_REF_TO_TEXTURE, /* GLHCK_COMPARE_REF_TO_TEXTURE */
+};
 
-/* \brief map glhck blending mode to OpenGL blending mode */
-GLenum glhBlendingModeForGlhckMode(glhckBlendingMode mode)
-{
-   switch (mode) {
-      case GLHCK_ZERO:return GL_ZERO;
-      case GLHCK_ONE:return GL_ONE;
-      case GLHCK_SRC_COLOR:return GL_SRC_COLOR;
-      case GLHCK_ONE_MINUS_SRC_COLOR:return GL_ONE_MINUS_SRC_COLOR;
-      case GLHCK_SRC_ALPHA:return GL_SRC_ALPHA;
-      case GLHCK_ONE_MINUS_SRC_ALPHA:return GL_ONE_MINUS_SRC_ALPHA;
-      case GLHCK_DST_ALPHA:return GL_DST_ALPHA;
-      case GLHCK_ONE_MINUS_DST_ALPHA:return GL_ONE_MINUS_DST_ALPHA;
-      case GLHCK_DST_COLOR:return GL_DST_COLOR;
-      case GLHCK_ONE_MINUS_DST_COLOR:return GL_ONE_MINUS_DST_COLOR;
-      case GLHCK_SRC_ALPHA_SATURATE:return GL_SRC_ALPHA_SATURATE;
-      case GLHCK_CONSTANT_COLOR:return GL_CONSTANT_COLOR;
-      case GLHCK_CONSTANT_ALPHA:return GL_CONSTANT_ALPHA;
-      case GLHCK_ONE_MINUS_CONSTANT_ALPHA:return GL_ONE_MINUS_CONSTANT_ALPHA;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckCompareFuncToGL[] = {
+   GL_LEQUAL, /* GLHCK_LEQUAL */
+   GL_GEQUAL, /* GLHCK_GEQUAL */
+   GL_LESS, /* GLHCK_LESS */
+   GL_GREATER, /* GLHCK_GREATER */
+   GL_EQUAL, /* GLHCK_EQUAL */
+   GL_NOTEQUAL, /* GLHCK_NOTEQUAL */
+   GL_ALWAYS, /* GLHCK_ALWAYS */
+   GL_NEVER, /* GLHCK_NEVER */
+};
 
-/* \brief map glhck fbo type to OpenGL fbo type */
-GLenum glhFramebufferTargetForGlhckType(glhckFramebufferTarget target)
-{
-   switch (target) {
-      case GLHCK_FRAMEBUFFER:return GL_FRAMEBUFFER;
-      case GLHCK_FRAMEBUFFER_READ:return GL_READ_FRAMEBUFFER;
-      case GLHCK_FRAMEBUFFER_DRAW:return GL_DRAW_FRAMEBUFFER;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckTextureTargetToGL[] = {
+   GL_TEXTURE_1D, /* GLHCK_TEXTURE_1D */
+   GL_TEXTURE_2D, /* GLHCK_TEXTURE_2D */
+   GL_TEXTURE_3D, /* GLHCK_TEXTURE_3D */
+   GL_TEXTURE_CUBE_MAP, /* GLHCK_TEXTURE_CUBE_MAP */
+};
 
-/* \brief map glhck fbo attachment constants to OpenGL attachment constants */
-GLenum glhAttachmentTypeForGlhckType(glhckFramebufferAttachmentType type)
-{
-   switch (type) {
-      case GLHCK_COLOR_ATTACHMENT0:return GL_COLOR_ATTACHMENT0;
-      case GLHCK_COLOR_ATTACHMENT1:return GL_COLOR_ATTACHMENT1;
-      case GLHCK_COLOR_ATTACHMENT2:return GL_COLOR_ATTACHMENT2;
-      case GLHCK_COLOR_ATTACHMENT3:return GL_COLOR_ATTACHMENT3;
-      case GLHCK_COLOR_ATTACHMENT4:return GL_COLOR_ATTACHMENT4;
-      case GLHCK_COLOR_ATTACHMENT5:return GL_COLOR_ATTACHMENT5;
-      case GLHCK_COLOR_ATTACHMENT6:return GL_COLOR_ATTACHMENT6;
-      case GLHCK_COLOR_ATTACHMENT7:return GL_COLOR_ATTACHMENT7;
-      case GLHCK_COLOR_ATTACHMENT8:return GL_COLOR_ATTACHMENT8;
-      case GLHCK_COLOR_ATTACHMENT9:return GL_COLOR_ATTACHMENT9;
-      case GLHCK_COLOR_ATTACHMENT10:return GL_COLOR_ATTACHMENT10;
-      case GLHCK_COLOR_ATTACHMENT11:return GL_COLOR_ATTACHMENT11;
-      case GLHCK_COLOR_ATTACHMENT12:return GL_COLOR_ATTACHMENT12;
-      case GLHCK_COLOR_ATTACHMENT13:return GL_COLOR_ATTACHMENT13;
-      case GLHCK_COLOR_ATTACHMENT14:return GL_COLOR_ATTACHMENT14;
-      case GLHCK_COLOR_ATTACHMENT15:return GL_COLOR_ATTACHMENT15;
-      case GLHCK_DEPTH_ATTACHMENT:return GL_DEPTH_ATTACHMENT;
-      case GLHCK_STENCIL_ATTACHMENT:return GL_STENCIL_ATTACHMENT;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckTextureFormatToGL[] = {
+   GL_RED, /* GLHCK_RED */
+   GL_RG, /* GLHCK_RG */
+   GL_ALPHA, /* GLHCK_ALPHA */
+   GL_LUMINANCE, /* GLHCK_LUMINANCE */
+   GL_LUMINANCE_ALPHA, /* GLHCK_LUMINANCE_ALPHA */
+   GL_RGB, /* GLHCK_RGB */
+   GL_BGR, /* GLHCK_BGR */
+   GL_RGBA, /* GLHCK_RGBA */
+   GL_BGRA, /* GLHCK_BGRA */
+   GL_DEPTH_COMPONENT, /* GLHCK_DEPTH_COMPONENT */
+   GL_DEPTH_COMPONENT16, /* GLHCK_DEPTH_COMPONENT16 */
+   GL_DEPTH_COMPONENT24, /* GLHCK_DEPTH_COMPONENT24 */
+   GL_DEPTH_COMPONENT32, /* GLHCK_DEPTH_COMPONENT32 */
+   GL_DEPTH_STENCIL, /* GLHCK_DEPTH_STENCIL */
+   GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, /* GLHCK_COMPRESSED_RGB_DXT1 */
+   GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, /* GLHCK_COMPRESSED_RGBA_DXT5 */
+};
 
-/* \brief map glhck hardware buffer type to OpenGL hw buffer type */
-GLenum glhHwBufferTargetForGlhckType(glhckHwBufferTarget target)
-{
-   switch (target) {
-      case GLHCK_ARRAY_BUFFER:return GL_ARRAY_BUFFER;
-      case GLHCK_COPY_READ_BUFFER:return GL_COPY_READ_BUFFER;
-      case GLHCK_COPY_WRITE_BUFFER:return GL_COPY_WRITE_BUFFER;
-      case GLHCK_ELEMENT_ARRAY_BUFFER:return GL_ELEMENT_ARRAY_BUFFER;
-      case GLHCK_PIXEL_PACK_BUFFER:return GL_PIXEL_PACK_BUFFER;
-      case GLHCK_PIXEL_UNPACK_BUFFER:return GL_PIXEL_UNPACK_BUFFER;
-      case GLHCK_TEXTURE_BUFFER:return GL_TEXTURE_BUFFER;
-      case GLHCK_TRANSFORM_FEEDBACK_BUFFER:return GL_TRANSFORM_FEEDBACK_BUFFER;
-      case GLHCK_UNIFORM_BUFFER:return GL_UNIFORM_BUFFER;
-      case GLHCK_SHADER_STORAGE_BUFFER:return GL_SHADER_STORAGE_BUFFER;
-      case GLHCK_ATOMIC_COUNTER_BUFFER:return GL_ATOMIC_COUNTER_BUFFER;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckDataTypeToGL[] = {
+   GL_UNSIGNED_BYTE, /* GLHCK_COMPRESSED */
+   GL_UNSIGNED_BYTE, /* GLHCK_UNSIGNED_BYTE */
+   GL_BYTE, /* GLHCK_BYTE */
+   GL_UNSIGNED_SHORT, /* GLHCK_UNSIGNED_SHORT */
+   GL_SHORT, /* GLHCK_SHORT */
+   GL_UNSIGNED_INT, /* GLHCK_UNSIGNED_INT */
+   GL_INT, /* GLHCK_INT */
+   GL_FLOAT, /* GLHCK_FLOAT */
+   GL_UNSIGNED_BYTE_3_3_2, /* GLHCK_UNSIGNED_BYTE_3_3_2 */
+   GL_UNSIGNED_BYTE_2_3_3_REV, /* GLHCK_UNSIGNED_BYTE_2_3_3_REV */
+   GL_UNSIGNED_SHORT_5_6_5, /* GLHCK_UNSIGNED_SHORT_5_6_5 */
+   GL_UNSIGNED_SHORT_5_6_5_REV, /* GLHCK_UNSIGNED_SHORT_5_6_5_REV */
+   GL_UNSIGNED_SHORT_4_4_4_4, /* GLHCK_UNSIGNED_SHORT_4_4_4_4 */
+   GL_UNSIGNED_SHORT_4_4_4_4_REV, /* GLHCK_UNSIGNED_SHORT_4_4_4_4_REV */
+   GL_UNSIGNED_SHORT_5_5_5_1, /* GLHCK_UNSIGNED_SHORT_5_5_5_1 */
+   GL_UNSIGNED_SHORT_1_5_5_5_REV, /* GLHCK_UNSIGNED_SHORT_1_5_5_5_REV */
+   GL_UNSIGNED_INT_8_8_8_8, /* GLHCK_UNSIGNED_INT_8_8_8_8 */
+   GL_UNSIGNED_INT_8_8_8_8_REV, /* GLHCK_UNSIGNED_INT_8_8_8_8_REV */
+   GL_UNSIGNED_INT_10_10_10_2, /* GLHCK_UNSIGNED_INT_10_10_10_2 */
+   GL_UNSIGNED_INT_2_10_10_10_REV, /* GLHCK_UNSIGNED_INT_2_10_10_10_REV */
+};
 
-/* \brief map glhck hardware buffer store type for OpenGL hw buffer store type */
-GLenum glhHwBufferStoreTypeForGlhckType(glhckHwBufferStoreType type)
-{
-   switch (type) {
-      case GLHCK_BUFFER_STREAM_DRAW:return GL_STREAM_DRAW;
-      case GLHCK_BUFFER_STREAM_READ:return GL_STREAM_READ;
-      case GLHCK_BUFFER_STREAM_COPY:return GL_STREAM_COPY;
-      case GLHCK_BUFFER_STATIC_DRAW:return GL_STATIC_DRAW;
-      case GLHCK_BUFFER_STATIC_READ:return GL_STATIC_READ;
-      case GLHCK_BUFFER_STATIC_COPY:return GL_STATIC_COPY;
-      case GLHCK_BUFFER_DYNAMIC_DRAW:return GL_DYNAMIC_DRAW;
-      case GLHCK_BUFFER_DYNAMIC_READ:return GL_DYNAMIC_READ;
-      case GLHCK_BUFFER_DYNAMIC_COPY:return GL_DYNAMIC_COPY;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
-
-/* \brief map glhck hardware buffer access type for OpenGL access type */
-GLenum glhHwBufferAccessTypeForGlhckType(glhckHwBufferAccessType type)
-{
-   switch (type) {
-      case GLHCK_BUFFER_READ_ONLY:return GL_READ_ONLY;
-      case GLHCK_BUFFER_WRITE_ONLY:return GL_WRITE_ONLY;
-      case GLHCK_BUFFER_READ_WRITE:return GL_READ_WRITE;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
-
-/* \brief map glhck shader type to OpenGL shader type */
-GLenum glhShaderTypeForGlhckType(glhckShaderType type)
-{
-   switch (type) {
-      case GLHCK_VERTEX_SHADER:return GL_VERTEX_SHADER;
-      case GLHCK_FRAGMENT_SHADER:return GL_FRAGMENT_SHADER;
-      default:break;
-   }
-   assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
-   return 0;
-}
+GLenum glhckBlendingModeToGL[] = {
+   GL_ZERO, /* GLHCK_ZERO */
+   GL_ONE, /* GLHCK_ONE */
+   GL_SRC_COLOR, /* GLHCK_SRC_COLOR */
+   GL_ONE_MINUS_SRC_COLOR, /* GLHCK_ONE_MINUS_SRC_COLOR */
+   GL_SRC_ALPHA, /* GLHCK_SRC_ALPHA */
+   GL_ONE_MINUS_SRC_ALPHA, /* GLHCK_ONE_MINUS_SRC_ALPHA */
+   GL_DST_ALPHA, /* GLHCK_DST_ALPHA */
+   GL_ONE_MINUS_DST_ALPHA, /* GLHCK_ONE_MINUS_DST_ALPHA */
+   GL_DST_COLOR, /* GLHCK_DST_COLOR */
+   GL_ONE_MINUS_DST_COLOR, /* GLHCK_ONE_MINUS_DST_COLOR */
+   GL_SRC_ALPHA_SATURATE, /* GLHCK_SRC_ALPHA_SATURATE */
+   GL_CONSTANT_COLOR, /* GLHCK_CONSTANT_COLOR */
+   GL_CONSTANT_ALPHA, /* GLHCK_CONSTANT_ALPHA */
+   GL_ONE_MINUS_CONSTANT_ALPHA, /* GLHCK_ONE_MINUS_CONSTANT_ALPHA */
+};
 
 /* \brief map glhck shader constants to OpenGL shader constants */
 GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
@@ -692,7 +548,7 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type) {
  */
 
 void glhTextureBind(glhckTextureTarget target, GLuint object) {
-   GL_CALL(glBindTexture(glhTextureTargetForGlhckType(target), object));
+   GL_CALL(glBindTexture(glhckTextureTargetToGL[target], object));
 }
 void glhTextureActive(GLuint index) {
    GL_CALL(glActiveTexture(GL_TEXTURE0+index));
@@ -701,28 +557,28 @@ void glhRenderbufferBind(GLuint object) {
    GL_CALL(glBindRenderbuffer(GL_RENDERBUFFER, object));
 }
 void glhFramebufferBind(glhckFramebufferTarget target, GLuint object) {
-   GL_CALL(glBindFramebuffer(glhFramebufferTargetForGlhckType(target), object));
+   GL_CALL(glBindFramebuffer(glhckFramebufferTargetToGL[target], object));
 }
 void glhHwBufferBind(glhckHwBufferTarget target, GLuint object) {
-   GL_CALL(glBindBuffer(glhHwBufferTargetForGlhckType(target), object));
+   GL_CALL(glBindBuffer(glhckHwBufferTargetToGL[target], object));
 }
 void glhHwBufferBindBase(glhckHwBufferTarget target, GLuint index, GLuint object) {
-   GL_CALL(glBindBufferBase(glhHwBufferTargetForGlhckType(target), index, object));
+   GL_CALL(glBindBufferBase(glhckHwBufferTargetToGL[target], index, object));
 }
 void glhHwBufferBindRange(glhckHwBufferTarget target, GLuint index, GLuint object, GLintptr offset, GLsizeiptr size) {
-   GL_CALL(glBindBufferRange(glhHwBufferTargetForGlhckType(target), index, object, offset, size));
+   GL_CALL(glBindBufferRange(glhckHwBufferTargetToGL[target], index, object, offset, size));
 }
 void glhHwBufferCreate(glhckHwBufferTarget target, GLsizeiptr size, const GLvoid *data, glhckHwBufferStoreType usage) {
-   GL_CALL(glBufferData(glhHwBufferTargetForGlhckType(target), size, data, glhHwBufferStoreTypeForGlhckType(usage)));
+   GL_CALL(glBufferData(glhckHwBufferTargetToGL[target], size, data, glhckHwBufferStoreTypeToGL[usage]));
 }
 void glhHwBufferFill(glhckHwBufferTarget target, GLintptr offset, GLsizeiptr size, const GLvoid *data) {
-   GL_CALL(glBufferSubData(glhHwBufferTargetForGlhckType(target), offset, size, data));
+   GL_CALL(glBufferSubData(glhckHwBufferTargetToGL[target], offset, size, data));
 }
 void* glhHwBufferMap(glhckHwBufferTarget target, glhckHwBufferAccessType access) {
-   return glMapBuffer(glhHwBufferTargetForGlhckType(target), glhHwBufferAccessTypeForGlhckType(access));
+   return glMapBuffer(glhckHwBufferTargetToGL[target], glhckHwBufferAccessTypeToGL[access]);
 }
 void glhHwBufferUnmap(glhckHwBufferTarget target) {
-   GL_CALL(glUnmapBuffer(glhHwBufferTargetForGlhckType(target)));
+   GL_CALL(glUnmapBuffer(glhckHwBufferTargetToGL[target]));
 }
 
 /*
@@ -735,9 +591,9 @@ void glhClear(GLuint bufferBits)
    GLuint glBufferBits = 0;
    CALL(2, "%u", bufferBits);
 
-   if (bufferBits & GLHCK_COLOR_BUFFER)
+   if (bufferBits & GLHCK_COLOR_BUFFER_BIT)
       glBufferBits |= GL_COLOR_BUFFER_BIT;
-   if (bufferBits & GLHCK_DEPTH_BUFFER)
+   if (bufferBits & GLHCK_DEPTH_BUFFER_BIT)
       glBufferBits |= GL_DEPTH_BUFFER_BIT;
 
    GL_CALL(glClear(glBufferBits));
@@ -757,13 +613,13 @@ void glhClearColor(const glhckColorb *color)
 /* \brief set front face */
 void glhFrontFace(glhckFaceOrientation orientation)
 {
-   GL_CALL(glFrontFace(glhFaceOrientationForGlhckOrientation(orientation)));
+   GL_CALL(glFrontFace(glhckFaceOrientationToGL[orientation]));
 }
 
 /* \brief set cull side */
 void glhCullFace(glhckCullFaceType face)
 {
-   GL_CALL(glCullFace(glhCullFaceTypeForGlhckType(face)));
+   GL_CALL(glCullFace(glhckCullFaceTypeToGL[face]));
 }
 
 /* \brief get pixels from OpenGL */
@@ -771,16 +627,13 @@ void glhBufferGetPixels(GLint x, GLint y, GLsizei width, GLsizei height,
       glhckTextureFormat format, glhckDataType type, GLvoid *data)
 {
    CALL(1, "%d, %d, %d, %d, %d, %d, %p", x, y, width, height, format, type, data);
-   GL_CALL(glReadPixels(x, y, width, height,
-            glhTextureFormatForGlhckFormat(format), glhDataTypeForGlhckType(type), data));
+   GL_CALL(glReadPixels(x, y, width, height, glhckTextureFormatToGL[format], glhckDataTypeToGL[type], data));
 }
 
 /* \brief blend func wrapper */
-void glhBlendFunc(GLenum blenda, GLenum blendb)
+void glhBlendFunc(glhckBlendingMode blenda, glhckBlendingMode blendb)
 {
-   GL_CALL(glBlendFunc(
-            glhBlendingModeForGlhckMode(blenda),
-            glhBlendingModeForGlhckMode(blendb)));
+   GL_CALL(glBlendFunc(glhckBlendingModeToGL[blenda], glhckBlendingModeToGL[blendb]));
 }
 
 /* \brief set texture parameters */
@@ -793,14 +646,14 @@ void glhTextureParameter(glhckTextureTarget target, const glhckTextureParameters
    CALL(0, "%d, %p", target, params);
    assert(params);
 
-   glTarget    = glhTextureTargetForGlhckType(target);
-   minFilter   = glhTextureFilterModeForGlhckMode(params->minFilter);
-   magFilter   = glhTextureFilterModeForGlhckMode(params->magFilter);
-   wrapS       = glhTextureWrapModeForGlhckMode(params->wrapS);
-   wrapT       = glhTextureWrapModeForGlhckMode(params->wrapT);
-   wrapR       = glhTextureWrapModeForGlhckMode(params->wrapR);
-   compareMode = glhTextureCompareModeForGlhckMode(params->compareMode);
-   compareFunc = glhCompareFuncForGlhckFunc(params->compareFunc);
+   glTarget    = glhckTextureTargetToGL[target];
+   minFilter   = glhckTextureFilterToGL[params->minFilter];
+   magFilter   = glhckTextureFilterToGL[params->magFilter];
+   wrapS       = glhckTextureWrapToGL[params->wrapS];
+   wrapT       = glhckTextureWrapToGL[params->wrapT];
+   wrapR       = glhckTextureWrapToGL[params->wrapR];
+   compareMode = glhckTextureCompareModeToGL[params->compareMode];
+   compareFunc = glhckCompareFuncToGL[params->compareFunc];
 
    /* remap filters, if no mipmap possible */
    if (!glGenerateMipmap || !params->mipmap) {
@@ -844,11 +697,9 @@ void glhTextureParameter(glhckTextureTarget target, const glhckTextureParameters
 /* \brief generate mipmaps for texture */
 void glhTextureMipmap(glhckTextureTarget target)
 {
-   GLenum glTarget;
    CALL(0, "%d", target);
    if (!glGenerateMipmap) return;
-   glTarget = glhTextureTargetForGlhckType(target);
-   GL_CALL(glGenerateMipmap(glTarget));
+   GL_CALL(glGenerateMipmap(glhckTextureTargetToGL[target]));
 }
 
 /* \brief create texture from data and upload it to OpenGL */
@@ -857,9 +708,9 @@ void glhTextureImage(glhckTextureTarget target, GLint level, GLsizei width, GLsi
    GLenum glTarget, glFormat, glDataType;
    CALL(0, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %p", target, level, width, height, depth, border, format, datatype, size, data);
 
-   glTarget = glhTextureTargetForGlhckType(target);
-   glFormat = glhTextureFormatForGlhckFormat(format);
-   glDataType = glhDataTypeForGlhckType(datatype);
+   glTarget = glhckTextureTargetToGL[target];
+   glFormat = glhckTextureFormatToGL[format];
+   glDataType = glhckDataTypeToGL[datatype];
 
    if (_glhckIsCompressedFormat(format)) {
       switch (target) {
@@ -897,9 +748,9 @@ void glhTextureFill(glhckTextureTarget target, GLint level, GLint x, GLint y, GL
    GLenum glTarget, glFormat, glDataType;
    CALL(1, "%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p", target, level, x, y, z, width, height, depth, format, datatype, size, data);
 
-   glTarget = glhTextureTargetForGlhckType(target);
-   glFormat = glhTextureFormatForGlhckFormat(format);
-   glDataType = glhDataTypeForGlhckType(datatype);
+   glTarget = glhckTextureTargetToGL[target];
+   glFormat = glhckTextureFormatToGL[format];
+   glDataType = glhckDataTypeToGL[datatype];
 
    if (_glhckIsCompressedFormat(format)) {
       switch (target) {
@@ -934,7 +785,7 @@ void glhTextureFill(glhckTextureTarget target, GLint level, GLint x, GLint y, GL
 void glhRenderbufferStorage(GLsizei width, GLsizei height, glhckTextureFormat format)
 {
    CALL(0, "%d, %d, %d", width, height, format);
-   glRenderbufferStorage(GL_RENDERBUFFER, glhTextureFormatForGlhckFormat(format), width, height);
+   glRenderbufferStorage(GL_RENDERBUFFER, glhckTextureFormatToGL[format], width, height);
 }
 
 /* \brief glFramebufferTexture wrapper with error checking */
@@ -943,9 +794,9 @@ GLint glhFramebufferTexture(glhckFramebufferTarget framebufferTarget, glhckTextu
    GLenum glTarget, glTexTarget, glAttachment;
    CALL(0, "%d, %d, %u, %d", framebufferTarget, textureTarget, texture, attachment);
 
-   glTarget     = glhFramebufferTargetForGlhckType(framebufferTarget);
-   glTexTarget  = glhTextureTargetForGlhckType(textureTarget);
-   glAttachment = glhAttachmentTypeForGlhckType(attachment);
+   glTarget     = glhckFramebufferTargetToGL[framebufferTarget];
+   glTexTarget  = glhckTextureTargetToGL[textureTarget];
+   glAttachment = glhckFramebufferAttachmentTypeToGL[attachment];
 
    switch (textureTarget) {
       case GLHCK_TEXTURE_1D:
@@ -979,8 +830,8 @@ GLint glhFramebufferRenderbuffer(glhckFramebufferTarget framebufferTarget, GLuin
    GLenum glTarget, glAttachment;
    CALL(0, "%d, %u, %d", framebufferTarget, buffer, attachment);
 
-   glTarget     = glhFramebufferTargetForGlhckType(framebufferTarget);
-   glAttachment = glhAttachmentTypeForGlhckType(attachment);
+   glTarget     = glhckFramebufferTargetToGL[framebufferTarget];
+   glAttachment = glhckFramebufferAttachmentTypeToGL[attachment];
    glFramebufferRenderbuffer(glTarget, glAttachment, GL_RENDERBUFFER, buffer);
 
    if (GL_CHECK(glCheckFramebufferStatus(glTarget)) != GL_FRAMEBUFFER_COMPLETE)
@@ -1415,49 +1266,32 @@ void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, 
    }
 }
 
-/* helper macro for passing indices to OpenGL */
-#define indicesToOpenGL(iprec, tunion) \
-   GL_CALL(glDrawElements(glGeometryType, geometry->indexCount, iprec, &geometry->indices.tunion[0]))
-
-/* \brief draw interleaved geometry */
-void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type)
+/* \brief draw interleaved geometry (arrays) */
+static void glhDrawArrays(const glhckGeometry *geometry, glhckGeometryType gtype)
 {
-   GLenum glGeometryType;
-   // printf("%s (%d)\n", glhckIndexTypeString(geometry->indexType), geometry->indexCount);
-
-   glGeometryType = glhGeometryTypeForGlhckType(type);
-   if (geometry->indexType != GLHCK_INDEX_NONE) {
-      switch (geometry->indexType) {
-         case GLHCK_INDEX_BYTE:
-            indicesToOpenGL(GL_UNSIGNED_BYTE, ivb);
-            break;
-
-         case GLHCK_INDEX_SHORT:
-            indicesToOpenGL(GL_UNSIGNED_SHORT, ivs);
-            break;
-
-         case GLHCK_INDEX_INTEGER:
-            indicesToOpenGL(GL_UNSIGNED_INT, ivi);
-            break;
-
-         default:
-            break;
-      }
-   } else {
-      GL_CALL(glDrawArrays(glGeometryType, 0, geometry->vertexCount));
-   }
+   GL_CALL(glDrawArrays(glhckGeometryTypeToGL[gtype], 0, geometry->vertexCount));
 }
 
-/* the helper is no longer needed */
-#undef indicesToOpenGL
+/* \brief draw interleaved geometry (elements) */
+static void glhDrawElements(const glhckGeometry *geometry, glhckGeometryType gtype)
+{
+   __GLHCKindexType *type = GLHCKIT(geometry->indexType);
+   GL_CALL(glDrawElements(glhckGeometryTypeToGL[gtype], geometry->indexCount, glhckDataTypeToGL[type->dataType], geometry->indices));
+}
+
+/* \brief draw geometry */
+void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type)
+{
+   if (geometry->indices) glhDrawElements(geometry, type);
+   else glhDrawArrays(geometry, type);
+}
 
 /*
  * misc
  */
 
 /* \brief debug output callback function */
-void glhDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
-      GLsizei length, const GLchar *message, void *user)
+void glhDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, void *user)
 {
    (void)source; (void)type; (void)id; (void)severity; (void)length; (void)user;
    printf(" [GPU::DBG] %s\n", message);

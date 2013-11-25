@@ -157,7 +157,7 @@ int _glhckImportPNG(const char *file, _glhckImportImageStruct *import)
    import->height = h;
    import->data   = importData;
    import->format = GLHCK_RGBA;
-   import->type   = GLHCK_DATA_UNSIGNED_BYTE;
+   import->type   = GLHCK_UNSIGNED_BYTE;
    import->flags |= (hasa==1?GLHCK_TEXTURE_IMPORT_ALPHA:0);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;

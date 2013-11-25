@@ -69,7 +69,7 @@ static void _glhckObjectUpdateRotationFromTarget(glhckObject *object)
 /* stub draw function */
 static void _glhckObjectStubDraw(const glhckObject *object)
 {
-   if (object->geometry && object->geometry->vertexType != GLHCK_VERTEX_NONE) {
+   if (object->geometry && object->geometry->vertexCount) {
       DEBUG(GLHCK_DBG_WARNING, "Stub draw function called for object which actually has vertexdata!");
       DEBUG(GLHCK_DBG_WARNING, "Did you forget to call glhckObjectUpdate() after inserting vertex data?");
    }
@@ -580,8 +580,8 @@ GLHCKAPI void glhckObjectMaterial(glhckObject *object, glhckMaterial *material)
    if (material && material->texture && object->geometry && object->geometry->textureRange > 1) {
       if ((material->texture->width  > object->geometry->textureRange) ||
           (material->texture->height > object->geometry->textureRange)) {
-         DEBUG(GLHCK_DBG_WARNING, "Texture dimensions are above the maximum precision of object's vertexdata (%s:%u)",
-               glhckVertexTypeString(object->geometry->vertexType), object->geometry->textureRange);
+         DEBUG(GLHCK_DBG_WARNING, "Texture dimensions are above the maximum precision of object's vertexdata (%u:%u)",
+               GLHCKVT(object->geometry->vertexType)->max[2], object->geometry->textureRange);
       }
    }
 
@@ -1118,15 +1118,27 @@ GLHCKAPI int glhckObjectInsertSkinBones(glhckObject *object, glhckSkinBone **ski
    if (object->skinBones) {
       for (i = 0; i != object->numSkinBones; ++i)
          glhckSkinBoneRef(object->skinBones[i]);
+
+      __GLHCKvertexType *type = GLHCKVT(object->geometry->vertexType);
+      if (!object->bind && !(object->bind = _glhckCopy(object->geometry->vertices, object->geometry->vertexCount * type->size)))
+         goto fail;
+      if (!object->zero && !(object->zero = _glhckCopy(object->geometry->vertices, object->geometry->vertexCount * type->size)))
+         goto fail;
+
+      int v;
+      for (v = 0; v < object->geometry->vertexCount; ++v)
+         memset(object->zero + type->size * v + type->offset[0], 0, type->msize[0] * type->memb[0]);
       _glhckSkinBoneTransformObject(object, 1);
    } else {
-      IFDO(_glhckGeometryFree, object->bindGeometry);
+      IFDO(_glhckFree, object->bind);
+      IFDO(_glhckFree, object->zero);
    }
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
+   glhckObjectInsertSkinBones(object, NULL, 0);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
@@ -1218,9 +1230,7 @@ GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object)
 }
 
 /* \brief insert indices to object */
-GLHCKAPI int glhckObjectInsertIndices(
-      glhckObject *object, glhckGeometryIndexType type,
-      const glhckImportIndexData *indices, int memb)
+GLHCKAPI int glhckObjectInsertIndices(glhckObject *object, unsigned char type, const glhckImportIndexData *indices, int memb)
 {
    CALL(0, "%p, %d, %d, %p", object, memb, type, indices);
    assert(object);
@@ -1237,7 +1247,7 @@ GLHCKAPI int glhckObjectInsertIndices(
          goto fail;
    } else {
       glhckGeometryInsertIndices(object->geometry, 0, NULL, 0);
-      if (!object->geometry->vertices.any) {
+      if (!object->geometry->vertices) {
          IFDO(_glhckGeometryFree, object->geometry);
       }
    }
@@ -1251,9 +1261,7 @@ fail:
 }
 
 /* \brief insert vertices to object */
-GLHCKAPI int glhckObjectInsertVertices(
-      glhckObject *object, glhckGeometryVertexType type,
-      const glhckImportVertexData *vertices, int memb)
+GLHCKAPI int glhckObjectInsertVertices(glhckObject *object, unsigned char type, const glhckImportVertexData *vertices, int memb)
 {
    CALL(0, "%p, %d, %d, %p", object, memb, type, vertices);
    assert(object);
@@ -1270,7 +1278,7 @@ GLHCKAPI int glhckObjectInsertVertices(
          goto fail;
    } else {
       glhckGeometryInsertVertices(object->geometry, 0, NULL, 0);
-      if (!object->geometry->indices.any) {
+      if (!object->geometry->indices) {
          IFDO(_glhckGeometryFree, object->geometry);
       }
    }

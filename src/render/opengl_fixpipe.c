@@ -152,15 +152,17 @@ static void rViewport(int x, int y, int width, int height)
 /* \brief set needed starte from object data */
 static void rObjectState(const glhckObject *object)
 {
-   /* always draw vertices */
-   GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
+   __GLHCKvertexType *type = GLHCKVT(object->geometry->vertexType);
 
-   /* enable normals always for now */
-   GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL] = glhckVertexTypeHasNormal(object->geometry->vertexType);
+    /* need vertices? */
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX] = type->memb[0];
+
+   /* need normal? */
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL] = type->memb[1];
 
    /* need color? */
    GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR] =
-      ((object->flags & GLHCK_OBJECT_VERTEX_COLOR) && glhckVertexTypeHasColor(object->geometry->vertexType));
+      ((object->flags & GLHCK_OBJECT_VERTEX_COLOR) && type->memb[3]);
 
    /* depth? */
    GLPOINTER()->state.flags |=
@@ -257,74 +259,15 @@ static void rPassState(void)
    }
 }
 
-/* helper macro for passing geometry */
-#define geometryV2ToOpenGL(vprec, nprec, tprec, type, tunion)                 \
-   GL_CALL(glVertexPointer(2, vprec,                                          \
-            sizeof(type), &geometry->vertices.tunion[0].vertex));             \
-   GL_CALL(glNormalPointer(nprec,                                             \
-            sizeof(type), &geometry->vertices.tunion[0].normal));             \
-   GL_CALL(glTexCoordPointer(2, tprec,                                        \
-            sizeof(type), &geometry->vertices.tunion[0].coord));              \
-   GL_CALL(glColorPointer(4, GL_UNSIGNED_BYTE,                                \
-            sizeof(type), &geometry->vertices.tunion[0].color));
-
-#define geometryV3ToOpenGL(vprec, nprec, tprec, type, tunion)                 \
-   GL_CALL(glVertexPointer(3, vprec,                                          \
-            sizeof(type), &geometry->vertices.tunion[0].vertex));             \
-   GL_CALL(glNormalPointer(nprec,                                             \
-            sizeof(type), &geometry->vertices.tunion[0].normal));             \
-   GL_CALL(glTexCoordPointer(2, tprec,                                        \
-            sizeof(type), &geometry->vertices.tunion[0].coord));              \
-   GL_CALL(glColorPointer(4, GL_UNSIGNED_BYTE,                                \
-            sizeof(type), &geometry->vertices.tunion[0].color));
-
 /* \brief pass interleaved vertex data to OpenGL nicely. */
 static void rGeometryPointer(const glhckGeometry *geometry)
 {
-   // printf("%s (%d) : %u\n", glhckVertexTypeString(geometry->vertexType), geometry->vertexCount, geometry->textureRange);
-
-   /* vertex data */
-   switch (geometry->vertexType) {
-      case GLHCK_VERTEX_V3B:
-         geometryV3ToOpenGL(GL_BYTE, GL_SHORT, GL_SHORT, glhckVertexData3b, v3b);
-         break;
-
-      case GLHCK_VERTEX_V2B:
-         geometryV2ToOpenGL(GL_BYTE, GL_SHORT, GL_SHORT, glhckVertexData2b, v2b);
-         break;
-
-      case GLHCK_VERTEX_V3S:
-         geometryV3ToOpenGL(GL_SHORT, GL_SHORT, GL_SHORT, glhckVertexData3s, v3s);
-         break;
-
-      case GLHCK_VERTEX_V2S:
-         geometryV2ToOpenGL(GL_SHORT, GL_SHORT, GL_SHORT, glhckVertexData2s, v2s);
-         break;
-
-      case GLHCK_VERTEX_V3FS:
-         geometryV3ToOpenGL(GL_FLOAT, GL_SHORT, GL_SHORT, glhckVertexData3fs, v3fs);
-         break;
-
-      case GLHCK_VERTEX_V2FS:
-         geometryV2ToOpenGL(GL_FLOAT, GL_SHORT, GL_SHORT, glhckVertexData2fs, v2fs);
-         break;
-
-      case GLHCK_VERTEX_V3F:
-         geometryV3ToOpenGL(GL_FLOAT, GL_FLOAT, GL_FLOAT, glhckVertexData3f, v3f);
-         break;
-
-      case GLHCK_VERTEX_V2F:
-         geometryV2ToOpenGL(GL_FLOAT, GL_FLOAT, GL_FLOAT, glhckVertexData2f, v2f);
-         break;
-
-      default:
-         break;
-   }
+   __GLHCKvertexType *type = GLHCKVT(geometry->vertexType);
+   GL_CALL(glVertexPointer(type->memb[0], glhckDataTypeToGL[type->dataType[0]], type->size, geometry->vertices + type->offset[0]));
+   GL_CALL(glNormalPointer(glhckDataTypeToGL[type->dataType[1]], type->size, geometry->vertices + type->offset[1]));
+   GL_CALL(glTexCoordPointer(type->memb[2], glhckDataTypeToGL[type->dataType[2]], type->size, geometry->vertices + type->offset[2]));
+   GL_CALL(glColorPointer(type->memb[3], glhckDataTypeToGL[type->dataType[3]], type->size, geometry->vertices + type->offset[3]));
 }
-
-/* the helpers are no longer needed */
-#undef geometryV2ToOpenGL
-#undef geometryV3ToOpenGL
 
 /* \brief render frustum */
 static void rFrustumRender(glhckFrustum *frustum)
@@ -715,12 +658,7 @@ static void rObjectEnd(const glhckObject *object) {
 static void rObjectRender(const glhckObject *object)
 {
    CALL(2, "%p", object);
-
-   /* no point drawing without vertex data */
-   if (object->geometry->vertexType == GLHCK_VERTEX_NONE ||
-      !object->geometry->vertexCount)
-      return;
-
+   assert(object->geometry->vertexCount && object->geometry->vertices);
    rObjectStart(object);
    rGeometryPointer(object->geometry);
    rObjectEnd(object);
@@ -752,8 +690,8 @@ static void rTextRender(const glhckText *text)
       }
    }
 
-   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
-      glhFrontFace(GLHCK_FACE_CCW);
+   if (GLPOINTER()->state.frontFace != GLHCK_CCW) {
+      glhFrontFace(GLHCK_CCW);
    }
 
    if (!GL_HAS_STATE(GL_STATE_OVERDRAW)) {
@@ -815,7 +753,7 @@ static void rTextRender(const glhckText *text)
                0, texture->geometry.vertexCount));
    }
 
-   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
+   if (GLPOINTER()->state.frontFace != GLHCK_CCW) {
       glhFrontFace(GLPOINTER()->state.frontFace);
    }
 

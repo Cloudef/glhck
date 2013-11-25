@@ -234,13 +234,13 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
    /* create stuff needed for rendering */
    if (!(texture = glhckTextureNew()))
       goto fail;
-   if (!(glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, width, height, 0, 0, format, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL)))
+   if (!(glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, width, height, 0, 0, format, GLHCK_UNSIGNED_BYTE, 0, NULL)))
       goto fail;
    if (!(fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER)))
       goto fail;
    if (!glhckFramebufferAttachTexture(fbo, texture, GLHCK_COLOR_ATTACHMENT0))
       goto fail;
-   if (!(plane = glhckPlaneNewEx(1, 1, GLHCK_INDEX_NONE, GLHCK_VERTEX_V2F)))
+   if (!(plane = glhckPlaneNewEx(1, 1, GLHCK_IDX_AUTO, GLHCK_VTX_V2F)))
       goto fail;
    if (!(material = glhckMaterialNew(NULL)))
       goto fail;
@@ -258,7 +258,7 @@ GLHCKAPI int glhckAtlasPack(glhckAtlas *object, glhckTextureFormat format, int p
    glhckRenderPass(GLHCK_PASS_TEXTURE);
    glhckRenderProjectionOnly(&projection);
    glhckRenderClearColorb(0,0,0,0);
-   glhckRenderClear(GLHCK_COLOR_BUFFER);
+   glhckRenderClear(GLHCK_COLOR_BUFFER_BIT);
    for (rect = object->rect; rect; rect = rect->next) {
       rect->packed.rotated = _glhckTexturePackerGetLocation(tp,
             rect->index, &rect->packed.x1, &rect->packed.y1,

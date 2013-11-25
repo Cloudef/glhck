@@ -7,18 +7,17 @@
 /* \brief create new object from supported model files */
 GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, const glhckImportModelParameters *importParams)
 {
-   glhckGeometryIndexType itype;
-   glhckGeometryVertexType vtype;
+   unsigned char itype, vtype;
    glhckGetGlobalPrecision(&itype, &vtype);
    return glhckModelNewEx(file, size, importParams, itype, vtype);
 }
 
 /* \brief create new object from supported model files
  * you can specify the index and vertex precision here */
-GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, const glhckImportModelParameters *importParams, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, const glhckImportModelParameters *importParams, unsigned char itype, unsigned char vtype)
 {
    glhckObject *object;
-   CALL(0, "%s, %f, %p, %d, %d", file, size, importParams, itype, vtype);
+   CALL(0, "%s, %f, %p, %u, %u", file, size, importParams, itype, vtype);
 
    /* create new object */
    if (!(object = glhckObjectNew()))
