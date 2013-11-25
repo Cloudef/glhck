@@ -42,7 +42,7 @@ static void _glhckDataTypeAttributes(glhckDataType dataType, unsigned char *size
          if (normalized) *normalized = 1;
          return;
       case GLHCK_FLOAT:
-         if (max) *max = UINT_MAX;
+         if (max) *max = 1;
          if (size) *size = sizeof(float);
          if (normalized) *normalized = 0;
          return;
