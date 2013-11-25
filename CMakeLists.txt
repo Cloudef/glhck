@@ -26,8 +26,8 @@ OPTION(GLHCK_IMPORT_DYNAMIC "Build importers dynamically" OFF)
 
 # Model importers
 OPTION(GLHCK_IMPORT_ASSIMP "Enable assimp importer" OFF)
-OPTION(GLHCK_IMPORT_OPENCTM "Enable OpenCTM importer" ON)
-OPTION(GLHCK_IMPORT_MMD "Enable MikuMikuDance importer" ON)
+OPTION(GLHCK_IMPORT_OPENCTM "Enable OpenCTM importer" OFF)
+OPTION(GLHCK_IMPORT_MMD "Enable MikuMikuDance importer" OFF)
 
 # Image importers
 OPTION(GLHCK_IMPORT_BMP "Enable BMP importer" ON)
