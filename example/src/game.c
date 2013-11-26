@@ -19,7 +19,7 @@ static const char *WINDOW_TITLE = "THE GAME";
 
 typedef struct GameBullet {
    kmAABB aabb;
-   kmVec3 position;
+   kmVec3 position, rendered;
    struct GameBullet *next;
    float angle, liveTime;
 } GameBullet;
@@ -29,7 +29,7 @@ typedef struct GameActor {
    glhckObject *object, *muzzle;
    glhckBone *muzzleBone;
    glhckAnimator *animator;
-   kmVec3 position, rotation;
+   kmVec3 position, rotation, interpolated;
    struct GameActor *next;
    float shootTimer;
    unsigned char flags;
@@ -47,7 +47,7 @@ typedef struct GameText {
 } GameText;
 
 typedef struct GameTime {
-   float now, last, delta, duration;
+   float now, next, frameTime;
    unsigned int frame, fps, update;
 } GameTime;
 
@@ -398,37 +398,31 @@ fail:
 static void gameWindowUpdateTitle(GameWindow *window)
 {
    char *title;
-   float msec = (glfwGetTime()-window->time.now)*1000.0f;
-   int perc = (msec*100)/(1000.0f/60);
-
-   if (!(title = malloc(snprintf(NULL, 0, "%s [%dFPS] [%.2fms] [%d%%]", WINDOW_TITLE, window->time.fps, msec, perc)+1)))
+   int perc = ((1000.0f/60)*100)/window->time.frameTime;
+   if (!(title = malloc(snprintf(NULL, 0, "%s [%dFPS] [%.2fms] [%d%%]", WINDOW_TITLE, window->time.fps, window->time.frameTime, perc)+1)))
       return;
 
-   sprintf(title, "%s [%dFPS] [%.2fms] [%d%%]", WINDOW_TITLE, window->time.fps, msec, perc);
+   sprintf(title, "%s [%dFPS] [%.2fms] [%d%%]", WINDOW_TITLE, window->time.fps, window->time.frameTime, perc);
    glfwSetWindowTitle(window->handle, title);
 
    if (window->title) free(window->title);
    window->title = title;
 }
 
-static int gameTimeBegin(GameTime *time)
+static void gameTimeBegin(GameTime *time)
 {
-   time->last = time->now;
    time->now = glfwGetTime();
-   time->delta = time->now - time->last;
    glhckRenderTime(time->now);
-   return (time->delta < 1.0);
 }
 
 static int gameTimeEnd(GameTime *time)
 {
    int changed = 0;
-
-   time->duration += time->delta;
    time->frame++;
+   time->frameTime = (glfwGetTime() - time->now) * 1000.0f;
 
    if (time->update < time->now) {
-      time->fps = (float)time->frame / time->duration;
+      time->fps = ((1000.0f/60)/time->frameTime) * 60;
       time->update = time->now + 1.0f;
       changed = 1;
    }
@@ -444,7 +438,7 @@ static void gameTextStash(GameText *text, GameFont font, float x, float y, const
 
 static GameBullet* gameBulletLogic(GameWindow *window, GameBullet *bullet)
 {
-   static const float spd = 80.0f;
+   static const float spd = 2.0f;
    GameBullet *next = bullet->next;
 
    if (bullet->liveTime <= 0.0f) {
@@ -455,9 +449,9 @@ static GameBullet* gameBulletLogic(GameWindow *window, GameBullet *bullet)
    kmVec3 lastPosition, velocity;
    kmVec3Assign(&lastPosition, &bullet->position);
 
-   bullet->liveTime -= 1.0f * window->time.delta;
-   bullet->position.x -= cos((bullet->angle + 90) * kmPIOver180) * spd * window->time.delta;
-   bullet->position.z += sin((bullet->angle + 90) * kmPIOver180) * spd * window->time.delta;
+   bullet->liveTime -= 0.01f;
+   bullet->position.x -= cos((bullet->angle + 90) * kmPIOver180) * spd;
+   bullet->position.z += sin((bullet->angle + 90) * kmPIOver180) * spd;
 
    glhckCollisionInData colData;
    memset(&colData, 0, sizeof(colData));
@@ -489,9 +483,9 @@ static void gameActorResponse(const glhckCollisionOutData *collision)
    kmVec3Add(&actor->position, &actor->position, collision->pushVector);
 }
 
-static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *player, float *outSpd)
+static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *player)
 {
-   float spd = 30.0f;
+   float spd = 0.6f;
    char flags = 0;
    float rotation;
    kmVec3 lastPosition, velocity;
@@ -532,38 +526,40 @@ static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *play
       bullet->position.y += 1.5f;
       bullet->position.x -= cos((bullet->angle + 90) * kmPIOver180) * 3.0f;
       bullet->position.z += sin((bullet->angle + 90) * kmPIOver180) * 3.0f;
+      memcpy(&bullet->rendered, &bullet->position, sizeof(kmVec3));
       actor->shootTimer = 1.0f;
    }
    if (actor->shootTimer > 0.0f) spd *= 0.5f;
 
    if (flags & UP) {
-      actor->position.z += spd * window->time.delta;
+      actor->position.z += spd;
       rotation = (flags&RT?-45:0) + (flags&LT?45:0);
    }
    if (flags & DN) {
-      actor->position.z -= spd * window->time.delta;
+      actor->position.z -= spd;
       rotation = 180.0f + (flags&RT?45:0) + (flags&LT?-45:0);
    }
    if (flags & LT) {
-      actor->position.x += spd * window->time.delta;
+      actor->position.x += spd;
       rotation = 90.0f + (flags&UP?-45:0) + (flags&DN?45:0);
    }
    if (flags & RT) {
-      actor->position.x -= spd * window->time.delta;
+      actor->position.x -= spd;
       rotation = 270.0f + (flags&UP?45:0) + (flags&DN?-45:0);
    }
 
    if (actor->shootTimer > 0.0f) {
-      actor->shootTimer -= 10.0f * window->time.delta;
+      actor->shootTimer -= 0.2f;
    }
 
    actor->flags = flags;
-   actor->rotation.y = fModIntrp(actor->rotation.y, rotation, spd * window->time.delta, 360);
+   actor->rotation.y = fModIntrp(actor->rotation.y, rotation, 0.15, 360);
 
-   if (actor == player && glfwGetKey(window->handle, GLFW_KEY_SPACE) == GLFW_PRESS)
-      actor->position.y += 70.0f * window->time.delta;
-   else
-      actor->position.y -= 70.0f * window->time.delta;
+   if (actor == player && glfwGetKey(window->handle, GLFW_KEY_SPACE) == GLFW_PRESS) {
+      actor->position.y += spd * 3.8f;
+   } else {
+      actor->position.y -= spd * 3.8f;
+   }
 
    glhckCollisionInData colData;
    memset(&colData, 0, sizeof(colData));
@@ -595,25 +591,28 @@ static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *play
    glhckCollisionWorldCollideSphere(window->collisionWorld, &sphere, &colData);
 #endif
 
-   if (outSpd) *outSpd = spd;
+   kmVec3Intrp(&actor->interpolated, &actor->interpolated, &actor->position, 0.2);
 }
 
 static void gameWindowLogic(GameWindow *window)
 {
-   kmVec3 intrp, target;
    GameActor *a;
    GameBullet *b;
-   float spd;
-
    for (a = window->actor; a; a = a->next) {
-      gameActorLogic(window, a, window->player, &spd);
-      kmVec3Intrp(&intrp, glhckObjectGetPosition(a->object), &a->position, spd * window->time.delta);
-      glhckObjectPosition(a->object, &intrp);
-      kmVec3ModIntrp(&intrp, glhckObjectGetRotation(a->object), &a->rotation, spd * window->time.delta, 360);
-      glhckObjectRotation(a->object, &intrp);
+      gameActorLogic(window, a, window->player);
+      if (a->animator && a->flags && a->flags != 1<<4) {
+         glhckAnimatorUpdate(a->animator, window->time.now);
+         glhckAnimatorTransform(a->animator, a->object);
+      }
    }
-
    for (b = window->bullet; b; b = gameBulletLogic(window, b));
+}
+
+static void gameWindowRender(GameWindow *window, float interpolation)
+{
+   GameActor *a;
+   GameBullet *b;
+   kmVec3 intrp, target;
 
    kmVec3Assign(&target, glhckObjectGetPosition(window->player->object));
    kmVec3Assign(&window->camera->position, &target);
@@ -624,26 +623,21 @@ static void gameWindowLogic(GameWindow *window)
    glhckObjectPosition(window->camera->object, &window->camera->position);
    glhckObjectTarget(window->camera->object, &target);
    glhckCameraUpdate(window->camera->handle);
-}
-
-static void gameWindowRender(GameWindow *window)
-{
-   GameActor *a;
-   GameBullet *b;
 
    glhckObjectRenderAll(window->world);
 
    for (a = window->actor; a; a = a->next) {
       glhckObjectScalef(a->muzzle, 0.0f, 0.0f, 0.0f);
-      if (a->animator && a->flags && a->flags != 1<<4) {
-         glhckAnimatorUpdate(a->animator, window->time.now);
-         glhckAnimatorTransform(a->animator, a->object);
-      }
+      kmVec3Intrp(&intrp, glhckObjectGetPosition(a->object), &a->interpolated, interpolation);
+      glhckObjectPosition(a->object, &intrp);
+      kmVec3ModIntrp(&intrp, glhckObjectGetRotation(a->object), &a->rotation, interpolation, 360);
+      glhckObjectRotation(a->object, &intrp);
       glhckObjectRenderAll(a->object);
    }
 
    for (b = window->bullet; b; b = b->next) {
-      glhckObjectPosition(window->bulletObject, &b->position);
+      kmVec3Intrp(&b->rendered, &b->rendered, &b->position, interpolation);
+      glhckObjectPosition(window->bulletObject, &b->rendered);
       glhckObjectRotationf(window->bulletObject, 0.0f, b->angle, 0.0f);
       glhckObjectRender(window->bulletObject);
    }
@@ -659,7 +653,15 @@ static void gameWindowRender(GameWindow *window)
       glhckObjectRenderAll(a->muzzle);
    }
 
+   glhckTextColorb(window->text->handle, 0, 0, 0, 255);
+   gameTextStash(window->text, FONT_DEFAULT, 1, 1 + FONT_SIZE[FONT_DEFAULT], window->title);
+   gameTextStash(window->text, FONT_DEFAULT, window->width - 49, 1 + window->height - 1, "~Cloudef");
+   glhckTextRender(window->text->handle);
+   glhckTextClear(window->text->handle);
+
+   glhckTextColorb(window->text->handle, 255, 255, 255, 255);
    gameTextStash(window->text, FONT_DEFAULT, 0, FONT_SIZE[FONT_DEFAULT], window->title);
+   gameTextStash(window->text, FONT_DEFAULT, window->width - 50, window->height - 1, "~Cloudef");
    glhckTextRender(window->text->handle);
    glhckTextClear(window->text->handle);
 
@@ -669,14 +671,24 @@ static void gameWindowRender(GameWindow *window)
 
 static int gameWindowRun(GameWindow *window)
 {
+   const float TICKS_PER_SECOND = 60.0f;
+   const float SKIP_TICKS = 1.0f / TICKS_PER_SECOND;
+   const unsigned int MAX_FRAMESKIP = 10;
+   unsigned int loops;
+
    glhckContextSet(window->context);
    glfwMakeContextCurrent(window->handle);
    glfwSwapInterval(0);
    glEnable(GL_MULTISAMPLE);
-   if (gameTimeBegin(&window->time)) {
+   gameTimeBegin(&window->time);
+
+   for (loops = 0; glfwGetTime() > window->time.next && loops < MAX_FRAMESKIP; ++loops) {
       gameWindowLogic(window);
-      gameWindowRender(window);
+      window->time.next += SKIP_TICKS;
    }
+   float interpolation = (glfwGetTime() + SKIP_TICKS - window->time.next) / SKIP_TICKS;
+   gameWindowRender(window, interpolation);
+
    if (gameTimeEnd(&window->time)) gameWindowUpdateTitle(window);
 
    if (!window->running) {
