@@ -33,6 +33,7 @@ typedef struct GameActor {
    struct GameActor *next;
    float shootTimer, animTime;
    unsigned char flags;
+   char pushed;
 } GameActor;
 
 typedef struct GameCamera {
@@ -202,6 +203,7 @@ static void gameActorResponse(const glhckCollisionOutData *collision)
    if (other) {
       kmVec3Subtract(&other->position, &other->position, collision->pushVector);
       gameActorCollide(other, collision->world, collision->pushVector);
+      other->pushed = 1;
    }
 }
 
@@ -609,14 +611,13 @@ static void gameWindowLogic(GameWindow *window)
    GameBullet *b;
 
    for (a = window->actor; a; a = a->next) {
-      kmVec3 lastPosition;
-      kmVec3Assign(&lastPosition, &a->position);
       gameActorLogic(window, a, window->player);
-      if (!kmVec3AreEqual(&a->position, &lastPosition)) {
+      if (a->pushed || (a->flags && a->flags != 1<<4)) {
          glhckAnimatorUpdate(a->animator, a->animTime);
          glhckAnimatorTransform(a->animator, a->object);
          a->animTime += 0.02f * (a->flags & 1<<4 ? 0.8f : 1.0f);
       }
+      a->pushed = 0;
    }
 
    for (b = window->bullet; b; b = gameBulletLogic(window, b));
