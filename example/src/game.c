@@ -39,7 +39,7 @@ typedef struct GameActor {
 typedef struct GameCamera {
    glhckCamera *handle;
    glhckObject *object;
-   kmVec3 position, rotation;
+   kmVec3 position, target;
 } GameCamera;
 
 typedef struct GameText {
@@ -424,7 +424,7 @@ static GameWindow* gameWindowNew(int argc, char **argv)
    for (i = 0; i < numChilds; ++i)
       glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), NULL);
 
-   for (i = 0; i < 3; ++i) gameActorNew(window);
+   for (i = 0; i < 8; ++i) gameActorNew(window);
 
    window->running = 1;
    glfwSetWindowUserPointer(window->handle, window);
@@ -599,7 +599,7 @@ static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *play
    gameActorCollide(actor, window->collisionWorld, &velocity);
 
    if (actor->position.y < 0.0f) {
-      puts("FALLING");
+      //puts("FALLING");
    }
 
    kmVec3Intrp(&actor->interpolated, &actor->interpolated, &actor->position, 0.2);
@@ -609,6 +609,7 @@ static void gameWindowLogic(GameWindow *window)
 {
    GameActor *a;
    GameBullet *b;
+   kmVec3 target;
 
    for (a = window->actor; a; a = a->next) {
       gameActorLogic(window, a, window->player);
@@ -621,22 +622,25 @@ static void gameWindowLogic(GameWindow *window)
    }
 
    for (b = window->bullet; b; b = gameBulletLogic(window, b));
+
+   kmVec3Assign(&target, &window->player->interpolated);
+   kmVec3Assign(&window->camera->position, &target);
+   window->camera->position.y += 40;
+   window->camera->position.z -= 40;
+   target.y += 10;
+   kmVec3Assign(&window->camera->target, &target);
 }
 
 static void gameWindowRender(GameWindow *window, float interpolation)
 {
    GameActor *a;
    GameBullet *b;
-   kmVec3 intrp, target;
+   kmVec3 intrp;
 
-   kmVec3Assign(&target, glhckObjectGetPosition(window->player->object));
-   kmVec3Assign(&window->camera->position, &target);
-   window->camera->position.y += 40;
-   window->camera->position.z -= 40;
-   target.y += 10;
-
-   glhckObjectPosition(window->camera->object, &window->camera->position);
-   glhckObjectTarget(window->camera->object, &target);
+   kmVec3Intrp(&intrp, glhckObjectGetPosition(window->camera->object), &window->camera->position, interpolation);
+   glhckObjectPosition(window->camera->object, &intrp);
+   kmVec3Intrp(&intrp, glhckObjectGetTarget(window->camera->object), &window->camera->target, interpolation);
+   glhckObjectTarget(window->camera->object, &intrp);
    glhckCameraUpdate(window->camera->handle);
 
    glhckObjectRenderAll(window->world);
