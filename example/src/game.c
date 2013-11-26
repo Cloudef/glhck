@@ -588,9 +588,9 @@ static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *play
    actor->rotation.y = fModIntrp(actor->rotation.y, rotation, 0.15, 360);
 
    if (actor == player && glfwGetKey(window->handle, GLFW_KEY_SPACE) == GLFW_PRESS) {
-      actor->position.y += spd * 3.8f;
+      actor->position.y += 0.6f * 3.8f;
    } else {
-      actor->position.y -= spd * 3.8f;
+      actor->position.y -= 0.6f * 3.8f;
    }
 
    kmVec3Subtract(&velocity, &actor->position, &lastPosition);
