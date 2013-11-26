@@ -42,6 +42,15 @@ typedef struct kmTriangle {
    kmVec3 v1, v2, v3;
 } kmTriangle;
 
+
+glhckObject* glhckCubeFromKazmathAABBExtent(const kmAABBExtent *aabb)
+{
+   glhckObject *o = glhckCubeNew(1.0);
+   glhckObjectPosition(o, &aabb->point);
+   glhckObjectScalef(o, aabb->extent.x, aabb->extent.y, aabb->extent.z);
+   return o;
+}
+
 kmAABBExtent* kmAABBToAABBExtent(kmAABBExtent* pOut, const kmAABB* aabb)
 {
   kmVec3Subtract(&pOut->extent, &aabb->max, &aabb->min);
@@ -334,6 +343,24 @@ kmScalar kmPlaneDistanceTo(const kmPlane *pIn, const kmVec3 *pV1)
 {
    const kmVec3 normal = {pIn->a, pIn->b, pIn->c};
    return kmVec3Dot(pV1, &normal) * pIn->d;
+}
+
+static const kmVec3* kmAABBGetPosition(const kmAABB *aabb, kmVec3 *pOut)
+{
+   kmAABBCentre(aabb, pOut);
+   return pOut;
+}
+
+static const kmVec3* kmAABBExtentGetPosition(const kmAABBExtent *aabbe, kmVec3 *pOut)
+{
+   kmVec3Assign(pOut, &aabbe->point);
+   return pOut;
+}
+
+static const kmVec3* kmSphereGetPosition(const kmSphere *sphere, kmVec3 *pOut)
+{
+   kmVec3Assign(pOut, &sphere->point);
+   return pOut;
 }
 
 static void kmAABBApplyVelocity(kmAABB *aabb, const kmVec3 *velocity)
@@ -772,6 +799,9 @@ typedef struct _glhckCollisionPrimitive {
 } _glhckCollisionPrimitive;
 
 typedef struct _glhckCollisionWorld {
+   /* number of collision packets going on */
+   unsigned int packets, rejected;
+
    /* collision primitives living under the world */
    struct _glhckCollisionPrimitive *primitives;
 
@@ -801,6 +831,7 @@ typedef struct _glhckCollisionPacket {
 static void *_glhckCollisionTestFunctions[GLHCK_COLLISION_LAST][GLHCK_COLLISION_LAST];
 static void *_glhckCollisionVelocityFunctions[GLHCK_COLLISION_LAST];
 static void *_glhckCollisionContactFunctions[GLHCK_COLLISION_LAST];
+static void *_glhckCollisionPositionFunctions[GLHCK_COLLISION_LAST];
 static void _glhckCollisionInit(void)
 {
    /* setup test functions */
@@ -839,6 +870,12 @@ static void _glhckCollisionInit(void)
    _glhckCollisionContactFunctions[GLHCK_COLLISION_AABB] = kmAABBClosestPointTo;
    _glhckCollisionContactFunctions[GLHCK_COLLISION_AABBE] = kmAABBExtentClosestPointTo;
    _glhckCollisionContactFunctions[GLHCK_COLLISION_SPHERE] = kmSphereClosestPointTo;
+
+   /* setup position functions */
+   memset(_glhckCollisionPositionFunctions, 0, sizeof(_glhckCollisionPositionFunctions));
+   _glhckCollisionPositionFunctions[GLHCK_COLLISION_AABB] = kmAABBGetPosition;
+   _glhckCollisionPositionFunctions[GLHCK_COLLISION_AABBE] = kmAABBExtentGetPosition;
+   _glhckCollisionPositionFunctions[GLHCK_COLLISION_SPHERE] = kmSphereGetPosition;
 }
 
 /* get string for collision shape type */
@@ -856,41 +893,51 @@ const char* _glhckCollisionTypeString(_glhckCollisionType type)
    return "INVALID TYPE";
 }
 
-/* get position of collision shape */
-void _glhckCollisionShapeGetPosition(const _glhckCollisionShape *shape, kmVec3 *outPosition)
+#ifndef NDEBUG
+static int _glhckCollisionTestMissingImplementations(const _glhckCollisionShape *a, const _glhckCollisionShape *b)
 {
-   assert(shape && outPosition);
-   memset(outPosition, 0, sizeof(kmVec3));
+   int ret = RETURN_OK;
 
-   switch (shape->type) {
-      case GLHCK_COLLISION_AABB:
-         kmAABBCentre(shape->aabb, outPosition);
-         return;
-      case GLHCK_COLLISION_AABBE:
-         memcpy(outPosition, &shape->aabbe->point, sizeof(kmVec3));
-         return;
-      case GLHCK_COLLISION_SPHERE:
-         memcpy(outPosition, &shape->sphere->point, sizeof(kmVec3));
-         return;
-      default:break;
-   }
+   /* test for missing implementations */
+      if (b && !_glhckCollisionTestFunctions[a->type][b->type]) {
+         DEBUG(GLHCK_DBG_ERROR, "-!- Intersection test not implemented for %s <-> %s",
+               _glhckCollisionTypeString(a->type),
+               _glhckCollisionTypeString(b->type));
+      }
+      if (!_glhckCollisionContactFunctions[a->type]) {
+         DEBUG(GLHCK_DBG_ERROR, "-!- Contact point function not implemented for %s", _glhckCollisionTypeString(a->type));
+         ret = RETURN_FAIL;
+      }
+      if (b && !_glhckCollisionContactFunctions[b->type]) {
+         DEBUG(GLHCK_DBG_ERROR, "-!- Contact point function not implemented for %s", _glhckCollisionTypeString(b->type));
+         ret = RETURN_FAIL;
+      }
+      if (!_glhckCollisionPositionFunctions[a->type]) {
+         DEBUG(GLHCK_DBG_ERROR, "-!- Shape position function not implemented for %s", _glhckCollisionTypeString(a->type));
+         ret = RETURN_FAIL;
+      }
+      if (b && !_glhckCollisionPositionFunctions[b->type]) {
+         DEBUG(GLHCK_DBG_ERROR, "-!- Shape position function not implemented for %s", _glhckCollisionTypeString(b->type));
+         ret = RETURN_FAIL;
+      }
 
-   DEBUG(GLHCK_DBG_ERROR, "-!- Shape position function not implemented for %s\n", _glhckCollisionTypeString(shape->type));
+   return ret;
 }
+#endif
 
 /* calculate contact point and push vector for shape */
 static void _glhckCollisionShapeShapeContact(const _glhckCollisionShape *packetShape, const _glhckCollisionShape *primitiveShape, kmVec3 *outContact, kmVec3 *outPush)
 {
    kmVec3 packetCenter, penetrativeContact, difference;
+   typedef const kmVec3* (*_positionFunc)(const void *a, kmVec3 *outPoint);
    typedef const kmVec3* (*_contactFunc)(const void *a, const kmVec3 *point, kmVec3 *outPoint);
+   _positionFunc packetPosition = _glhckCollisionPositionFunctions[packetShape->type];
    _contactFunc packetContact = _glhckCollisionContactFunctions[packetShape->type];
    _contactFunc primitiveContact = _glhckCollisionContactFunctions[primitiveShape->type];
-   assert(packetShape && primitiveShape && outContact && outPush);
-   memset(outPush, 0, sizeof(kmVec3));
-   memset(outContact, 0, sizeof(kmVec3));
+   assert(packetShape && primitiveShape && outContact);
 
    /* get contact points for packet and primitive */
-   _glhckCollisionShapeGetPosition(packetShape, &packetCenter);
+   packetPosition(packetShape->any, &packetCenter);
    primitiveContact(primitiveShape->any, &packetCenter, outContact);
    packetContact(packetShape->any, outContact, &penetrativeContact);
 
@@ -898,39 +945,24 @@ static void _glhckCollisionShapeShapeContact(const _glhckCollisionShape *packetS
    float contactDist = kmVec3Length(kmVec3Subtract(&difference, outContact, &packetCenter));
    float penetrativeDist = kmVec3Length(kmVec3Subtract(&difference, &penetrativeContact, &packetCenter));
    if (contactDist > penetrativeDist) kmVec3Swap(outContact, &penetrativeContact);
-   kmVec3Subtract(outPush, outContact, &penetrativeContact);
+   if (outPush) kmVec3Subtract(outPush, outContact, &penetrativeContact);
 }
 
 /* test packet against primitive */
 static void _glhckCollisionWorldTestPacketAgainstPrimitive(glhckCollisionWorld *world, _glhckCollisionPacket *packet, const _glhckCollisionPrimitive *primitive)
 {
    typedef kmBool (*_collisionTestFunc)(const void *a, const void *b);
-   typedef void (*_velocityApplyFunc)(const void *a, const kmVec3 *velocity);
-   typedef const kmVec3* (*_contactFunc)(const void *a, const kmVec3 *point, kmVec3 *outPoint);
    _collisionTestFunc intersection = _glhckCollisionTestFunctions[packet->shape->type][primitive->shape.type];
-   _velocityApplyFunc velocity = _glhckCollisionVelocityFunctions[packet->shape->type];
-   _contactFunc packetContactFunction = _glhckCollisionContactFunctions[packet->shape->type];
-   _contactFunc primitiveContactFunction = _glhckCollisionContactFunctions[primitive->shape.type];
    assert(world && packet && primitive);
 
-   /* test for missing implementations */
-   if (!intersection || !velocity || !packetContactFunction || !primitiveContactFunction) {
-      if (!intersection) {
-         DEBUG(GLHCK_DBG_ERROR, "-!- Intersection test not implemented for %s <-> %s\n",
-               _glhckCollisionTypeString(packet->shape->type),
-               _glhckCollisionTypeString(primitive->shape.type));
-      }
-      if (!packetContactFunction) {
-         DEBUG(GLHCK_DBG_ERROR, "-!- Contact point function not implemented for %s\n", _glhckCollisionTypeString(packet->shape->type));
-      }
-      if (!primitiveContactFunction) {
-         DEBUG(GLHCK_DBG_ERROR, "-!- Contact point function not implemented for %s\n", _glhckCollisionTypeString(primitive->shape.type));
-      }
-      if (!velocity) {
-         DEBUG(GLHCK_DBG_ERROR, "-!- Velocity function not implemented for %s\n", _glhckCollisionTypeString(packet->shape->type));
-      }
+#ifndef NDEBUG
+   if (!_glhckCollisionTestMissingImplementations(packet->shape, &primitive->shape))
       return;
-   }
+#endif
+
+   /* this is reference to us, bad things will happen if we continue */
+   if (packet->shape->any == primitive->shape.any)
+      return;
 
    /* ask user if we should even bother testing */
    if (packet->data->test && !packet->data->test(packet->data, primitive))
@@ -940,17 +972,24 @@ static void _glhckCollisionWorldTestPacketAgainstPrimitive(glhckCollisionWorld *
    if (!intersection(packet->shape->any, primitive->shape.any))
       return;
 
+   /* penetrative push back response tests */
    if (packet->data->response) {
-      kmVec3 contactPoint, pushVector, inverseVelocity;
-      kmVec3Scale(&inverseVelocity, &packet->velocity, -1);
-      velocity(packet->shape->any, &inverseVelocity);
+      static kmVec3 zero = {0,0,0};
+      kmVec3 contactPoint, pushVector;
       _glhckCollisionShapeShapeContact(packet->shape, &primitive->shape, &contactPoint, &pushVector);
-      velocity(packet->shape->any, &packet->velocity);
-      velocity(packet->shape->any, &pushVector);
+
+      /* we are not penetrating this round */
+      if (kmVec3AreEqual(&pushVector, &zero)) return;
+
+      /* early loop detection */
+      if (packet->collisions > 0) {
+         kmVec3 inverseVelocity;
+         kmVec3Scale(&inverseVelocity, &packet->velocity, -1);
+         if (kmVec3AreEqual(&inverseVelocity, &pushVector)) return;
+      }
 
       /* send response */
       glhckCollisionOutData outData;
-      memset(&outData, 0, sizeof(outData));
       outData.world = world;
       outData.collider = primitive;
       outData.pushVector = &pushVector;
@@ -970,12 +1009,19 @@ static int _glhckCollisionWorldTestPacketSweep(glhckCollisionWorld *world, _glhc
    float nearestSweepDistance = FLT_MAX;
    glhckCollisionPrimitive *p, *nearestSweepPrimitive = NULL;
    kmVec3 inverseVelocity, nearestContact, beforePoint;
+   typedef const kmVec3* (*_positionFunc)(const void *a, kmVec3 *outPoint);
    typedef kmBool (*_collisionTestFunc)(const void *a, const void *b);
    typedef void (*_velocityApplyFunc)(const void *a, const kmVec3 *velocity);
+   _positionFunc packetPosition = _glhckCollisionPositionFunctions[packet->shape->type];
    _velocityApplyFunc velocity = _glhckCollisionVelocityFunctions[packet->shape->type];
 
+#ifndef NDEBUG
+   if (!_glhckCollisionTestMissingImplementations(packet->sweep, NULL))
+      return 0;
+#endif
+
    /* move packet shape to before contact phase */
-   _glhckCollisionShapeGetPosition(packet->shape, &beforePoint);
+   packetPosition(packet->shape->any, &beforePoint);
    kmVec3Scale(&inverseVelocity, &packet->velocity, -1.0f);
    velocity(packet->shape->any, &inverseVelocity);
 
@@ -985,15 +1031,21 @@ static int _glhckCollisionWorldTestPacketSweep(glhckCollisionWorld *world, _glhc
       if (packet->data->test && !packet->data->test(packet->data, p))
          continue;
 
+#ifndef NDEBUG
+      if (!_glhckCollisionTestMissingImplementations(packet->sweep, &p->shape))
+         continue;
+#endif
+
       /* intersection test */
       _collisionTestFunc intersection = _glhckCollisionTestFunctions[packet->sweep->type][p->shape.type];
       if (!intersection(packet->sweep->any, p->shape.any))
          continue;
 
       /* figure out contact point */
-      kmVec3 pushVector, contact;
-      _glhckCollisionShapeShapeContact(packet->shape, &p->shape, &contact, &pushVector);
-      float distance = kmVec3Length(&pushVector)+1;
+      kmVec3 difference, contact;
+      _glhckCollisionShapeShapeContact(packet->shape, &p->shape, &contact, NULL);
+      kmVec3Subtract(&difference, &contact, &beforePoint);
+      float distance = kmVec3Length(&difference)+1.0f;
       if (distance < nearestSweepDistance) {
          memcpy(&nearestContact, &contact, sizeof(kmVec3));
          nearestSweepDistance = distance;
@@ -1006,18 +1058,12 @@ static int _glhckCollisionWorldTestPacketSweep(glhckCollisionWorld *world, _glhc
 
    /* do we need to sweep? */
    if (packet->data->response && nearestSweepDistance > 1.0f) {
-      kmVec3 offsetVelocity;
-      kmVec3 afterPoint, pushVector;
+      kmVec3 pushVector;
       float velocityDist = kmVec3Length(&packet->velocity);
-      kmVec3Scale(&offsetVelocity, &packet->velocity, nearestSweepDistance/velocityDist);
-      velocity(packet->shape->any, &offsetVelocity);
-
-      _glhckCollisionShapeGetPosition(packet->shape, &afterPoint);
-      kmVec3Subtract(&pushVector, &afterPoint, &beforePoint);
+      kmVec3Scale(&pushVector, &packet->velocity, -nearestSweepDistance/velocityDist);
 
       /* send response */
       glhckCollisionOutData outData;
-      memset(&outData, 0, sizeof(outData));
       outData.world = world;
       outData.collider = nearestSweepPrimitive;
       outData.pushVector = &pushVector;
@@ -1041,6 +1087,25 @@ static unsigned int _glhckCollisionWorldCollide(glhckCollisionWorld *world, _glh
    _glhckCollisionPacket packet;
    assert(world && shape && data);
 
+#if 0
+   if (sweep->any) {
+      /* debug */
+      glhckObject *o = glhckCubeFromKazmathAABBExtent(sweep->aabbe);
+      glhckMaterial *mat = glhckMaterialNew(NULL);
+      glhckObjectMaterial(o, mat);
+      glhckMaterialDiffuseb(mat, 0, 0, 255, 255);
+      glhckObjectRender(o);
+      glhckMaterialFree(mat);
+      glhckObjectFree(o);
+   }
+#endif
+
+   /* too much recursion, assume no collision and reject future packets */
+   if (world->packets + world->rejected > 20) {
+      ++world->rejected;
+      return 0;
+   }
+
    /* we are not moving anywhere, lets assume no collisions */
    if (data->velocity && kmVec3AreEqual(data->velocity, &zero))
       return 0;
@@ -1056,6 +1121,9 @@ static unsigned int _glhckCollisionWorldCollide(glhckCollisionWorld *world, _glh
    if (packet.sweep && !_glhckCollisionWorldTestPacketSweep(world, &packet))
       return 0;
 
+   /* indicate that new packet is colliding in this world */
+   ++world->packets;
+
    /* normal collision checks */
    unsigned int oldCollisions = -1;
    while (packet.collisions < 20 && oldCollisions != packet.collisions) {
@@ -1064,6 +1132,11 @@ static unsigned int _glhckCollisionWorldCollide(glhckCollisionWorld *world, _glh
       if (!data->response || !data->velocity) break;
    }
 
+   if (world->packets > 0) --world->packets;
+   if (world->packets == 0) {
+      if (world->rejected) DEBUG(GLHCK_DBG_CRAP, "-!- RECURSION LOOP: %u (rejected)", world->rejected);
+      world->rejected = 0;
+   }
    return packet.collisions;
 }
 
@@ -1253,78 +1326,87 @@ GLHCKAPI void glhckCollisionWorldRemovePrimitive(glhckCollisionWorld *object, gl
 
 GLHCKAPI unsigned int glhckCollisionWorldCollideAABB(glhckCollisionWorld *object, const kmAABB *aabb, const glhckCollisionInData *data)
 {
-   kmAABB copy;
+   kmAABBExtent sweepAABB;
    _glhckCollisionShape shape, sweep;
-   memset(&shape, 0, sizeof(shape));
-   memset(&sweep, 0, sizeof(sweep));
-   memcpy(&copy, aabb, sizeof(copy));
    shape.type = GLHCK_COLLISION_AABB;
-   shape.any = &copy;
+   shape.any = (kmAABB*)aabb;
+   shape.reference = 1;
+
+   /* create sweep volume, if needed */
+   if (data->velocity &&
+         (fabs(data->velocity->x) > (aabb->max.x-aabb->min.x)*0.5f ||
+          fabs(data->velocity->y) > (aabb->max.y-aabb->min.y)*0.5f ||
+          fabs(data->velocity->z) > (aabb->max.z-aabb->min.z)*0.5f)) {
+      kmVec3 pointBefore, center;
+      kmAABBCentre(aabb, &center);
+      kmVec3Subtract(&pointBefore, &center, data->velocity);
+      sweepAABB.point.x = (pointBefore.x+center.x)*0.5;
+      sweepAABB.point.y = (pointBefore.y+center.y)*0.5;
+      sweepAABB.point.z = (pointBefore.z+center.z)*0.5;
+      sweepAABB.extent.x = fabs(center.x-sweepAABB.point.x)+aabb->max.x-aabb->min.x;
+      sweepAABB.extent.y = fabs(center.y-sweepAABB.point.y)+aabb->max.y-aabb->min.y;
+      sweepAABB.extent.z = fabs(center.z-sweepAABB.point.z)+aabb->max.z-aabb->min.z;
+      sweep.type = GLHCK_COLLISION_AABBE;
+      sweep.any = &sweepAABB;
+      sweep.reference = 1;
+   } else {
+      memset(&sweep, 0, sizeof(sweep));
+   }
 
    return _glhckCollisionWorldCollide(object, &shape, &sweep, data);
 }
 
 GLHCKAPI unsigned int glhckCollisionWorldCollideAABBExtent(glhckCollisionWorld *object, const kmAABBExtent *aabbe, const glhckCollisionInData *data)
 {
-   kmAABBExtent copy;
    _glhckCollisionShape shape, sweep;
-   memset(&shape, 0, sizeof(shape));
    memset(&sweep, 0, sizeof(sweep));
-   memcpy(&copy, aabbe, sizeof(copy));
    shape.type = GLHCK_COLLISION_AABBE;
-   shape.any = &copy;
+   shape.any = (kmAABBExtent*)aabbe;
+   shape.reference = 1;
 
    return _glhckCollisionWorldCollide(object, &shape, &sweep, data);
 }
 
 GLHCKAPI unsigned int glhckCollisionWorldCollideOBB(glhckCollisionWorld *object, const kmOBB *obb, const glhckCollisionInData *data)
 {
-   kmOBB copy;
    _glhckCollisionShape shape, sweep;
-   memset(&shape, 0, sizeof(shape));
    memset(&sweep, 0, sizeof(sweep));
-   memcpy(&copy, obb, sizeof(copy));
    shape.type = GLHCK_COLLISION_OBB;
-   shape.any = &copy;
+   shape.any = (kmOBB*)obb;
+   shape.reference = 1;
 
    return _glhckCollisionWorldCollide(object, &shape, &sweep, data);
 }
 
 GLHCKAPI unsigned int glhckCollisionWorldCollideSphere(glhckCollisionWorld *object, const kmSphere *sphere, const glhckCollisionInData *data)
 {
-   kmSphere copy;
    kmAABBExtent sweepAABB;
    _glhckCollisionShape shape, sweep;
-   memset(&shape, 0, sizeof(shape));
-   memset(&sweep, 0, sizeof(sweep));
-   memcpy(&copy, sphere, sizeof(copy));
    shape.type = GLHCK_COLLISION_SPHERE;
-   shape.any = &copy;
+   shape.any = (kmSphere*)sphere;
+   shape.reference = 1;
 
    /* create sweep volume, if needed */
    if (data->velocity &&
-         (fabs(data->velocity->x) > sphere->radius ||
-          fabs(data->velocity->y) > sphere->radius ||
-          fabs(data->velocity->z) > sphere->radius)) {
+         (fabs(data->velocity->x) > sphere->radius*0.5f ||
+          fabs(data->velocity->y) > sphere->radius*0.5f ||
+          fabs(data->velocity->z) > sphere->radius*0.5f)) {
       kmVec3 pointBefore;
       kmVec3Subtract(&pointBefore, &sphere->point, data->velocity);
-      sweepAABB.point.x = (pointBefore.x+sphere->point.x)*0.5;
-      sweepAABB.point.y = (pointBefore.y+sphere->point.y)*0.5;
-      sweepAABB.point.z = (pointBefore.z+sphere->point.z)*0.5;
+      sweepAABB.point.x = (pointBefore.x+sphere->point.x)*0.5f;
+      sweepAABB.point.y = (pointBefore.y+sphere->point.y)*0.5f;
+      sweepAABB.point.z = (pointBefore.z+sphere->point.z)*0.5f;
       sweepAABB.extent.x = fabs(sphere->point.x-sweepAABB.point.x)+sphere->radius;
       sweepAABB.extent.y = fabs(sphere->point.y-sweepAABB.point.y)+sphere->radius;
       sweepAABB.extent.z = fabs(sphere->point.z-sweepAABB.point.z)+sphere->radius;
       sweep.type = GLHCK_COLLISION_AABBE;
       sweep.any = &sweepAABB;
+      sweep.reference = 1;
+   } else {
+      memset(&sweep, 0, sizeof(sweep));
    }
 
    return _glhckCollisionWorldCollide(object, &shape, &sweep, data);
-}
-
-GLHCKAPI void glhckCollisionPrimitiveGetPosition(const glhckCollisionPrimitive *object, kmVec3 *position)
-{
-   assert(object);
-   _glhckCollisionShapeGetPosition(&object->shape, position);
 }
 
 GLHCKAPI void* glhckCollisionPrimitiveGetUserData(const glhckCollisionPrimitive *object)
