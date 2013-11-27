@@ -31,11 +31,10 @@ static void trackAlloc(const char *channel, void *ptr, size_t size)
    /* track */
    for (; data && data->next; data = data->next);
    if (data) data = data->next = calloc(1, sizeof(__GLHCKalloc));
-   else      data = glhckContextGet()->alloc = calloc(1, sizeof(__GLHCKalloc));
+   else data = glhckContextGet()->alloc = calloc(1, sizeof(__GLHCKalloc));
 
    /* alloc failed */
-   if (!data)
-      return;
+   if (!data) return;
 
    /* init */
    data->size = size;
@@ -65,9 +64,8 @@ static void trackFree(const void *ptr)
       found = data->next;
       data->next = found->next;
       free(found);
-   } else {
-      found = glhckContextGet()->alloc;
-      glhckContextGet()->alloc = (found->next?found->next:NULL);
+   } else if ((found = glhckContextGet()->alloc) == ptr) {
+      glhckContextGet()->alloc = (found?found->next:NULL);
       free(found);
    }
 }
@@ -262,8 +260,7 @@ GLHCKAPI void glhckMemoryGraph(void)
 
       if (!glhckContextGet()->alloc) break;
       if (trace[i].name) {
-         for (data = glhckContextGet()->alloc;
-              data; data = data->next)
+         for (data = glhckContextGet()->alloc; data; data = data->next)
             if (!strcmp(data->channel, trace[i].name))
                allocChannel += data->size;
       } else {
@@ -275,9 +272,9 @@ GLHCKAPI void glhckMemoryGraph(void)
       if (!allocChannel) continue;
 
       /* set color */
-      if (allocChannel >= GLHCK_ALLOC_CRITICAL)       _glhckRed();
-      else if (allocChannel >= GLHCK_ALLOC_HIGH)      _glhckBlue();
-      else if (allocChannel >= GLHCK_ALLOC_AVERAGE)   _glhckYellow();
+      if (allocChannel >= GLHCK_ALLOC_CRITICAL) _glhckRed();
+      else if (allocChannel >= GLHCK_ALLOC_HIGH) _glhckBlue();
+      else if (allocChannel >= GLHCK_ALLOC_AVERAGE) _glhckYellow();
       else _glhckGreen();
 
       printf("%-13s : ", trace[i].name?trace[i].name:"Total");
