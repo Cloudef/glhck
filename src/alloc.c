@@ -22,11 +22,10 @@
 /* \brief add new data to tracking */
 static void trackAlloc(const char *channel, void *ptr, size_t size)
 {
-   __GLHCKalloc *data;
+   __GLHCKalloc *data = glhckContextGet()->alloc;
 
    /* real alloc failed */
    if (!ptr) return;
-   data = glhckContextGet()->alloc;
 
    /* track */
    for (; data && data->next; data = data->next);
@@ -43,31 +42,35 @@ static void trackAlloc(const char *channel, void *ptr, size_t size)
 }
 
 /* \brief internal realloc hook */
-static void trackRealloc(const void *ptr, void *ptr2, size_t size)
+static void trackRealloc(const char *channel, const void *ptr, void *ptr2, size_t size)
 {
    __GLHCKalloc *data = glhckContextGet()->alloc;
    for (; data && data->ptr != ptr; data = data->next);
-   if (data) {
-      data->ptr  = ptr2;
-      data->size = size;
+   if (!data) {
+      trackAlloc(channel, ptr2, size);
+      return;
    }
+   data->ptr = ptr2;
+   data->size = size;
 }
 
 /* \brief internal free hook */
 static void trackFree(const void *ptr)
 {
-   __GLHCKalloc *found, *data = glhckContextGet()->alloc;
+   __GLHCKalloc *data = glhckContextGet()->alloc;
    if (!data) return;
 
-   for (; data && data->next && data->next->ptr != ptr; data = data->next);
-   if (data && data->next) {
-      found = data->next;
-      data->next = found->next;
-      free(found);
-   } else if ((found = glhckContextGet()->alloc) == ptr) {
-      glhckContextGet()->alloc = (found?found->next:NULL);
-      free(found);
+   if (data->ptr == ptr) {
+      glhckContextGet()->alloc = (data?data->next:NULL);
+      free(data);
+      return;
    }
+
+   for (; data && data->next && data->next->ptr != ptr; data = data->next);
+   if (!data || !data->next) return;
+   __GLHCKalloc *found = data->next;
+   data->next = found->next;
+   free(found);
 }
 
 /* \brief add known allocate data to tracking
@@ -75,9 +78,23 @@ static void trackFree(const void *ptr)
  *
  * NOTE: This won't allocate new node,
  * instead it modifies size of already allocated node. */
-void _glhckTrackFake(void *ptr, size_t size)
+void __glhckTrackFake(const char *channel, void *ptr, size_t size)
 {
-   trackRealloc(ptr, ptr, size);
+   trackRealloc(channel, ptr, ptr, size);
+}
+
+/* \brief steal the pointer to current tracking channel
+ * useful when internal api function returns allocated object,
+ * which is then handled by other object. */
+void __glhckTrackSteal(const char *channel, void *ptr)
+{
+#ifndef NDEBUG
+   __GLHCKalloc *data = glhckContextGet()->alloc;
+   for (; data && data->ptr != ptr; data = data->next);
+   if (data) data->channel = channel;
+#else
+   (void)channel, (void)ptr;
+#endif /* NDEBUG */
 }
 
 /* \brief terminate all tracking */
@@ -93,20 +110,6 @@ void _glhckTrackTerminate(void)
    glhckContextGet()->alloc = NULL;
 }
 #endif /* NDEBUG */
-
-/* \brief steal the pointer to current tracking channel
- * useful when internal api function returns allocated object,
- * which is then handled by other object. */
-void __glhckTrackSteal(const char *channel, void *ptr)
-{
-#ifndef NDEBUG
-   __GLHCKalloc *data = glhckContextGet()->alloc;
-   for (; data && data->ptr != ptr; data = data->next);
-   if (data) data->channel = channel;
-#else
-   (void)channel, (void)ptr;
-#endif /* NDEBUG */
-}
 
 /* Use _glhckMalloc and _glhckCalloc and _glhckCopy macros instead
  * of __glhckMalloc and __glhckCalloc and _glhckCopy.
@@ -197,7 +200,7 @@ fail:
 }
 
 /* \brief internal realloc function. */
-void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size)
+void* __glhckRealloc(const char *channel, void *ptr, size_t omemb, size_t nmemb, size_t size)
 {
    void *ptr2;
    CALL(3, "%p, %zu, %zu, %zu", ptr, omemb, nmemb, size);
@@ -210,7 +213,7 @@ void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size)
    }
 
 #ifndef NDEBUG
-   trackRealloc(ptr, ptr2, size);
+   trackRealloc(channel, ptr, ptr2, nmemb * size);
 #endif
 
    RET(3, "%p", ptr2);

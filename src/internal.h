@@ -891,7 +891,7 @@ extern const kmMat4 _glhckFlipMatrix;
 #define _glhckCalloc(x,y)     __glhckCalloc(GLHCK_CHANNEL, x, y)
 #define _glhckStrdup(x)       __glhckStrdup(GLHCK_CHANNEL, x)
 #define _glhckCopy(x,y)       __glhckCopy(GLHCK_CHANNEL, x, y)
-#define _glhckTrackSteal(x)   __glhckTrackSteal(GLHCK_CHANNEL, x)
+#define _glhckRealloc(x,y,z,w)__glhckRealloc(GLHCK_CHANNEL, x, y, z, w)
 
 /* tracing && debug macros */
 #define THIS_FILE ((strrchr(__FILE__, '/') ?: __FILE__ - 1) + 1)
@@ -921,16 +921,19 @@ void* __glhckMalloc(const char *channel, size_t size);
 void* __glhckCalloc(const char *channel, size_t nmemb, size_t size);
 char* __glhckStrdup(const char *channel, const char *s);
 void* __glhckCopy(const char *channel, const void *ptr, size_t nmemb);
-void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size);
+void* __glhckRealloc(const char *channel, void *ptr, size_t omemb, size_t nmemb, size_t size);
 void _glhckFree(void *ptr);
-void __glhckTrackSteal(const char *channel, void *ptr);
 
 #ifndef NDEBUG
 /* tracking functions */
-void _glhckTrackFake(void *ptr, size_t size);
+void __glhckTrackFake(const char *channel, void *ptr, size_t size);
+void __glhckTrackSteal(const char *channel, void *ptr);
 void _glhckTrackTerminate(void);
+#define _glhckTrackFake(x,y) __glhckTrackFake(GLHCK_CHANNEL, x, y)
+#define _glhckTrackSteal(x)   __glhckTrackSteal(GLHCK_CHANNEL, x)
 #else
 #define _glhckTrackFake(x,y) ;
+#define _glhckTrackSteal(x) ;
 #endif
 
 /* util functions */
