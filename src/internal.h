@@ -324,8 +324,10 @@ typedef struct _glhckMaterial {
 typedef struct __GLHCKobjectView {
    kmMat4 matrix; /* model matrix */
    kmAABB bounding; /* bounding box (non-transformed) */
-   kmAABB aabb; /* transformed bounding (axis aligned) */
-   kmAABB obb; /* transformed bounding (oriented) */
+   kmAABB aabb; /* transformed bounding box (axis aligned) */
+   kmAABB aabbFull; /* aabb containing all the children */
+   kmAABB obb; /* transformed bounding box (oriented) */
+   kmAABB obbFull; /* obb containing all the children */
    kmVec3 translation, target, rotation, scaling;
    char update; /* does the model matrix need recalculation? */
    char wasFlipped; /* was drawn last time using flipped projection? */

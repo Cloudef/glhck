@@ -422,18 +422,27 @@ typedef enum glhckFrustumPlane {
 
 /* frustum corners */
 typedef enum glhckFrustumCorner {
-   GLHCK_FRUSTUM_CORNER_BOTTOM_LEFT,
-   GLHCK_FRUSTUM_CORNER_BOTTOM_RIGHT,
-   GLHCK_FRUSTUM_CORNER_TOP_RIGHT,
-   GLHCK_FRUSTUM_CORNER_TOP_LEFT,
+   GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_LEFT,
+   GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_RIGHT,
+   GLHCK_FRUSTUM_CORNER_NEAR_TOP_RIGHT,
+   GLHCK_FRUSTUM_CORNER_NEAR_TOP_LEFT,
+   GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_LEFT,
+   GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_RIGHT,
+   GLHCK_FRUSTUM_CORNER_FAR_TOP_RIGHT,
+   GLHCK_FRUSTUM_CORNER_FAR_TOP_LEFT,
    GLHCK_FRUSTUM_CORNER_LAST
 } glhckFrustumCorner;
+
+typedef enum glhckFrustumTestResult {
+   GLHCK_FRUSTUM_OUTSIDE,
+   GLHCK_FRUSTUM_INSIDE,
+   GLHCK_FRUSTUM_PARTIAL
+} glhckFrustumTestResult;
 
 /* frustum struct */
 typedef struct glhckFrustum {
    kmPlane planes[GLHCK_FRUSTUM_PLANE_LAST];
-   kmVec3 nearCorners[GLHCK_FRUSTUM_CORNER_LAST];
-   kmVec3 farCorners[GLHCK_FRUSTUM_CORNER_LAST];
+   kmVec3 corners[GLHCK_FRUSTUM_CORNER_LAST];
 } glhckFrustum;
 
 /* parent affection flags */
@@ -737,7 +746,9 @@ GLHCKAPI void glhckFrustumBuild(glhckFrustum *object, const kmMat4 *mvp);
 GLHCKAPI void glhckFrustumRender(glhckFrustum *object);
 GLHCKAPI int glhckFrustumContainsPoint(const glhckFrustum *object, const kmVec3 *point);
 GLHCKAPI kmScalar glhckFrustumContainsSphere(const glhckFrustum *object, const kmVec3 *point, kmScalar radius);
+GLHCKAPI glhckFrustumTestResult glhckFrustumContainsSphereEx(const glhckFrustum *object, const kmVec3 *point, kmScalar radius);
 GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *object, const kmAABB *aabb);
+GLHCKAPI glhckFrustumTestResult glhckFrustumContainsAABBEx(const glhckFrustum *object, const kmAABB *aabb);
 
 /* cameras */
 GLHCKAPI glhckCamera* glhckCameraNew(void);
@@ -806,7 +817,9 @@ GLHCKAPI int glhckObjectGetDrawWireframe(const glhckObject *object);
 
 /* object control */
 GLHCKAPI const kmAABB* glhckObjectGetOBB(glhckObject *object);
+GLHCKAPI const kmAABB* glhckObjectGetOBBWithChildren(glhckObject *object);
 GLHCKAPI const kmAABB* glhckObjectGetAABB(glhckObject *object);
+GLHCKAPI const kmAABB* glhckObjectGetAABBWithChildren(glhckObject *object);
 GLHCKAPI const kmMat4* glhckObjectGetMatrix(glhckObject *object);
 GLHCKAPI const kmVec3* glhckObjectGetPosition(const glhckObject *object);
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);

@@ -226,6 +226,23 @@ void _glhckObjectUpdateBoxes(glhckObject *object)
    /* set edges */
    glhckSetV3(&object->view.aabb.max, &max);
    glhckSetV3(&object->view.aabb.min, &min);
+   memcpy(&object->view.aabbFull, &object->view.aabb, sizeof(kmAABB));
+   memcpy(&object->view.obbFull, &object->view.obb, sizeof(kmAABB));
+
+   /* update full aabb && obb */
+   if (object->numChilds) {
+      unsigned int i;
+      const kmAABB *caabb, *cobb;
+      kmAABB *aabb = &object->view.aabbFull, *obb = &object->view.obbFull;
+      for (i = 0; i < object->numChilds; ++i) {
+         caabb = glhckObjectGetAABBWithChildren(object->childs[i]);
+         cobb = glhckObjectGetOBBWithChildren(object->childs[i]);
+         glhckMinV3(&aabb->min, &caabb->min);
+         glhckMaxV3(&aabb->max, &caabb->max);
+         glhckMinV3(&obb->min, &cobb->min);
+         glhckMaxV3(&obb->max, &cobb->max);
+      }
+   }
 }
 
 /* \brief update view matrix of object */
@@ -817,58 +834,64 @@ GLHCKAPI int glhckObjectGetDrawWireframe(const glhckObject *object)
    return object->flags & GLHCK_OBJECT_DRAW_WIREFRAME;
 }
 
-/* \brief get obb bounding box of the object */
-GLHCKAPI const kmAABB*  glhckObjectGetOBB(glhckObject *object)
+/* \brief get obb bounding box of the object that includes all the children */
+GLHCKAPI const kmAABB* glhckObjectGetOBBWithChildren(glhckObject *object)
 {
-   const kmAABB *obb, *cobb;
-   unsigned int i;
    CALL(1, "%p", object);
    assert(object);
 
    /* update matrix first, if needed */
-   if (object->view.update)
-      _glhckObjectUpdateMatrix(object);
+   if (object->view.update) _glhckObjectUpdateMatrix(object);
 
-   /* if performed on root, get the largest obb */
-   obb = &object->view.obb;
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      for (i = 0; i != object->numChilds; ++i) {
-         cobb = glhckObjectGetOBB(object->childs[i]);
-         if (obb->max.x < cobb->max.x &&
-             obb->max.y < cobb->max.y)
-            obb = cobb;
-      }
-   }
+   RET(2, "%p", &object->view.obbFull);
+   return &object->view.obbFull;
+}
 
-   RET(1, "%p", obb);
-   return obb;
+/* \brief get obb bounding box of the object */
+GLHCKAPI const kmAABB* glhckObjectGetOBB(glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   /* if performed on root, return the full obb instead */
+   if (object->flags & GLHCK_OBJECT_ROOT)
+      return glhckObjectGetOBBWithChildren(object);
+
+   /* update matrix first, if needed */
+   if (object->view.update) _glhckObjectUpdateMatrix(object);
+
+   RET(1, "%p", &object->view.obb);
+   return &object->view.obb;
+}
+
+/* \brief get aabb bounding box of the object that includes all the children */
+GLHCKAPI const kmAABB* glhckObjectGetAABBWithChildren(glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   /* update matrix first, if needed */
+   if (object->view.update) _glhckObjectUpdateMatrix(object);
+
+   RET(2, "%p", &object->view.aabbFull);
+   return &object->view.aabbFull;
 }
 
 /* \brief get aabb bounding box of the object */
 GLHCKAPI const kmAABB* glhckObjectGetAABB(glhckObject *object)
 {
-   const kmAABB *aabb, *caabb;
-   unsigned int i;
    CALL(2, "%p", object);
    assert(object);
 
+   /* if performed on root, return the full aabb instead */
+   if (object->flags & GLHCK_OBJECT_ROOT)
+      return glhckObjectGetAABBWithChildren(object);
+
    /* update matrix first, if needed */
-   if (object->view.update)
-      _glhckObjectUpdateMatrix(object);
+   if (object->view.update) _glhckObjectUpdateMatrix(object);
 
-   /* if performed on root, get the largest aabb */
-   aabb = &object->view.aabb;
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      for (i = 0; i != object->numChilds; ++i) {
-         caabb = glhckObjectGetAABB(object->childs[i]);
-         if (aabb->max.x < caabb->max.x &&
-             aabb->max.y < caabb->max.y)
-            aabb = &object->childs[i]->view.aabb;
-      }
-   }
-
-   RET(2, "%p", aabb);
-   return aabb;
+   RET(2, "%p", &object->view.aabb);
+   return &object->view.aabb;
 }
 
 /* \brief get object's matrix */

@@ -273,35 +273,34 @@ static void rGeometryPointer(const glhckGeometry *geometry)
 static void rFrustumRender(glhckFrustum *frustum)
 {
    GLuint i = 0;
-   kmVec3 *near = frustum->nearCorners;
-   kmVec3 *far  = frustum->farCorners;
+   kmVec3 *corners = frustum->corners;
    const GLfloat points[] = {
-                      near[0].x, near[0].y, near[0].z,
-                      near[1].x, near[1].y, near[1].z,
-                      near[1].x, near[1].y, near[1].z,
-                      near[2].x, near[2].y, near[2].z,
-                      near[2].x, near[2].y, near[2].z,
-                      near[3].x, near[3].y, near[3].z,
-                      near[3].x, near[3].y, near[3].z,
-                      near[0].x, near[0].y, near[0].z,
+                      corners[0].x, corners[0].y, corners[0].z,
+                      corners[1].x, corners[1].y, corners[1].z,
+                      corners[1].x, corners[1].y, corners[1].z,
+                      corners[2].x, corners[2].y, corners[2].z,
+                      corners[2].x, corners[2].y, corners[2].z,
+                      corners[3].x, corners[3].y, corners[3].z,
+                      corners[3].x, corners[3].y, corners[3].z,
+                      corners[0].x, corners[0].y, corners[0].z,
 
-                      far[0].x, far[0].y, far[0].z,
-                      far[1].x, far[1].y, far[1].z,
-                      far[1].x, far[1].y, far[1].z,
-                      far[2].x, far[2].y, far[2].z,
-                      far[2].x, far[2].y, far[2].z,
-                      far[3].x, far[3].y, far[3].z,
-                      far[3].x, far[3].y, far[3].z,
-                      far[0].x, far[0].y, far[0].z,
+                      corners[4].x, corners[4].y, corners[4].z,
+                      corners[5].x, corners[5].y, corners[5].z,
+                      corners[5].x, corners[5].y, corners[5].z,
+                      corners[6].x, corners[6].y, corners[6].z,
+                      corners[6].x, corners[6].y, corners[6].z,
+                      corners[7].x, corners[7].y, corners[7].z,
+                      corners[7].x, corners[7].y, corners[7].z,
+                      corners[4].x, corners[4].y, corners[4].z,
 
-                      near[0].x, near[0].y, near[0].z,
-                       far[0].x,  far[0].y,  far[0].z,
-                      near[1].x, near[1].y, near[1].z,
-                       far[1].x,  far[1].y,  far[1].z,
-                      near[2].x, near[2].y, near[2].z,
-                       far[2].x,  far[2].y,  far[2].z,
-                      near[3].x, near[3].y, near[3].z,
-                       far[3].x,  far[3].y,  far[3].z  };
+                      corners[0].x, corners[0].y, corners[0].z,
+                      corners[4].x, corners[4].y, corners[4].z,
+                      corners[1].x, corners[1].y, corners[1].z,
+                      corners[5].x, corners[5].y, corners[5].z,
+                      corners[2].x, corners[2].y, corners[2].z,
+                      corners[6].x, corners[6].y, corners[6].z,
+                      corners[3].x, corners[3].y, corners[3].z,
+                      corners[7].x, corners[7].y, corners[7].z  };
 
    /* disable stuff if enabled */
    if (GL_HAS_STATE(GL_STATE_TEXTURE)) {
