@@ -631,28 +631,62 @@ static void gameWindowLogic(GameWindow *window)
    kmVec3Assign(&window->camera->target, &target);
 }
 
+static void renderAllCulled(glhckObject *object, glhckFrustum *frustum, unsigned int *culled)
+{
+   unsigned int i, numChilds;
+   glhckObject **childs = glhckObjectChildren(object, &numChilds);
+
+   /* do test classification for root objects */
+   if (glhckObjectIsRoot(object)) {
+      glhckFrustumTestResult test = glhckFrustumContainsAABBEx(frustum, glhckObjectGetAABBWithChildren(object));
+
+      /* everything inside or outside, no need to process further */
+      if (test != GLHCK_FRUSTUM_PARTIAL) {
+         if (test == GLHCK_FRUSTUM_INSIDE) glhckObjectRenderAll(object);
+         else *culled += numChilds;
+         return;
+      }
+   } else {
+      /* non root, do cheaper test without classification */
+      if (!glhckFrustumContainsAABB(frustum, glhckObjectGetAABB(object))) {
+         if (culled) *culled += 1;
+         return;
+      }
+   }
+
+   for (i = 0; i < numChilds; ++i) renderAllCulled(childs[i], frustum, culled);
+   glhckObjectRender(object);
+}
+
 static void gameWindowRender(GameWindow *window, float interpolation)
 {
    GameActor *a;
    GameBullet *b;
    kmVec3 intrp;
+   glhckFrustum *frustum;
+   unsigned int culled = 0;
 
    kmVec3Intrp(&intrp, glhckObjectGetPosition(window->camera->object), &window->camera->position, interpolation);
    glhckObjectPosition(window->camera->object, &intrp);
    kmVec3Intrp(&intrp, glhckObjectGetTarget(window->camera->object), &window->camera->target, interpolation);
    glhckObjectTarget(window->camera->object, &intrp);
    glhckCameraUpdate(window->camera->handle);
+   frustum = glhckCameraGetFrustum(window->camera->handle);
 
-   glhckObjectRenderAll(window->world);
+   renderAllCulled(window->world, frustum, &culled);
 
    for (a = window->actor; a; a = a->next) {
-      glhckObjectScalef(a->muzzle, 0.0f, 0.0f, 0.0f);
       kmVec3Intrp(&intrp, glhckObjectGetPosition(a->object), &a->interpolated, interpolation);
       glhckObjectPosition(a->object, &intrp);
       kmVec3ModIntrp(&intrp, glhckObjectGetRotation(a->object), &a->rotation, interpolation, 360);
       glhckObjectRotation(a->object, &intrp);
       glhckObjectScalef(a->muzzle, 0.0f, 0.0f, 0.0f);
       a->intrpAnimTime = fIntrp(a->intrpAnimTime, a->animTime, interpolation);
+
+      if (!glhckFrustumContainsAABB(frustum, &a->aabb)) {
+         ++culled;
+         continue;
+      }
 
       glhckAnimatorUpdate(a->animator, a->intrpAnimTime);
       glhckAnimatorTransform(a->animator, a->object);
@@ -661,30 +695,46 @@ static void gameWindowRender(GameWindow *window, float interpolation)
 
    for (b = window->bullet; b; b = b->next) {
       kmVec3Intrp(&b->rendered, &b->rendered, &b->position, interpolation);
+
+      if (!glhckFrustumContainsAABB(frustum, &b->aabb)) {
+         ++culled;
+         continue;
+      }
+
       glhckObjectPosition(window->bulletObject, &b->rendered);
       glhckObjectRotationf(window->bulletObject, 0.0f, b->angle, 0.0f);
       glhckObjectRender(window->bulletObject);
    }
 
    for (a = window->actor; a; a = a->next) {
-      if (a->shootTimer <= 0.0f) continue;
       kmVec3 bpos;
+      if (a->shootTimer <= 0.0f) continue;
+
+      if (!glhckFrustumContainsAABB(frustum, &a->aabb)) {
+         ++culled;
+         continue;
+      }
+
       glhckBoneGetPositionRelativeOnObject(a->muzzleBone, a->object, &bpos);
-      bpos.y += 1.5f;
-      bpos.z += 2.0f;
+      bpos.y += 1.5f; bpos.z += 2.0f;
       glhckObjectPosition(a->muzzle, &bpos);
       glhckObjectScalef(a->muzzle, a->shootTimer/1.0f, 1.0f, a->shootTimer/1.0f);
       glhckObjectRenderAll(a->muzzle);
    }
 
+   char debug[255];
+   snprintf(debug, sizeof(debug)-1, "Culled: %d", culled);
+
    glhckTextColorb(window->text->handle, 0, 0, 0, 255);
    gameTextStash(window->text, FONT_DEFAULT, 1, 1 + FONT_SIZE[FONT_DEFAULT], window->title);
+   gameTextStash(window->text, FONT_DEFAULT, 1, 1 + FONT_SIZE[FONT_DEFAULT] * 2, debug);
    gameTextStash(window->text, FONT_DEFAULT, window->width - 49, 1 + window->height - 1, "~Cloudef");
    glhckTextRender(window->text->handle);
    glhckTextClear(window->text->handle);
 
    glhckTextColorb(window->text->handle, 255, 255, 255, 255);
    gameTextStash(window->text, FONT_DEFAULT, 0, FONT_SIZE[FONT_DEFAULT], window->title);
+   gameTextStash(window->text, FONT_DEFAULT, 0, FONT_SIZE[FONT_DEFAULT] * 2, debug);
    gameTextStash(window->text, FONT_DEFAULT, window->width - 50, window->height - 1, "~Cloudef");
    glhckTextRender(window->text->handle);
    glhckTextClear(window->text->handle);
