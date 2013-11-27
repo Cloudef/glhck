@@ -372,6 +372,8 @@ static GameWindow* gameWindowNew(int argc, char **argv)
 
    glfwMakeContextCurrent(window->handle);
    glhckContextSet(window->context);
+   glfwSwapInterval(0);
+   glEnable(GL_MULTISAMPLE);
 
    if (!glhckDisplayCreate(window->width, window->height, GLHCK_RENDER_AUTO))
       goto fail;
@@ -698,8 +700,6 @@ static int gameWindowRun(GameWindow *window)
 
    glhckContextSet(window->context);
    glfwMakeContextCurrent(window->handle);
-   glfwSwapInterval(0);
-   glEnable(GL_MULTISAMPLE);
    gameTimeBegin(&window->time);
 
    int loops = 0; /* for arcade feel, we slow down when CPU can't keep up */
