@@ -618,8 +618,11 @@ int glhckGeometryAddVertexType(const glhckVertexTypeFunctionMap *api, const glhc
    if (newCount >= GLHCK_VTX_AUTO)
       goto fail;
 
-   if (!(tmp = _glhckRealloc(GLHCKW()->vertexType, oldCount, newCount, sizeof(__GLHCKvertexType))))
+   if (!GLHCKW()->vertexType && !(tmp = _glhckMalloc(newCount * sizeof(__GLHCKvertexType)))) {
       goto fail;
+   } else if (!(tmp = _glhckRealloc(GLHCKW()->vertexType, oldCount, newCount, sizeof(__GLHCKvertexType)))) {
+      goto fail;
+   }
 
    for (i = 0; i < 4; ++i) _glhckDataTypeAttributes(dataType[i], &vertexType.msize[i], &vertexType.max[i], &vertexType.normalized[i]);
    vertexType.normalized[0] = 0; /* vertices are never normalized */
@@ -664,8 +667,11 @@ int glhckGeometryAddIndexType(const glhckIndexTypeFunctionMap *api, glhckDataTyp
    if (newCount >= GLHCK_IDX_AUTO)
       goto fail;
 
-   if (!(tmp = _glhckRealloc(GLHCKW()->indexType, oldCount, newCount, sizeof(__GLHCKindexType))))
+   if (!GLHCKW()->indexType && !(tmp = _glhckMalloc(newCount * sizeof(__GLHCKindexType)))) {
       goto fail;
+   } else if (!(tmp = _glhckRealloc(GLHCKW()->indexType, oldCount, newCount, sizeof(__GLHCKindexType)))) {
+      goto fail;
+   }
 
    _glhckDataTypeAttributes(dataType, &indexType.size, &indexType.max, NULL);
    memcpy(&indexType.api, api, sizeof(glhckIndexTypeFunctionMap));
