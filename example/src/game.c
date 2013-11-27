@@ -702,11 +702,15 @@ static int gameWindowRun(GameWindow *window)
    glfwMakeContextCurrent(window->handle);
    gameTimeBegin(&window->time);
 
-   int loops = 0; /* for arcade feel, we slow down when CPU can't keep up */
-   while (glfwGetTime() > window->time.next && loops < 1) {
+   if (glfwGetTime() > window->time.next) {
       gameWindowLogic(window);
       window->time.next += SKIP_TICKS;
-      loops++;
+
+      /* handle slowdown for arcade feel.
+       * if this was networked game, we would loop until we catch up to avoid desync. */
+      if (glfwGetTime() > window->time.next) {
+         window->time.next += glfwGetTime() - window->time.next;
+      }
    }
 
    float renderNow = glfwGetTime();
