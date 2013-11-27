@@ -816,6 +816,8 @@ int main(int argc, char **argv)
       if (!(window[i] = gameWindowNew(argc, argv)))
          goto fail;
 
+   glhckMemoryGraph();
+
    do {
       glfwPollEvents();
       for (i = 0, running = 0; i < windows; running += window[i]?1:0, ++i)
