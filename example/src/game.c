@@ -31,7 +31,7 @@ typedef struct GameActor {
    glhckAnimator *animator;
    kmVec3 position, rotation, interpolated;
    struct GameActor *next;
-   float shootTimer, animTime;
+   float shootTimer, animTime, intrpAnimTime;
    unsigned char flags;
    char pushed;
 } GameActor;
@@ -614,8 +614,6 @@ static void gameWindowLogic(GameWindow *window)
    for (a = window->actor; a; a = a->next) {
       gameActorLogic(window, a, window->player);
       if (a->pushed || (a->flags && a->flags != 1<<4)) {
-         glhckAnimatorUpdate(a->animator, a->animTime);
-         glhckAnimatorTransform(a->animator, a->object);
          a->animTime += 0.02f * (a->flags & 1<<4 ? 0.8f : 1.0f);
       }
       a->pushed = 0;
@@ -651,6 +649,11 @@ static void gameWindowRender(GameWindow *window, float interpolation)
       glhckObjectPosition(a->object, &intrp);
       kmVec3ModIntrp(&intrp, glhckObjectGetRotation(a->object), &a->rotation, interpolation, 360);
       glhckObjectRotation(a->object, &intrp);
+      glhckObjectScalef(a->muzzle, 0.0f, 0.0f, 0.0f);
+      a->intrpAnimTime = fIntrp(a->intrpAnimTime, a->animTime, interpolation);
+
+      glhckAnimatorUpdate(a->animator, a->intrpAnimTime);
+      glhckAnimatorTransform(a->animator, a->object);
       glhckObjectRenderAll(a->object);
    }
 
