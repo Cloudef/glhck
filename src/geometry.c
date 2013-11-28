@@ -1,6 +1,10 @@
 #include "internal.h"
 #include <limits.h> /* for type limits */
 
+#ifndef __STRING
+#  define __STRING(x) #x
+#endif
+
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
 
 /* This file contains all the methods that access
