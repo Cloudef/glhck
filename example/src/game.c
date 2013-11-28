@@ -690,8 +690,10 @@ static void gameWindowRender(GameWindow *window, float interpolation)
          continue;
       }
 
-      glhckAnimatorUpdate(a->animator, a->intrpAnimTime);
-      glhckAnimatorTransform(a->animator, a->object);
+      if (a->animator) {
+         glhckAnimatorUpdate(a->animator, a->intrpAnimTime);
+         glhckAnimatorTransform(a->animator, a->object);
+      }
       glhckObjectRenderAll(a->object);
    }
 
