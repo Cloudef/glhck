@@ -2,12 +2,6 @@
 #include <stdlib.h> /* for malloc */
 #include <assert.h> /* for assert */
 
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
-
 #ifndef NULLDO
 #  define NULLDO(f,x) { f(x); x = NULL; }
 #endif

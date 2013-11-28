@@ -1,16 +1,7 @@
 #include "internal.h"
+#include <stdlib.h> /* for malloc */
 #include <stdio.h>  /* for printf   */
 #include <stdarg.h> /* for va_start */
-
-#ifdef _WIN32
-#  include <windows.h>
-#endif
-
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
 
 /* Tracing levels:
  * 0: Non frequent calls (creation, freeing, etc..)

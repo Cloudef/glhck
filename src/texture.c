@@ -1,14 +1,9 @@
 #include "internal.h"
 #include "import/import.h"
 #include "texhck.h"
-#include <stdio.h>            /* for file io */
-#include <assert.h>           /* for assert */
-
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
+#include <stdlib.h> /* for malloc */
+#include <stdio.h>  /* for file io */
+#include <assert.h> /* for assert */
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_TEXTURE

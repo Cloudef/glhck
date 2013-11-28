@@ -1,15 +1,10 @@
+#define _GNU_SOURCE
 #include "internal.h"
+#include <stdlib.h> /* for malloc   */
 #include <stdio.h>  /* for printf   */
-#include <stdlib.h> /* for realloc  */
 #include <ctype.h>  /* for toupper  */
 #include <stdarg.h> /* for va_list  */
 #include <string.h> /* for strdup   */
-
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
 
 #ifdef __WIN32__
 #  include <windows.h>
@@ -150,6 +145,7 @@ size_t _glhckStrsplit(char ***dst, const char *str, const char *token)
    char *saveptr, *ptr, *start;
    size_t t_len, i;
 
+   /* FIXME: use own strdup implementation and remove _GNU_SOURCE */
    if (!(saveptr=strdup(str)))
       return 0;
 

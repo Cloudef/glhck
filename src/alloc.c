@@ -1,14 +1,8 @@
 #define _GNU_SOURCE
 #include "internal.h"
-#include <stdio.h>   /* for printf */
 #include <stdlib.h>  /* for malloc */
+#include <stdio.h>   /* for printf */
 #include <assert.h>  /* for assert */
-
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_ALLOC
@@ -164,6 +158,8 @@ char* __glhckStrdup(const char *channel, const char *s)
 {
    char *s2;
    CALL(3, "%s, %s", channel, s);
+
+   /* FIXME: do own strdup and remove _GNU_SOURCE at top of file */
    if (!(s2 = strdup(s)))
       goto fail;
 
