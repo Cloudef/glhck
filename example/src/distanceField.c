@@ -78,8 +78,10 @@ int main(int argc, char **argv)
 
    puts("-!- glhck init");
 
-   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_OPENGL))
+   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_OPENGL)) {
+      puts("-!- needs shaders, sorry!");
       return EXIT_FAILURE;
+   }
 
    puts("-!- glhck display create");
 

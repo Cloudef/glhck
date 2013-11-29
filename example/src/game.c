@@ -9,6 +9,10 @@
 #include "GLFW/glfw3.h"
 #include "glhck/glhck.h"
 
+#if EMSCRIPTEN
+#  include <emscripten/emscripten.h>
+#endif
+
 typedef enum GameFont {
    FONT_DEFAULT,
    FONT_LAST
@@ -428,7 +432,7 @@ static GameWindow* gameWindowNew(int argc, char **argv)
    for (i = 0; i < numChilds; ++i)
       glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), NULL);
 
-   for (i = 0; i < 8; ++i) gameActorNew(window);
+   for (i = 0; i < 1; ++i) gameActorNew(window);
 
    window->running = 1;
    glfwSetWindowUserPointer(window->handle, window);
@@ -539,11 +543,17 @@ static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *play
    kmVec3Assign(&lastPosition, &actor->position);
 
    if (actor == player) {
-      if (glfwGetKey(window->handle, GLFW_KEY_UP)    == GLFW_PRESS) flags |= UP;
-      if (glfwGetKey(window->handle, GLFW_KEY_DOWN)  == GLFW_PRESS) flags |= DN;
-      if (glfwGetKey(window->handle, GLFW_KEY_LEFT)  == GLFW_PRESS) flags |= LT;
-      if (glfwGetKey(window->handle, GLFW_KEY_RIGHT) == GLFW_PRESS) flags |= RT;
-      if (glfwGetKey(window->handle, GLFW_KEY_Q)     == GLFW_PRESS) flags |= ST;
+      if (glfwGetKey(window->handle, GLFW_KEY_UP)    == GLFW_PRESS ||
+          glfwGetKey(window->handle, GLFW_KEY_W)     == GLFW_PRESS) flags |= UP;
+      if (glfwGetKey(window->handle, GLFW_KEY_DOWN)  == GLFW_PRESS ||
+          glfwGetKey(window->handle, GLFW_KEY_S)     == GLFW_PRESS) flags |= DN;
+      if (glfwGetKey(window->handle, GLFW_KEY_LEFT)  == GLFW_PRESS ||
+          glfwGetKey(window->handle, GLFW_KEY_A)     == GLFW_PRESS) flags |= LT;
+      if (glfwGetKey(window->handle, GLFW_KEY_RIGHT) == GLFW_PRESS ||
+          glfwGetKey(window->handle, GLFW_KEY_D)     == GLFW_PRESS) flags |= RT;
+      if (glfwGetKey(window->handle, GLFW_KEY_Z)     == GLFW_PRESS ||
+          glfwGetKey(window->handle, GLFW_KEY_END)   == GLFW_PRESS ||
+          glfwGetMouseButton(window->handle, 0)      == GLFW_PRESS) flags |= ST;
    } else {
       int rand = (int)window->time.now + ((size_t)actor >> 3) - ((size_t)actor->next >> 4);
       if (actor->position.z < player->position.z-10) flags |= UP;
@@ -756,6 +766,13 @@ static int gameWindowRun(GameWindow *window)
    glfwMakeContextCurrent(window->handle);
    gameTimeBegin(&window->time);
 
+#if EMSCRIPTEN
+   /* emscripten mainloop is funny, so lets not slowdown. catchup instead. */
+   while (glfwGetTime() > window->time.next) {
+      gameWindowLogic(window);
+      window->time.next += SKIP_TICKS;
+   }
+#else
    if (glfwGetTime() > window->time.next) {
       gameWindowLogic(window);
       window->time.next += SKIP_TICKS;
@@ -766,6 +783,7 @@ static int gameWindowRun(GameWindow *window)
          window->time.next += glfwGetTime() - window->time.next;
       }
    }
+#endif
 
    float renderNow = glfwGetTime();
    window->time.logicTime = (renderNow - window->time.now) * 1000.0f;
@@ -785,11 +803,25 @@ static int gameWindowRun(GameWindow *window)
    return 1;
 }
 
+
+static GameWindow **window = NULL;
+static unsigned int windows = 1;
+void mainLoop(void)
+{
+   unsigned int i, running;
+   glfwPollEvents();
+   for (i = 0, running = 0; i < windows; running += window[i]?1:0, ++i)
+      if (window[i] && !gameWindowRun(window[i])) window[i] = NULL;
+
+#if EMSCRIPTEN
+   if (!running) emscripten_cancel_main_loop();
+#endif
+}
+
 int main(int argc, char **argv)
 {
-   GameWindow **window = NULL;
    glhckCompileFeatures features;
-   unsigned int i, windows = 1, running;
+   unsigned int i;
 
    glfwSetErrorCallback(glfwErrorCallback);
    if (!glfwInit()) goto fail;
@@ -822,11 +854,16 @@ int main(int argc, char **argv)
 
    glhckMemoryGraph();
 
+#if EMSCRIPTEN
+   emscripten_set_main_loop(mainLoop, 0, 1);
+#else
+   unsigned int running;
    do {
       glfwPollEvents();
       for (i = 0, running = 0; i < windows; running += window[i]?1:0, ++i)
          if (window[i] && !gameWindowRun(window[i])) window[i] = NULL;
    } while (running);
+#endif
 
    free(window);
    glfwTerminate();

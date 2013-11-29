@@ -487,6 +487,13 @@ int main(int argc, char **argv)
 
       ++frameCounter;
       duration += delta;
+
+#if EMSCRIPTEN
+      puts("-!- It was a triumph!");
+      puts("-!- Sadly the mainloop of this example hasn't been made Emscripten friendly.");
+      puts("-!- I suggest trying example/game.bc instead.");
+      break;
+#endif
    }
 
    /* check that everything is freed like should */
