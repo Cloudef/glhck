@@ -131,6 +131,12 @@ static _glhckModelImporter* _glhckGetModelImporter(const char *file)
    unsigned int i;
    CALL(0, "%s", file);
 
+   if (access(file, F_OK) == -1) {
+      DEBUG(GLHCK_DBG_ERROR, "Could not access file: %s", file);
+      RET(0, "%s", "FILE_DOES_NOT_EXIST");
+      return NULL;
+   }
+
    /* --------- FORMAT HEADER CHECKING ------------ */
 
    for (i = 0; modelImporters[i].formatFunc; ++i)
@@ -191,6 +197,12 @@ static _glhckImageImporter* _glhckGetImageImporter(const char *file)
 {
    unsigned int i;
    CALL(0, "%s", file);
+
+   if (access(file, F_OK) == -1) {
+      DEBUG(GLHCK_DBG_ERROR, "Could not access file: %s", file);
+      RET(0, "%s", "FILE_DOES_NOT_EXIST");
+      return NULL;
+   }
 
    /* --------- FORMAT HEADER CHECKING ------------ */
 
