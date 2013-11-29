@@ -61,6 +61,14 @@ static void _glhckTraceSet(const char *name, int active)
       GLHCKT()->channel[i].active = active;
 }
 
+#if EMSCRIPTEN
+static const char *EMSCRIPTEN_URL = NULL;
+__attribute__ ((noinline,used)) extern void _glhckTraceEmscriptenURL(const char *url) {
+   if (EMSCRIPTEN_URL) free((char*)EMSCRIPTEN_URL);
+   EMSCRIPTEN_URL = _glhckStrdupNoTrack(url);
+}
+#endif
+
 /* \brief init debug system */
 void _glhckTraceInit(int argc, const char **argv)
 {
@@ -77,18 +85,21 @@ void _glhckTraceInit(int argc, const char **argv)
    memcpy(channels, _traceChannels, sizeof(_traceChannels));
    GLHCKT()->channel = channels;
 
-#if EMSCRIPTEN
-   // _glhckTraceSet("2", 1);
-   // _glhckTraceSet("trace", 1);
-   _glhckTraceSet("all", 1);
-#endif
-
    for(i = 0, match = NULL; i != argc; ++i) {
       if (!_glhckStrnupcmp(argv[i], GLHCK_CHANNEL_SWITCH"=", strlen(GLHCK_CHANNEL_SWITCH"="))) {
          match = argv[i] + strlen(GLHCK_CHANNEL_SWITCH"=");
          break;
       }
    }
+
+#if EMSCRIPTEN
+   if (!match) {
+      asm("Module.ccall('_glhckTraceEmscriptenURL', 'number', ['string'], [document.URL]);");
+      printf("URL: %s\n", EMSCRIPTEN_URL);
+      match = _glhckStrupstr(EMSCRIPTEN_URL, GLHCK_CHANNEL_SWITCH"=") + strlen(GLHCK_CHANNEL_SWITCH"=");
+      printf("MATCH: %s\n", match);
+   }
+#endif
 
    if (!match) return;
    count = _glhckStrsplit(&split, match, ",");
