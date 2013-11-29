@@ -335,7 +335,7 @@ char *gnu_basename(char *path)
 int _glhckImportEmscripten(const char *file, _glhckImportImageStruct *import)
 {
    unsigned int i, i2;
-   char *importData = NULL, hasa = 0;
+   unsigned char *importData = NULL, hasa = 0;
    SDL_Surface* surface = NULL;
    glhckTextureFormat format;
    CALL(0, "%s, %p", file, import);
@@ -358,18 +358,7 @@ int _glhckImportEmscripten(const char *file, _glhckImportImageStruct *import)
       goto fail;
 
    memcpy(importData, surface->pixels, surface->w * surface->h * 4);
-
-   /* invert */
-   for (i = 0; i*2 < surface->h; ++i) {
-      int index1 = i*surface->w*surface->format->BytesPerPixel;
-      int index2 = (surface->h-1-i)*surface->w*surface->format->BytesPerPixel;
-      for (i2 = surface->w*surface->format->BytesPerPixel; i2 > 0; --i2) {
-         unsigned char temp = importData[index1];
-         importData[index1] = importData[index2];
-         importData[index2] = temp;
-         ++index1; ++index2;
-      }
-   }
+   _glhckInvertPixels(importData, surface->w, surface->h, surface->format->BytesPerPixel);
 
    import->width  = surface->w;
    import->height = surface->h;
