@@ -63,9 +63,9 @@ static void _glhckTraceSet(const char *name, int active)
 
 #if EMSCRIPTEN
 static const char *EMSCRIPTEN_URL = NULL;
-__attribute__ ((noinline,used)) extern void _glhckTraceEmscriptenURL(const char *url) {
+__attribute__((used, noinline)) extern void _glhckTraceEmscriptenURL(const char *url) {
    if (EMSCRIPTEN_URL) free((char*)EMSCRIPTEN_URL);
-   EMSCRIPTEN_URL = _glhckStrdupNoTrack(url);
+   EMSCRIPTEN_URL = (url?_glhckStrdupNoTrack(url):NULL);
 }
 #endif
 
@@ -94,10 +94,10 @@ void _glhckTraceInit(int argc, const char **argv)
 
 #if EMSCRIPTEN
    if (!match) {
-      asm("Module.ccall('_glhckTraceEmscriptenURL', 'number', ['string'], [document.URL]);");
-      printf("URL: %s\n", EMSCRIPTEN_URL);
-      match = _glhckStrupstr(EMSCRIPTEN_URL, GLHCK_CHANNEL_SWITCH"=") + strlen(GLHCK_CHANNEL_SWITCH"=");
-      printf("MATCH: %s\n", match);
+      asm("if (typeof __glhckTraceEmscriptenURL != 'undefined')"
+          "__glhckTraceEmscriptenURL(allocate(intArrayFromString(document.URL), 'i8', ALLOC_STACK));"
+          "else Module.print('__glhckTraceEmscriptenURL was not exported for some reason.. Skipping!');");
+      if (EMSCRIPTEN_URL) match = _glhckStrupstr(EMSCRIPTEN_URL, GLHCK_CHANNEL_SWITCH"=") + strlen(GLHCK_CHANNEL_SWITCH"=");
    }
 #endif
 
