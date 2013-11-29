@@ -987,8 +987,16 @@ void _glhckTextureInsertToQueue(_glhckTexture *texture);
 /* tracing && debug functions */
 void _glhckTraceInit(int argc, const char **argv);
 void _glhckTraceTerminate(void);
+
+#if __GNUC__
+void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...)
+   __attribute__((format(printf, 4, 5)));
+void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *channel, const char *fmt, ...)
+   __attribute__((format(printf, 6, 7)));
+#else
 void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...);
 void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *channel, const char *fmt, ...);
+#endif
 
 /* internal geometry vertexdata */
 int _glhckGeometryInit(void);

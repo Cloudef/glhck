@@ -101,7 +101,7 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
    JSAMPROW row_pointer = NULL;
    jpegErrorStruct jerr;
    struct jpeg_decompress_struct cinfo;
-   CALL(0, "%s, %u", file, import);
+   CALL(0, "%s, %p", file, import);
 
    /* JPEG error handlers, uh... */
    cinfo.err = jpeg_std_error(&(jerr.pub));

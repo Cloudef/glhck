@@ -652,7 +652,7 @@ int glhckGeometryAddVertexType(const glhckVertexTypeFunctionMap *api, const glhc
    GLHCKW()->numVertexTypes += 1;
    memcpy(&GLHCKW()->vertexType[newCount-1], &vertexType, sizeof(__GLHCKvertexType));
 
-   RET(0, "%d", newCount-1);
+   RET(0, "%zu", newCount-1);
    return newCount-1;
 
 fail:
@@ -694,7 +694,7 @@ int glhckGeometryAddIndexType(const glhckIndexTypeFunctionMap *api, glhckDataTyp
    GLHCKW()->numIndexTypes += 1;
    memcpy(&GLHCKW()->indexType[newCount-1], &indexType, sizeof(__GLHCKindexType));
 
-   RET(0, "%d", newCount-1);
+   RET(0, "%zu", newCount-1);
    return newCount-1;
 
 fail:
@@ -934,7 +934,7 @@ int _glhckGeometryInsertVertices(glhckGeometry *object, int memb, unsigned char 
    return RETURN_OK;
 
 bad_precision:
-   DEBUG(GLHCK_DBG_ERROR, "Internal indices precision is %u, however there are more vertices\n"
+   DEBUG(GLHCK_DBG_ERROR, "Internal indices precision is %zu, however there are more vertices\n"
                           "in geometry(%p) than index can hold.",
                           GLHCKIT(object->indexType)->max,
                           object);
@@ -969,7 +969,7 @@ int _glhckGeometryInsertIndices(glhckGeometry *object, int memb, unsigned char t
    return RETURN_OK;
 
 bad_precision:
-   DEBUG(GLHCK_DBG_ERROR, "Internal indices precision is %u, however there are more vertices\n"
+   DEBUG(GLHCK_DBG_ERROR, "Internal indices precision is %zu, however there are more vertices\n"
                           "in geometry(%p) than index can hold.",
                           GLHCKIT(type)->max,
                           object);

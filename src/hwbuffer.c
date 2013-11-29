@@ -143,7 +143,7 @@ GLHCKAPI glhckHwBufferStoreType glhckHwBufferGetStoreType(glhckHwBuffer *object)
 GLHCKAPI void glhckHwBufferCreate(glhckHwBuffer *object, glhckHwBufferTarget target, int size, const void *data, glhckHwBufferStoreType usage)
 {
    glhckHwBuffer *old;
-   CALL(2, "%p, %d, %p, %d", object, size, data, usage);
+   CALL(2, "%p, %d, %d, %p, %d", object, target, size, data, usage);
    assert(object);
 
    /* store old buffer */
@@ -187,7 +187,7 @@ GLHCKAPI void glhckHwBufferBindRange(glhckHwBuffer *object, unsigned int index, 
 GLHCKAPI void glhckHwBufferFill(glhckHwBuffer *object, int offset, int size, const void *data)
 {
    glhckHwBuffer *old;
-   CALL(2, "%p, %p, %p, %p", object, offset, size, data);
+   CALL(2, "%p, %d, %d, %p", object, offset, size, data);
    assert(object && object->created);
 
    old = glhckHwBufferCurrentForTarget(object->target);

@@ -385,7 +385,6 @@ GLHCKAPI void glhckGetGlobalPrecision(unsigned char *itype, unsigned char *vtype
 #define _massacre(list, func) {                       \
    void *c;                                           \
    while ((c = GLHCKW()->list)) { while (func(c)); }  \
-   DEBUG(GLHCK_DBG_CRAP, "Slaughter: %p");            \
    GLHCKW()->list = NULL;                             \
 }
 

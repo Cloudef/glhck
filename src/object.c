@@ -597,7 +597,7 @@ GLHCKAPI void glhckObjectMaterial(glhckObject *object, glhckMaterial *material)
    if (material && material->texture && object->geometry && object->geometry->textureRange > 1) {
       if ((material->texture->width  > object->geometry->textureRange) ||
           (material->texture->height > object->geometry->textureRange)) {
-         DEBUG(GLHCK_DBG_WARNING, "Texture dimensions are above the maximum precision of object's vertexdata (%u:%u)",
+         DEBUG(GLHCK_DBG_WARNING, "Texture dimensions are above the maximum precision of object's vertexdata (%zu:%u)",
                GLHCKVT(object->geometry->vertexType)->max[2], object->geometry->textureRange);
       }
    }

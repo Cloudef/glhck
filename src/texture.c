@@ -532,10 +532,7 @@ GLHCKAPI int glhckTextureSave(glhckTexture *object, const char *path)
    CALL(0, "%p, %s", object, path);
    assert(object);
 
-   DEBUG(GLHCK_DBG_CRAP,
-         "\2Save \3%d\5x\3%d \5[\4%s, \3%d\5]",
-         object->width, object->height);
-
+   DEBUG(GLHCK_DBG_CRAP, "\2Save \3%d\5x\3%d\5 [\4%s\5]", object->width, object->height, path);
 
    /* TODO: Render to FBO to get the image
     * Or use glGetTexImage if it's available (not in GLES) */
