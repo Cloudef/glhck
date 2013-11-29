@@ -1,5 +1,6 @@
 #include "../internal.h"
 #include "render.h"
+#include <limits.h>
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #define RENDER_NAME "NULL Renderer"
@@ -17,7 +18,15 @@ static void renderTerminate(void)
 /* \brief renderer main function */
 void _glhckRenderStub(void)
 {
+   glhckRenderFeatures *features;
    TRACE(0);
+
+   /* XXX: Maybe DRIVER_STUB || DRIVER_SOFTWARE? */
+   GLHCKR()->driver = GLHCK_DRIVER_OTHER;
+   features = &GLHCKR()->features;
+   features->texture.maxTextureSize = INT_MAX;
+   features->texture.maxRenderbufferSize = INT_MAX;
+   features->texture.hasNativeNpotSupport = 1;
 
    /* register stub api functions */
 
