@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include "internal.h"
 #include <stdlib.h>  /* for malloc */
 #include <stdio.h>   /* for printf */
@@ -159,12 +158,11 @@ char* __glhckStrdup(const char *channel, const char *s)
    char *s2;
    CALL(3, "%s, %s", channel, s);
 
-   /* FIXME: do own strdup and remove _GNU_SOURCE at top of file */
-   if (!(s2 = strdup(s)))
+   if (!(s2 = _glhckStrdupNoTrack(s)))
       goto fail;
 
 #ifndef NDEBUG
-   trackAlloc(channel, s2, strlen(s) + 1);
+   trackAlloc(channel, s2, strlen(s2) + 1);
 #endif
 
    RET(3, "%s", s2);

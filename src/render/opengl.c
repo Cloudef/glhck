@@ -1,7 +1,6 @@
 #include "../internal.h"
 #include "render.h"
-#include <string.h>  /* for strdup */
-#include <stdio.h>   /* for sscanf */
+#include <stdio.h> /* for printf */
 
 #if GLHCK_USE_GLES1
 #  error "OpenGL renderer doesn't support GLES 1.x!"

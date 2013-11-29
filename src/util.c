@@ -1,10 +1,8 @@
-#define _GNU_SOURCE
 #include "internal.h"
 #include <stdlib.h> /* for malloc   */
 #include <stdio.h>  /* for printf   */
 #include <ctype.h>  /* for toupper  */
 #include <stdarg.h> /* for va_list  */
-#include <string.h> /* for strdup   */
 
 #ifdef __WIN32__
 #  include <windows.h>
@@ -139,36 +137,47 @@ void _glhckPrintf(const char *fmt, ...)
    _glhckPuts(buffer);
 }
 
+/* \brief strdup without the tracking */
+char* _glhckStrdupNoTrack(const char *s)
+{
+   char *s2;
+   size_t size;
+
+   if (!s || !(size = strlen(s) + 1))
+      return NULL;
+
+   if (!(s2 = calloc(1, size)))
+      return NULL;
+
+   memcpy(s2, s, size-1);
+   return s2;
+}
+
 /* \brief split string */
 size_t _glhckStrsplit(char ***dst, const char *str, const char *token)
 {
    char *saveptr, *ptr, *start;
    size_t t_len, i;
 
-   /* FIXME: use own strdup implementation and remove _GNU_SOURCE */
-   if (!(saveptr=strdup(str)))
+   if (!(saveptr = _glhckStrdupNoTrack(str)))
       return 0;
 
-   *dst=NULL;
-   t_len=strlen(token);
-   i=0;
+   t_len = strlen(token);
+   for (i = 0, *dst = NULL, start = saveptr, ptr = saveptr ;; ++ptr) {
+      if (*ptr && strncmp(ptr, token, t_len)) continue;
 
-   for (start=saveptr,ptr=start;;ptr++) {
-      if (!strncmp(ptr,token,t_len) || !*ptr) {
-         while (!strncmp(ptr,token,t_len)) {
-            *ptr=0;
-            ptr+=t_len;
-         }
-
-         if (!((*dst)=realloc(*dst,(i+2)*sizeof(char*))))
-            return 0;
-         (*dst)[i]=start;
-         (*dst)[i+1]=NULL;
-         i++;
-
-         if (!*ptr) break;
-         start=ptr;
+      while (!strncmp(ptr, token, t_len)) {
+         *ptr = 0;
+         ptr += t_len;
       }
+
+      if (!((*dst) = realloc(*dst, (i + 2) * sizeof(char*))))
+         return 0;
+
+      (*dst)[i++] = start;
+      (*dst)[i]   = NULL;
+      if (!*ptr) break;
+      start = ptr;
    }
 
    return i;
@@ -207,12 +216,12 @@ char* _glhckStrupstr(const char *hay, const char *needle)
    if (!_glhckStrupcmp(hay, needle)) return (char*)hay;
    if ((len = strlen(hay)) < (len2 = strlen(needle))) return NULL;
    for (i = 0; i != len; ++i) {
-      if (p == len2) return (char*)&hay[r]; /* THIS IS IT! */
+      if (p == len2) return (char*)hay+r; /* THIS IS IT! */
       if (toupper(hay[i]) == toupper(needle[p++])) {
          if (!r) r = i; /* could this be.. */
       } else { if (r) i = r; r = 0; p = 0; } /* ..nope, damn it! */
    }
-   if (p == len2) return (char*)&hay[r]; /* THIS IS IT! */
+   if (p == len2) return (char*)hay+r; /* THIS IS IT! */
    return NULL;
 }
 
