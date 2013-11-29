@@ -18,7 +18,7 @@ OPTION(GLHCK_BUILD_TOOLS "Build tools" OFF)
 OPTION(GLHCK_USE_GLES1 "Build for OpenGL ES 1.x" OFF)
 OPTION(GLHCK_USE_GLES2 "Build for OpenGL ES 2.x" OFF)
 OPTION(GLHCK_TRISTRIP "Build GLhck with ACTC triangle stripping support" OFF)
-OPTION(GLHCK_KAZMATH_DOUBLE "Define kmScalar as double" OFF)
+OPTION(GLHCK_KAZMATH_DOUBLE "Define kmScalar as double (UNSUPPORTED)" OFF)
 OPTION(GLHCK_DISABLE_TRACE "Disable GLhck's tracing functionality (EXPERIMENTAL)" OFF)
 
 # Build importers dynamically?
