@@ -40,28 +40,7 @@
 #  define GL_CALL(x) x
 #else
 #  define GL_CALL(x) x; GL_ERROR(__LINE__, __func__, __STRING(x));
-static void GL_ERROR(unsigned int line, const char *func, const char *glfunc)
-{
-   GLenum error;
-   if ((error = glGetError()) != GL_NO_ERROR)
-      DEBUG(GLHCK_DBG_ERROR, "GL @%d:%-20s %-20s >> %s",
-            line, func, glfunc,
-            error==GL_INVALID_ENUM?
-            "GL_INVALID_ENUM":
-            error==GL_INVALID_VALUE?
-            "GL_INVALID_VALUE":
-            error==GL_INVALID_OPERATION?
-            "GL_INVALID_OPERATION":
-            error==GL_STACK_OVERFLOW?
-            "GL_STACK_OVERFLOW":
-            error==GL_STACK_UNDERFLOW?
-            "GL_STACK_UNDERFLOW":
-            error==GL_OUT_OF_MEMORY?
-            "GL_OUT_OF_MEMORY":
-            error==GL_INVALID_OPERATION?
-            "GL_INVALID_OPERATION":
-            "GL_UNKNOWN_ERROR");
-}
+void GL_ERROR(unsigned int line, const char *func, const char *glfunc);
 #endif
 
 /* check return value of gl function on debug build */
@@ -69,31 +48,7 @@ static void GL_ERROR(unsigned int line, const char *func, const char *glfunc)
 #  define GL_CHECK(x) x
 #else
 #  define GL_CHECK(x) GL_CHECK_ERROR(__func__, __STRING(x), x)
-static GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum error)
-{
-   if (error != GL_NO_ERROR &&
-       error != GL_FRAMEBUFFER_COMPLETE)
-      DEBUG(GLHCK_DBG_ERROR, "GL @%-20s %-20s >> %s",
-            func, glfunc,
-            error==GL_FRAMEBUFFER_UNDEFINED?
-            "GL_FRAMEBUFFER_UNDEFINED":
-            error==GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT?
-            "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT":
-            error==GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER?
-            "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER":
-            error==GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER?
-            "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER":
-            error==GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT?
-            "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT":
-            error==GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE?
-            "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE":
-            error==GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS?
-            "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS":
-            error==GL_FRAMEBUFFER_UNSUPPORTED?
-            "GL_FRAMEBUFFER_UNSUPPORTED":
-            "GL_UNKNOWN_ERROR");
-   return error;
-}
+GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum error);
 #endif
 
 /*** mapping tables ***/

@@ -55,8 +55,8 @@ static void _glhckTraceSet(const char *name, int active)
 {
    int i;
    for(i = 0; GLHCKT()->channel[i].name ; ++i)
-      if (!_glhckStrupcmp(name, GLHCKT()->channel[i].name)  ||
-         (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL)          &&
+      if (!_glhckStrupcmp(name, GLHCKT()->channel[i].name) ||
+         (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL) &&
           _glhckStrupcmp(GLHCKT()->channel[i].name, GLHCK_CHANNEL_TRACE)))
       GLHCKT()->channel[i].active = active;
 }

@@ -59,15 +59,18 @@ static void _glhckDataTypeAttributes(glhckDataType dataType, unsigned char *size
 /* \brief check for valid vertex type */
 static unsigned char _glhckGeometryCheckVertexType(unsigned char type)
 {
+   static char warned_once = 0;
+
    /* default to V3F on AUTO type */
    if (type == GLHCK_VTX_AUTO) type = GLHCK_VTX_V3F;
 
    /* fglrx and SGX on linux at least seems to fail with byte vertices.
     * workaround for now until I stumble upon why it's wrong. */
    if (GLHCKR()->driver != GLHCK_DRIVER_NVIDIA) {
-      if (type == GLHCK_VTX_V2B || type == GLHCK_VTX_V3B) {
+      if (!warned_once && (type == GLHCK_VTX_V2B || type == GLHCK_VTX_V3B)) {
          DEBUG(GLHCK_DBG_WARNING, "Some drivers have problems with BYTE precision vertexdata.");
          DEBUG(GLHCK_DBG_WARNING, "Will use SHORT precision instead, just a friendly warning.");
+         warned_once = 1;
       }
       if (type == GLHCK_VTX_V3B) type = GLHCK_VTX_V3S;
       if (type == GLHCK_VTX_V2B) type = GLHCK_VTX_V2S;
@@ -79,7 +82,7 @@ static unsigned char _glhckGeometryCheckVertexType(unsigned char type)
 static unsigned char _glhckGeometryCheckIndexType(unsigned char type, const glhckImportIndexData *indices, int memb)
 {
    int i;
-   glhckImportIndexData max = 0;
+   glhckImportIndexData max;
 
 #if EMSCRIPTEN
    /* emscripten works with USHRT indices atm only */
@@ -95,7 +98,7 @@ static unsigned char _glhckGeometryCheckIndexType(unsigned char type, const glhc
    if (type != GLHCK_IDX_AUTO) return type;
 
    /* autodetect */
-   for (i = 0; i < memb; ++i) if (max < indices[i]) max = indices[i];
+   for (i = 0, max = 0; i < memb; ++i) if (max < indices[i]) max = indices[i];
    for (type = GLHCK_IDX_UINT, i = 0; i < GLHCKW()->numIndexTypes; ++i) {
       if (GLHCKIT(i)->max >= max && GLHCKIT(i)->max < GLHCKIT(type)->max)
          type = i;

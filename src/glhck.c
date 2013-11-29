@@ -165,7 +165,6 @@ GLHCKAPI void glhckContextSet(glhckContext *ctx)
 GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
 {
    glhckContext *ctx, *oldCtx;
-   const char ** _argv = (const char **)argv;
 
 #ifndef _GLHCK_TLS_FOUND
    fprintf(stderr, "-!- Thread-local storage support in compiler was not detected.\n");
@@ -196,7 +195,7 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
 
 #if !GLHCK_DISABLE_TRACE
    /* init trace system */
-   _glhckTraceInit(argc, _argv);
+   _glhckTraceInit(argc, (const char**)argv);
 #endif
 
    /* setup internal vertex/index types */

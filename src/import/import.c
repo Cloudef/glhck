@@ -481,6 +481,7 @@ void _glhckInvertPixels(unsigned char *pixels, unsigned int w, unsigned int h, u
    }                                      \
 }
 
+#if GLHCK_TRISTRIP
 static void _glhckTriStripReverse(glhckImportIndexData *indices, unsigned int memb)
 {
    unsigned int i;
@@ -494,6 +495,7 @@ static void _glhckTriStripReverse(glhckImportIndexData *indices, unsigned int me
 
    _glhckFree(original);
 }
+#endif
 
 /* \brief return tristripped indecies for triangle index data */
 glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsigned int memb, unsigned int *outMemb)
