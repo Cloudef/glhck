@@ -20,8 +20,8 @@ static const glhckColorb overdrawColor = {25,25,25,255};
 
 static const GLenum _glhckAttribName[] = {
    GL_VERTEX_ARRAY,
-   GL_TEXTURE_COORD_ARRAY,
    GL_NORMAL_ARRAY,
+   GL_TEXTURE_COORD_ARRAY,
    GL_COLOR_ARRAY,
 };
 
@@ -194,7 +194,6 @@ static void rMaterialState(const glhckMaterial *material)
 {
    /* need texture? */
    GLPOINTER()->state.flags |= (material->texture?GL_STATE_TEXTURE:0);
-   GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = (GLPOINTER()->state.flags & GL_STATE_TEXTURE);
 
    /* alpha? */
    GLPOINTER()->state.flags |=
@@ -257,6 +256,8 @@ static void rPassState(void)
       GLPOINTER()->state.blenda = GLHCK_ONE;
       GLPOINTER()->state.blendb = GLHCK_ONE;
    }
+
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = (GLPOINTER()->state.flags & GL_STATE_TEXTURE);
 }
 
 /* \brief pass interleaved vertex data to OpenGL nicely. */
@@ -696,7 +697,7 @@ static void rTextRender(const glhckText *text)
    if (!GL_HAS_STATE(GL_STATE_OVERDRAW)) {
       if (!GL_HAS_STATE(GL_STATE_TEXTURE)) {
          GLPOINTER()->state.flags |= GL_STATE_TEXTURE;
-         GLPOINTER()->state.attrib[1] = 1;
+         GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = 1;
          GL_CALL(glEnable(GL_TEXTURE_2D));
          GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
       }
@@ -704,13 +705,18 @@ static void rTextRender(const glhckText *text)
       glhckTextureUnbind(GLHCK_TEXTURE_2D);
    }
 
-   if (!GLPOINTER()->state.attrib[0]) {
-      GLPOINTER()->state.attrib[0] = 1;
+   if (!GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX]) {
+      GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
       GL_CALL(glEnableClientState(GL_VERTEX_ARRAY));
    }
 
-   if (GLPOINTER()->state.attrib[3]) {
-      GLPOINTER()->state.attrib[3] = 0;
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL]) {
+      GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL] = 0;
+      GL_CALL(glDisableClientState(GL_NORMAL_ARRAY));
+   }
+
+   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR]) {
+      GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR] = 0;
       GL_CALL(glDisableClientState(GL_COLOR_ARRAY));
    }
 

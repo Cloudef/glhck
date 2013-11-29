@@ -96,7 +96,7 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
 {
    FILE *f = NULL;
    char decompress = 0;
-   unsigned int w = 0, h = 0, loc = 0, i, i2;
+   unsigned int w = 0, h = 0, loc = 0, i;
    unsigned char *importData = NULL;
    JSAMPROW row_pointer = NULL;
    jpegErrorStruct jerr;
@@ -157,16 +157,7 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
    }
 
    /* invert */
-   for (i = 0; i*2 < h; ++i) {
-      int index1 = i*w*cinfo.output_components;
-      int index2 = (h-1-i)*w*cinfo.output_components;
-      for (i2 = w*cinfo.output_components; i2 > 0; --i2) {
-         unsigned char temp = importData[index1];
-         importData[index1] = importData[index2];
-         importData[index2] = temp;
-         ++index1; ++index2;
-      }
-   }
+   _glhckInvertPixels(importData, w, h, cinfo.output_components);
 
    /* finish decompression */
    jpeg_finish_decompress(&cinfo);

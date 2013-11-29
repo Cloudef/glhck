@@ -12,6 +12,20 @@ IF (PANDORA)
    SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
 ENDIF ()
 
+# Emscripten build
+IF (EMSCRIPTEN)
+   MESSAGE("Building GLhck with Emscripten support")
+   MESSAGE("NOTE: For examples you need glfw3 emulation in Emscripten.")
+   MESSAGE("      This is not yet pushed to upstream so, query for more details about this.")
+   ADD_DEFINITIONS(-DEMSCRIPTEN)
+   SET(GLHCK_IMPORT_BMP OFF CACHE BOOL "Emscripten uses its own image importer")
+   SET(GLHCK_IMPORT_PNG OFF CACHE BOOL "Emscripten uses its own image importer")
+   SET(GLHCK_IMPORT_TGA OFF CACHE BOOL "Emscripten uses its own image importer")
+   SET(GLHCK_IMPORT_JPEG OFF CACHE BOOL "Emscripten uses its own image importer")
+   SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
+   SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
+ENDIF ()
+
 # General build options
 OPTION(GLHCK_BUILD_EXAMPLES "Build examples" ON)
 OPTION(GLHCK_BUILD_TOOLS "Build tools" OFF)
@@ -55,7 +69,9 @@ ENDIF ()
 # These are propably temporary
 # In the end make renderers load this stuff dynamically(?)
 
-IF (GLHCK_USE_GLES1)
+IF (EMSCRIPTEN)
+   # no-op
+ELSEIF (GLHCK_USE_GLES1)
    # GLES 1.x
    MESSAGE("Building GLhck for GLES 1.x")
    FIND_PACKAGE(EGL REQUIRED)
@@ -89,9 +105,9 @@ SET(GLHCK_LIBRARIES ${GLHCK_LINK} CACHE STRING "Dependencies of GLHCK")
 SET(SUBMODULE_ERROR "Run 'git submodule update --init --recursive' update first.")
 IF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/kazmath/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
-ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glfw/src/.git)
+ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glfw/src/.git AND NOT EMSCRIPTEN)
    SET(SUBMODULE_ERROR_THROW 1)
-ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glew-glhck/src/.git)
+ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glew-glhck/src/.git AND NOT EMSCRIPTEN)
    SET(SUBMODULE_ERROR_THROW 1)
 ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/chck/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)

@@ -8,7 +8,28 @@
 #elif GLHCK_USE_GLES2
 #  define GLEW_USE_LIB_ES20
 #endif
-#include "GL/glew.h"
+
+#if EMSCRIPTEN
+/* FIXME: UGLY HACK, do emscripten support instead */
+#  include <SDL_opengl.h>
+#  define GL_DEBUG_OUTPUT 0
+#  define GLEW_KHR_debug 0
+#  define GLEW_VERSION_1_4 0
+#  define GLEW_VERSION_2_0 0
+#  define GLEW_VERSION_3_0 0
+#  define GLEW_EXT_texture_filter_anisotropic 0
+#  define GLEW_ES_VERSION_2_0 1
+#  define GLEW_OK 0
+#  define GLEW_VERSION 0
+#  define glewInit() GLEW_OK
+#  define glewGetString(x) "EMSCRIPTEN"
+#else
+#  include "GL/glew.h"
+#endif
+
+#ifndef __STRING
+#  define __STRING(x) #x
+#endif
 
 #ifndef GLchar
 #  define GLchar char

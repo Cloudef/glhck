@@ -257,6 +257,9 @@ GLHCKAPI void glhckContextTerminate(void)
 GLHCKAPI void glhckLogColor(char color)
 {
    GLHCK_INITIALIZED();
+#if EMSCRIPTEN
+   color = 0;
+#endif
    if (color != GLHCKM()->coloredLog && !color)
       _glhckNormal();
    GLHCKM()->coloredLog = color;

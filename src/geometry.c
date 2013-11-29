@@ -80,6 +80,18 @@ static unsigned char _glhckGeometryCheckIndexType(unsigned char type, const glhc
 {
    int i;
    glhckImportIndexData max = 0;
+
+#if EMSCRIPTEN
+   /* emscripten works with USHRT indices atm only */
+   static char warned_once = 0;
+   if (!warned_once) {
+      DEBUG(GLHCK_DBG_WARNING, "Emscripten currently works only with USHRT indices, forcing that!");
+      warned_once = 1;
+   }
+   return GLHCK_IDX_USHRT;
+#endif
+
+   /* use user specific indices */
    if (type != GLHCK_IDX_AUTO) return type;
 
    /* autodetect */

@@ -287,6 +287,9 @@ GLHCKAPI const glhckColorb* glhckRenderGetClearColor(void)
 /* \brief clear scene */
 GLHCKAPI void glhckRenderClear(unsigned int bufferBits)
 {
+#if EMSCRIPTEN
+   return; /* no-op */
+#endif
    GLHCK_INITIALIZED();
    CALL(2, "%u", bufferBits);
    if (!_glhckRenderInitialized()) return;

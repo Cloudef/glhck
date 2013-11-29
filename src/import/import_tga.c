@@ -104,7 +104,7 @@ int _glhckImportTGA(const char *file, _glhckImportImageStruct *import)
    int bpp, vinverted = 0;
    int rle = 0, footer_present = 0;
    size_t datasize, size;
-   unsigned short i, i2, w, h;
+   unsigned short i, w, h;
    tga_header *header;
    tga_footer *footer;
    unsigned char *bufptr, *bufend, *importData = NULL;
@@ -225,18 +225,7 @@ int _glhckImportTGA(const char *file, _glhckImportImageStruct *import)
    }
 
    /* some TGA's are upside-down */
-   if (vinverted) {
-      for (i = 0; i*2 < h; ++i) {
-         int index1 = i*w*4;
-         int index2 = (h-1-i)*w*4;
-         for (i2 = w*4; i2 > 0; --i2) {
-            unsigned char temp = importData[index1];
-            importData[index1] = importData[index2];
-            importData[index2] = temp;
-            ++index1; ++index2;
-         }
-      }
-   }
+   if (vinverted) _glhckInvertPixels(importData, w, h, 4);
 
    /* free */
    NULLDO(_glhckFree, seg);

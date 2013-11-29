@@ -344,7 +344,6 @@ static void rMaterialState(const glhckMaterial *material)
 {
    /* need texture? */
    GLPOINTER()->state.flags |= (material->texture?GL_STATE_TEXTURE:0);
-   GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = (GLPOINTER()->state.flags & GL_STATE_TEXTURE);
 
    /* alpha? */
    GLPOINTER()->state.flags |=
@@ -407,6 +406,8 @@ static void rPassState(void)
       GLPOINTER()->state.blenda = GLHCK_ONE;
       GLPOINTER()->state.blendb = GLHCK_ONE;
    }
+
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = (GLPOINTER()->state.flags & GL_STATE_TEXTURE);
 }
 
 /* \brief pass interleaved vertex data to OpenGL nicely. */

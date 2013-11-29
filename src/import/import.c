@@ -4,6 +4,10 @@
 #include <unistd.h> /* for access   */
 #include <libgen.h> /* for dirname  */
 
+#ifndef __STRING
+#  define __STRING(x) #x
+#endif
+
 #if GLHCK_TRISTRIP
 #  include <limits.h> /* for INT_MAX  */
 #  include "tc.h" /* for ACTC */
@@ -27,7 +31,8 @@ typedef enum _glhckFormat {
    FORMAT_PNG,
    FORMAT_JPEG,
    FORMAT_TGA,
-   FORMAT_BMP
+   FORMAT_BMP,
+   FORMAT_EMSCRIPTEN
 } _glhckFormat;
 
 /* Function typedefs */
@@ -90,6 +95,9 @@ static _glhckImageImporter imageImporters[] = {
 #endif
 #if GLHCK_IMPORT_BMP
    REGISTER_IMPORTER(FORMAT_BMP, _glhckFormatBMP, _glhckImportBMP, "glhckImportBMP"),
+#endif
+#if EMSCRIPTEN
+   REGISTER_IMPORTER(FORMAT_EMSCRIPTEN, _glhckFormatEmscripten, _glhckImportEmscripten, "glhckImportEmscripten"),
 #endif
    END_IMPORTERS()
 };
@@ -307,6 +315,72 @@ char *gnu_basename(char *path)
     return base ? base+1 : path;
 }
 
+/* ------------ EMSCRIPTEN HELPERS -------------- */
+
+#if EMSCRIPTEN
+#include <SDL/SDL_image.h> /* doesn't actually need SDL_Image, this is wrapped by emscripten */
+/* \brief use browser to load images, may support more formats than glhck */
+int _glhckImportEmscripten(const char *file, _glhckImportImageStruct *import)
+{
+   unsigned int i, i2;
+   char *importData = NULL, hasa = 0;
+   SDL_Surface* surface = NULL;
+   glhckTextureFormat format;
+   CALL(0, "%s, %p", file, import);
+
+   if (!(surface = IMG_Load(file)))
+      goto fail;
+
+   if (surface->format->BytesPerPixel == 4) {
+      hasa = 1;
+      if (surface->format->Rmask == 0x000000ff) format = GLHCK_RGBA;
+      else format = GLHCK_BGRA;
+   } else if (surface->format->BytesPerPixel == 3) {
+      if (surface->format->Rmask == 0x000000ff) format = GLHCK_RGB;
+      else format = GLHCK_BGR;
+   } else {
+      goto not_truecolor;
+   }
+
+   if (!(importData = _glhckMalloc(surface->w * surface->h * 4)))
+      goto fail;
+
+   memcpy(importData, surface->pixels, surface->w * surface->h * 4);
+
+   /* invert */
+   for (i = 0; i*2 < surface->h; ++i) {
+      int index1 = i*surface->w*surface->format->BytesPerPixel;
+      int index2 = (surface->h-1-i)*surface->w*surface->format->BytesPerPixel;
+      for (i2 = surface->w*surface->format->BytesPerPixel; i2 > 0; --i2) {
+         unsigned char temp = importData[index1];
+         importData[index1] = importData[index2];
+         importData[index2] = temp;
+         ++index1; ++index2;
+      }
+   }
+
+   import->width  = surface->w;
+   import->height = surface->h;
+   import->data   = importData;
+   import->format = format;
+   import->type   = GLHCK_UNSIGNED_BYTE;
+   import->flags |= (hasa?GLHCK_TEXTURE_IMPORT_ALPHA:0);
+
+   SDL_FreeSurface(surface);
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
+
+not_truecolor:
+   DEBUG(GLHCK_DBG_ERROR, "SDL_Surface not truecolor, will bail out!");
+fail:
+   IFDO(SDL_FreeSurface, surface);
+   IFDO(_glhckFree, importData);
+   RET(0, "%d", RETURN_FAIL);
+   return RETURN_FAIL;
+}
+int _glhckFormatEmscripten(const char *file) { return 1; }
+#endif /* EMSCRIPTEN */
+
 /* ------------ SHARED FUNCTIONS ---------------- */
 
 /* \brief helper function for importers.
@@ -366,6 +440,22 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
 fail:
    RET(0, "%p", NULL);
    return NULL;
+}
+
+/* \brief invert pixel data */
+void _glhckInvertPixels(unsigned char *pixels, unsigned int w, unsigned int h, unsigned int components)
+{
+   unsigned int i, i2;
+   for (i = 0; i*2 < h; ++i) {
+      unsigned int index1 = i * w * components;
+      unsigned int index2 = (h - 1 - i) * w * components;
+      for (i2 = w * components; i2 > 0; --i2) {
+         unsigned char temp = pixels[index1];
+         pixels[index1] = pixels[index2];
+         pixels[index2] = temp;
+         ++index1; ++index2;
+      }
+   }
 }
 
 #define ACTC_CHECK_SYNTAX  "%d: "__STRING(func)" returned unexpected "__STRING(c)"\n"

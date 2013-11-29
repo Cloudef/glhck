@@ -63,6 +63,12 @@ int _glhckFormatAssimp(const char *file);
  */
 int _glhckImportImage(glhckTexture *texture, const char *file, const glhckImportImageParameters *params);
 
+#if EMSCRIPTEN
+/* BROWSER may support more formats than glhck */
+int _glhckImportEmscripten(const char *file, _glhckImportImageStruct *import);
+int _glhckFormatEmscripten(const char *file);
+#endif
+
 #if !GLHCK_IMPORT_DYNAMIC
 
 #if GLHCK_IMPORT_PNG
@@ -102,8 +108,8 @@ int _glhckFormatBMP(const char *file);
  */
 char* _glhckImportTexturePath(const char *texture_path, const char *asset_path);
 
-/* check that image dimensions are OK */
-int _glhckIsValidImageDimension(unsigned long long w,  unsigned long long h);
+/* \brief invert pixel data */
+void _glhckInvertPixels(unsigned char *pixels, unsigned int w, unsigned int h, unsigned int components);
 
 /* \brief returns tristripped indecies from triangle indecies */
 glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsigned int memb, unsigned int *outMemb);

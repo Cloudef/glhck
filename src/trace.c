@@ -77,6 +77,12 @@ void _glhckTraceInit(int argc, const char **argv)
    memcpy(channels, _traceChannels, sizeof(_traceChannels));
    GLHCKT()->channel = channels;
 
+#if EMSCRIPTEN
+   // _glhckTraceSet("2", 1);
+   // _glhckTraceSet("trace", 1);
+   _glhckTraceSet("all", 1);
+#endif
+
    for(i = 0, match = NULL; i != argc; ++i) {
       if (!_glhckStrnupcmp(argv[i], GLHCK_CHANNEL_SWITCH"=", strlen(GLHCK_CHANNEL_SWITCH"="))) {
          match = argv[i] + strlen(GLHCK_CHANNEL_SWITCH"=");
