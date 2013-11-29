@@ -6,9 +6,10 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${glhck_SOURCE_DIR}/CMake/modules)
 
 # OpenPandora hacks
 IF (PANDORA)
-    ADD_DEFINITIONS(-DPANDORA)
-    SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
-    SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
+   MESSAGE("Building GLhck with Pandora support")
+   ADD_DEFINITIONS(-DPANDORA)
+   SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
+   SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
 ENDIF ()
 
 # General build options
