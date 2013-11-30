@@ -115,10 +115,8 @@ GLenum glhckHwBufferTargetToGL[] = {
    GL_TEXTURE_BUFFER, /* GLHCK_TEXTURE_BUFFER */
    GL_TRANSFORM_FEEDBACK_BUFFER, /* GLHCK_TRANSFORM_FEEDBACK_BUFFER */
    GL_UNIFORM_BUFFER, /* GLHCK_UNIFORM_BUFFER */
-#if !EMSCRIPTEN
    GL_SHADER_STORAGE_BUFFER, /* GLHCK_SHADER_STORAGE_BUFFER */
    GL_ATOMIC_COUNTER_BUFFER, /* GLHCK_ATOMIC_COUNTER_BUFFER */
-#endif
 };
 
 GLenum glhckHwBufferStoreTypeToGL[] = {
@@ -320,7 +318,6 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
       case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:return GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
       case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER:return GL_UNSIGNED_INT_SAMPLER_BUFFER;
       case GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT:return GL_UNSIGNED_INT_SAMPLER_2D_RECT;
-#if !EMSCRIPTEN
       case GLHCK_SHADER_IMAGE_1D:return GL_IMAGE_1D;
       case GLHCK_SHADER_IMAGE_2D:return GL_IMAGE_2D;
       case GLHCK_SHADER_IMAGE_3D:return GL_IMAGE_3D;
@@ -352,7 +349,6 @@ GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type)
       case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
       case GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:return GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
       case GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER:return GL_UNSIGNED_INT_ATOMIC_COUNTER;
-#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -437,7 +433,6 @@ _glhckShaderVariableType glhGlhckShaderVariableTypeForOpenGLType(GLenum type)
       case GL_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_MULTISAMPLE_ARRAY;
       case GL_UNSIGNED_INT_SAMPLER_BUFFER:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_BUFFER;
       case GL_UNSIGNED_INT_SAMPLER_2D_RECT:return GLHCK_SHADER_UNSIGNED_INT_SAMPLER_2D_RECT;
-#if !EMSCRIPTEN
       case GL_IMAGE_1D:return GLHCK_SHADER_IMAGE_1D;
       case GL_IMAGE_2D:return GLHCK_SHADER_IMAGE_2D;
       case GL_IMAGE_3D:return GLHCK_SHADER_IMAGE_3D;
@@ -469,7 +464,6 @@ _glhckShaderVariableType glhGlhckShaderVariableTypeForOpenGLType(GLenum type)
       case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE;
       case GL_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY:return GLHCK_SHADER_UNSIGNED_INT_IMAGE_2D_MULTISAMPLE_ARRAY;
       case GL_UNSIGNED_INT_ATOMIC_COUNTER:return GLHCK_SHADER_UNSIGNED_INT_ATOMIC_COUNTER;
-#endif
       default:break;
    }
    assert(0 && "BAD ENUM OR NOT IMPLEMENTED");
@@ -1438,25 +1432,23 @@ int glhCheckSupport(const char *renderName)
    if (glewInit() != GLEW_OK)
       return RETURN_FAIL;
 
-#if GLHCK_USE_GLES1
+#if GLHCK_USE_GLES1 && !EMSCRIPTEN
    if (GLEW_OES_framebuffer_object) {
       DEBUG(GLHCK_DBG_ERROR, "GLES1.1 needs GL_OES_framebuffer_object extension!");
       return RETURN_FAIL;
    }
 
-#if !EMSCRIPTEN
-   glGenerateMipmap = glGenerateMipmapOES;
-   glBindFramebuffer = glBindFramebufferOES;
-   glGenFramebuffers = glGenFramebuffersOES;
-   glDeleteFramebuffers = glDeleteFramebuffersOES;
-   glFramebufferTexture2D = glFramebufferTexture2DOES;
-   glCheckFramebufferStatus = glCheckFramebufferStatusOES;
-   glFramebufferRenderbuffer = glFramebufferRenderbufferOES;
-   glBindRenderbuffer = glBindRenderbufferOES;
-   glGenRenderbuffers = glGenRenderbuffersOES;
-   glDeleteRenderbuffers = glDeleteRenderbuffersOES;
-   glRenderbufferStorage = glRenderbufferStorageOES;
-#endif
+   if (glGenerateMipmapOES) glGenerateMipmap = glGenerateMipmapOES;
+   if (glBindFramebufferOES) glBindFramebuffer = glBindFramebufferOES;
+   if (glGenFramebuffersOES) glGenFramebuffers = glGenFramebuffersOES;
+   if (glDeleteFramebuffersOES) glDeleteFramebuffers = glDeleteFramebuffersOES;
+   if (glFramebufferTexture2DOES) glFramebufferTexture2D = glFramebufferTexture2DOES;
+   if (glCheckFramebufferStatusOES) glCheckFramebufferStatus = glCheckFramebufferStatusOES;
+   if (glFramebufferRenderbufferOES) glFramebufferRenderbuffer = glFramebufferRenderbufferOES;
+   if (glBindRenderbufferOES) glBindRenderbuffer = glBindRenderbufferOES;
+   if (glGenRenderbuffersOES) glGenRenderbuffers = glGenRenderbuffersOES;
+   if (glDeleteRenderbuffersOES) glDeleteRenderbuffers = glDeleteRenderbuffersOES;
+   if (glhRenderbufferStorageOES) glRenderbufferStorage = glRenderbufferStorageOES;
 #endif
 
    /* fill the renderer's features struct */

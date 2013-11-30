@@ -3,27 +3,24 @@
 
 #include "../internal.h"
 
-#if GLHCK_USE_GLES1
-#  define GLEW_USE_LIB_ES11
-#elif GLHCK_USE_GLES2
-#  define GLEW_USE_LIB_ES20
-#endif
-
 #if EMSCRIPTEN
-/* FIXME: UGLY HACK, do emscripten support instead */
-#  include <SDL_opengl.h>
-#  define GL_DEBUG_OUTPUT 0
-#  define GLEW_KHR_debug 0
+/* we don't define GLEW_USE_LIB_ES11 since we need all the constants.
+ * bit of hack, but yeah.. */
+#  include <GL/glew.h>
+#  undef GLEW_VERSION_1_4
+#  undef GLEW_VERSION_2_0
+#  undef GLEW_VERSION_3_0
+#  undef GLEW_ES_VERSION_1_0
 #  define GLEW_VERSION_1_4 0
 #  define GLEW_VERSION_2_0 0
 #  define GLEW_VERSION_3_0 0
-#  define GLEW_EXT_texture_filter_anisotropic 0
-#  define GLEW_ES_VERSION_2_0 1
-#  define GLEW_OK 0
-#  define GLEW_VERSION 0
-#  define glewInit() GLEW_OK
-#  define glewGetString(x) "EMSCRIPTEN"
+#  define GLEW_ES_VERSION_1_0 1
 #else
+#  if GLHCK_USE_GLES1
+#     define GLEW_USE_LIB_ES11
+#  elif GLHCK_USE_GLES2
+#     define GLEW_USE_LIB_ES20
+#  endif
 #  include "GL/glew.h"
 #endif
 
