@@ -5,10 +5,6 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #include "helper_opengl.h"
 
-#if GLHCK_USE_GLES1 || GLHCK_USE_GLES2
-#  include <EGL/egl.h>
-#endif
-
 #ifndef GLEW_OES_framebuffer_object
 #  define GLEW_OES_framebuffer_object 0
 #endif
