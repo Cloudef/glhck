@@ -1439,13 +1439,6 @@ int glhCheckSupport(const char *renderName)
       return RETURN_FAIL;
 
 #if GLHCK_USE_GLES1
-#if 0
-   if (!GLEW_OES_element_index_uint) {
-      DEBUG(GLHCK_DBG_ERROR, "GLES1.1 needs GL_OES_element_index_uint extension!");
-      return RETURN_FAIL;
-   }
-#endif
-
    if (GLEW_OES_framebuffer_object) {
       DEBUG(GLHCK_DBG_ERROR, "GLES1.1 needs GL_OES_framebuffer_object extension!");
       return RETURN_FAIL;
