@@ -211,7 +211,7 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
    kmVec3 currentTranslation, currentScaling;
    kmQuaternion currentRotation;
    kmMat4 matrix, tmp;
-   float ticksPerSecond, duration, time;
+   float duration, time;
    unsigned int n, frame, nextFrame;
    CALL(2, "%p", object);
    assert(object);
@@ -225,8 +225,6 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
    duration = animation->duration;
    if (duration <= 0.0)  return;
 
-   ticksPerSecond = (animation->ticksPerSecond!=0.0f?animation->ticksPerSecond:25.0f);
-   playTime *= ticksPerSecond;
    time = fmod(playTime, duration);
    if (time == object->lastTime) return;
 

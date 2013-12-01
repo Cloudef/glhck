@@ -628,7 +628,7 @@ static void gameWindowLogic(GameWindow *window)
    for (a = window->actor; a; a = a->next) {
       gameActorLogic(window, a, window->player);
       if (a->pushed || (a->flags && a->flags != 1<<4)) {
-         a->animTime += 0.02f * (a->flags & 1<<4 ? 0.8f : 1.0f);
+         a->animTime += 0.5f * (a->flags & 1<<4 ? 0.8f : 1.0f);
       }
       a->pushed = 0;
    }

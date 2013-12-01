@@ -188,6 +188,9 @@ GLHCKAPI glhckAnimation* glhckAnimationNew(void)
    if (!(object = _glhckCalloc(1, sizeof(glhckAnimation))))
       goto fail;
 
+   /* default ticks per second */
+   object->ticksPerSecond = 1.0f;
+
    /* increase reference */
    object->refCounter++;
 
