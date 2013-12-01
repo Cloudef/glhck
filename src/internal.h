@@ -119,21 +119,21 @@ typedef enum _glhckReturnValue {
 /* internal texture flags */
 typedef enum _glhckTextureFlags {
    GLHCK_TEXTURE_IMPORT_NONE  = 0,
-   GLHCK_TEXTURE_IMPORT_ALPHA = 1,
-   GLHCK_TEXTURE_IMPORT_TEXT  = 2,
+   GLHCK_TEXTURE_IMPORT_ALPHA = 1<<0,
+   GLHCK_TEXTURE_IMPORT_TEXT  = 1<<1,
 } _glhckTextureFlags;
 
 /* internal object flags */
 typedef enum _glhckObjectFlags {
    GLHCK_OBJECT_NONE           = 0,
-   GLHCK_OBJECT_ROOT           = 1,
-   GLHCK_OBJECT_CULL           = 2,
-   GLHCK_OBJECT_DEPTH          = 4,
-   GLHCK_OBJECT_VERTEX_COLOR   = 8,
-   GLHCK_OBJECT_DRAW_AABB      = 16,
-   GLHCK_OBJECT_DRAW_OBB       = 32,
-   GLHCK_OBJECT_DRAW_SKELETON  = 64,
-   GLHCK_OBJECT_DRAW_WIREFRAME = 128,
+   GLHCK_OBJECT_ROOT           = 1<<0,
+   GLHCK_OBJECT_CULL           = 1<<1,
+   GLHCK_OBJECT_DEPTH          = 1<<2,
+   GLHCK_OBJECT_VERTEX_COLOR   = 1<<3,
+   GLHCK_OBJECT_DRAW_AABB      = 1<<4,
+   GLHCK_OBJECT_DRAW_OBB       = 1<<5,
+   GLHCK_OBJECT_DRAW_SKELETON  = 1<<6,
+   GLHCK_OBJECT_DRAW_WIREFRAME = 1<<7,
 } _glhckObjectFlags;
 
 /* shader attrib locations */

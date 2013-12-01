@@ -83,16 +83,16 @@ static const glhckColorb overdrawColor = {25,25,25,255};
 
 /* state flags */
 enum {
-   GL_STATE_DEPTH          = 1,
-   GL_STATE_CULL           = 2,
-   GL_STATE_BLEND          = 4,
-   GL_STATE_TEXTURE        = 8,
-   GL_STATE_DRAW_AABB      = 16,
-   GL_STATE_DRAW_OBB       = 32,
-   GL_STATE_DRAW_SKELETON  = 64,
-   GL_STATE_DRAW_WIREFRAME = 128,
-   GL_STATE_LIGHTING       = 256,
-   GL_STATE_OVERDRAW       = 512,
+   GL_STATE_DEPTH          = 1<<0,
+   GL_STATE_CULL           = 1<<1,
+   GL_STATE_BLEND          = 1<<2,
+   GL_STATE_TEXTURE        = 1<<3,
+   GL_STATE_DRAW_AABB      = 1<<4,
+   GL_STATE_DRAW_OBB       = 1<<5,
+   GL_STATE_DRAW_SKELETON  = 1<<6,
+   GL_STATE_DRAW_WIREFRAME = 1<<7,
+   GL_STATE_LIGHTING       = 1<<8,
+   GL_STATE_OVERDRAW       = 1<<9,
 };
 
 /* internal shaders */

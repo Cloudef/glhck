@@ -359,17 +359,17 @@ typedef enum glhckRenderType {
 
 /* render pass bits */
 typedef enum glhckRenderPassFlags {
-   GLHCK_PASS_NOTHING        = 1<<0,
-   GLHCK_PASS_DEPTH          = 1<<1,
-   GLHCK_PASS_CULL           = 1<<2,
-   GLHCK_PASS_BLEND          = 1<<3,
-   GLHCK_PASS_TEXTURE        = 1<<4,
-   GLHCK_PASS_DRAW_OBB       = 1<<5,
-   GLHCK_PASS_DRAW_AABB      = 1<<6,
-   GLHCK_PASS_DRAW_SKELETON  = 1<<7,
-   GLHCK_PASS_DRAW_WIREFRAME = 1<<8,
-   GLHCK_PASS_LIGHTING       = 1<<9,
-   GLHCK_PASS_OVERDRAW       = 1<<10,
+   GLHCK_PASS_NONE           = 0,
+   GLHCK_PASS_DEPTH          = 1<<0,
+   GLHCK_PASS_CULL           = 1<<1,
+   GLHCK_PASS_BLEND          = 1<<2,
+   GLHCK_PASS_TEXTURE        = 1<<3,
+   GLHCK_PASS_DRAW_OBB       = 1<<4,
+   GLHCK_PASS_DRAW_AABB      = 1<<5,
+   GLHCK_PASS_DRAW_SKELETON  = 1<<6,
+   GLHCK_PASS_DRAW_WIREFRAME = 1<<7,
+   GLHCK_PASS_LIGHTING       = 1<<8,
+   GLHCK_PASS_OVERDRAW       = 1<<9,
 } glhckRenderPassFlags;
 
 /* \brief version render features */
@@ -448,15 +448,15 @@ typedef struct glhckFrustum {
 /* parent affection flags */
 typedef enum glhckObjectAffectionFlags {
    GLHCK_AFFECT_NONE          = 0,
-   GLHCK_AFFECT_TRANSLATION   = 1,
-   GLHCK_AFFECT_ROTATION      = 2,
-   GLHCK_AFFECT_SCALING       = 4,
+   GLHCK_AFFECT_TRANSLATION   = 1<<0,
+   GLHCK_AFFECT_ROTATION      = 1<<1,
+   GLHCK_AFFECT_SCALING       = 1<<2,
 } glhckObjectAffectionFlags;
 
 /* material flags */
 typedef enum glhckMaterialOptionsFlags {
    GLHCK_MATERIAL_NONE           = 0,
-   GLHCK_MATERIAL_LIGHTING       = 1,
+   GLHCK_MATERIAL_LIGHTING       = 1<<0,
 } glhckMaterialOptionsFlags;
 
 /* texture compression type */
