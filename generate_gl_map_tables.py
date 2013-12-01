@@ -1,6 +1,7 @@
 #!/usr/bin/python
-import sys
+# pylint: disable=C0301
 """generate GL map tables from GLHCK tables"""
+import sys
 
 def find_gl_enum(enum):
     """maps GLHCK enum to GL enum"""
@@ -68,10 +69,9 @@ def generate():
             lne = lne[:-2].strip()
             lne = lne.split(' = ')[0]
             gle = find_gl_enum(lne)
-            if gle:
-                if gle != 'ignore':
-                    mapped.append([lne, gle])
-            else:
+            if gle and gle != 'ignore':
+                mapped.append([lne, gle])
+            elif gle != 'ignore':
                 failures.append([num, lne])
 
         if lne[:7] == 'PYGLMAP' and lne[13:-3] not in skip:
