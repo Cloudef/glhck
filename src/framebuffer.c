@@ -23,6 +23,11 @@ GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferTarget target)
    /* increase reference */
    object->refCounter++;
 
+#if GLHCK_USE_GLES1 || GLHCK_USE_GLES2
+   /* GLES1 && GLES2 don't have DRAW/READ_FRAMEBUFFER */
+   if (target != GLHCK_FRAMEBUFFER) target = GLHCK_FRAMEBUFFER;
+#endif
+
    /* init */
    object->object = obj;
    object->target = target;
