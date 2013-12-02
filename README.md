@@ -30,6 +30,7 @@ Move on.
 * [nethck][] - Geometry sharing over network
 * [anglhck][] - AngelScript bindings
 * [consolehck][] - Text console widget
+* [glhck-gas][] - GLhck animation system
 
 ## Projects using GLhck
 * [glhck-scene][] - QMLON GLhck scene arranger
@@ -53,6 +54,7 @@ Move on.
 [nethck]: https://github.com/Cloudef/nethck
 [anglhck]: https://github.com/bzar/anglhck
 [consolehck]: https://github.com/bzar/consolehck
+[glhck-gas]: https://github.com/bzar/glhck-gas
 
 [glhck-scene]: https://github.com/bzar/glhck-scene
 [2dshooter]: https://github.com/bzar/2dshooter
