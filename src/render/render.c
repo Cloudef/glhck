@@ -287,12 +287,19 @@ GLHCKAPI const glhckColorb* glhckRenderGetClearColor(void)
 /* \brief clear scene */
 GLHCKAPI void glhckRenderClear(unsigned int bufferBits)
 {
-#if EMSCRIPTEN
-   return; /* no-op */
-#endif
    GLHCK_INITIALIZED();
    CALL(2, "%u", bufferBits);
    if (!_glhckRenderInitialized()) return;
+
+#if EMSCRIPTEN
+   /* when there is no framebuffers bound assume we are in
+    * main loop don't do clear since webgl does clear itself.
+    * XXX: document this behaviour */
+   int i;
+   for (i = 0; i < GLHCK_FRAMEBUFFER_TYPE_LAST && !GLHCKRD()->framebuffer[i]; ++i);
+   if (i == GLHCK_FRAMEBUFFER_TYPE_LAST) return;
+#endif
+
    GLHCKRA()->clear(bufferBits);
 }
 
