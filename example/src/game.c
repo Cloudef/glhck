@@ -806,6 +806,7 @@ static int gameWindowRun(GameWindow *window)
 
 static GameWindow **window = NULL;
 static unsigned int windows = 1;
+#if EMSCRIPTEN
 void mainLoop(void)
 {
    unsigned int i, running;
@@ -813,10 +814,9 @@ void mainLoop(void)
    for (i = 0, running = 0; i < windows; running += window[i]?1:0, ++i)
       if (window[i] && !gameWindowRun(window[i])) window[i] = NULL;
 
-#if EMSCRIPTEN
    if (!running) emscripten_cancel_main_loop();
-#endif
 }
+#endif
 
 int main(int argc, char **argv)
 {
