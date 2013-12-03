@@ -1358,11 +1358,31 @@ GLHCKAPI unsigned int glhckCollisionWorldCollideAABB(glhckCollisionWorld *object
 
 GLHCKAPI unsigned int glhckCollisionWorldCollideAABBExtent(glhckCollisionWorld *object, const kmAABBExtent *aabbe, const glhckCollisionInData *data)
 {
+   kmAABBExtent sweepAABB;
    _glhckCollisionShape shape, sweep;
-   memset(&sweep, 0, sizeof(sweep));
    shape.type = GLHCK_COLLISION_AABBE;
    shape.any = (kmAABBExtent*)aabbe;
    shape.reference = 1;
+
+   /* create sweep volume, if needed */
+   if (data->velocity &&
+         (fabs(data->velocity->x) > aabbe->extent.x*0.5f ||
+          fabs(data->velocity->y) > aabbe->extent.y*0.5f ||
+          fabs(data->velocity->z) > aabbe->extent.z*0.5f)) {
+      kmVec3 pointBefore;
+      kmVec3Subtract(&pointBefore, &aabbe->point, data->velocity);
+      sweepAABB.point.x = (pointBefore.x+aabbe->point.x)*0.5;
+      sweepAABB.point.y = (pointBefore.y+aabbe->point.y)*0.5;
+      sweepAABB.point.z = (pointBefore.z+aabbe->point.z)*0.5;
+      sweepAABB.extent.x = fabs(aabbe->point.x-sweepAABB.point.x)+aabbe->extent.x;
+      sweepAABB.extent.y = fabs(aabbe->point.y-sweepAABB.point.y)+aabbe->extent.y;
+      sweepAABB.extent.z = fabs(aabbe->point.z-sweepAABB.point.z)+aabbe->extent.z;
+      sweep.type = GLHCK_COLLISION_AABBE;
+      sweep.any = &sweepAABB;
+      sweep.reference = 1;
+   } else {
+      memset(&sweep, 0, sizeof(sweep));
+   }
 
    return _glhckCollisionWorldCollide(object, &shape, &sweep, data);
 }
