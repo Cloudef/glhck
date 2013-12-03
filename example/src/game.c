@@ -614,11 +614,6 @@ static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *play
 
    kmVec3Subtract(&velocity, &actor->position, &lastPosition);
    gameActorCollide(actor, window->collisionWorld, &velocity);
-
-   if (actor->position.y < 0.0f) {
-      //puts("FALLING");
-   }
-
    kmVec3Intrp(&actor->interpolated, &actor->interpolated, &actor->position, 0.2);
 }
 
