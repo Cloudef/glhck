@@ -106,12 +106,14 @@ static void glfwKeyCallback(GLFWwindow *handle, int key, int scancode, int actio
 
 static float fIntrp(float f, float o, float d)
 {
+   if (kmAlmostEqual(f, o)) return o;
    const float inv = 1.0f-d;
    return f*inv + o*d;
 }
 
 static float fModIntrp(float f, float o, float d, float m)
 {
+   if (kmAlmostEqual(f, o)) return o;
    if (fabsf(o-f) > m*0.5f) {
       if (o > f) f += m;
       else o += m;
@@ -121,6 +123,10 @@ static float fModIntrp(float f, float o, float d, float m)
 
 static inline kmVec3* kmVec3Intrp(kmVec3* pOut, const kmVec3* pIn, const kmVec3* other, float d)
 {
+   if (kmVec3AreEqual(pIn, other)) {
+      memcpy(pOut, other, sizeof(kmVec3));
+      return pOut;
+   }
    const float inv = 1.0f - d;
    pOut->x = pIn->x*inv + other->x*d;
    pOut->y = pIn->y*inv + other->y*d;
