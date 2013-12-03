@@ -207,8 +207,11 @@ static void gameActorResponse(const glhckCollisionOutData *collision)
    kmVec3Add(&actor->position, &actor->position, collision->pushVector);
    gameActorUpdateAABB(actor);
    if (other) {
-      kmVec3Subtract(&other->position, &other->position, collision->pushVector);
-      gameActorCollide(other, collision->world, collision->pushVector);
+      kmVec3 push;
+      memcpy(&push, collision->pushVector, sizeof(kmVec3));
+      if (push.y <= 0.0f) push.y = 0.0f;
+      kmVec3Subtract(&other->position, &other->position, &push);
+      gameActorCollide(other, collision->world, &push);
       other->pushed = 1;
    }
 }
