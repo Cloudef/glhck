@@ -761,11 +761,9 @@ static int gameWindowRun(GameWindow *window)
    gameTimeBegin(&window->time);
 
 #if EMSCRIPTEN
-   /* emscripten mainloop is funny, so lets not slowdown. catchup instead. */
-   while (glfwGetTime() > window->time.next) {
-      gameWindowLogic(window);
-      window->time.next += SKIP_TICKS;
-   }
+   /* emscripten updates at 60FPS? */
+   gameWindowLogic(window);
+   window->time.next += SKIP_TICKS;
 #else
    if (glfwGetTime() > window->time.next) {
       gameWindowLogic(window);
