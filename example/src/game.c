@@ -61,7 +61,7 @@ typedef struct GameWindow {
    glhckContext *context;
    GLFWwindow *handle;
    glhckCollisionWorld *collisionWorld;
-   glhckObject *world, *bulletObject;
+   glhckObject *world, *bulletObject, *shadowObject;
    GameBullet *bullet;
    GameActor *actor, *player;
    GameCamera *camera;
@@ -352,6 +352,7 @@ static void gameWindowFree(GameWindow *window)
    while (window->actor) gameActorFree(window, window->actor);
    if (window->collisionWorld) glhckCollisionWorldFree(window->collisionWorld);
    if (window->bulletObject) glhckObjectFree(window->bulletObject);
+   if (window->shadowObject) glhckObjectFree(window->shadowObject);
    if (window->world) glhckObjectFree(window->world);
    if (window->camera) gameCameraFree(window->camera);
    if (window->text) gameTextFree(window->text);
@@ -405,39 +406,20 @@ static GameWindow* gameWindowNew(int argc, char **argv)
    if (!(window->bulletObject = glhckCubeNew(0.2f)))
       goto fail;
 
+   if (!(window->shadowObject = glhckSpriteNewFromFile("example/media/area/shadow.png", 7.0f, 7.0f, NULL, NULL)))
+      goto fail;
+
    if (!(window->world = glhckModelNew("example/media/area/area.glhckm", 8.0f, NULL)))
       goto fail;
 
    if (!(window->player = gameActorNew(window)))
       goto fail;
 
+   glhckObjectRotatef(window->shadowObject, -90, 0, 0);
+
    glhckObject **childs;
    unsigned int i, numChilds;
    childs = glhckObjectChildren(window->world, &numChilds);
-   for (i = 0; i < numChilds; ++i)
-      glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), NULL);
-
-   glhckObject *obj = glhckModelNew("example/media/area/area.glhckm", 8.0f, NULL);
-   glhckObjectAddChild(window->world, obj);
-   glhckObjectMovef(obj, 76.8f, 0.0f, 0.0f);
-   glhckObjectRotationf(obj, 0.0f, 90.0f, 0.0f);
-   childs = glhckObjectChildren(obj, &numChilds);
-   for (i = 0; i < numChilds; ++i)
-      glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), NULL);
-
-   obj = glhckModelNew("example/media/area/area.glhckm", 8.0f, NULL);
-   glhckObjectAddChild(window->world, obj);
-   glhckObjectMovef(obj, 0.0f, 0.0f, -76.8f);
-   glhckObjectRotationf(obj, 0.0f, 270.0f, 0.0f);
-   childs = glhckObjectChildren(obj, &numChilds);
-   for (i = 0; i < numChilds; ++i)
-      glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), NULL);
-
-   obj = glhckModelNew("example/media/area/area.glhckm", 8.0f, NULL);
-   glhckObjectAddChild(window->world, obj);
-   glhckObjectMovef(obj, 76.8f, 0.0f, -76.8f);
-   glhckObjectRotationf(obj, 0.0f, 180.0f, 0.0f);
-   childs = glhckObjectChildren(obj, &numChilds);
    for (i = 0; i < numChilds; ++i)
       glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), NULL);
 
@@ -725,19 +707,27 @@ static void gameWindowRender(GameWindow *window, float interpolation)
    }
 
    for (a = window->actor; a; a = a->next) {
-      kmVec3 bpos;
-      if (a->shootTimer <= 0.0f) continue;
-
       if (!glhckFrustumContainsAABB(frustum, &a->aabb)) {
          ++culled;
          continue;
       }
 
-      glhckBoneGetPositionRelativeOnObject(a->muzzleBone, a->object, &bpos);
-      bpos.y += 1.5f; bpos.z += 2.0f;
-      glhckObjectPosition(a->muzzle, &bpos);
-      glhckObjectScalef(a->muzzle, a->shootTimer/1.0f, 1.0f, a->shootTimer/1.0f);
-      glhckObjectRenderAll(a->muzzle);
+      if (a->shootTimer >= 0.0f) {
+         kmVec3 bpos;
+         glhckBoneGetPositionRelativeOnObject(a->muzzleBone, a->object, &bpos);
+         bpos.y += 1.5f; bpos.z += 2.0f;
+         glhckObjectPosition(a->muzzle, &bpos);
+         glhckObjectScalef(a->muzzle, a->shootTimer/1.0f, 1.0f, a->shootTimer/1.0f);
+         glhckObjectRenderAll(a->muzzle);
+      }
+
+      {
+         kmVec3 spos;
+         memcpy(&spos, glhckObjectGetPosition(a->object), sizeof(kmVec3));
+         spos.y = 5.0f;
+         glhckObjectPosition(window->shadowObject, &spos);
+        glhckObjectRender(window->shadowObject);
+      }
    }
 
    char debug[255];
