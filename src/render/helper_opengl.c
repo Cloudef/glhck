@@ -1489,7 +1489,7 @@ int glhCheckSupport(const char *renderName)
    if (glBindRenderbufferOES) glBindRenderbuffer = glBindRenderbufferOES;
    if (glGenRenderbuffersOES) glGenRenderbuffers = glGenRenderbuffersOES;
    if (glDeleteRenderbuffersOES) glDeleteRenderbuffers = glDeleteRenderbuffersOES;
-   if (glhRenderbufferStorageOES) glRenderbufferStorage = glRenderbufferStorageOES;
+   if (glRenderbufferStorageOES) glRenderbufferStorage = glRenderbufferStorageOES;
 #endif
 
    /* fill the renderer's features struct */
