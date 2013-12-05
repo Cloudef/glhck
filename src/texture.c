@@ -476,7 +476,7 @@ GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target,
       DEBUG(GLHCK_DBG_ERROR, "TEXTURE IS BIGGER THAN MAX TEXTURE SIZE (%d)", GLHCKRF()->texture.maxTextureSize);
    }
 
-   DEBUG(GLHCK_DBG_CRAP, "NEW(%p) %dx%dx%d %.2f MiB", object, object->internalWidth, object->internalHeight, object->internalDepth, (float)size/1048576);
+   DEBUG(GLHCK_DBG_CRAP, "NEW(%p:%u) %dx%dx%d %.2f MiB", object, object->object, object->internalWidth, object->internalHeight, object->internalDepth, (float)size/1048576);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
