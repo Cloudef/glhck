@@ -1337,7 +1337,7 @@ void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type)
  */
 
 /* \brief debug output callback function */
-void glhDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, void *user)
+static void glhDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, GLvoid *user)
 {
    (void)source; (void)type; (void)id; (void)severity; (void)length; (void)user;
    printf(" [GPU::DBG] %s\n", message);
