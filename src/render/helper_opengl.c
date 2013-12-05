@@ -5,6 +5,14 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_RENDER
 #include "helper_opengl.h"
 
+#if defined(__MINGW32__) || defined(__CYGWIN__)
+#  define GLCB __stdcall
+#elif (_MSC_VER >= 800) || defined(_STDCALL_SUPPORTED) || defined(__BORLANDC__)
+#  define GLCB __stdcall
+#else
+#  define GLCB
+#endif
+
 #ifndef GLEW_OES_framebuffer_object
 #  define GLEW_OES_framebuffer_object 0
 #endif
@@ -593,17 +601,41 @@ const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type) {
  * binding mappings
  */
 
+void glhTextureGenerate(GLsizei n, GLuint *textures) {
+   GL_CALL(glGenTextures(n, textures));
+}
+void glhTextureDelete(GLsizei n, const GLuint *textures) {
+   GL_CALL(glDeleteTextures(n, textures));
+}
 void glhTextureBind(glhckTextureTarget target, GLuint object) {
    GL_CALL(glBindTexture(glhckTextureTargetToGL[target], object));
 }
 void glhTextureActive(GLuint index) {
    GL_CALL(glActiveTexture(GL_TEXTURE0+index));
 }
+void glhRenderbufferGenerate(GLsizei n, GLuint *renderbuffers) {
+   GL_CALL(glGenRenderbuffers(n, renderbuffers));
+}
+void glhRenderbufferDelete(GLsizei n, const GLuint *renderbuffers) {
+   GL_CALL(glDeleteRenderbuffers(n, renderbuffers));
+}
 void glhRenderbufferBind(GLuint object) {
    GL_CALL(glBindRenderbuffer(GL_RENDERBUFFER, object));
 }
+void glhFramebufferGenerate(GLsizei n, GLuint *framebuffers) {
+   GL_CALL(glGenFramebuffers(n, framebuffers));
+}
+void glhFramebufferDelete(GLsizei n, const GLuint *framebuffers) {
+   GL_CALL(glDeleteFramebuffers(n, framebuffers));
+}
 void glhFramebufferBind(glhckFramebufferTarget target, GLuint object) {
    GL_CALL(glBindFramebuffer(glhckFramebufferTargetToGL[target], object));
+}
+void glhHwBufferGenerate(GLsizei n, GLuint *buffers) {
+   GL_CALL(glGenBuffers(n, buffers));
+}
+void glhHwBufferDelete(GLsizei n, const GLuint *buffers) {
+   GL_CALL(glDeleteBuffers(n, buffers));
 }
 void glhHwBufferBind(glhckHwBufferTarget target, GLuint object) {
    GL_CALL(glBindBuffer(glhckHwBufferTargetToGL[target], object));
@@ -625,6 +657,15 @@ void* glhHwBufferMap(glhckHwBufferTarget target, glhckHwBufferAccessType access)
 }
 void glhHwBufferUnmap(glhckHwBufferTarget target) {
    GL_CALL(glUnmapBuffer(glhckHwBufferTargetToGL[target]));
+}
+void glhProgramBind(GLuint program) {
+   GL_CALL(glUseProgram(program));
+}
+void glhProgramDelete(GLuint program) {
+   GL_CALL(glDeleteProgram(program));
+}
+void glhShaderDelete(GLuint shader) {
+   GL_CALL(glDeleteShader(shader));
 }
 
 /*
@@ -1337,7 +1378,7 @@ void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type)
  */
 
 /* \brief debug output callback function */
-static void glhDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, GLvoid *user)
+static GLCB void glhDebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, GLvoid *user)
 {
    (void)source; (void)type; (void)id; (void)severity; (void)length; (void)user;
    printf(" [GPU::DBG] %s\n", message);

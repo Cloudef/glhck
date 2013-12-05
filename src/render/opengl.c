@@ -1142,8 +1142,8 @@ void _glhckRenderOpenGL(void)
    /* register api functions */
 
    /* textures */
-   GLHCK_RENDER_FUNC(textureGenerate, glGenTextures);
-   GLHCK_RENDER_FUNC(textureDelete, glDeleteTextures);
+   GLHCK_RENDER_FUNC(textureGenerate, glhTextureGenerate);
+   GLHCK_RENDER_FUNC(textureDelete, glhTextureDelete);
    GLHCK_RENDER_FUNC(textureBind, glhTextureBind);
    GLHCK_RENDER_FUNC(textureActive, glhTextureActive);
    GLHCK_RENDER_FUNC(textureFill, glhTextureFill);
@@ -1155,21 +1155,21 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(lightBind, rLightBind);
 
    /* renderbuffer objects */
-   GLHCK_RENDER_FUNC(renderbufferGenerate, glGenRenderbuffers);
-   GLHCK_RENDER_FUNC(renderbufferDelete, glDeleteRenderbuffers);
+   GLHCK_RENDER_FUNC(renderbufferGenerate, glhRenderbufferGenerate);
+   GLHCK_RENDER_FUNC(renderbufferDelete, glhRenderbufferDelete);
    GLHCK_RENDER_FUNC(renderbufferBind, glhRenderbufferBind);
    GLHCK_RENDER_FUNC(renderbufferStorage, glhRenderbufferStorage);
 
    /* framebuffer objects */
-   GLHCK_RENDER_FUNC(framebufferGenerate, glGenFramebuffers);
-   GLHCK_RENDER_FUNC(framebufferDelete, glDeleteFramebuffers);
+   GLHCK_RENDER_FUNC(framebufferGenerate, glhFramebufferGenerate);
+   GLHCK_RENDER_FUNC(framebufferDelete, glhFramebufferDelete);
    GLHCK_RENDER_FUNC(framebufferBind, glhFramebufferBind);
    GLHCK_RENDER_FUNC(framebufferTexture, glhFramebufferTexture);
    GLHCK_RENDER_FUNC(framebufferRenderbuffer, glhFramebufferRenderbuffer);
 
    /* hardware buffer objects */
-   GLHCK_RENDER_FUNC(hwBufferGenerate, glGenBuffers);
-   GLHCK_RENDER_FUNC(hwBufferDelete, glDeleteBuffers);
+   GLHCK_RENDER_FUNC(hwBufferGenerate, glhHwBufferGenerate);
+   GLHCK_RENDER_FUNC(hwBufferDelete, glhHwBufferDelete);
    GLHCK_RENDER_FUNC(hwBufferBind, glhHwBufferBind);
    GLHCK_RENDER_FUNC(hwBufferBindBase, glhHwBufferBindBase);
    GLHCK_RENDER_FUNC(hwBufferBindRange, glhHwBufferBindRange);
@@ -1179,16 +1179,16 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(hwBufferUnmap, glhHwBufferUnmap);
 
    /* shader objects */
-   GLHCK_RENDER_FUNC(programBind, glUseProgram);
+   GLHCK_RENDER_FUNC(programBind, glhProgramBind);
    GLHCK_RENDER_FUNC(programLink, rProgramLink);
-   GLHCK_RENDER_FUNC(programDelete, glDeleteProgram);
+   GLHCK_RENDER_FUNC(programDelete, glhProgramDelete);
    GLHCK_RENDER_FUNC(programUniform, glhProgramUniform);
    GLHCK_RENDER_FUNC(programUniformBufferList, glhProgramUniformBufferList);
    GLHCK_RENDER_FUNC(programAttributeList, glhProgramAttributeList);
    GLHCK_RENDER_FUNC(programUniformList, glhProgramUniformList);
    GLHCK_RENDER_FUNC(programAttachUniformBuffer, glhProgramAttachUniformBuffer);
    GLHCK_RENDER_FUNC(shaderCompile, rShaderCompile);
-   GLHCK_RENDER_FUNC(shaderDelete, glDeleteShader);
+   GLHCK_RENDER_FUNC(shaderDelete, glhShaderDelete);
    GLHCK_RENDER_FUNC(shadersPath, glswSetPath);
    GLHCK_RENDER_FUNC(shadersDirectiveToken, glswAddDirectiveToken);
 

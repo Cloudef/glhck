@@ -71,10 +71,20 @@ extern GLenum glhckBlendingModeToGL[];
 int glhCheckSupport(const char *renderName);
 
 /*** binding mappings ***/
+void glhTextureGenerate(GLsizei n, GLuint *textures);
+void glhTextureDelete(GLsizei n, const GLuint *textures);
 void glhTextureBind(glhckTextureTarget target, GLuint object);
 void glhTextureActive(GLuint index);
+void glhRenderbufferGenerate(GLsizei n, GLuint *renderbuffers);
+void glhRenderbufferDelete(GLsizei n, const GLuint *renderbuffers);
 void glhRenderbufferBind(GLuint object);
+void glhFramebufferGenerate(GLsizei n, GLuint *framebuffers);
+void glhFramebufferDelete(GLsizei n, const GLuint *framebuffers);
 void glhFramebufferBind(glhckFramebufferTarget target, GLuint object);
+void glhFramebufferGenerate(GLsizei n, GLuint *framebuffers);
+void glhFramebufferDelete(GLsizei n, const GLuint *framebuffers);
+void glhHwBufferGenerate(GLsizei n, GLuint *buffers);
+void glhHwBufferDelete(GLsizei n, const GLuint *buffers);
 void glhHwBufferBind(glhckHwBufferTarget target, GLuint object);
 void glhHwBufferBindBase(glhckHwBufferTarget target, GLuint index, GLuint object);
 void glhHwBufferBindRange(glhckHwBufferTarget target, GLuint index, GLuint object, GLintptr offset, GLsizeiptr size);
@@ -82,6 +92,9 @@ void glhHwBufferCreate(glhckHwBufferTarget target, GLsizeiptr size, const GLvoid
 void glhHwBufferFill(glhckHwBufferTarget target, GLintptr offset, GLsizeiptr size, const GLvoid *data);
 void* glhHwBufferMap(glhckHwBufferTarget target, glhckHwBufferAccessType access);
 void glhHwBufferUnmap(glhckHwBufferTarget target);
+void glhProgramBind(GLuint program);
+void glhProgramDelete(GLuint program);
+void glhShaderDelete(GLuint shader);
 
 /*** shader mapping functions ***/
 GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type);

@@ -829,8 +829,8 @@ void _glhckRenderOpenGLFixedPipeline(void)
    /* register api functions */
 
    /* textures */
-   GLHCK_RENDER_FUNC(textureGenerate, glGenTextures);
-   GLHCK_RENDER_FUNC(textureDelete, glDeleteTextures);
+   GLHCK_RENDER_FUNC(textureGenerate, glhTextureGenerate);
+   GLHCK_RENDER_FUNC(textureDelete, glhTextureDelete);
    GLHCK_RENDER_FUNC(textureBind, glhTextureBind);
    GLHCK_RENDER_FUNC(textureActive, glhTextureActive);
    GLHCK_RENDER_FUNC(textureFill, glhTextureFill);
@@ -842,21 +842,21 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(lightBind, rLightBind);
 
    /* renderbuffer objects */
-   GLHCK_RENDER_FUNC(renderbufferGenerate, glGenRenderbuffers);
-   GLHCK_RENDER_FUNC(renderbufferDelete, glDeleteRenderbuffers);
+   GLHCK_RENDER_FUNC(renderbufferGenerate, glhFramebufferGenerate);
+   GLHCK_RENDER_FUNC(renderbufferDelete, glhFramebufferDelete);
    GLHCK_RENDER_FUNC(renderbufferBind, glhRenderbufferBind);
    GLHCK_RENDER_FUNC(renderbufferStorage, glhRenderbufferStorage);
 
    /* framebuffer objects */
-   GLHCK_RENDER_FUNC(framebufferGenerate, glGenFramebuffers);
-   GLHCK_RENDER_FUNC(framebufferDelete, glDeleteFramebuffers);
+   GLHCK_RENDER_FUNC(framebufferGenerate, glhFramebufferGenerate);
+   GLHCK_RENDER_FUNC(framebufferDelete, glhFramebufferDelete);
    GLHCK_RENDER_FUNC(framebufferBind, glhFramebufferBind);
    GLHCK_RENDER_FUNC(framebufferTexture, glhFramebufferTexture);
    GLHCK_RENDER_FUNC(framebufferRenderbuffer, glhFramebufferRenderbuffer);
 
    /* hardware buffer objects */
-   GLHCK_RENDER_FUNC(hwBufferGenerate, glGenBuffers);
-   GLHCK_RENDER_FUNC(hwBufferDelete, glDeleteBuffers);
+   GLHCK_RENDER_FUNC(hwBufferGenerate, glhHwBufferGenerate);
+   GLHCK_RENDER_FUNC(hwBufferDelete, glhHwBufferDelete);
    GLHCK_RENDER_FUNC(hwBufferBind, glhHwBufferBind);
    GLHCK_RENDER_FUNC(hwBufferBindBase, glhHwBufferBindBase);
    GLHCK_RENDER_FUNC(hwBufferBindRange, glhHwBufferBindRange);
