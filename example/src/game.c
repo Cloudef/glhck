@@ -13,6 +13,10 @@
 #  include <emscripten/emscripten.h>
 #endif
 
+#ifndef GL_MULTISAMPLE
+#  define GL_MULTISAMPLE 0x809D
+#endif
+
 typedef enum GameFont {
    FONT_DEFAULT,
    FONT_LAST

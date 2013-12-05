@@ -7,6 +7,12 @@
 #include <jpeglib.h>
 #include <setjmp.h>
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#  define sigjmp_buf jmp_buf
+#  define siglongjmp longjmp
+#  define sigsetjmp(b,s) setjmp((void*)b)
+#endif
+
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
 typedef struct jpegErrorStruct {

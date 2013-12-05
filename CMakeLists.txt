@@ -136,6 +136,10 @@ IF (MSVC)
 ELSEIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
    SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -Wall -Wextra -Wno-variadic-macros -Wno-long-long")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-variadic-macros -Wno-long-long")
+   IF (MINGW)
+      SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -mwindows -static")
+      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows -static")
+   ENDIF ()
 ENDIF ()
 
 # Build glhck
