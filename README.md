@@ -1,4 +1,5 @@
 # GLhck
+[![buildhck status](http://cloudef.eu:9001/build/glhck/internal-restructure/linux%20x86_64/build-status.png)](#)
 
 Nothing interesting here yet...
 Move on.
