@@ -36,6 +36,7 @@ Move on.
 * [glhck-scene][] - QMLON GLhck scene arranger
 * [2dshooter][] - 2D Shooter game
 * [spacerocks][] - 2D Asteroids clone
+* [qb][] - A cube pushing game
 
 ## Thanks to
 * [GLEW][] - OpenGL Extension Wrangler
@@ -59,6 +60,7 @@ Move on.
 [glhck-scene]: https://github.com/bzar/glhck-scene
 [2dshooter]: https://github.com/bzar/2dshooter
 [spacerocks]: https://github.com/bzar/spacerocks
+[qb]: https://github.com/bzar/qb
 
 [GLEW]: http://glew.sourceforge.net/
 [GLFW]: http://www.glfw.org/
