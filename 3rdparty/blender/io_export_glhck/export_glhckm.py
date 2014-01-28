@@ -48,7 +48,7 @@ ENUM_VERTEXDATAFLAGS = {
 }
 
 # Binary sizes for datatypes
-SZ_INT8  = 1
+SZ_INT8 = 1
 SZ_INT16 = 2
 SZ_INT32 = 4
 SZ_COLOR3 = SZ_INT8 * 3
@@ -211,7 +211,7 @@ def write_node(file, node):
 
 # Almost equality check of floating point
 def almost_equal(aflt, bflt, error=0.0001):
-    return (aflt + error > bflt and aflt - error < bflt)
+    return aflt + error > bflt and aflt - error < bflt
 
 # Almost equality check of 3d vector
 def ae3d(vec1, vec2, error=0.0001):
@@ -221,7 +221,7 @@ def ae3d(vec1, vec2, error=0.0001):
 
 # Almost equality check of quaternion
 def aeqt(qat1, qat2, error=0.0001):
-    return (ae3d(qat1, qat2, error) and almost_equal(qat1[3], qat2[3], error))
+    return ae3d(qat1, qat2, error) and almost_equal(qat1[3], qat2[3], error)
 
 # Round 2d vector
 def r2d(vec, num=6):
@@ -261,7 +261,7 @@ class Material:
         self.name = bmtl.name
 
         images = Material._get_texture_images(bmtl)
-        if images['diffuse'] is None and len(mesh.uv_textures):
+        if images['diffuse'] is None and mesh.uv_textures:
             images['diffuse'] = mesh.uv_textures.active.data[:][0].image
 
         self.textures = {}
@@ -474,11 +474,11 @@ def blender_object_to_data(context, bobj, options):
         materials = materials_from_blender_mesh(mesh, options)
 
     active_uvs = None
-    if options['use_uvs'] and len(mesh.tessface_uv_textures) > 0:
+    if options['use_uvs'] and mesh.tessface_uv_textures:
         active_uvs = mesh.tessface_uv_textures.active.data
 
     active_vertex_colors = None
-    if options['use_vertex_colors'] and len(mesh.vertex_colors) > 0:
+    if options['use_vertex_colors'] and mesh.vertex_colors:
         active_vertex_colors = mesh.vertex_colors.active.data
 
     vertex_count = 0
@@ -510,7 +510,7 @@ def blender_object_to_data(context, bobj, options):
             # Get total weight for vertex and number of influences
             influences = 0
             weight_total = 0.0
-            if len(skin_bones):
+            if skin_bones:
                 for vgroup in mesh.vertices[vidx].groups:
                     bones = get_skin_bones_for_vgroup(vgroup)
                     for bone in bones:
@@ -521,7 +521,7 @@ def blender_object_to_data(context, bobj, options):
             key = vertex, normal, uvc, color, round(weight_total, 6), influences
             duplicate_index = stored_data.get(key)
 
-            if (duplicate_index is None):
+            if duplicate_index is None:
                 # Store new vertex
                 stored_data[key] = vertex_count
                 vertices.append(vertex)
@@ -752,7 +752,7 @@ class ExportAnimation:
         for node in nodes:
             node_data_size += sz_node(node)
 
-        block_size  = sz_string(self.name) # name
+        block_size = sz_string(self.name) # name
         block_size += SZ_INT32 # nodeCount
         block_size += node_data_size # nodes
 
@@ -799,11 +799,11 @@ class ExportObject:
         geometry_type = ENUM_GEOMETRYTYPE['TRIANGLES']
 
         vertex_data_flags = 0
-        if len(normals):
+        if normals:
             vertex_data_flags |= ENUM_VERTEXDATAFLAGS['HAS_NORMALS']
-        if len(uvs):
+        if uvs:
             vertex_data_flags |= ENUM_VERTEXDATAFLAGS['HAS_UVS']
-        if len(vertex_colors):
+        if vertex_colors:
             vertex_data_flags |= ENUM_VERTEXDATAFLAGS['HAS_VERTEX_COLORS']
 
         vertex_data_size = 0
@@ -824,7 +824,7 @@ class ExportObject:
         for bone in skin_bones:
             bone_data_size += sz_skinbone(bone)
 
-        block_size  = sz_string(self.name) # name
+        block_size = sz_string(self.name) # name
         block_size += SZ_INT8 # geometryType
         block_size += SZ_INT8 # vertexDataFlags
         block_size += SZ_INT32 # indexCount
@@ -869,11 +869,11 @@ class ExportObject:
         # vertices
         for idx in range(len(vertices)):
             write_vector3(file, vertices[idx])
-            if len(normals):
+            if normals:
                 write_vector3(file, normals[idx])
-            if len(uvs):
+            if uvs:
                 write_vector2(file, uvs[idx])
-            if len(vertex_colors):
+            if vertex_colors:
                 write_color4(file, vertex_colors[idx])
 
         for mtl in materials:
@@ -901,9 +901,10 @@ class ExportObject:
             bone_data_size += sz_bone(self, bone, matrix)
             bone_matrices.append(matrix)
 
-        matrix = options['global_matrix'] * self.bobj.matrix_local # root bone matrix
+        # root bone matrix
+        matrix = options['global_matrix'] * self.bobj.matrix_local
 
-        block_size  = SZ_INT16 # boneCount
+        block_size = SZ_INT16 # boneCount
         block_size += sz_string(self.name) # root bone name
         block_size += sz_matrix4x4(matrix) # root bone matrix
         block_size += SZ_INT16 # root bone parent
@@ -1425,11 +1426,11 @@ def save(context, filepath,
         global_matrix = Matrix()
 
     options = {}
-    for i in ['use_selection',      'use_animations', 'bake_animations',
-              'split_animations',   'use_bones',      'use_rest_pose',
-              'use_mesh_modifiers', 'use_normals',    'use_uvs',
-              'use_vertex_colors',  'use_materials',
-              'path_mode',          'global_matrix']:
+    for i in ['use_selection', 'use_animations', 'bake_animations',
+              'split_animations', 'use_bones', 'use_rest_pose',
+              'use_mesh_modifiers', 'use_normals', 'use_uvs',
+              'use_vertex_colors', 'use_materials',
+              'path_mode', 'global_matrix']:
         options[i] = locals()[i]
 
     exporter = GlhckExporter()
