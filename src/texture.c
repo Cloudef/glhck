@@ -531,47 +531,44 @@ GLHCKAPI void glhckTextureFill(glhckTexture *object, int level, int x, int y, in
    if (old) glhckTextureBind(old);
 }
 
+/* \brief fill subdata to texture from source data */
 GLHCKAPI void glhckTextureFillFrom(glhckTexture *object, int level, int sx, int sy, int sz, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data)
 {
-  CALL(2, "%p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p", object, level, sx, sy, sz, x, y, z, width, height, depth, format, type, size, data);
+   CALL(2, "%p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p", object, level, sx, sy, sz, x, y, z, width, height, depth, format, type, size, data);
 
-  int bufferSize = _glhckSizeForTexture(object->target, width, height, depth, format, type);
-  int unitSize = _glhckUnitSizeForTexture(format, type);
-  void* buffer = calloc(1, bufferSize);
-  int dy, dz;
+   int bufferSize = _glhckSizeForTexture(object->target, width, height, depth, format, type);
+   int unitSize = _glhckUnitSizeForTexture(format, type);
+   void* buffer = calloc(1, bufferSize);
+   int dy, dz;
 
-  switch(object->target)
-  {
-    case GLHCK_TEXTURE_1D:
-      memcpy(buffer, data + sx * unitSize, width * unitSize);
-      break;
-    case GLHCK_TEXTURE_2D:
-    case GLHCK_TEXTURE_CUBE_MAP:
-      for(dy = 0; dy < height; ++dy)
-      {
-        memcpy(buffer + dy * width * unitSize,
-               data + ((sy + dy) * object->width + sx) * unitSize,
-               width * unitSize);
-      }
-      break;
-    case GLHCK_TEXTURE_3D:
-      for(dz = 0; dz < depth; ++dz)
-      {
-        for(dy = 0; dy < height; ++dy)
-        {
-          memcpy(buffer + (dz * height + dy) * width * unitSize,
-                 data + ((sz + dz) * object->width * object->height + (sy + dy) * object->width + sx) * unitSize,
-                 width * unitSize);
-        }
-      }
-      break;
-    default:
-      assert(0 && "Filling from target type has not been implemented");break;
-  }
+   switch(object->target) {
+      case GLHCK_TEXTURE_1D:
+         memcpy(buffer, data + sx * unitSize, width * unitSize);
+         break;
+      case GLHCK_TEXTURE_2D:
+      case GLHCK_TEXTURE_CUBE_MAP:
+         for(dy = 0; dy < height; ++dy) {
+            memcpy(buffer + dy * width * unitSize,
+                  data + ((sy + dy) * object->width + sx) * unitSize,
+                  width * unitSize);
+         }
+         break;
+      case GLHCK_TEXTURE_3D:
+         for(dz = 0; dz < depth; ++dz) {
+            for(dy = 0; dy < height; ++dy) {
+               memcpy(buffer + (dz * height + dy) * width * unitSize,
+                     data + ((sz + dz) * object->width * object->height + (sy + dy) * object->width + sx) * unitSize,
+                     width * unitSize);
+            }
+         }
+         break;
+      default:
+         assert(0 && "Filling from target type has not been implemented");
+         break;
+   }
 
-  glhckTextureFill(object, level, x, y, z, width, height, depth, format, type,  size, buffer);
-
-  free(buffer);
+   glhckTextureFill(object, level, x, y, z, width, height, depth, format, type,  size, buffer);
+   free(buffer);
 }
 
 /* \brief save texture to file in TGA format */
