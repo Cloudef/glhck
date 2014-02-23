@@ -2,6 +2,8 @@ TODO
 ====
 
 ---
+replace add_subdirectory in cmakelists with b-zar's macro
+---
 We need some sort of assest library with hashed tables
 This way we can reuse assets and not already load new ones..
 That's not the only saving, we can remove some pointers from glhckObject
