@@ -993,6 +993,7 @@ GLHCKAPI void glhckTextureGetInformation(glhckTexture *object, glhckTextureTarge
 GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, glhckDataType type, int size, const void *data);
 GLHCKAPI int glhckTextureRecreate(glhckTexture *object, glhckTextureFormat format, glhckDataType type, int size, const void *data);
 GLHCKAPI void glhckTextureFill(glhckTexture *object, int level, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data);
+GLHCKAPI void glhckTextureFillFrom(glhckTexture *object, int level, int sx, int sy, int sz, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data);
 GLHCKAPI void glhckTextureParameter(glhckTexture *object, const glhckTextureParameters *params);
 GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void);
 GLHCKAPI const glhckTextureParameters* glhckTextureDefaultLinearParameters(void);
