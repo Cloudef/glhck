@@ -60,44 +60,50 @@ void _glhckTextureInsertToQueue(glhckTexture *object)
    textures->count++;
 }
 
-/* \brief guess size for texture */
-int _glhckSizeForTexture(glhckTextureTarget target, int width, int height, int depth, glhckTextureFormat format, glhckDataType type)
+/* \brief guess unit size for texture */
+int _glhckUnitSizeForTexture(glhckTextureFormat format, glhckDataType type)
 {
-   int size = 0;
-   size_t b = 0;
+   size_t b;
 
    switch (type) {
       case GLHCK_BYTE:
       case GLHCK_UNSIGNED_BYTE:
-         b = sizeof(unsigned char);
-         break;
+         b = sizeof(unsigned char); break;
       case GLHCK_SHORT:
       case GLHCK_UNSIGNED_SHORT:
-         b = sizeof(unsigned short);
-         break;
+         b = sizeof(unsigned short); break;
       case GLHCK_INT:
       case GLHCK_UNSIGNED_INT:
-         b = sizeof(unsigned int);
-         break;
+         b = sizeof(unsigned int); break;
       case GLHCK_FLOAT:
          b = sizeof(float);
-         break;
       case GLHCK_COMPRESSED:
          assert(0 && "This should not never happen");break;
          break;
-      default:assert(0 && "Datatype size not known");break;
+      default:
+         assert(0 && "Datatype size not known");
+         break;
    }
+
+   return _glhckNumChannels(format) * b;
+}
+
+/* \brief guess size for texture */
+int _glhckSizeForTexture(glhckTextureTarget target, int width, int height, int depth, glhckTextureFormat format, glhckDataType type)
+{
+   int size = 0;
+   int unitSize = _glhckUnitSizeForTexture(format, type);
 
    switch (target) {
       case GLHCK_TEXTURE_1D:
-         size = width * _glhckNumChannels(format) * b;
+         size = width * unitSize;
          break;
       case GLHCK_TEXTURE_2D:
       case GLHCK_TEXTURE_CUBE_MAP:
-         size = width * height * _glhckNumChannels(format) * b;
+         size = width * height * unitSize;
          break;
       case GLHCK_TEXTURE_3D:
-         size = width * height * depth * _glhckNumChannels(format) * b;
+         size = width * height * depth * unitSize;
          break;
       default:assert(0 && "Target's size calculation not implemented");break;
    }
@@ -523,6 +529,49 @@ GLHCKAPI void glhckTextureFill(glhckTexture *object, int level, int x, int y, in
    glhckTextureBind(object);
    GLHCKRA()->textureFill(object->target, level, x, y, z, width, height, depth, format, type, size, data);
    if (old) glhckTextureBind(old);
+}
+
+GLHCKAPI void glhckTextureFillFrom(glhckTexture *object, int level, int sx, int sy, int sz, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data)
+{
+  CALL(2, "%p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p", object, level, sx, sy, sz, x, y, z, width, height, depth, format, type, size, data);
+
+  int bufferSize = _glhckSizeForTexture(object->target, width, height, depth, format, type);
+  int unitSize = _glhckUnitSizeForTexture(format, type);
+  void* buffer = calloc(1, bufferSize);
+  int dy, dz;
+
+  switch(object->target)
+  {
+    case GLHCK_TEXTURE_1D:
+      memcpy(buffer, data + sx * unitSize, width * unitSize);
+      break;
+    case GLHCK_TEXTURE_2D:
+    case GLHCK_TEXTURE_CUBE_MAP:
+      for(dy = 0; dy < height; ++dy)
+      {
+        memcpy(buffer + dy * width * unitSize,
+               data + ((sy + dy) * object->width + sx) * unitSize,
+               width * unitSize);
+      }
+      break;
+    case GLHCK_TEXTURE_3D:
+      for(dz = 0; dz < depth; ++dz)
+      {
+        for(dy = 0; dy < height; ++dy)
+        {
+          memcpy(buffer + (dz * height + dy) * width * unitSize,
+                 data + ((sz + dz) * object->width * object->height + (sy + dy) * object->width + sx) * unitSize,
+                 width * unitSize);
+        }
+      }
+      break;
+    default:
+      assert(0 && "Filling from target type has not been implemented");break;
+  }
+
+  glhckTextureFill(object, level, x, y, z, width, height, depth, format, type,  size, buffer);
+
+  free(buffer);
 }
 
 /* \brief save texture to file in TGA format */
