@@ -348,10 +348,10 @@ GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *object)
    return object->object;
 }
 
-/* \brief cast a ray from camera at specified relative coordinates */
-GLHCKAPI kmRay3* glhckCameraCastRayFromPosition(glhckCamera *object, kmRay3* pOut, kmScalar x, kmScalar y)
+/* \brief cast a ray from camera at specified relative coordinate */
+GLHCKAPI kmRay3* glhckCameraCastRayFromPoint(glhckCamera *object, kmRay3* pOut, const kmVec2 *point)
 {
-   CALL(2, "%p, %f, %f", pOut, x, y);
+   CALL(2, "%p, "VEC2S, pOut, VEC2(point));
 
    glhckFrustum* frustum = glhckCameraGetFrustum(object);
 
@@ -369,10 +369,10 @@ GLHCKAPI kmRay3* glhckCameraCastRayFromPosition(glhckCamera *object, kmRay3* pOu
 	 &frustum->corners[GLHCK_FRUSTUM_CORNER_FAR_TOP_LEFT],
 	 &frustum->corners[GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_LEFT]);
 
-   kmVec3Scale(&nu, &nu, x);
-   kmVec3Scale(&nv, &nv, y);
-   kmVec3Scale(&fu, &fu, x);
-   kmVec3Scale(&fv, &fv, y);
+   kmVec3Scale(&nu, &nu, point->x);
+   kmVec3Scale(&nv, &nv, point->y);
+   kmVec3Scale(&fu, &fu, point->x);
+   kmVec3Scale(&fv, &fv, point->y);
 
    pOut->start = frustum->corners[GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_LEFT];
    pOut->dir = frustum->corners[GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_LEFT];
@@ -385,6 +385,13 @@ GLHCKAPI kmRay3* glhckCameraCastRayFromPosition(glhckCamera *object, kmRay3* pOu
 
    RET(2, "%p", pOut);
    return pOut;
+}
+
+/* \brief cast a ray from camera at specified relative coordinate (with kmScalar) */
+GLHCKAPI kmRay3* glhckCameraCastRayFromPointf(glhckCamera *object, kmRay3* pOut, kmScalar x, kmScalar y)
+{
+   kmVec2 point = { x, y };
+   return glhckCameraCastRayFromPoint(object, pOut, &point);
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/
