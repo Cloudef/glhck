@@ -18,6 +18,7 @@ SET(GLHCK_SRC
    shader.c
    texture_packer.c
    collision.c
+   kazmath.c
    geometry/cube.c
    geometry/sphere.c
    geometry/plane.c
