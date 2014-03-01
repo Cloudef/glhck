@@ -23,29 +23,29 @@ static void _glhckCameraProjectionMatrix(glhckCamera *object)
    switch(object->view.projectionType)
    {
       case GLHCK_PROJECTION_ORTHOGRAPHIC:
-         w = object->view.viewport.w > object->view.viewport.h ? 1 :
-               object->view.viewport.w / object->view.viewport.h;
-         h = object->view.viewport.w < object->view.viewport.h ? 1 :
-               object->view.viewport.h / object->view.viewport.w;
+	 w = object->view.viewport.w > object->view.viewport.h ? 1 :
+	    object->view.viewport.w / object->view.viewport.h;
+	 h = object->view.viewport.w < object->view.viewport.h ? 1 :
+	    object->view.viewport.h / object->view.viewport.w;
 
-         kmVec3Subtract(&toTarget, &object->object->view.translation, &object->object->view.target);
-         distanceFromTarget = kmVec3Length(&toTarget);
+	 kmVec3Subtract(&toTarget, &object->object->view.translation, &object->object->view.target);
+	 distanceFromTarget = kmVec3Length(&toTarget);
 
-         w *= (distanceFromTarget+object->view.near)/2;
-         h *= (distanceFromTarget+object->view.near)/2;
+	 w *= (distanceFromTarget+object->view.near)/2;
+	 h *= (distanceFromTarget+object->view.near)/2;
 
-         kmMat4OrthographicProjection(&object->view.projection,
-            -w, w, -h, h, object->view.near, object->view.far);
-         break;
+	 kmMat4OrthographicProjection(&object->view.projection,
+	       -w, w, -h, h, object->view.near, object->view.far);
+	 break;
 
       case GLHCK_PROJECTION_PERSPECTIVE:
       default:
-         kmMat4PerspectiveProjection(
-               &object->view.projection,
-               object->view.fov,
-               (float)object->view.viewport.w/(float)object->view.viewport.h,
-               object->view.near, object->view.far);
-         break;
+	 kmMat4PerspectiveProjection(
+	       &object->view.projection,
+	       object->view.fov,
+	       (float)object->view.viewport.w/(float)object->view.viewport.h,
+	       object->view.near, object->view.far);
+	 break;
    }
 }
 
@@ -59,12 +59,12 @@ static void _glhckCameraViewMatrix(glhckCamera *object)
 
    /* build rotation for upvector */
    kmMat4RotationAxisAngle(&rotation, &(kmVec3){0,0,1},
-         kmDegreesToRadians(object->object->view.rotation.z));
+	 kmDegreesToRadians(object->object->view.rotation.z));
    kmMat4RotationAxisAngle(&tmp, &(kmVec3){0,1,0},
-         kmDegreesToRadians(object->object->view.rotation.y));
+	 kmDegreesToRadians(object->object->view.rotation.y));
    kmMat4Multiply(&rotation, &rotation, &tmp);
    kmMat4RotationAxisAngle(&tmp, &(kmVec3){1,0,0},
-         kmDegreesToRadians(object->object->view.rotation.x));
+	 kmDegreesToRadians(object->object->view.rotation.x));
    kmMat4Multiply(&rotation, &rotation, &tmp);
 
    /* assuming upvector is normalized */
@@ -72,9 +72,9 @@ static void _glhckCameraViewMatrix(glhckCamera *object)
 
    /* build view matrix */
    kmMat4LookAt(&object->view.view, &object->object->view.translation,
-         &object->object->view.target, &upvector);
+	 &object->object->view.target, &upvector);
    kmMat4Multiply(&object->view.viewProj,
-         &object->view.projection, &object->view.view);
+	 &object->view.projection, &object->view.view);
    glhckFrustumBuild(&object->frustum, &object->view.viewProj);
 }
 
@@ -91,10 +91,10 @@ void _glhckCameraWorldUpdate(int width, int height)
 
    for (camera = GLHCKW()->camera; camera; camera = camera->next) {
       glhckCameraViewporti(camera,
-            camera->view.viewport.x,
-            camera->view.viewport.y,
-            camera->view.viewport.w + diffw,
-            camera->view.viewport.h + diffh);
+	    camera->view.viewport.x,
+	    camera->view.viewport.y,
+	    camera->view.viewport.w + diffw,
+	    camera->view.viewport.h + diffh);
    }
 
    /* no camera binded, upload default projection */
@@ -209,7 +209,7 @@ GLHCKAPI void glhckCameraUpdate(glhckCamera *object)
 
    if (object->view.update || object->object->view.update) {
       if (object->view.projectionType == GLHCK_PROJECTION_ORTHOGRAPHIC)
-         _glhckCameraProjectionMatrix(object);
+	 _glhckCameraProjectionMatrix(object);
       _glhckCameraViewMatrix(object);
       object->view.update = 0;
    }
@@ -307,7 +307,7 @@ GLHCKAPI void glhckCameraRange(glhckCamera *object,
    assert(object);
 
    if (object->view.near == near &&
-       object->view.far  == far)
+	 object->view.far  == far)
       return;
 
    object->view.near = near;
@@ -322,9 +322,9 @@ GLHCKAPI void glhckCameraViewport(glhckCamera *object, const glhckRect *viewport
    assert(object);
 
    if (object->view.viewport.x == viewport->x &&
-       object->view.viewport.y == viewport->y &&
-       object->view.viewport.w == viewport->w &&
-       object->view.viewport.h == viewport->h)
+	 object->view.viewport.y == viewport->y &&
+	 object->view.viewport.w == viewport->w &&
+	 object->view.viewport.h == viewport->h)
       return;
 
    memcpy(&object->view.viewport, viewport, sizeof(glhckRect));
@@ -348,3 +348,44 @@ GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *object)
    RET(2, "%p", object->object);
    return object->object;
 }
+
+/* \brief cast a ray from camera at specified relative coordinates */
+GLHCKAPI kmRay3* glhckCameraCastRayFromPosition(glhckCamera *object, kmRay3* pOut, float const x, float const y)
+{
+   CALL(2, "%p, %f, %f", pOut, x, y);
+
+   glhckFrustum* frustum = glhckCameraGetFrustum(object);
+
+   kmVec3 nu, nv, fu, fv;
+   kmVec3Subtract(&nu,
+	 &frustum->corners[GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_RIGHT],
+	 &frustum->corners[GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_LEFT]);
+   kmVec3Subtract(&nv,
+	 &frustum->corners[GLHCK_FRUSTUM_CORNER_NEAR_TOP_LEFT],
+	 &frustum->corners[GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_LEFT]);
+   kmVec3Subtract(&fu,
+	 &frustum->corners[GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_RIGHT],
+	 &frustum->corners[GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_LEFT]);
+   kmVec3Subtract(&fv,
+	 &frustum->corners[GLHCK_FRUSTUM_CORNER_FAR_TOP_LEFT],
+	 &frustum->corners[GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_LEFT]);
+
+   kmVec3Scale(&nu, &nu, x);
+   kmVec3Scale(&nv, &nv, y);
+   kmVec3Scale(&fu, &fu, x);
+   kmVec3Scale(&fv, &fv, y);
+
+   pOut->start = frustum->corners[GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_LEFT];
+   pOut->dir = frustum->corners[GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_LEFT];
+
+   kmVec3Add(&pOut->start, &pOut->start, &nu);
+   kmVec3Add(&pOut->start, &pOut->start, &nv);
+   kmVec3Add(&pOut->dir, &pOut->dir, &fu);
+   kmVec3Add(&pOut->dir, &pOut->dir, &fv);
+   kmVec3Subtract(&pOut->dir, &pOut->dir, &pOut->start);
+
+   RET(2, "%p", pOut);
+   return pOut;
+}
+
+/* vim: set ts=8 sw=3 tw=0 :*/

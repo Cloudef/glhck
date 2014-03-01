@@ -753,6 +753,46 @@ kmBool kmRay3IntersectAABB(const kmRay3 *ray, const kmAABB *aabb, float *outMin,
    return KM_TRUE;
 }
 
+
+kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 *outIntersection)
+{
+  kmVec3 u, v, n;
+  kmVec3Subtract(&u,  &tri->v2,  &tri->v1);
+  kmVec3Subtract(&v,  &tri->v3,  &tri->v1);
+  kmVec3Cross(&n, &u, &v);
+
+  kmPlane triPlane;
+  kmPlaneFromPointAndNormal(&triPlane, &tri->v1, &n);
+
+  kmVec3 p;
+  if (!kmRay3IntersectPlane(&p, ray, &triPlane))
+  {
+    return KM_FALSE;
+  }
+
+  kmVec3 w;
+  kmVec3Subtract(&w, &p, &tri->v1);
+
+  const kmScalar uv = kmVec3Dot(&u, &v);
+  const kmScalar wv = kmVec3Dot(&w, &v);
+  const kmScalar vv = kmVec3Dot(&v, &v);
+  const kmScalar wu = kmVec3Dot(&w, &u);
+  const kmScalar uu = kmVec3Dot(&u, &u);
+
+  const kmScalar d = uv * uv - uu * vv;
+  const kmScalar s = (uv * wv - vv * wu) / d;
+  const kmScalar t = (uv * wu - uu * wv) / d;
+
+  if (s < 0 || t < 0 || s + t > 1)
+  {
+    return KM_FALSE;
+  }
+
+  *outIntersection = p;
+  return KM_TRUE;
+}
+
+
 /***
  * Collision manager
  ***/

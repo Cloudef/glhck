@@ -767,6 +767,7 @@ GLHCKAPI void glhckCameraRange(glhckCamera *object, const kmScalar near, const k
 GLHCKAPI void glhckCameraViewport(glhckCamera *object, const glhckRect *viewport);
 GLHCKAPI void glhckCameraViewporti(glhckCamera *object, int x, int y, int w, int h);
 GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *object);
+GLHCKAPI kmRay3* glhckCameraCastRayFromPosition(glhckCamera *object, kmRay3* pOut, float const x, float const y);
 
 /* objects */
 GLHCKAPI glhckObject* glhckObjectNew(void);
