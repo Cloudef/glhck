@@ -929,8 +929,7 @@ GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position)
 }
 
 /* \brief position object (with kmScalar) */
-GLHCKAPI void glhckObjectPositionf(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectPositionf(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 position = { x, y, z };
    glhckObjectPosition(object, &position);
@@ -947,8 +946,7 @@ GLHCKAPI void glhckObjectMove(glhckObject *object, const kmVec3 *move)
 }
 
 /* \brief move object (with kmScalar) */
-GLHCKAPI void glhckObjectMovef(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectMovef(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 move = { x, y, z };
    glhckObjectMove(object, &move);
@@ -976,8 +974,7 @@ GLHCKAPI void glhckObjectRotation(glhckObject *object, const kmVec3 *rotation)
 }
 
 /* \brief set object rotation (with kmScalar) */
-GLHCKAPI void glhckObjectRotationf(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectRotationf(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 rotation = { x, y, z };
    glhckObjectRotation(object, &rotation);
@@ -995,8 +992,7 @@ GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate)
 }
 
 /* \brief rotate object (with kmScalar) */
-GLHCKAPI void glhckObjectRotatef(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectRotatef(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 rotate = { x, y, z };
    glhckObjectRotate(object, &rotate);
@@ -1024,8 +1020,7 @@ GLHCKAPI void glhckObjectTarget(glhckObject *object, const kmVec3 *target)
 }
 
 /* \brief set object target (with kmScalar) */
-GLHCKAPI void glhckObjectTargetf(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectTargetf(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 target = { x, y, z };
    glhckObjectTarget(object, &target);
@@ -1057,8 +1052,7 @@ GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale)
 }
 
 /* \brief scale object (with kmScalar) */
-GLHCKAPI void glhckObjectScalef(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectScalef(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 scaling = { x, y, z };
    glhckObjectScale(object, &scaling);
