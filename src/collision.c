@@ -383,8 +383,8 @@ kmSphere* kmSphereFromAABB(kmSphere *sphere, const kmAABB *aabb)
 {
    kmAABBCentre(aabb, &sphere->point);
    sphere->radius = kmAABBDiameterX(aabb);
-   sphere->radius = max(sphere->radius, kmAABBDiameterY(aabb));
-   sphere->radius = max(sphere->radius, kmAABBDiameterZ(aabb));
+   sphere->radius = fmax(sphere->radius, kmAABBDiameterY(aabb));
+   sphere->radius = fmax(sphere->radius, kmAABBDiameterZ(aabb));
    return sphere;
 }
 
