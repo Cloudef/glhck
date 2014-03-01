@@ -523,38 +523,33 @@ kmBool kmAABBExtentIntersectsCapsule(const kmAABBExtent *a, const kmCapsule *b)
    /* Quick rejection test using the smallest (quickly calculatable) capsule the AABB fits inside*/
    kmCapsule smallestContainingCapsule = {{0, 0, 0}, {0, 0, 0}, 0};
 
-   if(a->extent.x >= a->extent.y && a->extent.x >= a->extent.z)
-   {
+   if (a->extent.x >= a->extent.y && a->extent.x >= a->extent.z) {
       smallestContainingCapsule.radius = sqrt(a->extent.y * a->extent.y + a->extent.z * a->extent.z);
       smallestContainingCapsule.pointA.x = a->point.x - a->extent.x;
       smallestContainingCapsule.pointB.x = a->point.x + a->extent.x;
-   }
-   else if(a->extent.y >= a->extent.x && a->extent.y >= a->extent.z)
-   {
+   } else if (a->extent.y >= a->extent.x && a->extent.y >= a->extent.z) {
       smallestContainingCapsule.radius = sqrt(a->extent.x * a->extent.x + a->extent.z * a->extent.z);
       smallestContainingCapsule.pointA.y = a->point.y - a->extent.y;
       smallestContainingCapsule.pointB.y = a->point.y + a->extent.y;
-   }
-   else
-   {
+   } else {
       smallestContainingCapsule.radius = sqrt(a->extent.x * a->extent.x + a->extent.y * a->extent.y);
       smallestContainingCapsule.pointA.z = a->point.z - a->extent.z;
       smallestContainingCapsule.pointB.z = a->point.z + a->extent.z;
    }
 
-   if(!kmCapsuleIntersectsCapsule(&smallestContainingCapsule, b)) return KM_FALSE;
+   if (!kmCapsuleIntersectsCapsule(&smallestContainingCapsule, b)) return KM_FALSE;
 
    /* Quick acceptance test for capsule line */
-   if(kmAABBExtentIntersectsLine(a, &b->pointA, &b->pointB)) return KM_TRUE;
+   if (kmAABBExtentIntersectsLine(a, &b->pointA, &b->pointB)) return KM_TRUE;
 
    /* Quick acceptance tests for capsule end spheres */
    kmSphere spa = {b->pointA, b->radius};
-   if(kmAABBExtentIntersectsSphere(a, &spa)) return KM_TRUE;
+   if (kmAABBExtentIntersectsSphere(a, &spa)) return KM_TRUE;
 
    kmSphere spb = {b->pointB, b->radius};
-   if(kmAABBExtentIntersectsSphere(a, &spb)) return KM_TRUE;
+   if (kmAABBExtentIntersectsSphere(a, &spb)) return KM_TRUE;
 
-
+   /* FIXME: unfinished function I guess? */
 
    return KM_TRUE;
 }
@@ -687,8 +682,7 @@ kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 
    kmPlaneFromPointAndNormal(&triPlane, &tri->v1, &n);
 
    kmVec3 p;
-   if (!kmRay3IntersectPlane(&p, ray, &triPlane))
-   {
+   if (!kmRay3IntersectPlane(&p, ray, &triPlane)) {
       return KM_FALSE;
    }
 
@@ -705,8 +699,7 @@ kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 
    const kmScalar s = (uv * wv - vv * wu) / d;
    const kmScalar t = (uv * wu - uu * wv) / d;
 
-   if (s < 0 || t < 0 || s + t > 1)
-   {
+   if (s < 0 || t < 0 || s + t > 1) {
       return KM_FALSE;
    }
 

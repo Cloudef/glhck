@@ -20,8 +20,7 @@ static void _glhckCameraProjectionMatrix(glhckCamera *object)
    assert(object);
    assert(object->view.viewport.w > 0.0f && object->view.viewport.h > 0.0f);
 
-   switch(object->view.projectionType)
-   {
+   switch(object->view.projectionType) {
       case GLHCK_PROJECTION_ORTHOGRAPHIC:
 	 w = object->view.viewport.w > object->view.viewport.h ? 1 :
 	    object->view.viewport.w / object->view.viewport.h;
@@ -350,7 +349,7 @@ GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *object)
 }
 
 /* \brief cast a ray from camera at specified relative coordinates */
-GLHCKAPI kmRay3* glhckCameraCastRayFromPosition(glhckCamera *object, kmRay3* pOut, float const x, float const y)
+GLHCKAPI kmRay3* glhckCameraCastRayFromPosition(glhckCamera *object, kmRay3* pOut, kmScalar x, kmScalar y)
 {
    CALL(2, "%p, %f, %f", pOut, x, y);
 

@@ -48,8 +48,6 @@ static void kmSphereApplyVelocity(kmSphere *sphere, const kmVec3 *velocity)
    kmVec3Add(&sphere->point, &sphere->point, velocity);
 }
 
-
-
 /***
  * Collision manager
  ***/

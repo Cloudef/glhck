@@ -995,28 +995,28 @@ void _glhckTrace(int level, const char *channel, const char *function, const cha
 void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *channel, const char *fmt, ...)
    __attribute__((format(printf, 6, 7)));
 #else
-   void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...);
-   void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *channel, const char *fmt, ...);
+void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...);
+void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *channel, const char *fmt, ...);
 #endif
 
-   /* internal geometry vertexdata */
-   int _glhckGeometryInit(void);
-   void _glhckGeometryTerminate(void);
-   glhckGeometry *_glhckGeometryNew(void);
-   glhckGeometry *_glhckGeometryCopy(glhckGeometry *src);
-   void _glhckGeometryFree(glhckGeometry *geometry);
-   int _glhckGeometryInsertVertices(glhckGeometry *geometry, int memb, unsigned char type, const glhckImportVertexData *vertices);
-   int _glhckGeometryInsertIndices(glhckGeometry *geometry, int memb, unsigned char type, const glhckImportIndexData *indices);
+/* internal geometry vertexdata */
+int _glhckGeometryInit(void);
+void _glhckGeometryTerminate(void);
+glhckGeometry *_glhckGeometryNew(void);
+glhckGeometry *_glhckGeometryCopy(glhckGeometry *src);
+void _glhckGeometryFree(glhckGeometry *geometry);
+int _glhckGeometryInsertVertices(glhckGeometry *geometry, int memb, unsigned char type, const glhckImportVertexData *vertices);
+int _glhckGeometryInsertIndices(glhckGeometry *geometry, int memb, unsigned char type, const glhckImportIndexData *indices);
 
-   /***
-    * Kazmath extension
-    * When stuff is tested and working
-    * Try to get much as we can to upstream
-    ***/
-   typedef struct kmAABBExtent {
-      kmVec3 point;
-      kmVec3 extent;
-   } kmAABBExtent;
+/***
+ * Kazmath extension
+ * When stuff is tested and working
+ * Try to get much as we can to upstream
+ ***/
+typedef struct kmAABBExtent {
+   kmVec3 point;
+   kmVec3 extent;
+} kmAABBExtent;
 
 typedef struct kmSphere {
    kmVec3 point;
@@ -1083,7 +1083,6 @@ kmBool kmAABBExtentIntersectsCapsule(const kmAABBExtent *a, const kmCapsule *b);
 kmBool kmRay3IntersectAABBExtent(const kmRay3 *ray, const kmAABBExtent *aabbe, float *outMin, kmVec3 *outIntersection);
 kmBool kmRay3IntersectAABB(const kmRay3 *ray, const kmAABB *aabb, float *outMin, kmVec3 *outIntersection);
 kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 *outIntersection);
-
 
 #endif /* __glhck_internal_h__ */
 
