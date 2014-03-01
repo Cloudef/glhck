@@ -388,9 +388,9 @@ GLHCKAPI kmRay3* glhckCameraCastRayFromPoint(glhckCamera *object, kmRay3* pOut, 
 }
 
 /* \brief cast a ray from camera at specified relative coordinate (with kmScalar) */
-GLHCKAPI kmRay3* glhckCameraCastRayFromPointf(glhckCamera *object, kmRay3* pOut, kmScalar x, kmScalar y)
+GLHCKAPI kmRay3* glhckCameraCastRayFromPointf(glhckCamera *object, kmRay3* pOut, const kmScalar x, const kmScalar y)
 {
-   kmVec2 point = { x, y };
+   const kmVec2 point = { x, y };
    return glhckCameraCastRayFromPoint(object, pOut, &point);
 }
 
