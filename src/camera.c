@@ -349,11 +349,11 @@ GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *object)
 }
 
 /* \brief cast a ray from camera at specified relative coordinate */
-GLHCKAPI kmRay3* glhckCameraCastRayFromPoint(glhckCamera *object, kmRay3* pOut, const kmVec2 *point)
+GLHCKAPI kmRay3* glhckCameraCastRayFromPoint(glhckCamera *object, kmRay3 *pOut, const kmVec2 *point)
 {
    CALL(2, "%p, "VEC2S, pOut, VEC2(point));
 
-   glhckFrustum* frustum = glhckCameraGetFrustum(object);
+   glhckFrustum *frustum = glhckCameraGetFrustum(object);
 
    kmVec3 nu, nv, fu, fv;
    kmVec3Subtract(&nu,
@@ -388,7 +388,7 @@ GLHCKAPI kmRay3* glhckCameraCastRayFromPoint(glhckCamera *object, kmRay3* pOut, 
 }
 
 /* \brief cast a ray from camera at specified relative coordinate (with kmScalar) */
-GLHCKAPI kmRay3* glhckCameraCastRayFromPointf(glhckCamera *object, kmRay3* pOut, const kmScalar x, const kmScalar y)
+GLHCKAPI kmRay3* glhckCameraCastRayFromPointf(glhckCamera *object, kmRay3 *pOut, const kmScalar x, const kmScalar y)
 {
    const kmVec2 point = { x, y };
    return glhckCameraCastRayFromPoint(object, pOut, &point);
