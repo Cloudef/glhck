@@ -1334,9 +1334,10 @@ GLHCKAPI int glhckObjectPickTextureCoordinatesWithRay(const glhckObject *object,
    CALL(0, "%p, %p, %p", object, ray, outCoords);
    assert(object && ray && outCoords);
 
-   /* FIXME: we'll use later AABB trees and seperate collision mesh for this...
-    * not optimized underlying rendering geometry, because it's hard to handle like this :P */
-   assert(object->geometry->vertexType && "Only GLHCK_VTX_V3F supported for now");
+   /* FIXME: move to geometry.c
+    * Can we use collision mesh for this instead somehow?
+    * It would simplify a lot since collisionMesh is optimized more for intersections. */
+   assert(object->geometry->vertexType == GLHCK_VTX_V3F && "Only GLHCK_VTX_V3F supported for now");
    assert((object->geometry->type == GLHCK_TRIANGLES || object->geometry->type == GLHCK_TRIANGLE_STRIP) && "Only TRIANGLES and STRIPS supported for now");
 
    /* Transform the ray to model coordinates */
@@ -1354,39 +1355,46 @@ GLHCKAPI int glhckObjectPickTextureCoordinatesWithRay(const glhckObject *object,
    int intersectionIndex, intersectionFound = 0;
    kmScalar closestDistanceSq, s, t;
 
+   int i, fix[3];
+   int skipCount = (object->geometry->type == GLHCK_TRIANGLES ? 3 : 1);
    glhckVertexData3f *vertices = (glhckVertexData3f*) object->geometry->vertices;
-   int skipCount = object->geometry->type == GLHCK_TRIANGLES ? 3 : 1;
-
-   int i;
    for (i = 0; i + 2 < object->geometry->vertexCount; i += skipCount) {
-      kmTriangle tri = {
-	 {vertices[i].vertex.x, vertices[i].vertex.y, vertices[i].vertex.z},
-	 {vertices[i+1].vertex.x, vertices[i+1].vertex.y, vertices[i+1].vertex.z},
-	 {vertices[i+2].vertex.x, vertices[i+2].vertex.y, vertices[i+2].vertex.z}
+      int ix[3] = {0, 1, 2};
+      if (skipCount == 1 && (i % 2)) {
+         ix[0] = 1;
+         ix[1] = 0;
+         ix[2] = 2;
+      }
+
+      const kmTriangle tri = {
+         {vertices[i+ix[0]].vertex.x, vertices[i+ix[0]].vertex.y, vertices[i+ix[0]].vertex.z},
+         {vertices[i+ix[1]].vertex.x, vertices[i+ix[1]].vertex.y, vertices[i+ix[1]].vertex.z},
+         {vertices[i+ix[2]].vertex.x, vertices[i+ix[2]].vertex.y, vertices[i+ix[2]].vertex.z}
       };
 
       kmVec3 intersection;
       kmScalar ss, tt;
       if (kmRay3IntersectTriangle(&r, &tri, &intersection, &ss, &tt)) {
-	 kmVec3 delta;
-	 kmVec3Subtract(&delta, &ray->start, &intersection);
-	 kmScalar distanceSq = kmVec3LengthSq(&delta);
-	 if (!intersectionFound || distanceSq < closestDistanceSq) {
-	    intersectionFound = 1;
-	    closestDistanceSq = distanceSq;
-	    intersectionIndex = i;
-	    s = ss;
-	    t = tt;
-	 }
+         kmVec3 delta;
+         kmVec3Subtract(&delta, &ray->start, &intersection);
+         kmScalar distanceSq = kmVec3LengthSq(&delta);
+         if (!intersectionFound || distanceSq < closestDistanceSq) {
+            intersectionFound = 1;
+            closestDistanceSq = distanceSq;
+            intersectionIndex = i;
+            s = ss;
+            t = tt;
+            memcpy(fix, ix, sizeof(fix));
+         }
       }
    }
 
    /* determine texture coordinates of the intersection point */
    if (intersectionFound) {
-      kmVec2 texCoods[] = {
-	 {vertices[intersectionIndex].coord.x, vertices[intersectionIndex].coord.y},
-	 {vertices[intersectionIndex+1].coord.x, vertices[intersectionIndex+1].coord.y},
-	 {vertices[intersectionIndex+2].coord.x, vertices[intersectionIndex+2].coord.y},
+      const kmVec2 texCoods[] = {
+         {vertices[intersectionIndex+fix[0]].coord.x, vertices[intersectionIndex+fix[0]].coord.y},
+         {vertices[intersectionIndex+fix[1]].coord.x, vertices[intersectionIndex+fix[1]].coord.y},
+         {vertices[intersectionIndex+fix[2]].coord.x, vertices[intersectionIndex+fix[2]].coord.y},
       };
 
       kmVec2 u, v;
