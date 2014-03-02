@@ -1236,7 +1236,7 @@ GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object)
    return object->geometry;
 }
 
-/* \brief get geometry from object */
+/* \brief get geometry from object */
 GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object)
 {
    CALL(1, "%p", object);
@@ -1326,6 +1326,88 @@ GLHCKAPI void glhckObjectUpdate(glhckObject *object)
    if (object->flags & GLHCK_OBJECT_ROOT) {
       PERFORM_ON_CHILDS(object, glhckObjectUpdate);
    }
+}
+
+GLHCKAPI kmBool glhckObjectPickTextureCoordinatesWithRay(const glhckObject* object, const kmRay3* ray, kmVec2* coords)
+{
+   CALL(0, "%p, %p, %p", object, ray, coords);
+   assert(object);
+   assert(ray);
+
+   // Only support V3F vertices for now
+   if (object->geometry->vertexType != GLHCK_VTX_V3F)
+      return KM_FALSE;
+
+   // Only support triangles and triangle strip geometries
+   if (object->geometry->type != GLHCK_TRIANGLES && object->geometry->type != GLHCK_TRIANGLE_STRIP)
+      return KM_FALSE;
+
+   // Transform the ray to model coordinates
+   kmMat4 inverseView;
+   kmMat4Inverse(&inverseView, &object->view.matrix);
+
+   kmRay3 r;
+   kmVec3Transform(&r.start, &ray->start, &inverseView);
+   kmVec3Transform(&r.dir, &ray->dir, &inverseView);
+   kmVec3 origin = {0, 0, 0};
+   kmVec3Transform(&origin, &origin, &inverseView);
+   kmVec3Subtract(&r.dir, &r.dir, &origin);
+
+   // Find closest intersecting primitive
+   kmBool intersectionFound = KM_FALSE;
+   int intersectionIndex;
+   kmScalar closestDistanceSq, s, t;
+
+   glhckVertexData3f* vertices = (glhckVertexData3f*) object->geometry->vertices;
+   int skipCount = object->geometry->type == GLHCK_TRIANGLES ? 3 : 1;
+   int i;
+
+   for (i = 0; i + 2 < object->geometry->vertexCount; i += skipCount)
+   {
+      kmTriangle tri = {
+	 {vertices[i].vertex.x, vertices[i].vertex.y, vertices[i].vertex.z},
+	 {vertices[i+1].vertex.x, vertices[i+1].vertex.y, vertices[i+1].vertex.z},
+	 {vertices[i+2].vertex.x, vertices[i+2].vertex.y, vertices[i+2].vertex.z}
+      };
+
+      kmVec3 intersection;
+      kmScalar ss, tt;
+      if (kmRay3IntersectTriangle(&r, &tri, &intersection, &ss, &tt))
+      {
+	 kmVec3 delta;
+	 kmVec3Subtract(&delta, &ray->start, &intersection);
+	 kmScalar distanceSq = kmVec3LengthSq(&delta);
+	 if (!intersectionFound || distanceSq < closestDistanceSq)
+	 {
+	    intersectionFound = KM_TRUE;
+	    closestDistanceSq = distanceSq;
+	    intersectionIndex = i;
+	    s = ss;
+	    t = tt;
+	 }
+      }
+   }
+
+   // Determine texture coordinates of the intersection point
+   if (intersectionFound)
+   {
+      kmVec2 texCoods[] = {
+	 {vertices[intersectionIndex].coord.x, vertices[intersectionIndex].coord.y},
+	 {vertices[intersectionIndex+1].coord.x, vertices[intersectionIndex+1].coord.y},
+	 {vertices[intersectionIndex+2].coord.x, vertices[intersectionIndex+2].coord.y},
+      };
+
+      kmVec2 u, v;
+      kmVec2Subtract(&u, &texCoods[1], &texCoods[0]);
+      kmVec2Subtract(&v, &texCoods[2], &texCoods[0]);
+      kmVec2Scale(&u, &u, s);
+      kmVec2Scale(&v, &v, t);
+      *coords = texCoods[0];
+      kmVec2Add(coords, coords, &u);
+      kmVec2Add(coords, coords, &v);
+   }
+
+   return intersectionFound;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

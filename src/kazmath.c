@@ -671,7 +671,7 @@ kmBool kmRay3IntersectAABB(const kmRay3 *ray, const kmAABB *aabb, float *outMin,
 }
 
 
-kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 *outIntersection)
+kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 *outIntersection, kmScalar* sOut, kmScalar* tOut)
 {
    kmVec3 u, v, n;
    kmVec3Subtract(&u,  &tri->v2,  &tri->v1);
@@ -703,7 +703,15 @@ kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 
       return KM_FALSE;
    }
 
-   *outIntersection = p;
+   if (outIntersection)
+      *outIntersection = p;
+
+   if (sOut)
+      *sOut = s;
+
+   if (tOut)
+      *tOut = t;
+
    return KM_TRUE;
 }
 
