@@ -87,7 +87,7 @@ void _glhckRenderDefaultProjection(int width, int height)
 {
    CALL(1, "%d, %d", width, height);
    assert(width > 0 && height > 0);
-   glhckRenderProjection2D(width, height, -100.0f, 100.0f);
+   glhckRenderProjection2D(width, height, -1000.0f, 1000.0f);
 }
 
 /***
