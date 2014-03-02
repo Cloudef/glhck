@@ -1328,21 +1328,18 @@ GLHCKAPI void glhckObjectUpdate(glhckObject *object)
    }
 }
 
-GLHCKAPI kmBool glhckObjectPickTextureCoordinatesWithRay(const glhckObject* object, const kmRay3* ray, kmVec2* coords)
+/* \brief return intersecting texture coordinate from object's geometry using ray */
+GLHCKAPI int glhckObjectPickTextureCoordinatesWithRay(const glhckObject *object, const kmRay3 *ray, kmVec2 *outCoords)
 {
-   CALL(0, "%p, %p, %p", object, ray, coords);
-   assert(object);
-   assert(ray);
+   CALL(0, "%p, %p, %p", object, ray, outCoords);
+   assert(object && ray && outCoords);
 
-   // Only support V3F vertices for now
-   if (object->geometry->vertexType != GLHCK_VTX_V3F)
-      return KM_FALSE;
+   /* FIXME: we'll use later AABB trees and seperate collision mesh for this...
+    * not optimized underlying rendering geometry, because it's hard to handle like this :P */
+   assert(object->geometry->vertexType && "Only GLHCK_VTX_V3F supported for now");
+   assert((object->geometry->type == GLHCK_TRIANGLES || object->geometry->type == GLHCK_TRIANGLE_STRIP) && "Only TRIANGLES and STRIPS supported for now");
 
-   // Only support triangles and triangle strip geometries
-   if (object->geometry->type != GLHCK_TRIANGLES && object->geometry->type != GLHCK_TRIANGLE_STRIP)
-      return KM_FALSE;
-
-   // Transform the ray to model coordinates
+   /* Transform the ray to model coordinates */
    kmMat4 inverseView;
    kmMat4Inverse(&inverseView, &object->view.matrix);
 
@@ -1353,17 +1350,15 @@ GLHCKAPI kmBool glhckObjectPickTextureCoordinatesWithRay(const glhckObject* obje
    kmVec3Transform(&origin, &origin, &inverseView);
    kmVec3Subtract(&r.dir, &r.dir, &origin);
 
-   // Find closest intersecting primitive
-   kmBool intersectionFound = KM_FALSE;
-   int intersectionIndex;
+   /* Find closest intersecting primitive */
+   int intersectionIndex, intersectionFound = 0;
    kmScalar closestDistanceSq, s, t;
 
-   glhckVertexData3f* vertices = (glhckVertexData3f*) object->geometry->vertices;
+   glhckVertexData3f *vertices = (glhckVertexData3f*) object->geometry->vertices;
    int skipCount = object->geometry->type == GLHCK_TRIANGLES ? 3 : 1;
-   int i;
 
-   for (i = 0; i + 2 < object->geometry->vertexCount; i += skipCount)
-   {
+   int i;
+   for (i = 0; i + 2 < object->geometry->vertexCount; i += skipCount) {
       kmTriangle tri = {
 	 {vertices[i].vertex.x, vertices[i].vertex.y, vertices[i].vertex.z},
 	 {vertices[i+1].vertex.x, vertices[i+1].vertex.y, vertices[i+1].vertex.z},
@@ -1372,14 +1367,12 @@ GLHCKAPI kmBool glhckObjectPickTextureCoordinatesWithRay(const glhckObject* obje
 
       kmVec3 intersection;
       kmScalar ss, tt;
-      if (kmRay3IntersectTriangle(&r, &tri, &intersection, &ss, &tt))
-      {
+      if (kmRay3IntersectTriangle(&r, &tri, &intersection, &ss, &tt)) {
 	 kmVec3 delta;
 	 kmVec3Subtract(&delta, &ray->start, &intersection);
 	 kmScalar distanceSq = kmVec3LengthSq(&delta);
-	 if (!intersectionFound || distanceSq < closestDistanceSq)
-	 {
-	    intersectionFound = KM_TRUE;
+	 if (!intersectionFound || distanceSq < closestDistanceSq) {
+	    intersectionFound = 1;
 	    closestDistanceSq = distanceSq;
 	    intersectionIndex = i;
 	    s = ss;
@@ -1388,9 +1381,8 @@ GLHCKAPI kmBool glhckObjectPickTextureCoordinatesWithRay(const glhckObject* obje
       }
    }
 
-   // Determine texture coordinates of the intersection point
-   if (intersectionFound)
-   {
+   /* determine texture coordinates of the intersection point */
+   if (intersectionFound) {
       kmVec2 texCoods[] = {
 	 {vertices[intersectionIndex].coord.x, vertices[intersectionIndex].coord.y},
 	 {vertices[intersectionIndex+1].coord.x, vertices[intersectionIndex+1].coord.y},
@@ -1402,9 +1394,9 @@ GLHCKAPI kmBool glhckObjectPickTextureCoordinatesWithRay(const glhckObject* obje
       kmVec2Subtract(&v, &texCoods[2], &texCoods[0]);
       kmVec2Scale(&u, &u, s);
       kmVec2Scale(&v, &v, t);
-      *coords = texCoods[0];
-      kmVec2Add(coords, coords, &u);
-      kmVec2Add(coords, coords, &v);
+      memcpy(outCoords, &texCoods[0], sizeof(kmVec2));
+      kmVec2Add(outCoords, outCoords, &u);
+      kmVec2Add(outCoords, outCoords, &v);
    }
 
    return intersectionFound;

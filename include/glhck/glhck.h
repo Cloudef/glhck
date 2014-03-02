@@ -846,7 +846,7 @@ GLHCKAPI int glhckObjectInsertIndices(glhckObject *object, unsigned char type, c
 GLHCKAPI void glhckObjectUpdate(glhckObject *object);
 GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object);
 GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object);
-GLHCKAPI kmBool glhckObjectPickTextureCoordinatesWithRay(const glhckObject* object, const kmRay3* ray, kmVec2* coords);
+GLHCKAPI int glhckObjectPickTextureCoordinatesWithRay(const glhckObject *object, const kmRay3 *ray, kmVec2 *outCoords);
 
 /* pre-defined geometry */
 GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, const glhckImportModelParameters *importParams);
