@@ -1082,7 +1082,7 @@ kmBool kmOBBIntersectsAABB(const kmOBB *a, const kmAABB *b);
 kmBool kmAABBExtentIntersectsCapsule(const kmAABBExtent *a, const kmCapsule *b);
 kmBool kmRay3IntersectAABBExtent(const kmRay3 *ray, const kmAABBExtent *aabbe, float *outMin, kmVec3 *outIntersection);
 kmBool kmRay3IntersectAABB(const kmRay3 *ray, const kmAABB *aabb, float *outMin, kmVec3 *outIntersection);
-kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 *outIntersection);
+kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 *outIntersection, kmScalar* tOut, kmScalar* sOut);
 
 #endif /* __glhck_internal_h__ */
 
