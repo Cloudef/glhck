@@ -163,7 +163,7 @@ GLHCKAPI void glhckRenderViewport(const glhckRect *viewport)
 /* \brief set renderer's viewport (int) */
 GLHCKAPI void glhckRenderViewporti(int x, int y, int width, int height)
 {
-   glhckRect viewport = {x, y, width, height};
+   const glhckRect viewport = { x, y, width, height };
    glhckRenderViewport(&viewport);
 }
 
