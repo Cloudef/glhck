@@ -120,7 +120,7 @@ INCLUDE_DIRECTORIES(
    ${glew-glhck_SOURCE_DIR}/include
    ${kazmath_SOURCE_DIR}/src
    ${GLSW_SOURCE_DIR}/src
-   ${chck_SOURCE_DIR}/src
+   ${chckBuffer_SOURCE_DIR}/src
    ${texhck_SOURCE_DIR}
    ${GLHCK_INCL}
    ${OPT_INCL}
@@ -135,5 +135,5 @@ ENDIF ()
 
 ADD_DEFINITIONS(-DGLEW_STATIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck chck texhck kazmath glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
+TARGET_LINK_LIBRARIES(glhck chckBuffer texhck kazmath glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
 INSTALL(TARGETS glhck DESTINATION lib)
