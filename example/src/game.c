@@ -808,11 +808,10 @@ static int gameWindowRun(GameWindow *window)
    return 1;
 }
 
-
 static GameWindow **window = NULL;
 static unsigned int windows = 1;
 #if EMSCRIPTEN
-void mainLoop(void)
+static void mainLoop(void)
 {
    unsigned int i, running;
    glfwPollEvents();
