@@ -168,7 +168,6 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
    /* finish decompression */
    jpeg_finish_decompress(&cinfo);
    jpeg_destroy_decompress(&cinfo);
-   decompress = 0;
 
    /* close file */
    NULLDO(fclose, f);

@@ -171,8 +171,10 @@ size_t _glhckStrsplit(char ***dst, const char *str, const char *token)
          ptr += t_len;
       }
 
-      if (!((*dst) = realloc(*dst, (i + 2) * sizeof(char*))))
+      if (!((*dst) = realloc(*dst, (i + 2) * sizeof(char*)))) {
+         free(saveptr);
          return 0;
+      }
 
       (*dst)[i++] = start;
       (*dst)[i]   = NULL;

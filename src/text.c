@@ -270,6 +270,7 @@ static __GLHCKtextTexture* _glhckTextGetTextureCache(glhckText *object, int gw, 
          return NULL;
       texture = object->textureCache;
    }
+
    while (!br) {
       /* skip textures with INT_MAX rows (these are either really big text blobs or bitmap fonts) */
       while (texture && texture->rowsCount == INT_MAX) {
@@ -279,6 +280,9 @@ static __GLHCKtextTexture* _glhckTextGetTextureCache(glhckText *object, int gw, 
          }
          texture = texture->next;
       }
+
+      if (!texture)
+         goto fail;
 
       for (i = 0; i < texture->rowsCount; ++i) {
          if (texture->rows[i].h == rh &&
@@ -334,6 +338,10 @@ static __GLHCKtextTexture* _glhckTextGetTextureCache(glhckText *object, int gw, 
 
    if (row) *row = br;
    return texture;
+
+fail:
+   if (row) *row = NULL;
+   return NULL;
 }
 
 /* \brief get glyph from font */
@@ -645,10 +653,12 @@ GLHCKAPI void glhckTextFlushCache(glhckText *object)
 
       if (!object->textureCache) object->textureCache = tp;
       if (tp) tp->next = t->next;
-      if (t == object->textureCache) t = NULL;
-      IFDO(glhckTextureFree, t->texture);
+      if (t == object->textureCache)
+         continue;
+
       IFDO(_glhckFree, t->geometry.vertexData);
       IFDO(_glhckFree, t->rows);
+      IFDO(glhckTextureFree, t->texture);
       _glhckFree(t);
    }
 
@@ -849,7 +859,7 @@ GLHCKAPI unsigned int glhckTextFontNewFromTexture(glhckText *object, glhckTextur
    int fh;
    unsigned int id;
    __GLHCKtextFont *font, *f;
-   __GLHCKtextTexture *textTexture, *t;
+   __GLHCKtextTexture *textTexture = NULL, *t;
    CALL(0, "%p, %p, %d, %d, %d", object, texture, ascent, descent, lineGap);
    assert(object && texture);
 
@@ -895,7 +905,7 @@ GLHCKAPI unsigned int glhckTextFontNewFromTexture(glhckText *object, glhckTextur
    return id;
 
 fail:
-   if (texture) {
+   if (textTexture) {
       IFDO(glhckTextureFree, textTexture->texture);
    }
    IFDO(_glhckFree, texture);

@@ -76,9 +76,9 @@ int _glhckUnitSizeForTexture(glhckTextureFormat format, glhckDataType type)
       case GLHCK_UNSIGNED_INT:
          b = sizeof(unsigned int); break;
       case GLHCK_FLOAT:
-         b = sizeof(float);
+         b = sizeof(float); break;
       case GLHCK_COMPRESSED:
-         assert(0 && "This should not never happen");break;
+         assert(0 && "This should not never happen"); break;
          break;
       default:
          assert(0 && "Datatype size not known");
