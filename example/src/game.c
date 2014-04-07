@@ -156,9 +156,13 @@ static void gameBulletFree(GameWindow *window, GameBullet *bullet)
 {
    GameBullet *b;
 
-   for (b = window->bullet; b && b->next != bullet; b = b->next);
-   if (b) b->next = bullet->next;
-   else if (window->bullet == bullet) window->bullet = bullet->next;
+   if (window->bullet == bullet) {
+      window->bullet = bullet->next;
+   } else {
+      for (b = window->bullet; b && b->next != bullet; b = b->next);
+      if (!b) return;
+      b->next = bullet->next;
+   }
    free(bullet);
 }
 
@@ -184,9 +188,14 @@ static void gameActorFree(GameWindow *window, GameActor *actor)
 {
    GameActor *a;
 
-   for (a = window->actor; a && a->next != actor; a = a->next);
-   if (a) a->next = actor->next;
-   else if (window->actor == actor) window->actor = actor->next;
+   if (window->actor == actor) {
+      window->actor = actor->next;
+   } else {
+      for (a = window->actor; a && a->next != actor; a = a->next);
+      if (!a) return;
+      a->next = actor->next;
+   }
+
    if (actor->object) glhckObjectFree(actor->object);
    if (actor->muzzle) glhckObjectFree(actor->muzzle);
    if (actor->animator) glhckAnimatorFree(actor->animator);
