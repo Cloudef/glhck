@@ -831,9 +831,9 @@ int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codepoint)
       search -= 2;
       while (entrySelector) {
          searchRange >>= 1;
-         start = ttUSHORT(data + search + 2 + segcount*2 + 2);
-         end = ttUSHORT(data + search + 2);
-         start = ttUSHORT(data + search + searchRange*2 + segcount*2 + 2);
+         // start = ttUSHORT(data + search + 2 + segcount*2 + 2);
+         // end = ttUSHORT(data + search + 2);
+         // start = ttUSHORT(data + search + searchRange*2 + segcount*2 + 2);
          end = ttUSHORT(data + search + searchRange*2);
          if (unicode_codepoint > end)
             search += searchRange*2;
@@ -845,7 +845,7 @@ int stbtt_FindGlyphIndex(const stbtt_fontinfo *info, int unicode_codepoint)
 
       STBTT_assert(unicode_codepoint <= ttUSHORT(data + endCount + 2*item));
       start = ttUSHORT(data + index_map + 14 + segcount*2 + 2 + 2*item);
-      end = ttUSHORT(data + index_map + 14 + 2 + 2*item);
+      // end = ttUSHORT(data + index_map + 14 + 2 + 2*item);
       if (unicode_codepoint < start)
          return 0;
 
