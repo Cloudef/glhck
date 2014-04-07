@@ -122,6 +122,7 @@ static int _glhckReadHeader(uint8_t *version, FILE *f, unsigned int *i)
 {
    uint32_t r;
    assert(version && f && i);
+   (void)version;
 
    if (fread(&r, sizeof(r), 1, f) != 1)
       return RETURN_FAIL;
@@ -237,7 +238,7 @@ fail:
 
 /* \brief read OBD data block */
 static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObject *root, glhckObject *parent,
-      const glhckImportModelParameters *params, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+      const glhckImportModelParameters *params, unsigned char itype, unsigned char vtype)
 {
    unsigned char geometryType, vertexDataFlags;
    unsigned short materialCount, skinBoneCount, childCount;
@@ -723,7 +724,7 @@ fail:
 
 /* \brief read glhckm/glhcka file */
 static int _glhckImport(const char *file, uint8_t *version, FILE *f, glhckObject *root, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+      unsigned char itype, unsigned char vtype)
 {
    char block[3];
    uint32_t BNH = 0, OBH = 0, ANH = 0;
@@ -820,7 +821,7 @@ int _glhckFormatGlhcka(const char *file) { return _glhckFormatGlhck(file, GLHCKA
 
 /* \brief import glhckm/glhcka file */
 static int _glhckImportGlhck(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+      unsigned char itype, unsigned char vtype)
 {
    FILE *f;
    uint8_t version[2];
@@ -858,13 +859,13 @@ fail:
 }
 
 int _glhckImportGlhckm(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype) {
+      unsigned char itype, unsigned char vtype) {
    return _glhckImportGlhck(object, file, params, itype, vtype);
 }
 
 #if 0
 int _glhckImportGlhcka(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype) {
+      unsigned char itype, unsigned char vtype) {
    return _glhckImportGlhck(object, file, params, itype, vtype);
 }
 #endif

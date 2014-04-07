@@ -1,7 +1,6 @@
 #include "../internal.h"
 #include "render.h"
-#include <string.h>  /* for strdup */
-#include <stdio.h>   /* for sscanf */
+#include <stdio.h> /* for printf */
 
 #if GLHCK_USE_GLES1
 #  error "OpenGL renderer doesn't support GLES 1.x!"
@@ -84,16 +83,16 @@ static const glhckColorb overdrawColor = {25,25,25,255};
 
 /* state flags */
 enum {
-   GL_STATE_DEPTH          = 1,
-   GL_STATE_CULL           = 2,
-   GL_STATE_BLEND          = 4,
-   GL_STATE_TEXTURE        = 8,
-   GL_STATE_DRAW_AABB      = 16,
-   GL_STATE_DRAW_OBB       = 32,
-   GL_STATE_DRAW_SKELETON  = 64,
-   GL_STATE_DRAW_WIREFRAME = 128,
-   GL_STATE_LIGHTING       = 256,
-   GL_STATE_OVERDRAW       = 512,
+   GL_STATE_DEPTH          = 1<<0,
+   GL_STATE_CULL           = 1<<1,
+   GL_STATE_BLEND          = 1<<2,
+   GL_STATE_TEXTURE        = 1<<3,
+   GL_STATE_DRAW_AABB      = 1<<4,
+   GL_STATE_DRAW_OBB       = 1<<5,
+   GL_STATE_DRAW_SKELETON  = 1<<6,
+   GL_STATE_DRAW_WIREFRAME = 1<<7,
+   GL_STATE_LIGHTING       = 1<<8,
+   GL_STATE_OVERDRAW       = 1<<9,
 };
 
 /* internal shaders */
@@ -272,7 +271,7 @@ static GLuint rShaderCompile(glhckShaderType type, const GLchar *effectKey, cons
    }
 
    /* create shader object */
-   if (!(obj = glCreateShader(glhShaderTypeForGlhckType(type))))
+   if (!(obj = glCreateShader(glhckShaderTypeToGL[type])))
       goto fail;
 
    /* feed the shader the contents */
@@ -302,15 +301,17 @@ fail:
 /* \brief set needed starte from object data */
 static void rObjectState(const glhckObject *object)
 {
-   /* always draw vertices */
-   GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX] = 1;
+   __GLHCKvertexType *type = GLHCKVT(object->geometry->vertexType);
 
-   /* enable normals always for now */
-   GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL] = glhckVertexTypeHasNormal(object->geometry->vertexType);
+   /* need vertices? */
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX] = type->memb[0];
+
+   /* need normal? */
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL] = type->memb[1];
 
    /* need color? */
    GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR] =
-      ((object->flags & GLHCK_OBJECT_VERTEX_COLOR) && glhckVertexTypeHasColor(object->geometry->vertexType));
+      ((object->flags & GLHCK_OBJECT_VERTEX_COLOR) && type->memb[3]);
 
    /* depth? */
    GLPOINTER()->state.flags |=
@@ -342,7 +343,6 @@ static void rMaterialState(const glhckMaterial *material)
 {
    /* need texture? */
    GLPOINTER()->state.flags |= (material->texture?GL_STATE_TEXTURE:0);
-   GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = (GLPOINTER()->state.flags & GL_STATE_TEXTURE);
 
    /* alpha? */
    GLPOINTER()->state.flags |=
@@ -405,117 +405,56 @@ static void rPassState(void)
       GLPOINTER()->state.blenda = GLHCK_ONE;
       GLPOINTER()->state.blendb = GLHCK_ONE;
    }
+
+   GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE] = (GLPOINTER()->state.flags & GL_STATE_TEXTURE);
 }
-
-/* helper macro for passing geometry */
-#define geometryV2ToOpenGL(vprec, nprec, tprec, type, tunion)                          \
-   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX])                                      \
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, vprec, 0,                  \
-               sizeof(type), &geometry->vertices.tunion[0].vertex));                   \
-   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL])                                      \
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, nprec, (nprec!=GL_FLOAT),  \
-               sizeof(type), &geometry->vertices.tunion[0].normal));                   \
-   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE])                                     \
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
-               sizeof(type), &geometry->vertices.tunion[0].coord));                    \
-   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR])                                       \
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1,        \
-               sizeof(type), &geometry->vertices.tunion[0].color));
-
-#define geometryV3ToOpenGL(vprec, nprec, tprec, type, tunion)                          \
-   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_VERTEX])                                      \
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, vprec, 0,                  \
-             sizeof(type), &geometry->vertices.tunion[0].vertex));                     \
-   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_NORMAL])                                      \
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, 3, nprec, (nprec!=GL_FLOAT),  \
-               sizeof(type), &geometry->vertices.tunion[0].normal));                   \
-   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_TEXTURE])                                     \
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, tprec, (tprec!=GL_FLOAT), \
-               sizeof(type), &geometry->vertices.tunion[0].coord));                    \
-   if (GLPOINTER()->state.attrib[GLHCK_ATTRIB_COLOR])                                       \
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, 4, GL_UNSIGNED_BYTE, 1,        \
-               sizeof(type), &geometry->vertices.tunion[0].color));
 
 /* \brief pass interleaved vertex data to OpenGL nicely. */
 static void rGeometryPointer(const glhckGeometry *geometry)
 {
-   // printf("%s dd) : %u\n", glhckVertexTypeString(geometry->vertexType), geometry->vertexCount, geometry->textureRange);
-
-   /* vertex data */
-   switch (geometry->vertexType) {
-      case GLHCK_VERTEX_V3B:
-         geometryV3ToOpenGL(GL_BYTE, GL_SHORT, GL_SHORT, glhckVertexData3b, v3b);
-         break;
-
-      case GLHCK_VERTEX_V2B:
-         geometryV2ToOpenGL(GL_BYTE, GL_SHORT, GL_SHORT, glhckVertexData2b, v2b);
-         break;
-
-      case GLHCK_VERTEX_V3S:
-         geometryV3ToOpenGL(GL_SHORT, GL_SHORT, GL_SHORT, glhckVertexData3s, v3s);
-         break;
-
-      case GLHCK_VERTEX_V2S:
-         geometryV2ToOpenGL(GL_SHORT, GL_SHORT, GL_SHORT, glhckVertexData2s, v2s);
-         break;
-
-      case GLHCK_VERTEX_V3FS:
-         geometryV3ToOpenGL(GL_FLOAT, GL_SHORT, GL_SHORT, glhckVertexData3fs, v3fs);
-         break;
-
-      case GLHCK_VERTEX_V2FS:
-         geometryV2ToOpenGL(GL_FLOAT, GL_SHORT, GL_SHORT, glhckVertexData2fs, v2fs);
-         break;
-
-      case GLHCK_VERTEX_V3F:
-         geometryV3ToOpenGL(GL_FLOAT, GL_FLOAT, GL_FLOAT, glhckVertexData3f, v3f);
-         break;
-
-      case GLHCK_VERTEX_V2F:
-         geometryV2ToOpenGL(GL_FLOAT, GL_FLOAT, GL_FLOAT, glhckVertexData2f, v2f);
-         break;
-
-      default:break;
-   }
+   __GLHCKvertexType *type = GLHCKVT(geometry->vertexType);
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, type->memb[0],
+            glhckDataTypeToGL[type->dataType[0]], type->normalized[0], type->size, geometry->vertices + type->offset[0]));
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_NORMAL, type->memb[1],
+            glhckDataTypeToGL[type->dataType[1]], type->normalized[1], type->size, geometry->vertices + type->offset[1]));
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, type->memb[2],
+            glhckDataTypeToGL[type->dataType[2]], type->normalized[2], type->size, geometry->vertices + type->offset[2]));
+   GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_COLOR, type->memb[3],
+            glhckDataTypeToGL[type->dataType[3]], type->normalized[3], type->size, geometry->vertices + type->offset[3]));
 }
-
-/* the helpers are no longer needed */
-#undef geometryV2ToOpenGL
-#undef geometryV3ToOpenGL
 
 /* \brief render frustum */
 static void rFrustumRender(glhckFrustum *frustum)
 {
    GLuint i = 0;
-   kmVec3 *near = frustum->nearCorners;
-   kmVec3 *far  = frustum->farCorners;
+   kmVec3 *corners = frustum->corners;
    const GLfloat points[] = {
-                      near[0].x, near[0].y, near[0].z,
-                      near[1].x, near[1].y, near[1].z,
-                      near[1].x, near[1].y, near[1].z,
-                      near[2].x, near[2].y, near[2].z,
-                      near[2].x, near[2].y, near[2].z,
-                      near[3].x, near[3].y, near[3].z,
-                      near[3].x, near[3].y, near[3].z,
-                      near[0].x, near[0].y, near[0].z,
+                      corners[0].x, corners[0].y, corners[0].z,
+                      corners[1].x, corners[1].y, corners[1].z,
+                      corners[1].x, corners[1].y, corners[1].z,
+                      corners[2].x, corners[2].y, corners[2].z,
+                      corners[2].x, corners[2].y, corners[2].z,
+                      corners[3].x, corners[3].y, corners[3].z,
+                      corners[3].x, corners[3].y, corners[3].z,
+                      corners[0].x, corners[0].y, corners[0].z,
 
-                      far[0].x, far[0].y, far[0].z,
-                      far[1].x, far[1].y, far[1].z,
-                      far[1].x, far[1].y, far[1].z,
-                      far[2].x, far[2].y, far[2].z,
-                      far[2].x, far[2].y, far[2].z,
-                      far[3].x, far[3].y, far[3].z,
-                      far[3].x, far[3].y, far[3].z,
-                      far[0].x, far[0].y, far[0].z,
+                      corners[4].x, corners[4].y, corners[4].z,
+                      corners[5].x, corners[5].y, corners[5].z,
+                      corners[5].x, corners[5].y, corners[5].z,
+                      corners[6].x, corners[6].y, corners[6].z,
+                      corners[6].x, corners[6].y, corners[6].z,
+                      corners[7].x, corners[7].y, corners[7].z,
+                      corners[7].x, corners[7].y, corners[7].z,
+                      corners[4].x, corners[4].y, corners[4].z,
 
-                      near[0].x, near[0].y, near[0].z,
-                       far[0].x,  far[0].y,  far[0].z,
-                      near[1].x, near[1].y, near[1].z,
-                       far[1].x,  far[1].y,  far[1].z,
-                      near[2].x, near[2].y, near[2].z,
-                       far[2].x,  far[2].y,  far[2].z,
-                      near[3].x, near[3].y, near[3].z,
-                       far[3].x,  far[3].y,  far[3].z  };
+                      corners[0].x, corners[0].y, corners[0].z,
+                      corners[4].x, corners[4].y, corners[4].z,
+                      corners[1].x, corners[1].y, corners[1].z,
+                      corners[5].x, corners[5].y, corners[5].z,
+                      corners[2].x, corners[2].y, corners[2].z,
+                      corners[6].x, corners[6].y, corners[6].z,
+                      corners[3].x, corners[3].y, corners[3].z,
+                      corners[7].x, corners[7].y, corners[7].z  };
 
    for (i = 0; i != GLHCK_ATTRIB_COUNT; ++i)
       if (i != GLHCK_ATTRIB_VERTEX && GLPOINTER()->state.attrib[i]) {
@@ -873,12 +812,7 @@ static void rObjectEnd(const glhckObject *object)
 static void rObjectRender(const glhckObject *object)
 {
    CALL(2, "%p", object);
-
-   /* no point drawing without vertex data */
-   if (object->geometry->vertexType == GLHCK_VERTEX_NONE ||
-      !object->geometry->vertexCount)
-      return;
-
+   assert(object->geometry->vertexCount != 0 && object->geometry->vertices);
    rObjectStart(object);
    rGeometryPointer(object->geometry);
    rObjectEnd(object);
@@ -905,8 +839,8 @@ static void rTextRender(const glhckText *text)
       }
    }
 
-   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
-      glhFrontFace(GLHCK_FACE_CCW);
+   if (GLPOINTER()->state.frontFace != GLHCK_CCW) {
+      glhFrontFace(GLHCK_CCW);
    }
 
    if (!GL_HAS_STATE(GL_STATE_OVERDRAW)) {
@@ -966,7 +900,7 @@ static void rTextRender(const glhckText *text)
                0, texture->geometry.vertexCount));
    }
 
-   if (GLPOINTER()->state.frontFace != GLHCK_FACE_CCW) {
+   if (GLPOINTER()->state.frontFace != GLHCK_CCW) {
       glhFrontFace(GLPOINTER()->state.frontFace);
    }
 
@@ -1208,8 +1142,8 @@ void _glhckRenderOpenGL(void)
    /* register api functions */
 
    /* textures */
-   GLHCK_RENDER_FUNC(textureGenerate, glGenTextures);
-   GLHCK_RENDER_FUNC(textureDelete, glDeleteTextures);
+   GLHCK_RENDER_FUNC(textureGenerate, glhTextureGenerate);
+   GLHCK_RENDER_FUNC(textureDelete, glhTextureDelete);
    GLHCK_RENDER_FUNC(textureBind, glhTextureBind);
    GLHCK_RENDER_FUNC(textureActive, glhTextureActive);
    GLHCK_RENDER_FUNC(textureFill, glhTextureFill);
@@ -1221,21 +1155,21 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(lightBind, rLightBind);
 
    /* renderbuffer objects */
-   GLHCK_RENDER_FUNC(renderbufferGenerate, glGenRenderbuffers);
-   GLHCK_RENDER_FUNC(renderbufferDelete, glDeleteRenderbuffers);
+   GLHCK_RENDER_FUNC(renderbufferGenerate, glhRenderbufferGenerate);
+   GLHCK_RENDER_FUNC(renderbufferDelete, glhRenderbufferDelete);
    GLHCK_RENDER_FUNC(renderbufferBind, glhRenderbufferBind);
    GLHCK_RENDER_FUNC(renderbufferStorage, glhRenderbufferStorage);
 
    /* framebuffer objects */
-   GLHCK_RENDER_FUNC(framebufferGenerate, glGenFramebuffers);
-   GLHCK_RENDER_FUNC(framebufferDelete, glDeleteFramebuffers);
+   GLHCK_RENDER_FUNC(framebufferGenerate, glhFramebufferGenerate);
+   GLHCK_RENDER_FUNC(framebufferDelete, glhFramebufferDelete);
    GLHCK_RENDER_FUNC(framebufferBind, glhFramebufferBind);
    GLHCK_RENDER_FUNC(framebufferTexture, glhFramebufferTexture);
    GLHCK_RENDER_FUNC(framebufferRenderbuffer, glhFramebufferRenderbuffer);
 
    /* hardware buffer objects */
-   GLHCK_RENDER_FUNC(hwBufferGenerate, glGenBuffers);
-   GLHCK_RENDER_FUNC(hwBufferDelete, glDeleteBuffers);
+   GLHCK_RENDER_FUNC(hwBufferGenerate, glhHwBufferGenerate);
+   GLHCK_RENDER_FUNC(hwBufferDelete, glhHwBufferDelete);
    GLHCK_RENDER_FUNC(hwBufferBind, glhHwBufferBind);
    GLHCK_RENDER_FUNC(hwBufferBindBase, glhHwBufferBindBase);
    GLHCK_RENDER_FUNC(hwBufferBindRange, glhHwBufferBindRange);
@@ -1245,16 +1179,16 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(hwBufferUnmap, glhHwBufferUnmap);
 
    /* shader objects */
-   GLHCK_RENDER_FUNC(programBind, glUseProgram);
+   GLHCK_RENDER_FUNC(programBind, glhProgramBind);
    GLHCK_RENDER_FUNC(programLink, rProgramLink);
-   GLHCK_RENDER_FUNC(programDelete, glDeleteProgram);
+   GLHCK_RENDER_FUNC(programDelete, glhProgramDelete);
    GLHCK_RENDER_FUNC(programUniform, glhProgramUniform);
    GLHCK_RENDER_FUNC(programUniformBufferList, glhProgramUniformBufferList);
    GLHCK_RENDER_FUNC(programAttributeList, glhProgramAttributeList);
    GLHCK_RENDER_FUNC(programUniformList, glhProgramUniformList);
    GLHCK_RENDER_FUNC(programAttachUniformBuffer, glhProgramAttachUniformBuffer);
    GLHCK_RENDER_FUNC(shaderCompile, rShaderCompile);
-   GLHCK_RENDER_FUNC(shaderDelete, glDeleteShader);
+   GLHCK_RENDER_FUNC(shaderDelete, glhShaderDelete);
    GLHCK_RENDER_FUNC(shadersPath, glswSetPath);
    GLHCK_RENDER_FUNC(shadersDirectiveToken, glswAddDirectiveToken);
 

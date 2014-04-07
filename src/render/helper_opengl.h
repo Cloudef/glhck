@@ -3,12 +3,30 @@
 
 #include "../internal.h"
 
-#if GLHCK_USE_GLES1
-#  define GLEW_USE_LIB_ES11
-#elif GLHCK_USE_GLES2
-#  define GLEW_USE_LIB_ES20
+#if EMSCRIPTEN
+/* we don't define GLEW_USE_LIB_ES11 since we need all the constants.
+ * bit of hack, but yeah.. */
+#  include <GL/glew.h>
+#  undef GLEW_VERSION_1_4
+#  undef GLEW_VERSION_2_0
+#  undef GLEW_VERSION_3_0
+#  undef GLEW_ES_VERSION_1_0
+#  define GLEW_VERSION_1_4 0
+#  define GLEW_VERSION_2_0 0
+#  define GLEW_VERSION_3_0 0
+#  define GLEW_ES_VERSION_1_0 1
+#else
+#  if GLHCK_USE_GLES1
+#     define GLEW_USE_LIB_ES11
+#  elif GLHCK_USE_GLES2
+#     define GLEW_USE_LIB_ES20
+#  endif
+#  include "GL/glew.h"
 #endif
-#include "GL/glew.h"
+
+#ifndef __STRING
+#  define __STRING(x) #x
+#endif
 
 #ifndef GLchar
 #  define GLchar char
@@ -19,28 +37,7 @@
 #  define GL_CALL(x) x
 #else
 #  define GL_CALL(x) x; GL_ERROR(__LINE__, __func__, __STRING(x));
-static void GL_ERROR(unsigned int line, const char *func, const char *glfunc)
-{
-   GLenum error;
-   if ((error = glGetError()) != GL_NO_ERROR)
-      DEBUG(GLHCK_DBG_ERROR, "GL @%d:%-20s %-20s >> %s",
-            line, func, glfunc,
-            error==GL_INVALID_ENUM?
-            "GL_INVALID_ENUM":
-            error==GL_INVALID_VALUE?
-            "GL_INVALID_VALUE":
-            error==GL_INVALID_OPERATION?
-            "GL_INVALID_OPERATION":
-            error==GL_STACK_OVERFLOW?
-            "GL_STACK_OVERFLOW":
-            error==GL_STACK_UNDERFLOW?
-            "GL_STACK_UNDERFLOW":
-            error==GL_OUT_OF_MEMORY?
-            "GL_OUT_OF_MEMORY":
-            error==GL_INVALID_OPERATION?
-            "GL_INVALID_OPERATION":
-            "GL_UNKNOWN_ERROR");
-}
+void GL_ERROR(unsigned int line, const char *func, const char *glfunc);
 #endif
 
 /* check return value of gl function on debug build */
@@ -48,41 +45,46 @@ static void GL_ERROR(unsigned int line, const char *func, const char *glfunc)
 #  define GL_CHECK(x) x
 #else
 #  define GL_CHECK(x) GL_CHECK_ERROR(__func__, __STRING(x), x)
-static GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum error)
-{
-   if (error != GL_NO_ERROR &&
-       error != GL_FRAMEBUFFER_COMPLETE)
-      DEBUG(GLHCK_DBG_ERROR, "GL @%-20s %-20s >> %s",
-            func, glfunc,
-            error==GL_FRAMEBUFFER_UNDEFINED?
-            "GL_FRAMEBUFFER_UNDEFINED":
-            error==GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT?
-            "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT":
-            error==GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER?
-            "GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER":
-            error==GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER?
-            "GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER":
-            error==GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT?
-            "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT":
-            error==GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE?
-            "GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE":
-            error==GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS?
-            "GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS":
-            error==GL_FRAMEBUFFER_UNSUPPORTED?
-            "GL_FRAMEBUFFER_UNSUPPORTED":
-            "GL_UNKNOWN_ERROR");
-   return error;
-}
+GLenum GL_CHECK_ERROR(const char *func, const char *glfunc, GLenum error);
 #endif
+
+/*** mapping tables ***/
+extern GLenum glhckCullFaceTypeToGL[];
+extern GLenum glhckFaceOrientationToGL[];
+extern GLenum glhckGeometryTypeToGL[];
+extern GLenum glhckFramebufferTargetToGL[];
+extern GLenum glhckFramebufferAttachmentTypeToGL[];
+extern GLenum glhckHwBufferTargetToGL[];
+extern GLenum glhckHwBufferStoreTypeToGL[];
+extern GLenum glhckHwBufferAccessTypeToGL[];
+extern GLenum glhckShaderTypeToGL[];
+extern GLenum glhckTextureWrapToGL[];
+extern GLenum glhckTextureFilterToGL[];
+extern GLenum glhckTextureCompareModeToGL[];
+extern GLenum glhckCompareFuncToGL[];
+extern GLenum glhckTextureTargetToGL[];
+extern GLenum glhckTextureFormatToGL[];
+extern GLenum glhckDataTypeToGL[];
+extern GLenum glhckBlendingModeToGL[];
 
 /*** check if driver setup is supported ***/
 int glhCheckSupport(const char *renderName);
 
 /*** binding mappings ***/
+void glhTextureGenerate(GLsizei n, GLuint *textures);
+void glhTextureDelete(GLsizei n, const GLuint *textures);
 void glhTextureBind(glhckTextureTarget target, GLuint object);
 void glhTextureActive(GLuint index);
+void glhRenderbufferGenerate(GLsizei n, GLuint *renderbuffers);
+void glhRenderbufferDelete(GLsizei n, const GLuint *renderbuffers);
 void glhRenderbufferBind(GLuint object);
+void glhFramebufferGenerate(GLsizei n, GLuint *framebuffers);
+void glhFramebufferDelete(GLsizei n, const GLuint *framebuffers);
 void glhFramebufferBind(glhckFramebufferTarget target, GLuint object);
+void glhFramebufferGenerate(GLsizei n, GLuint *framebuffers);
+void glhFramebufferDelete(GLsizei n, const GLuint *framebuffers);
+void glhHwBufferGenerate(GLsizei n, GLuint *buffers);
+void glhHwBufferDelete(GLsizei n, const GLuint *buffers);
 void glhHwBufferBind(glhckHwBufferTarget target, GLuint object);
 void glhHwBufferBindBase(glhckHwBufferTarget target, GLuint index, GLuint object);
 void glhHwBufferBindRange(glhckHwBufferTarget target, GLuint index, GLuint object, GLintptr offset, GLsizeiptr size);
@@ -90,24 +92,11 @@ void glhHwBufferCreate(glhckHwBufferTarget target, GLsizeiptr size, const GLvoid
 void glhHwBufferFill(glhckHwBufferTarget target, GLintptr offset, GLsizeiptr size, const GLvoid *data);
 void* glhHwBufferMap(glhckHwBufferTarget target, glhckHwBufferAccessType access);
 void glhHwBufferUnmap(glhckHwBufferTarget target);
+void glhProgramBind(GLuint program);
+void glhProgramDelete(GLuint program);
+void glhShaderDelete(GLuint shader);
 
-/*** glhck mapping functions ***/
-GLenum glhRenderPropertyForGlhckProperty(glhckRenderProperty property);
-GLenum glhFaceOrientationForGlhckOrientation(glhckFaceOrientation orientation);
-GLenum glhCullFaceTypeForGlhckType(glhckCullFaceType type);
-GLenum glhGeometryTypeForGlhckType(glhckGeometryType type);
-GLenum glhTextureFormatForGlhckFormat(glhckTextureFormat format);
-GLenum glhDataTypeForGlhckType(glhckDataType type);
-GLenum glhTextureCompareModeForGlhckMode(glhckTextureCompareMode mode);
-GLenum glhCompareFuncForGlhckFunc(glhckCompareFunc mode);
-GLenum glhTextureWrapModeForGlhckMode(glhckTextureWrap wrap);
-GLenum glhTextureFilterModeForGlhckMode(glhckTextureFilter filter);
-GLenum glhBlendingModeForGlhckMode(glhckBlendingMode mode);
-GLenum glhAttachmentTypeForGlhckType(glhckFramebufferAttachmentType type);
-GLenum glhHwBufferTargetForGlhckType(glhckHwBufferTarget target);
-GLenum glhHwBufferStoreTypeForGlhckType(glhckHwBufferStoreType type);
-GLenum glhHwBufferAccessTypeForGlhckType(glhckHwBufferAccessType type);
-GLenum glhShaderTypeForGlhckType(glhckShaderType type);
+/*** shader mapping functions ***/
 GLenum glhShaderVariableTypeForGlhckType(_glhckShaderVariableType type);
 _glhckShaderVariableType glhGlhckShaderVariableTypeForOpenGLType(GLenum type);
 const GLchar* glhShaderVariableNameForOpenGLConstant(GLenum type);
@@ -138,3 +127,5 @@ void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type);
 void glhSetupDebugOutput(void);
 
 #endif /* __glhck_opengl_helper_h__ */
+
+/* vim: set ts=8 sw=3 tw=0 :*/

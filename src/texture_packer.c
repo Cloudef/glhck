@@ -2,12 +2,6 @@
 #include <stdlib.h> /* for malloc */
 #include <assert.h> /* for assert */
 
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
-
 #ifndef NULLDO
 #  define NULLDO(f,x) { f(x); x = NULL; }
 #endif
@@ -32,15 +26,6 @@ static void rect_set(tpRect *rect, int x1, int y1, int x2, int y2)
    assert(rect);
    rect->x1 = x1; rect->y1 = y1;
    rect->x2 = x2; rect->y2 = y2;
-}
-
-static int rect_intersects(tpRect *r1, tpRect *r2)
-{
-   assert(r1 && r2);
-   return !(r1->x2 < r2->x1 ||
-            r1->x1 > r2->x2 ||
-            r1->y2 < r2->y1 ||
-            r1->y1 > r2->y2);
 }
 
 static void texture_set(tpTexture *t, int width, int height)
@@ -92,6 +77,16 @@ static void node_get_rect(tpNode *n, tpRect *r)
    rect_set(r, n->x, n->y, n->x + n->width - 1, n->y + n->height - 1);
 }
 
+#ifndef NDEBUG
+static int rect_intersects(tpRect *r1, tpRect *r2)
+{
+   assert(r1 && r2);
+   return !(r1->x2 < r2->x1 ||
+            r1->x1 > r2->x2 ||
+            r1->y2 < r2->y1 ||
+            r1->y1 > r2->y2);
+}
+
 static void node_validate(tpNode *n1, tpNode *n2)
 {
    tpRect r1, r2;
@@ -100,6 +95,7 @@ static void node_validate(tpNode *n1, tpNode *n2)
    node_get_rect(n2, &r2);
    assert(!rect_intersects(&r1, &r2));
 }
+#endif
 
 static int node_merge(tpNode *n1, tpNode *n2)
 {

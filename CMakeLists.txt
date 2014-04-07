@@ -6,9 +6,24 @@ SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${glhck_SOURCE_DIR}/CMake/modules)
 
 # OpenPandora hacks
 IF (PANDORA)
-    ADD_DEFINITIONS(-DPANDORA)
-    SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
-    SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
+   MESSAGE("Building GLhck with Pandora support")
+   ADD_DEFINITIONS(-DPANDORA)
+   SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
+   SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
+ENDIF ()
+
+# Emscripten build
+IF (EMSCRIPTEN)
+   MESSAGE("Building GLhck with Emscripten support")
+   MESSAGE("NOTE: For examples you need glfw3 emulation in Emscripten.")
+   MESSAGE("      This is not yet pushed to upstream so, query for more details about this.")
+   ADD_DEFINITIONS(-DEMSCRIPTEN)
+   SET(GLHCK_IMPORT_BMP OFF CACHE BOOL "Emscripten uses its own image importer")
+   SET(GLHCK_IMPORT_PNG OFF CACHE BOOL "Emscripten uses its own image importer")
+   SET(GLHCK_IMPORT_TGA OFF CACHE BOOL "Emscripten uses its own image importer")
+   SET(GLHCK_IMPORT_JPEG OFF CACHE BOOL "Emscripten uses its own image importer")
+   SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
+   SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
 ENDIF ()
 
 # General build options
@@ -17,7 +32,7 @@ OPTION(GLHCK_BUILD_TOOLS "Build tools" OFF)
 OPTION(GLHCK_USE_GLES1 "Build for OpenGL ES 1.x" OFF)
 OPTION(GLHCK_USE_GLES2 "Build for OpenGL ES 2.x" OFF)
 OPTION(GLHCK_TRISTRIP "Build GLhck with ACTC triangle stripping support" OFF)
-OPTION(GLHCK_KAZMATH_DOUBLE "Define kmScalar as double" OFF)
+OPTION(GLHCK_KAZMATH_DOUBLE "Define kmScalar as double (UNSUPPORTED)" OFF)
 OPTION(GLHCK_DISABLE_TRACE "Disable GLhck's tracing functionality (EXPERIMENTAL)" OFF)
 
 # Build importers dynamically?
@@ -26,8 +41,8 @@ OPTION(GLHCK_IMPORT_DYNAMIC "Build importers dynamically" OFF)
 
 # Model importers
 OPTION(GLHCK_IMPORT_ASSIMP "Enable assimp importer" OFF)
-OPTION(GLHCK_IMPORT_OPENCTM "Enable OpenCTM importer" ON)
-OPTION(GLHCK_IMPORT_MMD "Enable MikuMikuDance importer" ON)
+OPTION(GLHCK_IMPORT_OPENCTM "Enable OpenCTM importer" OFF)
+OPTION(GLHCK_IMPORT_MMD "Enable MikuMikuDance importer" OFF)
 
 # Image importers
 OPTION(GLHCK_IMPORT_BMP "Enable BMP importer" ON)
@@ -54,7 +69,9 @@ ENDIF ()
 # These are propably temporary
 # In the end make renderers load this stuff dynamically(?)
 
-IF (GLHCK_USE_GLES1)
+IF (EMSCRIPTEN)
+   # no-op
+ELSEIF (GLHCK_USE_GLES1)
    # GLES 1.x
    MESSAGE("Building GLhck for GLES 1.x")
    FIND_PACKAGE(EGL REQUIRED)
@@ -80,6 +97,12 @@ ELSE ()
    LIST(APPEND GLHCK_LINK ${OPENGL_gl_LIBRARY})
 ENDIF ()
 
+FIND_LIBRARY(MATH_LIBRARY m)
+MARK_AS_ADVANCED(MATH_LIBRARY)
+IF (MATH_LIBRARY)
+   LIST(APPEND GLHCK_LIBRARIES ${MATH_LIBRARY})
+ENDIF ()
+
 # Export GLHCK library dependencies
 SET(GLHCK_LIBRARIES ${GLHCK_LINK} CACHE STRING "Dependencies of GLHCK")
 
@@ -88,9 +111,9 @@ SET(GLHCK_LIBRARIES ${GLHCK_LINK} CACHE STRING "Dependencies of GLHCK")
 SET(SUBMODULE_ERROR "Run 'git submodule update --init --recursive' update first.")
 IF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/kazmath/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
-ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glfw/src/.git)
+ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glfw/src/.git AND NOT EMSCRIPTEN)
    SET(SUBMODULE_ERROR_THROW 1)
-ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glew-glhck/src/.git)
+ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glew-glhck/src/.git AND NOT EMSCRIPTEN)
    SET(SUBMODULE_ERROR_THROW 1)
 ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/chck/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
@@ -119,6 +142,10 @@ IF (MSVC)
 ELSEIF (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
    SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -Wall -Wextra -Wno-variadic-macros -Wno-long-long")
    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-variadic-macros -Wno-long-long")
+   IF (MINGW)
+      SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -mwindows -static")
+      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mwindows -static")
+   ENDIF ()
 ENDIF ()
 
 # Build glhck

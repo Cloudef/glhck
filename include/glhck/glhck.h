@@ -95,84 +95,29 @@ extern "C" {
  * public api
  ***/
 
-/* debugging level */
-typedef enum glhckDebugLevel {
-   GLHCK_DBG_ERROR,
-   GLHCK_DBG_WARNING,
-   GLHCK_DBG_CRAP,
-} glhckDebugLevel;
-
-/* render type */
-typedef enum glhckRenderType {
-   GLHCK_RENDER_AUTO,
-   GLHCK_RENDER_OPENGL,
-   GLHCK_RENDER_OPENGL_FIXED_PIPELINE,
-   GLHCK_RENDER_GLES1,
-   GLHCK_RENDER_GLES2,
-   GLHCK_RENDER_STUB,
-} glhckRenderType;
-
-/* driver type */
-typedef enum glhckDriverType {
-   GLHCK_DRIVER_NONE,
-   GLHCK_DRIVER_OTHER,
-   GLHCK_DRIVER_MESA,
-   GLHCK_DRIVER_NVIDIA,
-   GLHCK_DRIVER_ATI,
-   GLHCK_DRIVER_IMGTEC,
-} glhckDriverType;
-
-/* renderer properties */
-typedef enum glhckRenderProperty {
-   GLHCK_MAX_TEXTURE_SIZE,
-   GLHCK_MAX_CUBE_MAP_TEXTURE_SIZE,
-   GLHCK_MAX_VERTEX_ATTRIBS,
-   GLHCK_MAX_VERTEX_UNIFORM_VECTORS,
-   GLHCK_MAX_VARYING_VECTORS,
-   GLHCK_MAX_COMBINED_TEXTURE_IMAGE_UNITS,
-   GLHCK_MAX_VERTEX_TEXTURE_IMAGE_UNITS,
-   GLHCK_MAX_TEXTURE_IMAGE_UNITS,
-   GLHCK_MAX_FRAGMENT_UNIFORM_VECTORS,
-   GLHCK_MAX_RENDERBUFFER_SIZE,
-   GLHCK_MAX_VIEWPORT_DIMS,
-} glhckRenderProperty;
+/* helper for python script */
+#define PYGLMAP typedef
 
 /* clear bits */
-typedef enum glhckClearBufferBits {
-   GLHCK_CLEAR_BIT_NONE,
-   GLHCK_COLOR_BUFFER,
-   GLHCK_DEPTH_BUFFER,
+PYGLMAP enum glhckClearBufferBits {
+   GLHCK_COLOR_BUFFER_BIT = 1<<0,
+   GLHCK_DEPTH_BUFFER_BIT = 1<<1,
 } glhckClearBufferBits;
 
 /* cull side face */
-typedef enum glhckCullFaceType {
-   GLHCK_CULL_BACK,
-   GLHCK_CULL_FRONT,
+PYGLMAP enum glhckCullFaceType {
+   GLHCK_BACK,
+   GLHCK_FRONT,
 } glhckCullFaceType;
 
 /* face orientations */
-typedef enum glhckFaceOrientation {
-   GLHCK_FACE_CCW,
-   GLHCK_FACE_CW,
+PYGLMAP enum glhckFaceOrientation {
+   GLHCK_CW,
+   GLHCK_CCW,
 } glhckFaceOrientation;
 
-/* render pass bits */
-typedef enum glhckRenderPassFlags {
-   GLHCK_PASS_NOTHING        = 0,
-   GLHCK_PASS_DEPTH          = 1,
-   GLHCK_PASS_CULL           = 2,
-   GLHCK_PASS_BLEND          = 4,
-   GLHCK_PASS_TEXTURE        = 8,
-   GLHCK_PASS_DRAW_OBB       = 16,
-   GLHCK_PASS_DRAW_AABB      = 32,
-   GLHCK_PASS_DRAW_SKELETON  = 64,
-   GLHCK_PASS_DRAW_WIREFRAME = 128,
-   GLHCK_PASS_LIGHTING       = 256,
-   GLHCK_PASS_OVERDRAW       = 512,
-} glhckRenderPassFlags;
-
 /* geometry type */
-typedef enum glhckGeometryType {
+PYGLMAP enum glhckGeometryType {
    GLHCK_POINTS,
    GLHCK_LINES,
    GLHCK_LINE_LOOP,
@@ -182,7 +127,7 @@ typedef enum glhckGeometryType {
 } glhckGeometryType;
 
 /* framebuffer types */
-typedef enum glhckFramebufferTarget {
+PYGLMAP enum glhckFramebufferTarget {
    GLHCK_FRAMEBUFFER,
    GLHCK_FRAMEBUFFER_READ,
    GLHCK_FRAMEBUFFER_DRAW,
@@ -190,7 +135,7 @@ typedef enum glhckFramebufferTarget {
 } glhckFramebufferTarget;
 
 /* framebuffer attachment types */
-typedef enum glhckFramebufferAttachmentType {
+PYGLMAP enum glhckFramebufferAttachmentType {
    GLHCK_COLOR_ATTACHMENT0,
    GLHCK_COLOR_ATTACHMENT1,
    GLHCK_COLOR_ATTACHMENT2,
@@ -212,7 +157,7 @@ typedef enum glhckFramebufferAttachmentType {
 } glhckFramebufferAttachmentType;
 
 /* hardware buffer type */
-typedef enum glhckHwBufferTarget {
+PYGLMAP enum glhckHwBufferTarget {
    GLHCK_ARRAY_BUFFER,
    GLHCK_COPY_READ_BUFFER,
    GLHCK_COPY_WRITE_BUFFER,
@@ -228,7 +173,7 @@ typedef enum glhckHwBufferTarget {
 } glhckHwBufferTarget;
 
 /* hardware buffer storage type */
-typedef enum glhckHwBufferStoreType {
+PYGLMAP enum glhckHwBufferStoreType {
    GLHCK_BUFFER_STREAM_DRAW,
    GLHCK_BUFFER_STREAM_READ,
    GLHCK_BUFFER_STREAM_COPY,
@@ -241,103 +186,56 @@ typedef enum glhckHwBufferStoreType {
 } glhckHwBufferStoreType;
 
 /* hardware buffer access type */
-typedef enum glhckHwBufferAccessType {
+PYGLMAP enum glhckHwBufferAccessType {
    GLHCK_BUFFER_READ_ONLY,
    GLHCK_BUFFER_WRITE_ONLY,
    GLHCK_BUFFER_READ_WRITE,
 } glhckHwBufferAccessType;
 
 /* shader type */
-typedef enum glhckShaderType {
+PYGLMAP enum glhckShaderType {
    GLHCK_VERTEX_SHADER,
    GLHCK_FRAGMENT_SHADER,
 } glhckShaderType;
 
-/* projection type */
-typedef enum glhckProjectionType {
-   GLHCK_PROJECTION_PERSPECTIVE,
-   GLHCK_PROJECTION_ORTHOGRAPHIC,
-} glhckProjectionType;
-
-/* frustum planes */
-typedef enum glhckFrustumPlane {
-   GLHCK_FRUSTUM_PLANE_LEFT,
-   GLHCK_FRUSTUM_PLANE_RIGHT,
-   GLHCK_FRUSTUM_PLANE_BOTTOM,
-   GLHCK_FRUSTUM_PLANE_TOP,
-   GLHCK_FRUSTUM_PLANE_NEAR,
-   GLHCK_FRUSTUM_PLANE_FAR,
-   GLHCK_FRUSTUM_PLANE_LAST
-} glhckFrustumPlane;
-
-/* frustum corners */
-typedef enum glhckFrustumCorner {
-   GLHCK_FRUSTUM_CORNER_BOTTOM_LEFT,
-   GLHCK_FRUSTUM_CORNER_BOTTOM_RIGHT,
-   GLHCK_FRUSTUM_CORNER_TOP_RIGHT,
-   GLHCK_FRUSTUM_CORNER_TOP_LEFT,
-   GLHCK_FRUSTUM_CORNER_LAST
-} glhckFrustumCorner;
-
-/* frustum struct */
-typedef struct glhckFrustum {
-   kmPlane planes[GLHCK_FRUSTUM_PLANE_LAST];
-   kmVec3 nearCorners[GLHCK_FRUSTUM_CORNER_LAST];
-   kmVec3 farCorners[GLHCK_FRUSTUM_CORNER_LAST];
-} glhckFrustum;
-
-/* parent affection flags */
-typedef enum glhckObjectAffectionFlags {
-   GLHCK_AFFECT_NONE          = 0,
-   GLHCK_AFFECT_TRANSLATION   = 1,
-   GLHCK_AFFECT_ROTATION      = 2,
-   GLHCK_AFFECT_SCALING       = 4,
-} glhckObjectAffectionFlags;
-
 /* texture wrap modes */
-typedef enum glhckTextureWrap {
-   GLHCK_WRAP_REPEAT,
-   GLHCK_WRAP_MIRRORED_REPEAT,
-   GLHCK_WRAP_CLAMP_TO_EDGE,
-   GLHCK_WRAP_CLAMP_TO_BORDER,
+PYGLMAP enum glhckTextureWrap {
+   GLHCK_REPEAT,
+   GLHCK_MIRRORED_REPEAT,
+   GLHCK_CLAMP_TO_EDGE,
+   GLHCK_CLAMP_TO_BORDER,
 } glhckTextureWrap;
 
 /* texture filter modes */
-typedef enum glhckTextureFilter {
-   GLHCK_FILTER_NEAREST,
-   GLHCK_FILTER_LINEAR,
-   GLHCK_FILTER_NEAREST_MIPMAP_NEAREST,
-   GLHCK_FILTER_LINEAR_MIPMAP_NEAREST,
-   GLHCK_FILTER_NEAREST_MIPMAP_LINEAR,
-   GLHCK_FILTER_LINEAR_MIPMAP_LINEAR,
+PYGLMAP enum glhckTextureFilter {
+   GLHCK_NEAREST,
+   GLHCK_LINEAR,
+   GLHCK_NEAREST_MIPMAP_NEAREST,
+   GLHCK_LINEAR_MIPMAP_NEAREST,
+   GLHCK_NEAREST_MIPMAP_LINEAR,
+   GLHCK_LINEAR_MIPMAP_LINEAR,
 } glhckTextureFilter;
 
-/* texture compression type */
-typedef enum glhckTextureCompression {
-   GLHCK_COMPRESSION_NONE,
-   GLHCK_COMPRESSION_DXT,
-} glhckTextureCompression;
-
 /* texture compare mode */
-typedef enum glhckTextureCompareMode {
+PYGLMAP enum glhckTextureCompareMode {
    GLHCK_COMPARE_NONE,
-   GLHCK_COMPARE_REF_TO_TEXTURE
+   GLHCK_COMPARE_REF_TO_TEXTURE,
 } glhckTextureCompareMode;
 
 /* compare func */
-typedef enum glhckCompareFunc {
-   GLHCK_COMPARE_LEQUAL,
-   GLHCK_COMPARE_GEQUAL,
-   GLHCK_COMPARE_LESS,
-   GLHCK_COMPARE_GREATER,
-   GLHCK_COMPARE_EQUAL,
-   GLHCK_COMPARE_NOTEQUAL,
-   GLHCK_COMPARE_ALWAYS,
-   GLHCK_COMPARE_NEVER,
+PYGLMAP enum glhckCompareFunc {
+   GLHCK_LEQUAL,
+   GLHCK_GEQUAL,
+   GLHCK_LESS,
+   GLHCK_GREATER,
+   GLHCK_EQUAL,
+   GLHCK_NOTEQUAL,
+   GLHCK_ALWAYS,
+   GLHCK_NEVER,
 } glhckCompareFunc;
 
 /* texture types */
-typedef enum glhckTextureTarget {
+PYGLMAP enum glhckTextureTarget {
    GLHCK_TEXTURE_1D,
    GLHCK_TEXTURE_2D,
    GLHCK_TEXTURE_3D,
@@ -346,7 +244,7 @@ typedef enum glhckTextureTarget {
 } glhckTextureTarget;
 
 /* texture formats */
-typedef enum glhckTextureFormat {
+PYGLMAP enum glhckTextureFormat {
    GLHCK_RED,
    GLHCK_RG,
    GLHCK_ALPHA,
@@ -356,40 +254,65 @@ typedef enum glhckTextureFormat {
    GLHCK_BGR,
    GLHCK_RGBA,
    GLHCK_BGRA,
-
    GLHCK_DEPTH_COMPONENT,
    GLHCK_DEPTH_COMPONENT16,
    GLHCK_DEPTH_COMPONENT24,
    GLHCK_DEPTH_COMPONENT32,
    GLHCK_DEPTH_STENCIL,
-
    GLHCK_COMPRESSED_RGB_DXT1,
    GLHCK_COMPRESSED_RGBA_DXT5,
 } glhckTextureFormat;
 
 /* data formats */
-typedef enum glhckDataType {
-   GLHCK_DATA_COMPRESSED,
-   GLHCK_DATA_UNSIGNED_BYTE,
-   GLHCK_DATA_BYTE,
-   GLHCK_DATA_UNSIGNED_SHORT,
-   GLHCK_DATA_SHORT,
-   GLHCK_DATA_UNSIGNED_INT,
-   GLHCK_DATA_INT,
-   GLHCK_DATA_FLOAT,
-   GLHCK_DATA_UNSIGNED_BYTE_3_3_2,
-   GLHCK_DATA_UNSIGNED_BYTE_2_3_3_REV,
-   GLHCK_DATA_UNSIGNED_SHORT_5_6_5,
-   GLHCK_DATA_UNSIGNED_SHORT_5_6_5_REV,
-   GLHCK_DATA_UNSIGNED_SHORT_4_4_4_4,
-   GLHCK_DATA_UNISNGED_SHORT_4_4_4_4_REV,
-   GLHCK_DATA_UNISGNED_SHORT_5_5_5_1,
-   GLHCK_DATA_UNSIGNED_SHORT_1_5_5_5_REV,
-   GLHCK_DATA_UNSIGNED_INT_8_8_8_8,
-   GLHCK_DATA_UNSIGNED_INT_8_8_8_8_REV,
-   GLHCK_DATA_UNSIGNED_INT_10_10_10_2,
-   GLHCK_DATA_UNSIGNED_INT_2_10_10_10_REV,
+PYGLMAP enum glhckDataType {
+   GLHCK_COMPRESSED,
+   GLHCK_UNSIGNED_BYTE,
+   GLHCK_BYTE,
+   GLHCK_UNSIGNED_SHORT,
+   GLHCK_SHORT,
+   GLHCK_UNSIGNED_INT,
+   GLHCK_INT,
+   GLHCK_FLOAT,
+   GLHCK_UNSIGNED_BYTE_3_3_2,
+   GLHCK_UNSIGNED_BYTE_2_3_3_REV,
+   GLHCK_UNSIGNED_SHORT_5_6_5,
+   GLHCK_UNSIGNED_SHORT_5_6_5_REV,
+   GLHCK_UNSIGNED_SHORT_4_4_4_4,
+   GLHCK_UNSIGNED_SHORT_4_4_4_4_REV,
+   GLHCK_UNSIGNED_SHORT_5_5_5_1,
+   GLHCK_UNSIGNED_SHORT_1_5_5_5_REV,
+   GLHCK_UNSIGNED_INT_8_8_8_8,
+   GLHCK_UNSIGNED_INT_8_8_8_8_REV,
+   GLHCK_UNSIGNED_INT_10_10_10_2,
+   GLHCK_UNSIGNED_INT_2_10_10_10_REV,
 } glhckDataType;
+
+/* blending modes */
+PYGLMAP enum glhckBlendingMode {
+   GLHCK_ZERO,
+   GLHCK_ONE,
+   GLHCK_SRC_COLOR,
+   GLHCK_ONE_MINUS_SRC_COLOR,
+   GLHCK_SRC_ALPHA,
+   GLHCK_ONE_MINUS_SRC_ALPHA,
+   GLHCK_DST_ALPHA,
+   GLHCK_ONE_MINUS_DST_ALPHA,
+   GLHCK_DST_COLOR,
+   GLHCK_ONE_MINUS_DST_COLOR,
+   GLHCK_SRC_ALPHA_SATURATE,
+   GLHCK_CONSTANT_COLOR,
+   GLHCK_CONSTANT_ALPHA,
+   GLHCK_ONE_MINUS_CONSTANT_ALPHA,
+} glhckBlendingMode;
+
+#undef PYGLMAP
+
+/* debugging level */
+typedef enum glhckDebugLevel {
+   GLHCK_DBG_ERROR,
+   GLHCK_DBG_WARNING,
+   GLHCK_DBG_CRAP,
+} glhckDebugLevel;
 
 /* \brief render compile time features */
 typedef struct glhckCompileFeaturesRender {
@@ -413,6 +336,41 @@ typedef struct glhckCompileFeatures {
    glhckCompileFeaturesImport import;
    glhckCompileFeaturesMath math;
 } glhckCompileFeatures;
+
+/* driver type */
+typedef enum glhckDriverType {
+   GLHCK_DRIVER_NONE,
+   GLHCK_DRIVER_OTHER,
+   GLHCK_DRIVER_MESA,
+   GLHCK_DRIVER_NVIDIA,
+   GLHCK_DRIVER_ATI,
+   GLHCK_DRIVER_IMGTEC,
+} glhckDriverType;
+
+/* render type */
+typedef enum glhckRenderType {
+   GLHCK_RENDER_AUTO,
+   GLHCK_RENDER_OPENGL,
+   GLHCK_RENDER_OPENGL_FIXED_PIPELINE,
+   GLHCK_RENDER_GLES1,
+   GLHCK_RENDER_GLES2,
+   GLHCK_RENDER_STUB,
+} glhckRenderType;
+
+/* render pass bits */
+typedef enum glhckRenderPassFlags {
+   GLHCK_PASS_NONE           = 0,
+   GLHCK_PASS_DEPTH          = 1<<0,
+   GLHCK_PASS_CULL           = 1<<1,
+   GLHCK_PASS_BLEND          = 1<<2,
+   GLHCK_PASS_TEXTURE        = 1<<3,
+   GLHCK_PASS_DRAW_OBB       = 1<<4,
+   GLHCK_PASS_DRAW_AABB      = 1<<5,
+   GLHCK_PASS_DRAW_SKELETON  = 1<<6,
+   GLHCK_PASS_DRAW_WIREFRAME = 1<<7,
+   GLHCK_PASS_LIGHTING       = 1<<8,
+   GLHCK_PASS_OVERDRAW       = 1<<9,
+} glhckRenderPassFlags;
 
 /* \brief version render features */
 typedef struct glhckRenderFeaturesVersion {
@@ -445,29 +403,67 @@ typedef struct glhckTextureParameters {
    char mipmap;
 } glhckTextureParameters;
 
+/* projection type */
+typedef enum glhckProjectionType {
+   GLHCK_PROJECTION_PERSPECTIVE,
+   GLHCK_PROJECTION_ORTHOGRAPHIC,
+} glhckProjectionType;
+
+/* frustum planes */
+typedef enum glhckFrustumPlane {
+   GLHCK_FRUSTUM_PLANE_LEFT,
+   GLHCK_FRUSTUM_PLANE_RIGHT,
+   GLHCK_FRUSTUM_PLANE_BOTTOM,
+   GLHCK_FRUSTUM_PLANE_TOP,
+   GLHCK_FRUSTUM_PLANE_NEAR,
+   GLHCK_FRUSTUM_PLANE_FAR,
+   GLHCK_FRUSTUM_PLANE_LAST
+} glhckFrustumPlane;
+
+/* frustum corners */
+typedef enum glhckFrustumCorner {
+   GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_LEFT,
+   GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_RIGHT,
+   GLHCK_FRUSTUM_CORNER_NEAR_TOP_RIGHT,
+   GLHCK_FRUSTUM_CORNER_NEAR_TOP_LEFT,
+   GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_LEFT,
+   GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_RIGHT,
+   GLHCK_FRUSTUM_CORNER_FAR_TOP_RIGHT,
+   GLHCK_FRUSTUM_CORNER_FAR_TOP_LEFT,
+   GLHCK_FRUSTUM_CORNER_LAST
+} glhckFrustumCorner;
+
+typedef enum glhckFrustumTestResult {
+   GLHCK_FRUSTUM_OUTSIDE,
+   GLHCK_FRUSTUM_INSIDE,
+   GLHCK_FRUSTUM_PARTIAL
+} glhckFrustumTestResult;
+
+/* frustum struct */
+typedef struct glhckFrustum {
+   kmPlane planes[GLHCK_FRUSTUM_PLANE_LAST];
+   kmVec3 corners[GLHCK_FRUSTUM_CORNER_LAST];
+} glhckFrustum;
+
+/* parent affection flags */
+typedef enum glhckObjectAffectionFlags {
+   GLHCK_AFFECT_NONE          = 0,
+   GLHCK_AFFECT_TRANSLATION   = 1<<0,
+   GLHCK_AFFECT_ROTATION      = 1<<1,
+   GLHCK_AFFECT_SCALING       = 1<<2,
+} glhckObjectAffectionFlags;
+
 /* material flags */
 typedef enum glhckMaterialOptionsFlags {
    GLHCK_MATERIAL_NONE           = 0,
-   GLHCK_MATERIAL_LIGHTING       = 1,
+   GLHCK_MATERIAL_LIGHTING       = 1<<0,
 } glhckMaterialOptionsFlags;
 
-/* blending modes */
-typedef enum glhckBlendingMode {
-   GLHCK_ZERO,
-   GLHCK_ONE,
-   GLHCK_SRC_COLOR,
-   GLHCK_ONE_MINUS_SRC_COLOR,
-   GLHCK_SRC_ALPHA,
-   GLHCK_ONE_MINUS_SRC_ALPHA,
-   GLHCK_DST_ALPHA,
-   GLHCK_ONE_MINUS_DST_ALPHA,
-   GLHCK_DST_COLOR,
-   GLHCK_ONE_MINUS_DST_COLOR,
-   GLHCK_SRC_ALPHA_SATURATE,
-   GLHCK_CONSTANT_COLOR,
-   GLHCK_CONSTANT_ALPHA,
-   GLHCK_ONE_MINUS_CONSTANT_ALPHA,
-} glhckBlendingMode;
+/* texture compression type */
+typedef enum glhckTextureCompression {
+   GLHCK_COMPRESSION_NONE,
+   GLHCK_COMPRESSION_DXT,
+} glhckTextureCompression;
 
 /* model import parameters */
 typedef struct glhckImportModelParameters {
@@ -514,22 +510,19 @@ typedef struct glhckVector2f {
    float x, y;
 } glhckVector2f;
 
-/* internal vertex data structures,
- * if you modify the object's vertexdata directly
- * make sure you cast to the right data type. */
-typedef struct glhckVertexData3b {
-   glhckVector3b vertex;
-   glhckVector3s normal;
-   glhckVector2s coord;
+typedef struct glhckVertexData3f {
+   glhckVector3f vertex;
+   glhckVector3f normal;
+   glhckVector2f coord;
    glhckColorb color;
-} glhckVertexData3b;
+} glhckVertexData3f;
 
-typedef struct glhckVertexData2b {
-   glhckVector2b vertex;
-   glhckVector3s normal;
-   glhckVector2s coord;
+typedef struct glhckVertexData2f {
+   glhckVector2f vertex;
+   glhckVector3f normal;
+   glhckVector2f coord;
    glhckColorb color;
-} glhckVertexData2b;
+} glhckVertexData2f;
 
 typedef struct glhckVertexData3s {
    glhckVector3s vertex;
@@ -545,101 +538,66 @@ typedef struct glhckVertexData2s {
    glhckColorb color;
 } glhckVertexData2s;
 
-typedef struct glhckVertexData3fs {
-   glhckVector3f vertex;
+typedef struct glhckVertexData3b {
+   glhckVector3b vertex;
    glhckVector3s normal;
    glhckVector2s coord;
    glhckColorb color;
-} glhckVertexData3fs;
+} glhckVertexData3b;
 
-typedef struct glhckVertexData2fs {
-   glhckVector2f vertex;
+typedef struct glhckVertexData2b {
+   glhckVector2b vertex;
    glhckVector3s normal;
    glhckVector2s coord;
    glhckColorb color;
-} glhckVertexData2fs;
-
-typedef struct glhckVertexData3f {
-   glhckVector3f vertex;
-   glhckVector3f normal;
-   glhckVector2f coord;
-   glhckColorb color;
-} glhckVertexData3f;
-
-typedef struct glhckVertexData2f {
-   glhckVector2f vertex;
-   glhckVector3f normal;
-   glhckVector2f coord;
-   glhckColorb color;
-} glhckVertexData2f;
+} glhckVertexData2b;
 
 /* feed glhck the highest precision */
 typedef glhckVertexData3f glhckImportVertexData;
+typedef unsigned int glhckImportIndexData;
 
-typedef union glhckVertexData {
-      glhckVertexData3b *v3b;
-      glhckVertexData2b *v2b;
-      glhckVertexData3s *v3s;
-      glhckVertexData2s *v2s;
-      glhckVertexData3fs *v3fs;
-      glhckVertexData2fs *v2fs;
-      glhckVertexData3f *v3f;
-      glhckVertexData2f *v2f;
-      void *any;
-} glhckVertexData;
+typedef enum glhckBuiltinVertexType {
+   GLHCK_VTX_V3F,
+   GLHCK_VTX_V2F,
+   GLHCK_VTX_V3S,
+   GLHCK_VTX_V2S,
+   GLHCK_VTX_V3B,
+   GLHCK_VTX_V2B,
+   GLHCK_VTX_AUTO = 255,
+} glhckBuiltinVertexType;
 
-typedef unsigned char glhckIndexb;
-typedef unsigned short glhckIndexs;
-typedef unsigned int glhckIndexi;
+typedef enum glhckBuiltinIndexType {
+   GLHCK_IDX_UINT,
+   GLHCK_IDX_USHRT,
+   GLHCK_IDX_UBYTE,
+   GLHCK_IDX_AUTO = 255,
+} glhckBuiltinIndexType;
 
-/* feed glhck the highest precision */
-typedef glhckIndexi glhckImportIndexData;
+/* forward */
+struct glhckGeometry;
+struct _glhckSkinBone;
 
-typedef union glhckIndexData {
-      glhckIndexb *ivb;
-      glhckIndexs *ivs;
-      glhckIndexi *ivi;
-      void *any;
-} glhckIndexData;
+/* function map for vertexType */
+typedef struct glhckVertexTypeFunctionMap {
+   void (*convert)(const glhckImportVertexData *import, int memb, void *out, glhckVector3f *bias, glhckVector3f *scale);
+   void (*minMax)(struct glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max);
+   void (*transform)(struct glhckGeometry *geometry, const void *bindPose, struct _glhckSkinBone **bones, unsigned int memb);
+} glhckVertexTypeFunctionMap;
 
-/* geometry type enums */
-typedef enum glhckGeometryVertexType {
-   GLHCK_VERTEX_NONE,
-   GLHCK_VERTEX_V3B,
-   GLHCK_VERTEX_V2B,
-   GLHCK_VERTEX_V3S,
-   GLHCK_VERTEX_V2S,
-   GLHCK_VERTEX_V3FS,
-   GLHCK_VERTEX_V2FS,
-   GLHCK_VERTEX_V3F,
-   GLHCK_VERTEX_V2F
-} glhckGeometryVertexType;
+/* function map for indexType */
+typedef struct glhckIndexTypeFunctionMap {
+   void (*convert)(const glhckImportIndexData *import, int memb, void *out);
+} glhckIndexTypeFunctionMap;
 
-typedef enum glhckGeometryIndexType {
-   GLHCK_INDEX_NONE,
-   GLHCK_INDEX_BYTE,
-   GLHCK_INDEX_SHORT,
-   GLHCK_INDEX_INTEGER
-} glhckGeometryIndexType;
-
-/* teture coordinate transformation */
-typedef struct glhckCoordTransform {
-   glhckRect transform;
-   short degrees;
-} glhckCoordTransform;
-
-/* datatype that presents object's geometry */
+/* geometry datatype for low-level raw access */
 typedef struct glhckGeometry {
    /* geometry transformation needed
     * after precision conversion */
    glhckVector3f bias;
    glhckVector3f scale;
 
-   /* vertices */
-   glhckVertexData vertices;
-
-   /* indices */
-   glhckIndexData indices;
+   /* vertices && indices*/
+   void *vertices, *indices;
 
    /* counts for vertices && indices */
    int vertexCount, indexCount;
@@ -650,9 +608,8 @@ typedef struct glhckGeometry {
     * sending to OpenGL */
    int textureRange;
 
-   /* vertex && indices types */
-   glhckGeometryVertexType vertexType;
-   glhckGeometryIndexType indexType;
+   /* vertex data && index data types */
+   unsigned char vertexType, indexType;
 
    /* geometry type (triangles, triangle strip, etc..) */
    glhckGeometryType type;
@@ -673,7 +630,7 @@ typedef struct glhckAnimationQuaternionKey {
 /* datatype that presents bone's vertex weight */
 typedef struct glhckVertexWeight {
    float weight;
-   glhckIndexi vertexIndex;
+   glhckImportIndexData vertexIndex;
 } glhckVertexWeight;
 
 /* collision callbacks */
@@ -735,8 +692,8 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv);
 GLHCKAPI void glhckContextTerminate(void);
 GLHCKAPI void glhckMassacreWorld(void);
 GLHCKAPI void glhckLogColor(char color);
-GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
-GLHCKAPI void glhckGetGlobalPrecision(glhckGeometryIndexType *itype, glhckGeometryVertexType *vtype);
+GLHCKAPI void glhckSetGlobalPrecision(unsigned char itype, unsigned char vtype);
+GLHCKAPI void glhckGetGlobalPrecision(unsigned char *itype, unsigned char *vtype);
 
 /* import */
 GLHCKAPI const glhckImportModelParameters* glhckImportDefaultModelParameters(void);
@@ -789,7 +746,9 @@ GLHCKAPI void glhckFrustumBuild(glhckFrustum *object, const kmMat4 *mvp);
 GLHCKAPI void glhckFrustumRender(glhckFrustum *object);
 GLHCKAPI int glhckFrustumContainsPoint(const glhckFrustum *object, const kmVec3 *point);
 GLHCKAPI kmScalar glhckFrustumContainsSphere(const glhckFrustum *object, const kmVec3 *point, kmScalar radius);
+GLHCKAPI glhckFrustumTestResult glhckFrustumContainsSphereEx(const glhckFrustum *object, const kmVec3 *point, kmScalar radius);
 GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *object, const kmAABB *aabb);
+GLHCKAPI glhckFrustumTestResult glhckFrustumContainsAABBEx(const glhckFrustum *object, const kmAABB *aabb);
 
 /* cameras */
 GLHCKAPI glhckCamera* glhckCameraNew(void);
@@ -808,6 +767,8 @@ GLHCKAPI void glhckCameraRange(glhckCamera *object, const kmScalar near, const k
 GLHCKAPI void glhckCameraViewport(glhckCamera *object, const glhckRect *viewport);
 GLHCKAPI void glhckCameraViewporti(glhckCamera *object, int x, int y, int w, int h);
 GLHCKAPI glhckObject* glhckCameraGetObject(const glhckCamera *object);
+GLHCKAPI kmRay3* glhckCameraCastRayFromPoint(glhckCamera *object, kmRay3 *pOut, const kmVec2 *point);
+GLHCKAPI kmRay3* glhckCameraCastRayFromPointf(glhckCamera *object, kmRay3 *pOut, const kmScalar x, const kmScalar y);
 
 /* objects */
 GLHCKAPI glhckObject* glhckObjectNew(void);
@@ -858,7 +819,9 @@ GLHCKAPI int glhckObjectGetDrawWireframe(const glhckObject *object);
 
 /* object control */
 GLHCKAPI const kmAABB* glhckObjectGetOBB(glhckObject *object);
+GLHCKAPI const kmAABB* glhckObjectGetOBBWithChildren(glhckObject *object);
 GLHCKAPI const kmAABB* glhckObjectGetAABB(glhckObject *object);
+GLHCKAPI const kmAABB* glhckObjectGetAABBWithChildren(glhckObject *object);
 GLHCKAPI const kmMat4* glhckObjectGetMatrix(glhckObject *object);
 GLHCKAPI const kmVec3* glhckObjectGetPosition(const glhckObject *object);
 GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position);
@@ -878,24 +841,24 @@ GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale);
 GLHCKAPI void glhckObjectScalef(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z);
 
 /* object geometry */
-GLHCKAPI int glhckObjectInsertVertices(glhckObject *object, glhckGeometryVertexType type, const glhckImportVertexData *vertices, int memb);
-GLHCKAPI int glhckObjectInsertIndices(glhckObject *object, glhckGeometryIndexType type, const glhckImportIndexData *indices, int memb);
+GLHCKAPI int glhckObjectInsertVertices(glhckObject *object, unsigned char type, const glhckImportVertexData *vertices, int memb);
+GLHCKAPI int glhckObjectInsertIndices(glhckObject *object, unsigned char type, const glhckImportIndexData *indices, int memb);
 GLHCKAPI void glhckObjectUpdate(glhckObject *object);
 GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object);
 GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object);
+GLHCKAPI int glhckObjectPickTextureCoordinatesWithRay(const glhckObject *object, const kmRay3 *ray, kmVec2 *outCoords);
 
 /* pre-defined geometry */
 GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, const glhckImportModelParameters *importParams);
-GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, const glhckImportModelParameters *importParams,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, const glhckImportModelParameters *importParams, unsigned char itype, unsigned char vtype);
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size);
-GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, unsigned char itype, unsigned char vtype);
 GLHCKAPI glhckObject* glhckSphereNew(kmScalar size);
-GLHCKAPI glhckObject* glhckSphereNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+GLHCKAPI glhckObject* glhckSphereNewEx(kmScalar size, unsigned char itype, unsigned char vtype);
 GLHCKAPI glhckObject* glhckEllipsoidNew(kmScalar rx, kmScalar ry, kmScalar rz);
-GLHCKAPI glhckObject* glhckEllipsoidNewEx(kmScalar rx, kmScalar ry, kmScalar rz, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+GLHCKAPI glhckObject* glhckEllipsoidNewEx(kmScalar rx, kmScalar ry, kmScalar rz, unsigned char itype, unsigned char vtype);
 GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height);
-GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height, glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height, unsigned char itype, unsigned char vtype);
 GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture* texture, kmScalar width, kmScalar height);
 GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, kmScalar height, const glhckImportImageParameters *importParams, const glhckTextureParameters *params);
 
@@ -1033,6 +996,7 @@ GLHCKAPI void glhckTextureGetInformation(glhckTexture *object, glhckTextureTarge
 GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target, int level, int width, int height, int depth, int border, glhckTextureFormat format, glhckDataType type, int size, const void *data);
 GLHCKAPI int glhckTextureRecreate(glhckTexture *object, glhckTextureFormat format, glhckDataType type, int size, const void *data);
 GLHCKAPI void glhckTextureFill(glhckTexture *object, int level, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data);
+GLHCKAPI void glhckTextureFillFrom(glhckTexture *object, int level, int sx, int sy, int sz, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data);
 GLHCKAPI void glhckTextureParameter(glhckTexture *object, const glhckTextureParameters *params);
 GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void);
 GLHCKAPI const glhckTextureParameters* glhckTextureDefaultLinearParameters(void);
@@ -1132,41 +1096,16 @@ GLHCKAPI void glhckRenderPrintObjectQueue(void);
 GLHCKAPI void glhckRenderPrintTextureQueue(void);
 
 /* vertexdata geometry */
-GLHCKAPI size_t glhckIndexTypeElementSize(glhckGeometryIndexType type);
-GLHCKAPI glhckIndexi glhckIndexTypeMaxPrecision(glhckGeometryIndexType type);
-GLHCKAPI const char* glhckIndexTypeString(glhckGeometryIndexType type);
-GLHCKAPI int glhckIndexTypeWithinRange(unsigned int value, glhckGeometryIndexType type);
-GLHCKAPI glhckGeometryIndexType glhckIndexTypeForValue(unsigned int value);
-
-GLHCKAPI size_t glhckVertexTypeElementSize(glhckGeometryVertexType type);
-GLHCKAPI float glhckVertexTypeMaxPrecision(glhckGeometryVertexType type);
-GLHCKAPI const char* glhckVertexTypeString(glhckGeometryVertexType type);
-GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV2Counterpart(glhckGeometryVertexType type);
-GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV3Counterpart(glhckGeometryVertexType type);
-GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetFloatingPointCounterpart(glhckGeometryVertexType type);
-GLHCKAPI int glhckVertexTypeWithinRange(float value, glhckGeometryVertexType type);
-GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(kmScalar width, kmScalar height);
-GLHCKAPI int glhckVertexTypeHasNormal(glhckGeometryVertexType type);
-GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type);
-
-GLHCKAPI glhckIndexi glhckGeometryGetVertexIndexForIndex(glhckGeometry *geometry, glhckIndexi ix);
-GLHCKAPI void glhckGeometrySetVertexIndexForIndex(glhckGeometry *object, glhckIndexi ix, glhckIndexi vertexIndex);
-GLHCKAPI void glhckGeometryGetVertexDataForIndex(
-      glhckGeometry *geometry, glhckIndexi ix,
-      glhckVector3f *vertex, glhckVector3f *normal,
-      glhckVector2f *coord, glhckColorb *color);
-GLHCKAPI void glhckGeometrySetVertexDataForIndex(
-      glhckGeometry *geometry, glhckIndexi ix,
-      const glhckVector3f *vertex, const glhckVector3f *normal,
-      const glhckVector2f *coord, const glhckColorb *color);
 GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *geometry, kmAABB *bb);
-GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *geometry, glhckGeometryVertexType type, const void *data, int memb);
-GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *geometry, glhckGeometryIndexType type, const void *data, int memb);
+GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *geometry, unsigned char type, const void *data, int memb);
+GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *geometry, unsigned char type, const void *data, int memb);
 
 /* collisions
  * XXX: incomplete */
 GLHCKAPI glhckCollisionWorld* glhckCollisionWorldNew(void *userData);
 GLHCKAPI void glhckCollisionWorldFree(glhckCollisionWorld *object);
+GLHCKAPI void* glhckCollisionPrimitiveGetUserData(const glhckCollisionPrimitive *object);
+GLHCKAPI glhckCollisionPrimitive* glhckCollisionWorldAddAABBRef(glhckCollisionWorld *object, const kmAABB *aabb, void *userData);
 GLHCKAPI glhckCollisionPrimitive* glhckCollisionWorldAddAABB(glhckCollisionWorld *object, const kmAABB *aabb, void *userData);
 GLHCKAPI unsigned int glhckCollisionWorldCollideAABB(glhckCollisionWorld *object, const kmAABB *aabb, const glhckCollisionInData *data);
 
@@ -1186,3 +1125,5 @@ GLHCKAPI unsigned int glhckCollisionWorldCollideAABB(glhckCollisionWorld *object
 #endif
 
 #endif /* __glhck_h__ */
+
+/* vim: set ts=8 sw=3 tw=0 :*/

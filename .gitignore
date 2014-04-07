@@ -3,6 +3,7 @@
 *.exe
 *.o
 *.a
+*.pyc
 *~
 
 # Build and local

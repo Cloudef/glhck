@@ -154,7 +154,7 @@ GLHCKAPI kmScalar glhckLightGetPointLightFactor(glhckLight *object)
 {
    CALL(2, "%p", object);
    assert(object);
-   RET(2, "%p", object->options.pointLightFactor);
+   RET(2, "%.2f", object->options.pointLightFactor);
    return object->options.pointLightFactor;
 }
 

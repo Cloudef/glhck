@@ -69,7 +69,7 @@ static void _glhckObjectUpdateRotationFromTarget(glhckObject *object)
 /* stub draw function */
 static void _glhckObjectStubDraw(const glhckObject *object)
 {
-   if (object->geometry && object->geometry->vertexType != GLHCK_VERTEX_NONE) {
+   if (object->geometry && object->geometry->vertexCount) {
       DEBUG(GLHCK_DBG_WARNING, "Stub draw function called for object which actually has vertexdata!");
       DEBUG(GLHCK_DBG_WARNING, "Did you forget to call glhckObjectUpdate() after inserting vertex data?");
    }
@@ -226,6 +226,23 @@ void _glhckObjectUpdateBoxes(glhckObject *object)
    /* set edges */
    glhckSetV3(&object->view.aabb.max, &max);
    glhckSetV3(&object->view.aabb.min, &min);
+   memcpy(&object->view.aabbFull, &object->view.aabb, sizeof(kmAABB));
+   memcpy(&object->view.obbFull, &object->view.obb, sizeof(kmAABB));
+
+   /* update full aabb && obb */
+   if (object->numChilds) {
+      unsigned int i;
+      const kmAABB *caabb, *cobb;
+      kmAABB *aabb = &object->view.aabbFull, *obb = &object->view.obbFull;
+      for (i = 0; i < object->numChilds; ++i) {
+         caabb = glhckObjectGetAABBWithChildren(object->childs[i]);
+         cobb = glhckObjectGetOBBWithChildren(object->childs[i]);
+         glhckMinV3(&aabb->min, &caabb->min);
+         glhckMaxV3(&aabb->max, &caabb->max);
+         glhckMinV3(&obb->min, &cobb->min);
+         glhckMaxV3(&obb->max, &cobb->max);
+      }
+   }
 }
 
 /* \brief update view matrix of object */
@@ -580,8 +597,8 @@ GLHCKAPI void glhckObjectMaterial(glhckObject *object, glhckMaterial *material)
    if (material && material->texture && object->geometry && object->geometry->textureRange > 1) {
       if ((material->texture->width  > object->geometry->textureRange) ||
           (material->texture->height > object->geometry->textureRange)) {
-         DEBUG(GLHCK_DBG_WARNING, "Texture dimensions are above the maximum precision of object's vertexdata (%s:%u)",
-               glhckVertexTypeString(object->geometry->vertexType), object->geometry->textureRange);
+         DEBUG(GLHCK_DBG_WARNING, "Texture dimensions are above the maximum precision of object's vertexdata (%zu:%u)",
+               GLHCKVT(object->geometry->vertexType)->max[2], object->geometry->textureRange);
       }
    }
 
@@ -817,58 +834,64 @@ GLHCKAPI int glhckObjectGetDrawWireframe(const glhckObject *object)
    return object->flags & GLHCK_OBJECT_DRAW_WIREFRAME;
 }
 
-/* \brief get obb bounding box of the object */
-GLHCKAPI const kmAABB*  glhckObjectGetOBB(glhckObject *object)
+/* \brief get obb bounding box of the object that includes all the children */
+GLHCKAPI const kmAABB* glhckObjectGetOBBWithChildren(glhckObject *object)
 {
-   const kmAABB *obb, *cobb;
-   unsigned int i;
    CALL(1, "%p", object);
    assert(object);
 
    /* update matrix first, if needed */
-   if (object->view.update)
-      _glhckObjectUpdateMatrix(object);
+   if (object->view.update) _glhckObjectUpdateMatrix(object);
 
-   /* if performed on root, get the largest obb */
-   obb = &object->view.obb;
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      for (i = 0; i != object->numChilds; ++i) {
-         cobb = glhckObjectGetOBB(object->childs[i]);
-         if (obb->max.x < cobb->max.x &&
-             obb->max.y < cobb->max.y)
-            obb = cobb;
-      }
-   }
+   RET(2, "%p", &object->view.obbFull);
+   return &object->view.obbFull;
+}
 
-   RET(1, "%p", obb);
-   return obb;
+/* \brief get obb bounding box of the object */
+GLHCKAPI const kmAABB* glhckObjectGetOBB(glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   /* if performed on root, return the full obb instead */
+   if (object->flags & GLHCK_OBJECT_ROOT)
+      return glhckObjectGetOBBWithChildren(object);
+
+   /* update matrix first, if needed */
+   if (object->view.update) _glhckObjectUpdateMatrix(object);
+
+   RET(1, "%p", &object->view.obb);
+   return &object->view.obb;
+}
+
+/* \brief get aabb bounding box of the object that includes all the children */
+GLHCKAPI const kmAABB* glhckObjectGetAABBWithChildren(glhckObject *object)
+{
+   CALL(1, "%p", object);
+   assert(object);
+
+   /* update matrix first, if needed */
+   if (object->view.update) _glhckObjectUpdateMatrix(object);
+
+   RET(2, "%p", &object->view.aabbFull);
+   return &object->view.aabbFull;
 }
 
 /* \brief get aabb bounding box of the object */
 GLHCKAPI const kmAABB* glhckObjectGetAABB(glhckObject *object)
 {
-   const kmAABB *aabb, *caabb;
-   unsigned int i;
    CALL(2, "%p", object);
    assert(object);
 
+   /* if performed on root, return the full aabb instead */
+   if (object->flags & GLHCK_OBJECT_ROOT)
+      return glhckObjectGetAABBWithChildren(object);
+
    /* update matrix first, if needed */
-   if (object->view.update)
-      _glhckObjectUpdateMatrix(object);
+   if (object->view.update) _glhckObjectUpdateMatrix(object);
 
-   /* if performed on root, get the largest aabb */
-   aabb = &object->view.aabb;
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      for (i = 0; i != object->numChilds; ++i) {
-         caabb = glhckObjectGetAABB(object->childs[i]);
-         if (aabb->max.x < caabb->max.x &&
-             aabb->max.y < caabb->max.y)
-            aabb = &object->childs[i]->view.aabb;
-      }
-   }
-
-   RET(2, "%p", aabb);
-   return aabb;
+   RET(2, "%p", &object->view.aabb);
+   return &object->view.aabb;
 }
 
 /* \brief get object's matrix */
@@ -906,8 +929,7 @@ GLHCKAPI void glhckObjectPosition(glhckObject *object, const kmVec3 *position)
 }
 
 /* \brief position object (with kmScalar) */
-GLHCKAPI void glhckObjectPositionf(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectPositionf(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 position = { x, y, z };
    glhckObjectPosition(object, &position);
@@ -924,8 +946,7 @@ GLHCKAPI void glhckObjectMove(glhckObject *object, const kmVec3 *move)
 }
 
 /* \brief move object (with kmScalar) */
-GLHCKAPI void glhckObjectMovef(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectMovef(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 move = { x, y, z };
    glhckObjectMove(object, &move);
@@ -953,8 +974,7 @@ GLHCKAPI void glhckObjectRotation(glhckObject *object, const kmVec3 *rotation)
 }
 
 /* \brief set object rotation (with kmScalar) */
-GLHCKAPI void glhckObjectRotationf(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectRotationf(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 rotation = { x, y, z };
    glhckObjectRotation(object, &rotation);
@@ -972,8 +992,7 @@ GLHCKAPI void glhckObjectRotate(glhckObject *object, const kmVec3 *rotate)
 }
 
 /* \brief rotate object (with kmScalar) */
-GLHCKAPI void glhckObjectRotatef(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectRotatef(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 rotate = { x, y, z };
    glhckObjectRotate(object, &rotate);
@@ -1001,8 +1020,7 @@ GLHCKAPI void glhckObjectTarget(glhckObject *object, const kmVec3 *target)
 }
 
 /* \brief set object target (with kmScalar) */
-GLHCKAPI void glhckObjectTargetf(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectTargetf(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 target = { x, y, z };
    glhckObjectTarget(object, &target);
@@ -1034,8 +1052,7 @@ GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale)
 }
 
 /* \brief scale object (with kmScalar) */
-GLHCKAPI void glhckObjectScalef(glhckObject *object,
-      const kmScalar x, const kmScalar y, const kmScalar z)
+GLHCKAPI void glhckObjectScalef(glhckObject *object, const kmScalar x, const kmScalar y, const kmScalar z)
 {
    const kmVec3 scaling = { x, y, z };
    glhckObjectScale(object, &scaling);
@@ -1118,15 +1135,27 @@ GLHCKAPI int glhckObjectInsertSkinBones(glhckObject *object, glhckSkinBone **ski
    if (object->skinBones) {
       for (i = 0; i != object->numSkinBones; ++i)
          glhckSkinBoneRef(object->skinBones[i]);
+
+      __GLHCKvertexType *type = GLHCKVT(object->geometry->vertexType);
+      if (!object->bind && !(object->bind = _glhckCopy(object->geometry->vertices, object->geometry->vertexCount * type->size)))
+         goto fail;
+      if (!object->zero && !(object->zero = _glhckCopy(object->geometry->vertices, object->geometry->vertexCount * type->size)))
+         goto fail;
+
+      int v;
+      for (v = 0; v < object->geometry->vertexCount; ++v)
+         memset(object->zero + type->size * v + type->offset[0], 0, type->msize[0] * type->memb[0]);
       _glhckSkinBoneTransformObject(object, 1);
    } else {
-      IFDO(_glhckGeometryFree, object->bindGeometry);
+      IFDO(_glhckFree, object->bind);
+      IFDO(_glhckFree, object->zero);
    }
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
+   glhckObjectInsertSkinBones(object, NULL, 0);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
@@ -1207,7 +1236,7 @@ GLHCKAPI glhckGeometry* glhckObjectNewGeometry(glhckObject *object)
    return object->geometry;
 }
 
-/* \brief get geometry from object */
+/* \brief get geometry from object */
 GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object)
 {
    CALL(1, "%p", object);
@@ -1218,9 +1247,7 @@ GLHCKAPI glhckGeometry* glhckObjectGetGeometry(const glhckObject *object)
 }
 
 /* \brief insert indices to object */
-GLHCKAPI int glhckObjectInsertIndices(
-      glhckObject *object, glhckGeometryIndexType type,
-      const glhckImportIndexData *indices, int memb)
+GLHCKAPI int glhckObjectInsertIndices(glhckObject *object, unsigned char type, const glhckImportIndexData *indices, int memb)
 {
    CALL(0, "%p, %d, %d, %p", object, memb, type, indices);
    assert(object);
@@ -1237,7 +1264,7 @@ GLHCKAPI int glhckObjectInsertIndices(
          goto fail;
    } else {
       glhckGeometryInsertIndices(object->geometry, 0, NULL, 0);
-      if (!object->geometry->vertices.any) {
+      if (!object->geometry->vertices) {
          IFDO(_glhckGeometryFree, object->geometry);
       }
    }
@@ -1251,9 +1278,7 @@ fail:
 }
 
 /* \brief insert vertices to object */
-GLHCKAPI int glhckObjectInsertVertices(
-      glhckObject *object, glhckGeometryVertexType type,
-      const glhckImportVertexData *vertices, int memb)
+GLHCKAPI int glhckObjectInsertVertices(glhckObject *object, unsigned char type, const glhckImportVertexData *vertices, int memb)
 {
    CALL(0, "%p, %d, %d, %p", object, memb, type, vertices);
    assert(object);
@@ -1270,7 +1295,7 @@ GLHCKAPI int glhckObjectInsertVertices(
          goto fail;
    } else {
       glhckGeometryInsertVertices(object->geometry, 0, NULL, 0);
-      if (!object->geometry->indices.any) {
+      if (!object->geometry->indices) {
          IFDO(_glhckGeometryFree, object->geometry);
       }
    }
@@ -1301,6 +1326,88 @@ GLHCKAPI void glhckObjectUpdate(glhckObject *object)
    if (object->flags & GLHCK_OBJECT_ROOT) {
       PERFORM_ON_CHILDS(object, glhckObjectUpdate);
    }
+}
+
+/* \brief return intersecting texture coordinate from object's geometry using ray */
+GLHCKAPI int glhckObjectPickTextureCoordinatesWithRay(const glhckObject *object, const kmRay3 *ray, kmVec2 *outCoords)
+{
+   CALL(0, "%p, %p, %p", object, ray, outCoords);
+   assert(object && ray && outCoords);
+
+   /* FIXME: move to geometry.c
+    * Can we use collision mesh for this instead somehow?
+    * It would simplify a lot since collisionMesh is optimized more for intersections. */
+   assert(object->geometry->vertexType == GLHCK_VTX_V3F && "Only GLHCK_VTX_V3F supported for now");
+   assert((object->geometry->type == GLHCK_TRIANGLES || object->geometry->type == GLHCK_TRIANGLE_STRIP) && "Only TRIANGLES and STRIPS supported for now");
+
+   /* Transform the ray to model coordinates */
+   kmMat4 inverseView;
+   kmMat4Inverse(&inverseView, &object->view.matrix);
+
+   kmRay3 r;
+   kmVec3Transform(&r.start, &ray->start, &inverseView);
+   kmVec3Transform(&r.dir, &ray->dir, &inverseView);
+   kmVec3 origin = {0, 0, 0};
+   kmVec3Transform(&origin, &origin, &inverseView);
+   kmVec3Subtract(&r.dir, &r.dir, &origin);
+
+   /* Find closest intersecting primitive */
+   int intersectionIndex, intersectionFound = 0;
+   kmScalar closestDistanceSq, s, t;
+
+   int i, fix[3];
+   int skipCount = (object->geometry->type == GLHCK_TRIANGLES ? 3 : 1);
+   glhckVertexData3f *vertices = (glhckVertexData3f*) object->geometry->vertices;
+   for (i = 0; i + 2 < object->geometry->vertexCount; i += skipCount) {
+      int ix[3] = {0, 1, 2};
+      if (skipCount == 1 && (i % 2)) {
+         ix[0] = 1;
+         ix[1] = 0;
+         ix[2] = 2;
+      }
+
+      const kmTriangle tri = {
+         {vertices[i+ix[0]].vertex.x, vertices[i+ix[0]].vertex.y, vertices[i+ix[0]].vertex.z},
+         {vertices[i+ix[1]].vertex.x, vertices[i+ix[1]].vertex.y, vertices[i+ix[1]].vertex.z},
+         {vertices[i+ix[2]].vertex.x, vertices[i+ix[2]].vertex.y, vertices[i+ix[2]].vertex.z}
+      };
+
+      kmVec3 intersection;
+      kmScalar ss, tt;
+      if (kmRay3IntersectTriangle(&r, &tri, &intersection, &ss, &tt)) {
+         kmVec3 delta;
+         kmVec3Subtract(&delta, &ray->start, &intersection);
+         kmScalar distanceSq = kmVec3LengthSq(&delta);
+         if (!intersectionFound || distanceSq < closestDistanceSq) {
+            intersectionFound = 1;
+            closestDistanceSq = distanceSq;
+            intersectionIndex = i;
+            s = ss;
+            t = tt;
+            memcpy(fix, ix, sizeof(fix));
+         }
+      }
+   }
+
+   /* determine texture coordinates of the intersection point */
+   if (intersectionFound) {
+      const kmVec2 texCoods[] = {
+         {vertices[intersectionIndex+fix[0]].coord.x, vertices[intersectionIndex+fix[0]].coord.y},
+         {vertices[intersectionIndex+fix[1]].coord.x, vertices[intersectionIndex+fix[1]].coord.y},
+         {vertices[intersectionIndex+fix[2]].coord.x, vertices[intersectionIndex+fix[2]].coord.y},
+      };
+
+      kmVec2 u, v;
+      kmVec2Subtract(&u, &texCoods[1], &texCoods[0]);
+      kmVec2Subtract(&v, &texCoods[2], &texCoods[0]);
+      kmVec2Scale(&u, &u, s);
+      kmVec2Scale(&v, &v, t);
+      memcpy(outCoords, &texCoods[0], sizeof(kmVec2));
+      kmVec2Add(outCoords, outCoords, &u);
+      kmVec2Add(outCoords, outCoords, &v);
+   }
+
+   return intersectionFound;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

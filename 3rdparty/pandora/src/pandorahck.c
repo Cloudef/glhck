@@ -28,23 +28,121 @@ Status XIQueryVersion(Display *display, int *major, int *minor)
 }
 
 #if !PANDORAHCK_NO_GRAB
-/* Grab all input to not allow custom WM key combos like the openbox setup on Pandora. */
+/* Grab keyboard */
+static void _grabKeyboard(Display *display, Window w)
+{
+   for (int i = 0; i < 1000; i++) {
+      if (!XGrabKeyboard(display, w, True, GrabModeAsync, GrabModeAsync, CurrentTime)) {
+         printf("-!- [X11 HACK] Grabbed input for window: %lu\n", w);
+         return;
+      }
+      usleep(1000);
+   }
+   printf("-!- [X11 HACK] Could not grab keyboard for display and window: %p, %lu\n", display, w);
+}
+#endif /* PANDORAHCK_NO_GRAB */
+
+#if !PANDORAHCK_NO_FRAMEBUFFER
+/* for memcpy, memset */
+#include <string.h>
+
+/* Atoms for fullscreen */
+static Atom _state = 0, _compositor = 0, _active = 0, _fullscreen = 0;
+static void _getAtoms(Display *display) {
+   if (!_state) _state = XInternAtom(display, "_NET_WM_STATE", False);
+   if (!_compositor) _compositor = XInternAtom(display, "_NET_WM_BYPASS_COMPOSITOR", False);
+   if (!_active) _active = XInternAtom(display, "_NET_ACTIVE_WINDOW", False);
+   if (!_fullscreen) _fullscreen = XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", False);
+}
+
+/* Force window fullscreen */
+static void _toggleFullscreen(Display *display, Window w, int toggle)
+{
+   _getAtoms(display);
+
+   if (_compositor) {
+      const unsigned long value = toggle;
+      XChangeProperty(display, w, _compositor, ((Atom)6), 32, PropModeReplace, (unsigned char*)&value, 1);
+      if (toggle) printf("-!- [X11 HACK] Telling WM to bypass compositor\n");
+   }
+
+   if (!_state || !_fullscreen) {
+      if (toggle) printf("-!- [X11 HACK] WM doesn't support _NET_WM_FULLSCREEN || _NET_WM_STATE, cant force fullscreen!\n");
+      return;
+   }
+
+   static Window root = 0;
+   if (!root) root = XRootWindow(display, XDefaultScreen(display));
+
+   if (toggle && _active) {
+      XEvent event;
+      memset(&event, 0, sizeof(event));
+      event.type = ClientMessage;
+      event.xclient.window = w;
+      event.xclient.format = 32;
+      event.xclient.message_type = _active;
+      event.xclient.data.l[0] = 1;
+      event.xclient.data.l[1] = 0;
+      XSendEvent(display, root, False, SubstructureNotifyMask | SubstructureRedirectMask, &event);
+      printf("-!- [X11 HACK] Telling WM to set active window\n");
+   }
+
+   XEvent event;
+   memset(&event, 0, sizeof(event));
+   event.type = ClientMessage;
+   event.xclient.window = w;
+   event.xclient.format = 32;
+   event.xclient.message_type = _state;
+   event.xclient.data.l[0] = toggle;
+   event.xclient.data.l[1] = _fullscreen;
+   event.xclient.data.l[2] = 0;
+   event.xclient.data.l[3] = 1;
+   XSendEvent(display, root, False, SubstructureNotifyMask | SubstructureRedirectMask, &event);
+   if (toggle) printf("-!- [X11 HACK] Telling WM to force fullscreen\n");
+}
+
+/* Cleanup fullscreen when unmapping, also map/unmap to clean framebuffer mess */
+int XUnmapWindow(Display *display, Window w)
+{
+   static int (*hooked)(Display*, Window) = NULL;
+   if (!hooked) hooked = dlsym(RTLD_NEXT, __FUNCTION__);
+   _toggleFullscreen(display, w, 0);
+   hooked(display, w);
+   XMapWindow(display, w);
+   return hooked(display, w);
+}
+
+/* Make sure we have black window when framebuffer hacked */
+Window XCreateWindow(Display *display, Window parent, int x, int y, unsigned int width, unsigned int height, unsigned int border_width, int depth, unsigned int class, Visual *visual, unsigned long valuemask, XSetWindowAttributes *attributes)
+{
+   static int (*hooked)(Display*, Window, int, int, unsigned int, unsigned int, unsigned int, int, unsigned int, Visual*, unsigned long, XSetWindowAttributes*) = NULL;
+   if (!hooked) hooked = dlsym(RTLD_NEXT, __FUNCTION__);
+   XSetWindowAttributes wa;
+   if (attributes) memcpy(&wa, attributes, sizeof(XSetWindowAttributes));
+   wa.background_pixel = BlackPixel(display, XDefaultScreen(display));
+   valuemask |= CWBackPixel;
+   printf("-!- [X11 HACK] Forcing wa.background_pixel on XCreateWindow\n");
+   return hooked(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, &wa);
+}
+#endif /* PANDORAHCK_NO_FRAMEBUFFER */
+
+#if !PANDORAHCK_NO_GRAB || !PANDORAHCK_NO_FRAMEBUFFER
+/* Grab all input to not allow custom WM key combos like the openbox setup on Pandora.
+ * If framebuffer mode is enabled, force fullscreen. */
 int XMapRaised(Display *display, Window w)
 {
    static int (*hooked)(Display*, Window) = NULL;
    if (!hooked) hooked = dlsym(RTLD_NEXT, __FUNCTION__);
    int ret = hooked(display, w);
-   for (int i = 0; i < 1000; i++) {
-      if (!XGrabKeyboard(display, w, True, GrabModeAsync, GrabModeAsync, CurrentTime)) {
-         printf("-!- [X11 HACK] Grabbed input for window: %lu\n", w);
-         return ret;
-      }
-      usleep(1000);
-   }
-   printf("-!- [X11 HACK] Could not grab keyboard for displau and window: %p, %lu\n", display, w);
+#if !PANDORAHCK_NO_GRAB
+   _grabKeyboard(display, w);
+#endif /* PANDORAHCK_NO_GRAB */
+#if !PANDORAHCK_NO_FRAMEBUFFER
+   _toggleFullscreen(display, w, 1);
+#endif /* PANDORAHCK_NO_FRAMEBUFFER */
    return ret;
 }
-#endif /* PANDORAHCK_NO_GRAB */
+#endif /* PANDORAHCK_NO_GRAB || PANDORAHCK_NO_FRAMEBUFFER */
 
 #if !PANDORAHCK_NO_FRAMEBUFFER
 /* Lets create Framebuffer EGL/OpenGL context for Pandora instead.

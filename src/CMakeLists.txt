@@ -18,6 +18,7 @@ SET(GLHCK_SRC
    shader.c
    texture_packer.c
    collision.c
+   kazmath.c
    geometry/cube.c
    geometry/sphere.c
    geometry/plane.c
@@ -88,10 +89,11 @@ ENDIF ()
 IF (GLHCK_IMPORT_PNG)
    MESSAGE("Building GLhck with PNG support")
    FIND_PACKAGE(PNG REQUIRED)
+   FIND_PACKAGE(ZLIB REQUIRED)
    ADD_DEFINITIONS(-DGLHCK_IMPORT_PNG)
    LIST(APPEND GLHCK_SRC import/import_png.c)
-   LIST(APPEND OPT_LIBS ${PNG_LIBRARY})
-   LIST(APPEND OPT_INCL ${PNG_INCLUDE_DIR})
+   LIST(APPEND OPT_LIBS ${PNG_LIBRARY} ${ZLIB_LIBRARIES})
+   LIST(APPEND OPT_INCL ${PNG_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 ENDIF ()
 IF (GLHCK_IMPORT_JPEG)
    MESSAGE("Building GLhck with JPEG support")
@@ -118,13 +120,20 @@ INCLUDE_DIRECTORIES(
    ${glew-glhck_SOURCE_DIR}/include
    ${kazmath_SOURCE_DIR}/src
    ${GLSW_SOURCE_DIR}/src
-   ${chck_SOURCE_DIR}/src
+   ${chckBuffer_SOURCE_DIR}/src
    ${texhck_SOURCE_DIR}
    ${GLHCK_INCL}
    ${OPT_INCL}
 )
 
-ADD_DEFINITIONS(-fPIC)
+IF (UNIX AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX))
+   SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
+   IF (${CMAKE_VERSION} VERSION_LESS 2.8.9)
+      ADD_DEFINITIONS(-fPIC)
+   ENDIF ()
+ENDIF ()
+
+ADD_DEFINITIONS(-DGLEW_STATIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck chck texhck kazmath glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
+TARGET_LINK_LIBRARIES(glhck chckBuffer texhck kazmath glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
 INSTALL(TARGETS glhck DESTINATION lib)

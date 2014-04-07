@@ -993,8 +993,7 @@ int bdelete (bstring b, int pos, int len) {
  *  been bdestroyed is undefined.
  */
 int bdestroy (bstring b) {
-	if (b == NULL || b->slen < 0 || b->mlen <= 0 || b->mlen < b->slen ||
-	    b->data == NULL)
+	if (b == NULL || b->data == NULL)
 		return BSTR_ERR;
 
 	bstr__free (b->data);
@@ -2307,7 +2306,7 @@ int i, p, ret;
 			ret = 0;
 	} else {
 		buildCharField (&chrs, splitStr);
-		ret = p = i = 0;
+		p = i = 0;
 		for (;;) {
 			if (i >= buff->slen) {
 				bsreada (buff, s, BSSSC_BUFF_LEN);
@@ -2378,8 +2377,7 @@ int i, p, ret;
 		}
 		return BSTR_OK;
 	} else {
-		ret = p = i = 0;
-		for (i=p=0;;) {
+		for (p = 0;;) {
 			if ((ret = binstr (buff, 0, splitStr)) >= 0) {
 				struct tagbstring t;
 				blk2tbstr (t, buff->data, ret);

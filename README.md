@@ -1,4 +1,5 @@
 # GLhck
+[![buildhck status](http://cloudef.eu:9001/build/glhck/internal-restructure/linux%20x86_64/build-status.png)](#)
 
 Nothing interesting here yet...
 Move on.
@@ -30,11 +31,13 @@ Move on.
 * [nethck][] - Geometry sharing over network
 * [anglhck][] - AngelScript bindings
 * [consolehck][] - Text console widget
+* [glhck-gas][] - GLhck animation system
 
 ## Projects using GLhck
 * [glhck-scene][] - QMLON GLhck scene arranger
 * [2dshooter][] - 2D Shooter game
 * [spacerocks][] - 2D Asteroids clone
+* [qb][] - A cube pushing game
 
 ## Thanks to
 * [GLEW][] - OpenGL Extension Wrangler
@@ -53,10 +56,12 @@ Move on.
 [nethck]: https://github.com/Cloudef/nethck
 [anglhck]: https://github.com/bzar/anglhck
 [consolehck]: https://github.com/bzar/consolehck
+[glhck-gas]: https://github.com/bzar/glhck-gas
 
 [glhck-scene]: https://github.com/bzar/glhck-scene
 [2dshooter]: https://github.com/bzar/2dshooter
 [spacerocks]: https://github.com/bzar/spacerocks
+[qb]: https://github.com/bzar/qb
 
 [GLEW]: http://glew.sourceforge.net/
 [GLFW]: http://www.glfw.org/

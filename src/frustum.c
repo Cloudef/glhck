@@ -11,14 +11,13 @@
 GLHCKAPI void glhckFrustumBuild(glhckFrustum *object, const kmMat4 *mvp)
 {
    kmPlane *planes;
-   kmVec3 *nearCorners, *farCorners;
+   kmVec3 *corners;
 
    CALL(0, "%p, %p", object, mvp);
    assert(object && mvp);
 
-   planes      = object->planes;
-   nearCorners = object->nearCorners;
-   farCorners  = object->farCorners;
+   planes  = object->planes;
+   corners = object->corners;
 
    kmPlaneExtractFromMat4(&planes[GLHCK_FRUSTUM_PLANE_LEFT],   mvp,  1);
    kmPlaneExtractFromMat4(&planes[GLHCK_FRUSTUM_PLANE_RIGHT],  mvp, -1);
@@ -28,56 +27,56 @@ GLHCKAPI void glhckFrustumBuild(glhckFrustum *object, const kmMat4 *mvp)
    kmPlaneExtractFromMat4(&planes[GLHCK_FRUSTUM_PLANE_FAR],    mvp, -3);
 
    kmPlaneGetIntersection(
-         &nearCorners[GLHCK_FRUSTUM_CORNER_BOTTOM_LEFT],
+         &corners[GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_LEFT],
          &planes[GLHCK_FRUSTUM_PLANE_LEFT],
          &planes[GLHCK_FRUSTUM_PLANE_BOTTOM],
          &planes[GLHCK_FRUSTUM_PLANE_NEAR]
          );
 
    kmPlaneGetIntersection(
-         &nearCorners[GLHCK_FRUSTUM_CORNER_BOTTOM_RIGHT],
+         &corners[GLHCK_FRUSTUM_CORNER_NEAR_BOTTOM_RIGHT],
          &planes[GLHCK_FRUSTUM_PLANE_RIGHT],
          &planes[GLHCK_FRUSTUM_PLANE_BOTTOM],
          &planes[GLHCK_FRUSTUM_PLANE_NEAR]
          );
 
    kmPlaneGetIntersection(
-         &nearCorners[GLHCK_FRUSTUM_CORNER_TOP_RIGHT],
+         &corners[GLHCK_FRUSTUM_CORNER_NEAR_TOP_RIGHT],
          &planes[GLHCK_FRUSTUM_PLANE_RIGHT],
          &planes[GLHCK_FRUSTUM_PLANE_TOP],
          &planes[GLHCK_FRUSTUM_PLANE_NEAR]
          );
 
    kmPlaneGetIntersection(
-         &nearCorners[GLHCK_FRUSTUM_CORNER_TOP_LEFT],
+         &corners[GLHCK_FRUSTUM_CORNER_NEAR_TOP_LEFT],
          &planes[GLHCK_FRUSTUM_PLANE_LEFT],
          &planes[GLHCK_FRUSTUM_PLANE_TOP],
          &planes[GLHCK_FRUSTUM_PLANE_NEAR]
          );
 
    kmPlaneGetIntersection(
-         &farCorners[GLHCK_FRUSTUM_CORNER_BOTTOM_LEFT],
+         &corners[GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_LEFT],
          &planes[GLHCK_FRUSTUM_PLANE_LEFT],
          &planes[GLHCK_FRUSTUM_PLANE_BOTTOM],
          &planes[GLHCK_FRUSTUM_PLANE_FAR]
          );
 
    kmPlaneGetIntersection(
-         &farCorners[GLHCK_FRUSTUM_CORNER_BOTTOM_RIGHT],
+         &corners[GLHCK_FRUSTUM_CORNER_FAR_BOTTOM_RIGHT],
          &planes[GLHCK_FRUSTUM_PLANE_RIGHT],
          &planes[GLHCK_FRUSTUM_PLANE_BOTTOM],
          &planes[GLHCK_FRUSTUM_PLANE_FAR]
          );
 
    kmPlaneGetIntersection(
-         &farCorners[GLHCK_FRUSTUM_CORNER_TOP_RIGHT],
+         &corners[GLHCK_FRUSTUM_CORNER_FAR_TOP_RIGHT],
          &planes[GLHCK_FRUSTUM_PLANE_RIGHT],
          &planes[GLHCK_FRUSTUM_PLANE_TOP],
          &planes[GLHCK_FRUSTUM_PLANE_FAR]
          );
 
    kmPlaneGetIntersection(
-         &farCorners[GLHCK_FRUSTUM_CORNER_TOP_LEFT],
+         &corners[GLHCK_FRUSTUM_CORNER_FAR_TOP_LEFT],
          &planes[GLHCK_FRUSTUM_PLANE_LEFT],
          &planes[GLHCK_FRUSTUM_PLANE_TOP],
          &planes[GLHCK_FRUSTUM_PLANE_FAR]
@@ -96,7 +95,7 @@ GLHCKAPI void glhckFrustumRender(glhckFrustum *object)
 GLHCKAPI int glhckFrustumContainsPoint(const glhckFrustum *object, const kmVec3 *point)
 {
    unsigned int i;
-   for (i = 0; i != GLHCK_FRUSTUM_PLANE_LAST; ++i) {
+   for (i = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
       if (object->planes[i].a * point->x +
           object->planes[i].b * point->y +
           object->planes[i].c * point->z +
@@ -112,7 +111,7 @@ GLHCKAPI kmScalar glhckFrustumContainsSphere(const glhckFrustum *object, const k
 {
    unsigned int i;
    kmScalar d;
-   for (i = 0; i != GLHCK_FRUSTUM_PLANE_LAST; ++i) {
+   for (i = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
       d = object->planes[i].a * point->x +
           object->planes[i].b * point->y +
           object->planes[i].c * point->z +
@@ -122,17 +121,106 @@ GLHCKAPI kmScalar glhckFrustumContainsSphere(const glhckFrustum *object, const k
    return d + radius;
 }
 
+/* \brief sphere inside frustum? (with extra checks, OUTSIDE, INSIDE, PARTIAL) */
+GLHCKAPI glhckFrustumTestResult glhckFrustumContainsSphereEx(const glhckFrustum *object, const kmVec3 *point, kmScalar radius)
+{
+   unsigned int i, c;
+   kmScalar d;
+   for (i = 0, c = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
+      d = object->planes[i].a * point->x +
+          object->planes[i].b * point->y +
+          object->planes[i].c * point->z +
+          object->planes[i].d;
+      if (d < -radius) return GLHCK_FRUSTUM_OUTSIDE;
+      if (d >= radius) ++c;
+   }
+   return (c == 6 ? GLHCK_FRUSTUM_INSIDE : GLHCK_FRUSTUM_PARTIAL);
+}
+
 /* \brief aabb inside frustum? */
 GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *object, const kmAABB *aabb)
 {
    unsigned int i;
-   for (i = 0; i != GLHCK_FRUSTUM_PLANE_LAST; ++i) {
-      if (max(object->planes[i].a * aabb->min.x, object->planes[i].a * aabb->max.x) +
-          max(object->planes[i].b * aabb->min.y, object->planes[i].b * aabb->max.y) +
-          max(object->planes[i].c * aabb->min.z, object->planes[i].c * aabb->max.z) +
-          object->planes[i].d < 0) return 0;
+
+   const kmVec3 bounds[] = {
+      { aabb->max.x, aabb->min.y, aabb->min.z },
+      { aabb->min.x, aabb->max.y, aabb->min.z },
+      { aabb->max.x, aabb->max.y, aabb->min.z },
+      { aabb->min.x, aabb->min.y, aabb->max.z },
+      { aabb->max.x, aabb->min.y, aabb->max.z },
+      { aabb->min.x, aabb->max.y, aabb->max.z },
+   };
+
+   for (i = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
+      if (kmPlaneDotCoord(&object->planes[i], &aabb->min) > 0)
+         continue;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[0]) > 0)
+         continue;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[1]) > 0)
+         continue;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[2]) > 0)
+         continue;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[3]) > 0)
+         continue;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[4]) > 0)
+         continue;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[5]) > 0)
+         continue;
+      if (kmPlaneDotCoord(&object->planes[i], &aabb->max) > 0)
+         continue;
+      return 0;
    }
+
+   /* Regular frustum failing to reject the big object behind the camera near plane,
+    * because it's so big it does intersect some of the side planes of the frustum.
+    *
+    * source: http://www.iquilezles.org/www/articles/frustumcorrect/frustumcorrect.htm */
+   int out;
+   out = 0; for (i = 0; i < GLHCK_FRUSTUM_CORNER_LAST; ++i) out += ((object->corners[i].x > aabb->max.x)?1:0); if (out == 8) return 0;
+   out = 0; for (i = 0; i < GLHCK_FRUSTUM_CORNER_LAST; ++i) out += ((object->corners[i].x < aabb->min.x)?1:0); if (out == 8) return 0;
+   out = 0; for (i = 0; i < GLHCK_FRUSTUM_CORNER_LAST; ++i) out += ((object->corners[i].y > aabb->max.y)?1:0); if (out == 8) return 0;
+   out = 0; for (i = 0; i < GLHCK_FRUSTUM_CORNER_LAST; ++i) out += ((object->corners[i].y < aabb->min.y)?1:0); if (out == 8) return 0;
+   out = 0; for (i = 0; i < GLHCK_FRUSTUM_CORNER_LAST; ++i) out += ((object->corners[i].z > aabb->max.z)?1:0); if (out == 8) return 0;
+   out = 0; for (i = 0; i < GLHCK_FRUSTUM_CORNER_LAST; ++i) out += ((object->corners[i].z < aabb->min.z)?1:0); if (out == 8) return 0;
    return 1;
+}
+
+/* \brief aabb inside frustum? (with extra checks, OUTSIDE, INSIDE, PARTIAL) */
+GLHCKAPI glhckFrustumTestResult glhckFrustumContainsAABBEx(const glhckFrustum *object, const kmAABB *aabb)
+{
+   unsigned int i, c, c2;
+
+   const kmVec3 bounds[] = {
+      { aabb->max.x, aabb->min.y, aabb->min.z },
+      { aabb->min.x, aabb->max.y, aabb->min.z },
+      { aabb->max.x, aabb->max.y, aabb->min.z },
+      { aabb->min.x, aabb->min.y, aabb->max.z },
+      { aabb->max.x, aabb->min.y, aabb->max.z },
+      { aabb->min.x, aabb->max.y, aabb->max.z },
+   };
+
+   for (i = 0, c = 0, c2 = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
+      if (kmPlaneDotCoord(&object->planes[i], &aabb->min) > 0)
+         ++c;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[0]) > 0)
+         ++c;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[1]) > 0)
+         ++c;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[2]) > 0)
+         ++c;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[3]) > 0)
+         ++c;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[4]) > 0)
+         ++c;
+      if (kmPlaneDotCoord(&object->planes[i], &bounds[5]) > 0)
+         ++c;
+      if (kmPlaneDotCoord(&object->planes[i], &aabb->max) > 0)
+         ++c;
+
+      if (c == 0) return GLHCK_FRUSTUM_OUTSIDE;
+      if (c == 8) ++c2;
+   }
+   return (c2 == 6 ? GLHCK_FRUSTUM_INSIDE : GLHCK_FRUSTUM_PARTIAL);
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

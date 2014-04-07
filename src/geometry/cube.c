@@ -9,17 +9,17 @@
 /* \brief create new cube object */
 GLHCKAPI glhckObject* glhckCubeNew(kmScalar size)
 {
-   glhckGeometryVertexType vtype;
+   unsigned char vtype;
    glhckGetGlobalPrecision(NULL, &vtype);
-   if (vtype == GLHCK_VERTEX_NONE) vtype = GLHCK_VERTEX_V3B;
-   return glhckCubeNewEx(size, GLHCK_INDEX_NONE, vtype);
+   if (vtype == GLHCK_VTX_AUTO) vtype = GLHCK_VTX_V3B;
+   return glhckCubeNewEx(size, GLHCK_IDX_AUTO, vtype);
 }
 
 /* \brief create new cube object (specify precision) */
-GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, unsigned char itype, unsigned char vtype)
 {
    glhckObject *object;
-   CALL(0, "%f, %d, %d", size, itype, vtype);
+   CALL(0, "%f, %u, %u", size, itype, vtype);
 
    const glhckImportVertexData vertices[] = {
       {
@@ -167,8 +167,7 @@ GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, glhckGeometryIndexType itype
       goto fail;
 
    /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertices(object, vtype,
-            &vertices[0], LENGTH(vertices)) != RETURN_OK)
+   if (glhckObjectInsertVertices(object, vtype, &vertices[0], LENGTH(vertices)) != RETURN_OK)
       goto fail;
 
    /* assigning indices would be waste

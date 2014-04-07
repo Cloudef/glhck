@@ -91,7 +91,6 @@
 #define GLHCK_CHANNEL_FRUSTUM       "FRUSTUM"
 #define GLHCK_CHANNEL_CAMERA        "CAMERA"
 #define GLHCK_CHANNEL_GEOMETRY      "GEOMETRY"
-#define GLHCK_CHANNEL_VDATA         "VERTEXDATA"
 #define GLHCK_CHANNEL_MATERIAL      "MATERIAL"
 #define GLHCK_CHANNEL_TEXTURE       "TEXTURE"
 #define GLHCK_CHANNEL_ATLAS         "ATLAS"
@@ -120,21 +119,21 @@ typedef enum _glhckReturnValue {
 /* internal texture flags */
 typedef enum _glhckTextureFlags {
    GLHCK_TEXTURE_IMPORT_NONE  = 0,
-   GLHCK_TEXTURE_IMPORT_ALPHA = 1,
-   GLHCK_TEXTURE_IMPORT_TEXT  = 2,
+   GLHCK_TEXTURE_IMPORT_ALPHA = 1<<0,
+   GLHCK_TEXTURE_IMPORT_TEXT  = 1<<1,
 } _glhckTextureFlags;
 
 /* internal object flags */
 typedef enum _glhckObjectFlags {
    GLHCK_OBJECT_NONE           = 0,
-   GLHCK_OBJECT_ROOT           = 1,
-   GLHCK_OBJECT_CULL           = 2,
-   GLHCK_OBJECT_DEPTH          = 4,
-   GLHCK_OBJECT_VERTEX_COLOR   = 8,
-   GLHCK_OBJECT_DRAW_AABB      = 16,
-   GLHCK_OBJECT_DRAW_OBB       = 32,
-   GLHCK_OBJECT_DRAW_SKELETON  = 64,
-   GLHCK_OBJECT_DRAW_WIREFRAME = 128,
+   GLHCK_OBJECT_ROOT           = 1<<0,
+   GLHCK_OBJECT_CULL           = 1<<1,
+   GLHCK_OBJECT_DEPTH          = 1<<2,
+   GLHCK_OBJECT_VERTEX_COLOR   = 1<<3,
+   GLHCK_OBJECT_DRAW_AABB      = 1<<4,
+   GLHCK_OBJECT_DRAW_OBB       = 1<<5,
+   GLHCK_OBJECT_DRAW_SKELETON  = 1<<6,
+   GLHCK_OBJECT_DRAW_WIREFRAME = 1<<7,
 } _glhckObjectFlags;
 
 /* shader attrib locations */
@@ -260,7 +259,7 @@ typedef enum _glhckShaderVariableType {
  * all reference counted objects should be defined in __GLHCKworld world as well. */
 #define REFERENCE_COUNTED(type) \
    struct type *next;           \
-   unsigned int refCounter
+unsigned int refCounter
 
 /* texture container */
 typedef struct _glhckTexture {
@@ -325,16 +324,24 @@ typedef struct _glhckMaterial {
 typedef struct __GLHCKobjectView {
    kmMat4 matrix; /* model matrix */
    kmAABB bounding; /* bounding box (non-transformed) */
-   kmAABB aabb; /* transformed bounding (axis aligned) */
-   kmAABB obb; /* transformed bounding (oriented) */
+   kmAABB aabb; /* transformed bounding box (axis aligned) */
+   kmAABB aabbFull; /* aabb containing all the children */
+   kmAABB obb; /* transformed bounding box (oriented) */
+   kmAABB obbFull; /* obb containing all the children */
    kmVec3 translation, target, rotation, scaling;
    char update; /* does the model matrix need recalculation? */
    char wasFlipped; /* was drawn last time using flipped projection? */
 } __GLHCKobjectView;
 
+typedef struct __GLHCKgeometrySkinning {
+   void *vertices; /* copy of the vertices from geometry */
+   void *zero; /* zeroed vertex data for initial state */
+} __GLHCKgeometrySkinning;
+
 /* object container */
 typedef void (*__GLHCKobjectDraw) (const struct _glhckObject *object);
 typedef struct _glhckObject {
+   void *bind, *zero; /* temporary for skinning, will be removed */
    struct __GLHCKobjectView view;
    struct _glhckMaterial *material;
    struct _glhckObject *parent;
@@ -343,7 +350,6 @@ typedef struct _glhckObject {
    struct _glhckSkinBone **skinBones;
    struct _glhckAnimation **animations;
    struct glhckGeometry *geometry;
-   struct glhckGeometry *bindGeometry; /* used on CPU transformation path, has the original geometry copied */
    __GLHCKobjectDraw drawFunc;
    char *file, *name;
    REFERENCE_COUNTED(_glhckObject);
@@ -775,6 +781,23 @@ typedef struct __GLHCKrender {
    glhckDriverType driver;
 } __GLHCKrender;
 
+/* internal vertex type */
+typedef struct __GLHCKvertexType {
+   glhckVertexTypeFunctionMap api;
+   size_t size, max[4], offset[4];
+   glhckDataType dataType[4];
+   char memb[4], normalized[4];
+   unsigned char msize[4];
+} __GLHCKvertexType;
+
+/* internal index type */
+typedef struct __GLHCKindexType {
+   glhckIndexTypeFunctionMap api;
+   size_t max;
+   glhckDataType dataType;
+   unsigned char size;
+} __GLHCKindexType;
+
 /* context's world */
 typedef struct __GLHCKworld {
    struct _glhckObject           *object;
@@ -793,6 +816,9 @@ typedef struct __GLHCKworld {
    struct _glhckText             *text;
    struct _glhckHwBuffer         *hwbuffer;
    struct _glhckShader           *shader;
+   struct __GLHCKvertexType      *vertexType;
+   struct __GLHCKindexType       *indexType;
+   unsigned char numVertexTypes, numIndexTypes;
 } __GLHCKworld;
 
 /* context trace channel */
@@ -820,8 +846,7 @@ typedef struct __GLHCKalloc {
 
 /* misc context options */
 typedef struct __GLHCKmisc {
-   glhckGeometryIndexType globalIndexType;
-   glhckGeometryVertexType globalVertexType;
+   unsigned char globalIndexType, globalVertexType;
    char coloredLog;
 } __GLHCKmisc;
 
@@ -858,13 +883,15 @@ extern const kmMat4 _glhckFlipMatrix;
 #define GLHCKW() (&glhckContextGet()->world)
 #define GLHCKT() (&glhckContextGet()->trace)
 #define GLHCKM() (&glhckContextGet()->misc)
+#define GLHCKVT(x) (&glhckContextGet()->world.vertexType[x])
+#define GLHCKIT(x) (&glhckContextGet()->world.indexType[x])
 
 /* tracking allocation macros */
 #define _glhckMalloc(x)       __glhckMalloc(GLHCK_CHANNEL, x)
 #define _glhckCalloc(x,y)     __glhckCalloc(GLHCK_CHANNEL, x, y)
 #define _glhckStrdup(x)       __glhckStrdup(GLHCK_CHANNEL, x)
 #define _glhckCopy(x,y)       __glhckCopy(GLHCK_CHANNEL, x, y)
-#define _glhckTrackSteal(x)   __glhckTrackSteal(GLHCK_CHANNEL, x)
+#define _glhckRealloc(x,y,z,w)__glhckRealloc(GLHCK_CHANNEL, x, y, z, w)
 
 /* tracing && debug macros */
 #define THIS_FILE ((strrchr(__FILE__, '/') ?: __FILE__ - 1) + 1)
@@ -894,16 +921,19 @@ void* __glhckMalloc(const char *channel, size_t size);
 void* __glhckCalloc(const char *channel, size_t nmemb, size_t size);
 char* __glhckStrdup(const char *channel, const char *s);
 void* __glhckCopy(const char *channel, const void *ptr, size_t nmemb);
-void* _glhckRealloc(void *ptr, size_t omemb, size_t nmemb, size_t size);
+void* __glhckRealloc(const char *channel, void *ptr, size_t omemb, size_t nmemb, size_t size);
 void _glhckFree(void *ptr);
-void __glhckTrackSteal(const char *channel, void *ptr);
 
 #ifndef NDEBUG
 /* tracking functions */
-void _glhckTrackFake(void *ptr, size_t size);
+void __glhckTrackFake(const char *channel, void *ptr, size_t size);
+void __glhckTrackSteal(const char *channel, void *ptr);
 void _glhckTrackTerminate(void);
+#define _glhckTrackFake(x,y) __glhckTrackFake(GLHCK_CHANNEL, x, y)
+#define _glhckTrackSteal(x)   __glhckTrackSteal(GLHCK_CHANNEL, x)
 #else
 #define _glhckTrackFake(x,y) ;
+#define _glhckTrackSteal(x) ;
 #endif
 
 /* util functions */
@@ -915,6 +945,7 @@ void _glhckWhite(void);
 void _glhckNormal(void);
 void _glhckPuts(const char *buffer);
 void _glhckPrintf(const char *fmt, ...);
+char* _glhckStrdupNoTrack(const char *s);
 size_t _glhckStrsplit(char ***dst, const char *str, const char *token);
 void _glhckStrsplitClear(char ***dst);
 char* _glhckStrupstr(const char *hay, const char *needle);
@@ -948,6 +979,7 @@ void _glhckCameraWorldUpdate(int width, int height);
 /* textures */
 int _glhckHasAlpha(glhckTextureFormat format);
 unsigned int _glhckNumChannels(unsigned int format);
+int _glhckUnitSizeForTexture(glhckTextureFormat format, glhckDataType type);
 int _glhckSizeForTexture(glhckTextureTarget target, int width, int height, int depth, glhckTextureFormat format, glhckDataType type);
 int _glhckIsCompressedFormat(unsigned int format);
 void _glhckNextPow2(int width, int height, int depth, int *outWidth, int *outHeight, int *outDepth, int limitToSize);
@@ -956,21 +988,101 @@ void _glhckTextureInsertToQueue(_glhckTexture *texture);
 /* tracing && debug functions */
 void _glhckTraceInit(int argc, const char **argv);
 void _glhckTraceTerminate(void);
+
+#if __GNUC__
+void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...)
+   __attribute__((format(printf, 4, 5)));
+void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *channel, const char *fmt, ...)
+   __attribute__((format(printf, 6, 7)));
+#else
 void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...);
 void _glhckPassDebug(const char *file, int line, const char *func, glhckDebugLevel level, const char *channel, const char *fmt, ...);
+#endif
 
 /* internal geometry vertexdata */
+int _glhckGeometryInit(void);
+void _glhckGeometryTerminate(void);
 glhckGeometry *_glhckGeometryNew(void);
 glhckGeometry *_glhckGeometryCopy(glhckGeometry *src);
 void _glhckGeometryFree(glhckGeometry *geometry);
-int _glhckGeometryInsertVertices(
-      glhckGeometry *geometry, int memb,
-      glhckGeometryVertexType type,
-      const glhckImportVertexData *vertices);
-int _glhckGeometryInsertIndices(
-      glhckGeometry *geometry, int memb,
-      glhckGeometryIndexType type,
-      const glhckImportIndexData *indices);
+int _glhckGeometryInsertVertices(glhckGeometry *geometry, int memb, unsigned char type, const glhckImportVertexData *vertices);
+int _glhckGeometryInsertIndices(glhckGeometry *geometry, int memb, unsigned char type, const glhckImportIndexData *indices);
+
+/***
+ * Kazmath extension
+ * When stuff is tested and working
+ * Try to get much as we can to upstream
+ ***/
+typedef struct kmAABBExtent {
+   kmVec3 point;
+   kmVec3 extent;
+} kmAABBExtent;
+
+typedef struct kmSphere {
+   kmVec3 point;
+   kmScalar radius;
+} kmSphere;
+
+typedef struct kmCapsule {
+   kmVec3 pointA;
+   kmVec3 pointB;
+   kmScalar radius;
+} kmCapsule;
+
+typedef struct kmEllipse {
+   kmVec3 point;
+   kmVec3 radius;
+} kmEllipse;
+
+typedef struct kmOBB {
+   struct kmAABBExtent aabb;
+   kmVec3 orientation[3];
+} kmOBB;
+
+typedef struct kmTriangle {
+   kmVec3 v1, v2, v3;
+} kmTriangle;
+
+kmAABBExtent* kmAABBToAABBExtent(kmAABBExtent* pOut, const kmAABB* aabb);
+kmAABB* kmAABBExtentToAABB(kmAABB* pOut, const kmAABBExtent* aabbExtent);
+kmVec3* kmVec3Abs(kmVec3 *pOut, const kmVec3 *pV1);
+kmVec3* kmVec3Divide(kmVec3 *pOut, const kmVec3 *pV1, const kmVec3 *pV2);
+kmVec3* kmVec3Multiply(kmVec3 *pOut, const kmVec3 *pV1, const kmVec3 *pV2);
+kmScalar kmVec3LengthSqSegment(const kmVec3 *a, const kmVec3 *b, const kmVec3 *c);
+kmBool kmAABBExtentContainsPoint(const kmAABBExtent* a, const kmVec3* p);
+kmScalar kmClosestPointFromSegments(const kmVec3 *a1, const kmVec3 *b1, const kmVec3 *a2, const kmVec3 *b2, kmScalar *s, kmScalar *t, kmVec3 *c1, kmVec3 *c2);
+const kmVec3* kmAABBExtentClosestPointTo(const kmAABBExtent *pIn, const kmVec3 *point, kmVec3 *pOut);
+const kmVec3* kmAABBClosestPointTo(const kmAABB *pIn, const kmVec3 *point, kmVec3 *pOut);
+const kmVec3* kmSphereClosestPointTo(const kmSphere *pIn, const kmVec3 *point, kmVec3 *pOut);
+kmScalar kmSqDistPointAABB(const kmVec3 *p, const kmAABB *aabb);
+kmScalar kmSqDistPointAABBExtent(const kmVec3 *p, const kmAABBExtent *aabbe);
+kmBool kmAABBExtentIntersectsLine(const kmAABBExtent* a, const kmVec3* p1, const kmVec3* p2);
+void kmVec3Swap(kmVec3 *a, kmVec3 *b);
+void kmSwap(kmScalar *a, kmScalar *b);
+kmScalar kmPlaneDistanceTo(const kmPlane *pIn, const kmVec3 *pV1);
+kmSphere* kmSphereFromAABB(kmSphere *sphere, const kmAABB *aabb);
+kmBool kmSphereIntersectsAABBExtent(const kmSphere *a, const kmAABBExtent *b);
+kmBool kmSphereIntersectsAABB(const kmSphere *a, const kmAABB *b);
+kmBool kmSphereIntersectsSphere(const kmSphere *a, const kmSphere *b);
+kmBool kmSphereIntersectsCapsule(const kmSphere *a, const kmCapsule *b);
+kmBool kmCapsuleIntersectsCapsule(const kmCapsule *a, const kmCapsule *b);
+kmBool kmSphereIntersectsPlane(const kmSphere *a, const kmPlane *b);
+kmMat3* kmOBBGetMat3(const kmOBB *pIn, kmMat3 *pOut);
+kmBool kmOBBIntersectsOBB(const kmOBB *a, const kmOBB *b);
+kmBool kmAABBIntersectsAABB(const kmAABB *a, const kmAABB *b);
+kmBool kmAABBIntersectsSphere(const kmAABB *a, const kmSphere *b);
+kmBool kmAABBExtentIntersectsAABBExtent(const kmAABBExtent *a, const kmAABBExtent *b);
+kmBool kmAABBExtentIntersectsSphere(const kmAABBExtent *a, const kmSphere *b);
+kmBool kmAABBIntersectsAABBExtent(const kmAABB *a, const kmAABBExtent *b);
+kmBool kmAABBExtentIntersectsAABB(const kmAABBExtent *a, const kmAABB *b);
+kmBool kmAABBExtentIntersectsOBB(const kmAABBExtent *a, const kmOBB *b);
+kmBool kmOBBIntersectsAABBExtent(const kmOBB *a, const kmAABBExtent *b);
+kmBool kmAABBIntersectsOBB(const kmAABB *a, const kmOBB *b);
+kmBool kmOBBIntersectsAABB(const kmOBB *a, const kmAABB *b);
+kmBool kmAABBExtentIntersectsCapsule(const kmAABBExtent *a, const kmCapsule *b);
+kmBool kmRay3IntersectAABBExtent(const kmRay3 *ray, const kmAABBExtent *aabbe, float *outMin, kmVec3 *outIntersection);
+kmBool kmRay3IntersectAABB(const kmRay3 *ray, const kmAABB *aabb, float *outMin, kmVec3 *outIntersection);
+kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 *outIntersection, kmScalar *tOut, kmScalar *sOut);
 
 #endif /* __glhck_internal_h__ */
 

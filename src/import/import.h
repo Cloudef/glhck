@@ -26,32 +26,32 @@ int _glhckUnloadImporters(void);
  * 3. 1 = import animation data, 0 = don't import
  */
 int _glhckImportModel(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      unsigned char itype, unsigned char vtype);
 
 #if !GLHCK_IMPORT_DYNAMIC
 
 int _glhckImportGlhckm(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      unsigned char itype, unsigned char vtype);
 int _glhckFormatGlhckm(const char *file);
 
 #if GLHCK_IMPORT_OPENCTM
 /* OpenCTM http://openctm.sourceforge.net/ */
 int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      unsigned char itype, unsigned char vtype);
 int _glhckFormatOpenCTM(const char *file);
 #endif
 
 #if GLHCK_IMPORT_MMD
 /* MikuMikuDance PMD */
 int _glhckImportPMD(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      unsigned char itype, unsigned char vtype);
 int _glhckFormatPMD(const char *file);
 #endif
 
 #if GLHCK_IMPORT_ASSIMP
 /* Assimp Wrapper http://assimp.sourceforge.net/ */
 int _glhckImportAssimp(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype);
+      unsigned char itype, unsigned char vtype);
 int _glhckFormatAssimp(const char *file);
 #endif
 
@@ -62,6 +62,12 @@ int _glhckFormatAssimp(const char *file);
  * 2. filename
  */
 int _glhckImportImage(glhckTexture *texture, const char *file, const glhckImportImageParameters *params);
+
+#if EMSCRIPTEN
+/* BROWSER may support more formats than glhck */
+int _glhckImportEmscripten(const char *file, _glhckImportImageStruct *import);
+int _glhckFormatEmscripten(const char *file);
+#endif
 
 #if !GLHCK_IMPORT_DYNAMIC
 
@@ -102,8 +108,8 @@ int _glhckFormatBMP(const char *file);
  */
 char* _glhckImportTexturePath(const char *texture_path, const char *asset_path);
 
-/* check that image dimensions are OK */
-int _glhckIsValidImageDimension(unsigned long long w,  unsigned long long h);
+/* \brief invert pixel data */
+void _glhckInvertPixels(unsigned char *pixels, unsigned int w, unsigned int h, unsigned int components);
 
 /* \brief returns tristripped indecies from triangle indecies */
 glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsigned int memb, unsigned int *outMemb);

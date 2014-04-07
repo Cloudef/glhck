@@ -7,6 +7,12 @@
 #include <jpeglib.h>
 #include <setjmp.h>
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#  define sigjmp_buf jmp_buf
+#  define siglongjmp longjmp
+#  define sigsetjmp(b,s) setjmp((void*)b)
+#endif
+
 #define GLHCK_CHANNEL GLHCK_CHANNEL_IMPORT
 
 typedef struct jpegErrorStruct {
@@ -96,12 +102,12 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
 {
    FILE *f = NULL;
    char decompress = 0;
-   unsigned int w = 0, h = 0, loc = 0, i, i2;
+   unsigned int w = 0, h = 0, loc = 0, i;
    unsigned char *importData = NULL;
    JSAMPROW row_pointer = NULL;
    jpegErrorStruct jerr;
    struct jpeg_decompress_struct cinfo;
-   CALL(0, "%s, %u", file, import);
+   CALL(0, "%s, %p", file, import);
 
    /* JPEG error handlers, uh... */
    cinfo.err = jpeg_std_error(&(jerr.pub));
@@ -157,21 +163,11 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
    }
 
    /* invert */
-   for (i = 0; i*2 < h; ++i) {
-      int index1 = i*w*cinfo.output_components;
-      int index2 = (h-1-i)*w*cinfo.output_components;
-      for (i2 = w*cinfo.output_components; i2 > 0; --i2) {
-         unsigned char temp = importData[index1];
-         importData[index1] = importData[index2];
-         importData[index2] = temp;
-         ++index1; ++index2;
-      }
-   }
+   _glhckInvertPixels(importData, w, h, cinfo.output_components);
 
    /* finish decompression */
    jpeg_finish_decompress(&cinfo);
    jpeg_destroy_decompress(&cinfo);
-   decompress = 0;
 
    /* close file */
    NULLDO(fclose, f);
@@ -184,7 +180,7 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
    import->height = h;
    import->data   = importData;
    import->format = GLHCK_RGB;
-   import->type   = GLHCK_DATA_UNSIGNED_BYTE;
+   import->type   = GLHCK_UNSIGNED_BYTE;
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 

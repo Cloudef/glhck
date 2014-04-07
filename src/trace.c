@@ -1,16 +1,7 @@
 #include "internal.h"
+#include <stdlib.h> /* for malloc */
 #include <stdio.h>  /* for printf   */
 #include <stdarg.h> /* for va_start */
-
-#ifdef _WIN32
-#  include <windows.h>
-#endif
-
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
 
 /* Tracing levels:
  * 0: Non frequent calls (creation, freeing, etc..)
@@ -32,7 +23,6 @@ static __GLHCKtraceChannel _traceChannels[] =
    { GLHCK_CHANNEL_TEXT,            0 },
    { GLHCK_CHANNEL_CAMERA,          0 },
    { GLHCK_CHANNEL_GEOMETRY,        0 },
-   { GLHCK_CHANNEL_VDATA,           0 },
    { GLHCK_CHANNEL_MATERIAL,        0 },
    { GLHCK_CHANNEL_TEXTURE,         0 },
    { GLHCK_CHANNEL_ATLAS,           0 },
@@ -65,11 +55,19 @@ static void _glhckTraceSet(const char *name, int active)
 {
    int i;
    for(i = 0; GLHCKT()->channel[i].name ; ++i)
-      if (!_glhckStrupcmp(name, GLHCKT()->channel[i].name)  ||
-         (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL)          &&
+      if (!_glhckStrupcmp(name, GLHCKT()->channel[i].name) ||
+         (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL) &&
           _glhckStrupcmp(GLHCKT()->channel[i].name, GLHCK_CHANNEL_TRACE)))
       GLHCKT()->channel[i].active = active;
 }
+
+#if EMSCRIPTEN
+static const char *EMSCRIPTEN_URL = NULL;
+__attribute__((used, noinline)) extern void _glhckTraceEmscriptenURL(const char *url) {
+   if (EMSCRIPTEN_URL) free((char*)EMSCRIPTEN_URL);
+   EMSCRIPTEN_URL = (url?_glhckStrdupNoTrack(url):NULL);
+}
+#endif
 
 /* \brief init debug system */
 void _glhckTraceInit(int argc, const char **argv)
@@ -93,6 +91,15 @@ void _glhckTraceInit(int argc, const char **argv)
          break;
       }
    }
+
+#if EMSCRIPTEN
+   if (!match) {
+      asm("if (typeof __glhckTraceEmscriptenURL != 'undefined')"
+          "__glhckTraceEmscriptenURL(allocate(intArrayFromString(document.URL), 'i8', ALLOC_STACK));"
+          "else Module.print('__glhckTraceEmscriptenURL was not exported for some reason.. Skipping!');");
+      if (EMSCRIPTEN_URL) match = _glhckStrupstr(EMSCRIPTEN_URL, GLHCK_CHANNEL_SWITCH"=") + strlen(GLHCK_CHANNEL_SWITCH"=");
+   }
+#endif
 
    if (!match) return;
    count = _glhckStrsplit(&split, match, ",");

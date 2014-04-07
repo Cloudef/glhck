@@ -1,14 +1,9 @@
 #include "internal.h"
 #include "import/import.h"
 #include "texhck.h"
-#include <stdio.h>            /* for file io */
-#include <assert.h>           /* for assert */
-
-#ifdef __APPLE__
-#   include <malloc/malloc.h>
-#else
-#   include <malloc.h>
-#endif
+#include <stdlib.h> /* for malloc */
+#include <stdio.h>  /* for file io */
+#include <assert.h> /* for assert */
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_TEXTURE
@@ -65,44 +60,50 @@ void _glhckTextureInsertToQueue(glhckTexture *object)
    textures->count++;
 }
 
+/* \brief guess unit size for texture */
+int _glhckUnitSizeForTexture(glhckTextureFormat format, glhckDataType type)
+{
+   size_t b;
+
+   switch (type) {
+      case GLHCK_BYTE:
+      case GLHCK_UNSIGNED_BYTE:
+         b = sizeof(unsigned char); break;
+      case GLHCK_SHORT:
+      case GLHCK_UNSIGNED_SHORT:
+         b = sizeof(unsigned short); break;
+      case GLHCK_INT:
+      case GLHCK_UNSIGNED_INT:
+         b = sizeof(unsigned int); break;
+      case GLHCK_FLOAT:
+         b = sizeof(float); break;
+      case GLHCK_COMPRESSED:
+         assert(0 && "This should not never happen"); break;
+         break;
+      default:
+         assert(0 && "Datatype size not known");
+         break;
+   }
+
+   return _glhckNumChannels(format) * b;
+}
+
 /* \brief guess size for texture */
 int _glhckSizeForTexture(glhckTextureTarget target, int width, int height, int depth, glhckTextureFormat format, glhckDataType type)
 {
    int size = 0;
-   size_t b = 0;
-
-   switch (type) {
-      case GLHCK_DATA_BYTE:
-      case GLHCK_DATA_UNSIGNED_BYTE:
-         b = sizeof(unsigned char);
-         break;
-      case GLHCK_DATA_SHORT:
-      case GLHCK_DATA_UNSIGNED_SHORT:
-         b = sizeof(unsigned short);
-         break;
-      case GLHCK_DATA_INT:
-      case GLHCK_DATA_UNSIGNED_INT:
-         b = sizeof(unsigned int);
-         break;
-      case GLHCK_DATA_FLOAT:
-         b = sizeof(float);
-         break;
-      case GLHCK_DATA_COMPRESSED:
-         assert(0 && "This should not never happen");break;
-         break;
-      default:assert(0 && "Datatype size not known");break;
-   }
+   int unitSize = _glhckUnitSizeForTexture(format, type);
 
    switch (target) {
       case GLHCK_TEXTURE_1D:
-         size = width * _glhckNumChannels(format) * b;
+         size = width * unitSize;
          break;
       case GLHCK_TEXTURE_2D:
       case GLHCK_TEXTURE_CUBE_MAP:
-         size = width * height * _glhckNumChannels(format) * b;
+         size = width * height * unitSize;
          break;
       case GLHCK_TEXTURE_3D:
-         size = width * height * depth * _glhckNumChannels(format) * b;
+         size = width * height * depth * unitSize;
          break;
       default:assert(0 && "Target's size calculation not implemented");break;
    }
@@ -355,13 +356,13 @@ GLHCKAPI const glhckTextureParameters* glhckTextureDefaultParameters(void)
       .biasLod       = 0.0f,
       .baseLevel     = 0,
       .maxLevel      = 1000,
-      .wrapS         = GLHCK_WRAP_REPEAT,
-      .wrapT         = GLHCK_WRAP_REPEAT,
-      .wrapR         = GLHCK_WRAP_REPEAT,
-      .minFilter     = GLHCK_FILTER_NEAREST_MIPMAP_LINEAR,
-      .magFilter     = GLHCK_FILTER_LINEAR,
+      .wrapS         = GLHCK_REPEAT,
+      .wrapT         = GLHCK_REPEAT,
+      .wrapR         = GLHCK_REPEAT,
+      .minFilter     = GLHCK_NEAREST_MIPMAP_LINEAR,
+      .magFilter     = GLHCK_LINEAR,
       .compareMode   = GLHCK_COMPARE_NONE,
-      .compareFunc   = GLHCK_COMPARE_LEQUAL,
+      .compareFunc   = GLHCK_LEQUAL,
       .mipmap        = 1,
    };
    return &defaultParameters;
@@ -377,13 +378,13 @@ GLHCKAPI const glhckTextureParameters* glhckTextureDefaultLinearParameters(void)
       .biasLod       = 0.0f,
       .baseLevel     = 0,
       .maxLevel      = 1000,
-      .wrapS         = GLHCK_WRAP_CLAMP_TO_EDGE,
-      .wrapT         = GLHCK_WRAP_CLAMP_TO_EDGE,
-      .wrapR         = GLHCK_WRAP_CLAMP_TO_EDGE,
-      .minFilter     = GLHCK_FILTER_LINEAR,
-      .magFilter     = GLHCK_FILTER_LINEAR,
+      .wrapS         = GLHCK_CLAMP_TO_EDGE,
+      .wrapT         = GLHCK_CLAMP_TO_EDGE,
+      .wrapR         = GLHCK_CLAMP_TO_EDGE,
+      .minFilter     = GLHCK_LINEAR,
+      .magFilter     = GLHCK_LINEAR,
       .compareMode   = GLHCK_COMPARE_NONE,
-      .compareFunc   = GLHCK_COMPARE_LEQUAL,
+      .compareFunc   = GLHCK_LEQUAL,
       .mipmap        = 0,
    };
    return &defaultParameters;
@@ -399,13 +400,13 @@ GLHCKAPI const glhckTextureParameters* glhckTextureDefaultSpriteParameters(void)
       .biasLod       = 0.0f,
       .baseLevel     = 0,
       .maxLevel      = 1000,
-      .wrapS         = GLHCK_WRAP_CLAMP_TO_EDGE,
-      .wrapT         = GLHCK_WRAP_CLAMP_TO_EDGE,
-      .wrapR         = GLHCK_WRAP_CLAMP_TO_EDGE,
-      .minFilter     = GLHCK_FILTER_NEAREST,
-      .magFilter     = GLHCK_FILTER_NEAREST,
+      .wrapS         = GLHCK_CLAMP_TO_EDGE,
+      .wrapT         = GLHCK_CLAMP_TO_EDGE,
+      .wrapR         = GLHCK_CLAMP_TO_EDGE,
+      .minFilter     = GLHCK_NEAREST,
+      .magFilter     = GLHCK_NEAREST,
       .compareMode   = GLHCK_COMPARE_NONE,
-      .compareFunc   = GLHCK_COMPARE_LEQUAL,
+      .compareFunc   = GLHCK_LEQUAL,
       .mipmap        = 0,
    };
    return &defaultParameters;
@@ -481,7 +482,7 @@ GLHCKAPI int glhckTextureCreate(glhckTexture *object, glhckTextureTarget target,
       DEBUG(GLHCK_DBG_ERROR, "TEXTURE IS BIGGER THAN MAX TEXTURE SIZE (%d)", GLHCKRF()->texture.maxTextureSize);
    }
 
-   DEBUG(GLHCK_DBG_CRAP, "NEW(%p) %dx%dx%d %.2f MiB", object, object->internalWidth, object->internalHeight, object->internalDepth, (float)size/1048576);
+   DEBUG(GLHCK_DBG_CRAP, "NEW(%p:%u) %dx%dx%d %.2f MiB", object, object->object, object->internalWidth, object->internalHeight, object->internalDepth, (float)size/1048576);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
@@ -530,6 +531,46 @@ GLHCKAPI void glhckTextureFill(glhckTexture *object, int level, int x, int y, in
    if (old) glhckTextureBind(old);
 }
 
+/* \brief fill subdata to texture from source data */
+GLHCKAPI void glhckTextureFillFrom(glhckTexture *object, int level, int sx, int sy, int sz, int x, int y, int z, int width, int height, int depth, glhckTextureFormat format, glhckDataType type, int size, const void *data)
+{
+   CALL(2, "%p, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p", object, level, sx, sy, sz, x, y, z, width, height, depth, format, type, size, data);
+
+   int bufferSize = _glhckSizeForTexture(object->target, width, height, depth, format, type);
+   int unitSize = _glhckUnitSizeForTexture(format, type);
+   void* buffer = calloc(1, bufferSize);
+   int dy, dz;
+
+   switch(object->target) {
+      case GLHCK_TEXTURE_1D:
+         memcpy(buffer, data + sx * unitSize, width * unitSize);
+         break;
+      case GLHCK_TEXTURE_2D:
+      case GLHCK_TEXTURE_CUBE_MAP:
+         for(dy = 0; dy < height; ++dy) {
+            memcpy(buffer + dy * width * unitSize,
+                  data + ((sy + dy) * object->width + sx) * unitSize,
+                  width * unitSize);
+         }
+         break;
+      case GLHCK_TEXTURE_3D:
+         for(dz = 0; dz < depth; ++dz) {
+            for(dy = 0; dy < height; ++dy) {
+               memcpy(buffer + (dz * height + dy) * width * unitSize,
+                     data + ((sz + dz) * object->width * object->height + (sy + dy) * object->width + sx) * unitSize,
+                     width * unitSize);
+            }
+         }
+         break;
+      default:
+         assert(0 && "Filling from target type has not been implemented");
+         break;
+   }
+
+   glhckTextureFill(object, level, x, y, z, width, height, depth, format, type,  size, buffer);
+   free(buffer);
+}
+
 /* \brief save texture to file in TGA format */
 GLHCKAPI int glhckTextureSave(glhckTexture *object, const char *path)
 {
@@ -537,10 +578,7 @@ GLHCKAPI int glhckTextureSave(glhckTexture *object, const char *path)
    CALL(0, "%p, %s", object, path);
    assert(object);
 
-   DEBUG(GLHCK_DBG_CRAP,
-         "\2Save \3%d\5x\3%d \5[\4%s, \3%d\5]",
-         object->width, object->height);
-
+   DEBUG(GLHCK_DBG_CRAP, "\2Save \3%d\5x\3%d\5 [\4%s\5]", object->width, object->height, path);
 
    /* TODO: Render to FBO to get the image
     * Or use glGetTexImage if it's available (not in GLES) */
@@ -607,7 +645,7 @@ GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int wid
 {
    void *compressed = NULL;
    CALL(0, "%d, %d, %d, %d, %d, %p, %p, %p", compression, width, height, format, type, data, size, outFormat);
-   assert(type == GLHCK_DATA_UNSIGNED_BYTE && "Only GLHCK_DATA_UNSIGNED_BYTE is supported atm");
+   assert(type == GLHCK_UNSIGNED_BYTE && "Only GLHCK_UNSIGNED_BYTE is supported atm");
    if (size)      *size = 0;
    if (outFormat) *outFormat = 0;
 
@@ -628,7 +666,7 @@ GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int wid
          texhckConvertToDXT1(compressed, data, width, height, _glhckNumChannels(format));
          if (size)      *size      = texhckSizeForDXT1(width, height);
          if (outFormat) *outFormat = GLHCK_COMPRESSED_RGB_DXT1;
-         if (outType)   *outType   = GLHCK_DATA_UNSIGNED_BYTE;
+         if (outType)   *outType   = GLHCK_UNSIGNED_BYTE;
          DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT1");
       } else {
          /* RGBA */
@@ -638,7 +676,7 @@ GLHCKAPI void* glhckTextureCompress(glhckTextureCompression compression, int wid
          texhckConvertToDXT5(compressed, data, width, height, _glhckNumChannels(format));
          if (size)      *size      = texhckSizeForDXT5(width, height);
          if (outFormat) *outFormat = GLHCK_COMPRESSED_RGBA_DXT5;
-         if (outType)   *outType   = GLHCK_DATA_UNSIGNED_BYTE;
+         if (outType)   *outType   = GLHCK_UNSIGNED_BYTE;
          DEBUG(GLHCK_DBG_CRAP, "Image data converted to DXT5");
       }
    } else {

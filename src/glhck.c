@@ -165,7 +165,6 @@ GLHCKAPI void glhckContextSet(glhckContext *ctx)
 GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
 {
    glhckContext *ctx, *oldCtx;
-   const char ** _argv = (const char **)argv;
 
 #ifndef _GLHCK_TLS_FOUND
    fprintf(stderr, "-!- Thread-local storage support in compiler was not detected.\n");
@@ -196,12 +195,15 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
 
 #if !GLHCK_DISABLE_TRACE
    /* init trace system */
-   _glhckTraceInit(argc, _argv);
+   _glhckTraceInit(argc, (const char**)argv);
 #endif
+
+   /* setup internal vertex/index types */
+   _glhckGeometryInit();
 
    /* set default global precision for glhck to use with geometry
     * NOTE: _NONE means that glhck and importers choose the best precision. */
-   glhckSetGlobalPrecision(GLHCK_INDEX_NONE, GLHCK_VERTEX_NONE);
+   glhckSetGlobalPrecision(GLHCK_IDX_AUTO, GLHCK_IDX_AUTO);
 
    /* pre-allocate render queues */
    GLHCKRD()->objects.queue = _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckObject*));
@@ -227,6 +229,9 @@ GLHCKAPI void glhckContextTerminate(void)
    /* destroy world */
    glhckMassacreWorld();
 
+   /* terminate internal vertex/index types */
+   _glhckGeometryTerminate();
+
    /* close display */
    glhckDisplayClose();
 
@@ -251,6 +256,9 @@ GLHCKAPI void glhckContextTerminate(void)
 GLHCKAPI void glhckLogColor(char color)
 {
    GLHCK_INITIALIZED();
+#if EMSCRIPTEN
+   color = 0;
+#endif
    if (color != GLHCKM()->coloredLog && !color)
       _glhckNormal();
    GLHCKM()->coloredLog = color;
@@ -317,10 +325,10 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    glhckRenderPass(glhckRenderPassDefaults());
 
    /* default cull face */
-   glhckRenderCullFace(GLHCK_CULL_BACK);
+   glhckRenderCullFace(GLHCK_BACK);
 
    /* counter-clockwise are front face by default */
-   glhckRenderFrontFace(GLHCK_FACE_CCW);
+   glhckRenderFrontFace(GLHCK_CCW);
 
    /* resize display */
    glhckDisplayResize(width, height);
@@ -357,7 +365,7 @@ GLHCKAPI void glhckDisplayResize(int width, int height)
 }
 
 /* \brief set global geometry vertexdata precision to glhck */
-GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+GLHCKAPI void glhckSetGlobalPrecision(unsigned char itype, unsigned char vtype)
 {
    GLHCK_INITIALIZED();
    CALL(0, "%u, %u", itype, vtype);
@@ -366,7 +374,7 @@ GLHCKAPI void glhckSetGlobalPrecision(glhckGeometryIndexType itype, glhckGeometr
 }
 
 /* \brief get global geometry vertexdata precision */
-GLHCKAPI void glhckGetGlobalPrecision(glhckGeometryIndexType *itype, glhckGeometryVertexType *vtype)
+GLHCKAPI void glhckGetGlobalPrecision(unsigned char *itype, unsigned char *vtype)
 {
    GLHCK_INITIALIZED();
    CALL(0, "%p, %p", itype, vtype);
@@ -377,7 +385,6 @@ GLHCKAPI void glhckGetGlobalPrecision(glhckGeometryIndexType *itype, glhckGeomet
 #define _massacre(list, func) {                       \
    void *c;                                           \
    while ((c = GLHCKW()->list)) { while (func(c)); }  \
-   DEBUG(GLHCK_DBG_CRAP, "Slaughter: %p");            \
    GLHCKW()->list = NULL;                             \
 }
 

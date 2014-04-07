@@ -1,498 +1,942 @@
 #include "internal.h"
 #include <limits.h> /* for type limits */
 
-#define GLHCK_CHANNEL GLHCK_CHANNEL_VDATA
+#ifndef __STRING
+#  define __STRING(x) #x
+#endif
+
+#define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
 
 /* This file contains all the methods that access
  * object's internal vertexdata, since the GLHCK object's
  * internal vertexdata structure is quite complex */
 
-/* FIXME:
- * When moving to modern OpenGL api,
- * we can propably convert coordinates to unsigned types. */
+/* \brief get attributes for glhckDataType */
+static void _glhckDataTypeAttributes(glhckDataType dataType, unsigned char *size, size_t *max, char *normalized)
+{
+   switch (dataType) {
+      case GLHCK_BYTE:
+         if (max) *max = CHAR_MAX;
+         if (size) *size = sizeof(char);
+         if (normalized) *normalized = 1;
+         return;
+      case GLHCK_UNSIGNED_BYTE:
+         if (max) *max = UCHAR_MAX;
+         if (size) *size = sizeof(unsigned char);
+         if (normalized) *normalized = 1;
+         return;
+      case GLHCK_SHORT:
+         if (max) *max = SHRT_MAX;
+         if (size) *size = sizeof(short);
+         if (normalized) *normalized = 1;
+         return;
+      case GLHCK_UNSIGNED_SHORT:
+         if (max) *max = USHRT_MAX;
+         if (size) *size = sizeof(unsigned short);
+         if (normalized) *normalized = 1;
+         return;
+      case GLHCK_INT:
+         if (max) *max = INT_MAX;
+         if (size) *size = sizeof(int);
+         if (normalized) *normalized = 1;
+         return;
+      case GLHCK_UNSIGNED_INT:
+         if (max) *max = UINT_MAX;
+         if (size) *size = sizeof(unsigned int);
+         if (normalized) *normalized = 1;
+         return;
+      case GLHCK_FLOAT:
+         if (max) *max = 1;
+         if (size) *size = sizeof(float);
+         if (normalized) *normalized = 0;
+         return;
+      default:break;
+   }
 
-/* conversion constants for vertexdata conversion */
-#define GLHCK_BYTE_CMAGIC  CHAR_MAX
-#define GLHCK_BYTE_VMAGIC  UCHAR_MAX - CHAR_MAX
-#define GLHCK_BYTE_VBIAS   CHAR_MAX / (UCHAR_MAX - 1.0f)
-#define GLHCK_BYTE_VSCALE  UCHAR_MAX - 1.0f
-
-#define GLHCK_SHORT_CMAGIC  SHRT_MAX
-#define GLHCK_SHORT_VMAGIC  USHRT_MAX - SHRT_MAX
-#define GLHCK_SHORT_VBIAS   SHRT_MAX / (USHRT_MAX - 1.0f)
-#define GLHCK_SHORT_VSCALE  USHRT_MAX - 1.0f
-
-/* 1. 2D vector conversion function name
- * 2. 3D vector conversion function name
- * 3. 2D internal vector cast
- * 4. 3D internal vector cast
- * 5. Base cast of vector's units
- * 6. Vector magic constant */
-#define glhckMagicDefine(namev2, namev3, castv2, castv3, bcast, magic)                    \
-static void namev2(                                                                       \
-   castv2 *vb, const glhckVector3f *vh,                                                   \
-   glhckVector3f *max, glhckVector3f *min)                                                \
-{                                                                                         \
-   vb->x = (bcast)floorf(((vh->x - min->x) / (max->x - min->x)) * magic + 0.5f);          \
-   vb->y = (bcast)floorf(((vh->y - min->y) / (max->y - min->y)) * magic + 0.5f);          \
-}                                                                                         \
-static void namev3(                                                                       \
-   castv3 *vb, const glhckVector3f *vh,                                                   \
-   glhckVector3f *max, glhckVector3f *min)                                                \
-{                                                                                         \
-   namev2((castv2*)vb, vh, max, min);                                                     \
-   vb->z = (bcast)floorf(((vh->z - min->z) / (max->z - min->z)) * magic + 0.5f);          \
+   assert(0 && "INVALID DATATYPE");
 }
 
-/* convert vector to internal byte format */
-glhckMagicDefine(glhckMagic2b, glhckMagic3b,
-      glhckVector2b, glhckVector3b, char, GLHCK_BYTE_VMAGIC);
-
-/* convert vector to internal short format */
-glhckMagicDefine(glhckMagic2s, glhckMagic3s,
-      glhckVector2s, glhckVector3s, short, GLHCK_SHORT_VMAGIC);
-
-/* \brief get min/max from import data */
-static void _glhckMaxMinImportData(const glhckImportVertexData *import, int memb, glhckVector3f *vmin, glhckVector3f *vmax)
+/* \brief check for valid vertex type */
+static unsigned char _glhckGeometryCheckVertexType(unsigned char type)
 {
-   int i;
-   glhckSetV3(vmax, &import[0].vertex);
-   glhckSetV3(vmin, &import[0].vertex);
+   static char warned_once = 0;
 
-   /* find max && min first */
-   for (i = 1; i != memb; ++i) {
-      glhckMaxV3(vmax, &import[i].vertex);
-      glhckMinV3(vmin, &import[i].vertex);
-   }
-}
-
-/* \brief get /min/max from index data */
-static void _glhckMaxMinIndexData(const glhckImportIndexData *import, int memb, unsigned int *mini, unsigned int *maxi)
-{
-   int i;
-   *mini = *maxi = import[0];
-   for (i = 1; i != memb; ++i) {
-      if (*mini > import[i]) *mini = import[i];
-      if (*maxi < import[i]) *maxi = import[i];
-   }
-}
-
-/* \brief check that vertex type is ok for allocation. If not override it with better one */
-glhckGeometryVertexType _glhckGeometryCheckVertexType(glhckGeometryVertexType type)
-{
-   /* default to V3F on NONE type */
-   if (type == GLHCK_VERTEX_NONE) {
-      type = GLHCK_VERTEX_V3F;
-   }
+   /* default to V3F on AUTO type */
+   if (type == GLHCK_VTX_AUTO) type = GLHCK_VTX_V3F;
 
    /* fglrx and SGX on linux at least seems to fail with byte vertices.
     * workaround for now until I stumble upon why it's wrong. */
    if (GLHCKR()->driver != GLHCK_DRIVER_NVIDIA) {
-      if (type == GLHCK_VERTEX_V2B || type == GLHCK_VERTEX_V3B) {
+      if (!warned_once && (type == GLHCK_VTX_V2B || type == GLHCK_VTX_V3B)) {
          DEBUG(GLHCK_DBG_WARNING, "Some drivers have problems with BYTE precision vertexdata.");
          DEBUG(GLHCK_DBG_WARNING, "Will use SHORT precision instead, just a friendly warning.");
+         warned_once = 1;
       }
-      if (type == GLHCK_VERTEX_V3B) type = GLHCK_VERTEX_V3S;
-      if (type == GLHCK_VERTEX_V2B) type = GLHCK_VERTEX_V2S;
+      if (type == GLHCK_VTX_V3B) type = GLHCK_VTX_V3S;
+      if (type == GLHCK_VTX_V2B) type = GLHCK_VTX_V2S;
    }
    return type;
 }
 
-/* \brief check that index type is ok for allocation. If not override it with better one */
-glhckGeometryIndexType _glhckGeometryCheckIndexType(const glhckImportIndexData *indices, int memb, glhckGeometryIndexType type)
+/* \brief check for valid index type  */
+static unsigned char _glhckGeometryCheckIndexType(unsigned char type, const glhckImportIndexData *indices, int memb)
 {
-   unsigned int mini, maxi;
+   int i;
+   glhckImportIndexData max;
+
+#if EMSCRIPTEN
+   /* emscripten works with USHRT indices atm only */
+   static char warned_once = 0;
+   if (!warned_once) {
+      DEBUG(GLHCK_DBG_WARNING, "Emscripten currently works only with USHRT indices, forcing that!");
+      warned_once = 1;
+   }
+   return GLHCK_IDX_USHRT;
+#endif
+
+   /* use user specific indices */
+   if (type != GLHCK_IDX_AUTO) return type;
 
    /* autodetect */
-   if (type == GLHCK_INDEX_NONE) {
-      _glhckMaxMinIndexData(indices, memb, &mini, &maxi);
-      type = glhckIndexTypeForValue(maxi);
+   for (i = 0, max = 0; i < memb; ++i) if (max < indices[i]) max = indices[i];
+   for (type = GLHCK_IDX_UINT, i = 0; i < GLHCKW()->numIndexTypes; ++i) {
+      if (GLHCKIT(i)->max >= max && GLHCKIT(i)->max < GLHCKIT(type)->max)
+         type = i;
    }
    return type;
 }
 
-/* \brief convert vertex data to internal format */
-static void _glhckConvertVertexData(
-      glhckGeometryVertexType type, glhckVertexData internal,
-      const glhckImportVertexData *import, int memb,
-      glhckVector3f *bias, glhckVector3f *scale)
+/* \brief get max && min for import vertex data */
+static void _glhckImportVertexDataMaxMin(const glhckImportVertexData *import, int memb, glhckVector3f *vmin, glhckVector3f *vmax)
 {
    int i;
-   float biasMagic = 0.0f, scaleMagic = 0.0f;
-   glhckVector3f vmin, vmax;
-   CALL(0, "%d, %p, %d, %p, %p", type, import, memb, bias, scale);
+   assert(import && vmin && vmax);
 
-   /* default bias scale */
-   bias->x  = bias->y  = bias->z  = 0.0f;
-   scale->x = scale->y = scale->z = 1.0f;
-
-   /* get min and max from import data */
-   _glhckMaxMinImportData(import, memb, &vmin, &vmax);
-
-   /* lie about bounds by 1 point so,
-    * we don't get artifacts */
-   vmax.x++; vmax.y++; vmax.z++;
-   vmin.x--; vmin.y--; vmin.z--;
-
-   if (type == GLHCK_VERTEX_V3F) {
-      memcpy(internal.v3f, import, memb * sizeof(glhckVertexData3f));
-
-      /* center geometry */
-      for (i = 0; i != memb; ++i) {
-         internal.v3f[i].vertex.x -= 0.5f * (vmax.x-vmin.x)+vmin.x;
-         internal.v3f[i].vertex.y -= 0.5f * (vmax.y-vmin.y)+vmin.y;
-         internal.v3f[i].vertex.z -= 0.5f * (vmax.z-vmin.z)+vmin.z;
-      }
-   } else {
-      /* handle vertex data conversion */
-      for (i = 0; i != memb; ++i) {
-         switch (type) {
-            case GLHCK_VERTEX_V3B:
-               memcpy(&internal.v3b[i].color,  &import[i].color,  sizeof(glhckColorb));
-
-               glhckMagic3b(&internal.v3b[i].vertex, &import[i].vertex, &vmax, &vmin);
-
-               internal.v3b[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
-               internal.v3b[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
-               internal.v3b[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
-
-               internal.v3b[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
-               internal.v3b[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
-
-               biasMagic  = GLHCK_BYTE_VBIAS;
-               scaleMagic = GLHCK_BYTE_VSCALE;
-               break;
-
-            case GLHCK_VERTEX_V2B:
-               memcpy(&internal.v2b[i].color,  &import[i].color,  sizeof(glhckColorb));
-
-               glhckMagic2b(&internal.v2b[i].vertex, &import[i].vertex, &vmax, &vmin);
-
-               internal.v2b[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
-               internal.v2b[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
-               internal.v2b[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
-
-               internal.v2b[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
-               internal.v2b[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
-
-               biasMagic  = GLHCK_BYTE_VBIAS;
-               scaleMagic = GLHCK_BYTE_VSCALE;
-               break;
-
-            case GLHCK_VERTEX_V3S:
-               memcpy(&internal.v3s[i].color,  &import[i].color,  sizeof(glhckColorb));
-
-               glhckMagic3s(&internal.v3s[i].vertex, &import[i].vertex, &vmax, &vmin);
-
-               internal.v3s[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
-               internal.v3s[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
-               internal.v3s[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
-
-               internal.v3s[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
-               internal.v3s[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
-
-               biasMagic  = GLHCK_SHORT_VBIAS;
-               scaleMagic = GLHCK_SHORT_VSCALE;
-               break;
-
-            case GLHCK_VERTEX_V2S:
-               memcpy(&internal.v2s[i].color,  &import[i].color,  sizeof(glhckColorb));
-
-               glhckMagic2s(&internal.v2s[i].vertex, &import[i].vertex, &vmax, &vmin);
-
-               internal.v2s[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
-               internal.v2s[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
-               internal.v2s[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
-
-               internal.v2s[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
-               internal.v2s[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
-
-               biasMagic  = GLHCK_SHORT_VBIAS;
-               scaleMagic = GLHCK_SHORT_VSCALE;
-               break;
-
-            case GLHCK_VERTEX_V3FS:
-               memcpy(&internal.v3fs[i].color,  &import[i].color,  sizeof(glhckColorb));
-               memcpy(&internal.v3fs[i].vertex, &import[i].vertex, sizeof(glhckVector3f));
-
-               internal.v3fs[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
-               internal.v3fs[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
-               internal.v3fs[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
-
-               internal.v3fs[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
-               internal.v3fs[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
-
-               /* center */
-               internal.v3fs[i].vertex.x -= 0.5f * (vmax.x-vmin.x)+vmin.x;
-               internal.v3fs[i].vertex.y -= 0.5f * (vmax.y-vmin.y)+vmin.y;
-               internal.v3fs[i].vertex.z -= 0.5f * (vmax.z-vmin.z)+vmin.z;
-               break;
-
-            case GLHCK_VERTEX_V2FS:
-               memcpy(&internal.v2fs[i].color,  &import[i].color,  sizeof(glhckColorb));
-               memcpy(&internal.v2fs[i].vertex, &import[i].vertex, sizeof(glhckVector2f));
-
-               internal.v2fs[i].normal.x = (short)(import[i].normal.x * GLHCK_SHORT_CMAGIC);
-               internal.v2fs[i].normal.y = (short)(import[i].normal.y * GLHCK_SHORT_CMAGIC);
-               internal.v2fs[i].normal.z = (short)(import[i].normal.z * GLHCK_SHORT_CMAGIC);
-
-               internal.v2fs[i].coord.x = (short)(import[i].coord.x * GLHCK_SHORT_CMAGIC);
-               internal.v2fs[i].coord.y = (short)(import[i].coord.y * GLHCK_SHORT_CMAGIC);
-
-               /* center */
-               internal.v2fs[i].vertex.x -= 0.5f * (vmax.x-vmin.x)+vmin.x;
-               internal.v2fs[i].vertex.y -= 0.5f * (vmax.y-vmin.y)+vmin.y;
-               break;
-
-            case GLHCK_VERTEX_V2F:
-               memcpy(&internal.v2f[i].color,  &import[i].color,  sizeof(glhckColorb));
-               memcpy(&internal.v2f[i].vertex, &import[i].vertex, sizeof(glhckVector2f));
-               memcpy(&internal.v2f[i].normal, &import[i].normal, sizeof(glhckVector3f));
-               memcpy(&internal.v2f[i].coord,  &import[i].coord,  sizeof(glhckVector2f));
-
-               /* center */
-               internal.v2f[i].vertex.x -= 0.5f * (vmax.x-vmin.x)+vmin.x;
-               internal.v2f[i].vertex.y -= 0.5f * (vmax.y-vmin.y)+vmin.y;
-               break;
-
-            default:
-               DEBUG(GLHCK_DBG_ERROR, "Something terrible happenned.");
-               assert(0 && "NOT IMPLEMENTED");
-               return;
-         }
-      }
+   memcpy(vmin, &import[0].vertex, sizeof(glhckVector3f));
+   memcpy(vmax, &import[0].vertex, sizeof(glhckVector3f));
+   for (i = 1; i < memb; ++i) {
+      glhckMaxV3(vmax, &import[i].vertex);
+      glhckMinV3(vmin, &import[i].vertex);
    }
 
-   DEBUG(GLHCK_DBG_CRAP, "CONV: "VEC3S" : "VEC3S" (%f:%f)",
-         VEC3(&vmax),  VEC3(&vmin), biasMagic, scaleMagic);
-
-   if (type == GLHCK_VERTEX_V3F  || type == GLHCK_VERTEX_V2F ||
-       type == GLHCK_VERTEX_V3FS || type == GLHCK_VERTEX_V2FS) {
-      /* fix bias after centering */
-      bias->x = 0.5f * (vmax.x - vmin.x) + vmin.x;
-      bias->y = 0.5f * (vmax.y - vmin.y) + vmin.y;
-      bias->z = 0.5f * (vmax.z - vmin.z) + vmin.z;
-   } else {
-      /* fix geometry bias && scale after conversion */
-      bias->x  = biasMagic*(vmax.x-vmin.x)+vmin.x;
-      bias->y  = biasMagic*(vmax.y-vmin.y)+vmin.y;
-      bias->z  = biasMagic*(vmax.z-vmin.z)+vmin.z;
-      scale->x = (vmax.x-vmin.x)/scaleMagic;
-      scale->y = (vmax.y-vmin.y)/scaleMagic;
-      scale->z = (vmax.z-vmin.z)/scaleMagic;
-   }
-
-   DEBUG(GLHCK_DBG_CRAP, "Converted bias "VEC3S, VEC3(bias));
-   DEBUG(GLHCK_DBG_CRAP, "Converted scale "VEC3S, VEC3(scale));
+   /* lie about bounds by 1 point so, we don't get artifacts */
+   vmax->x++; vmax->y++; vmax->z++;
+   vmin->x--; vmin->y--; vmin->z--;
 }
 
-/* \brief convert index data to internal format */
-static void _glhckConvertIndexData(
-      glhckGeometryIndexType type, glhckIndexData internal,
-      const glhckImportIndexData *import, int memb)
+/* \brief transform V2B */
+static void _glhckGeometryTransformV2B(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   int i;
-   CALL(0, "%d, %p, %d", type, import, memb);
-   if (type == GLHCK_INDEX_INTEGER) {
-      memcpy(internal.ivi, import, memb *sizeof(glhckImportIndexData));
-   } else {
-      for (i = 0; i != memb; ++i) {
-         switch (type) {
-            case GLHCK_INDEX_BYTE:
-               internal.ivb[i] = (glhckIndexb)import[i];
-               break;
+   unsigned int i, w;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   glhckVertexData3b *internal = geometry->vertices;
 
-            case GLHCK_INDEX_SHORT:
-               internal.ivs[i] = (glhckIndexs)import[i];
-               break;
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
 
-            default:
-               DEBUG(GLHCK_DBG_ERROR, "Something terrible happenned.");
-               assert(0 && "NOT IMPLEMENTED");
-               break;
-         }
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData2b *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData2b);
+         glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
+         kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
       }
    }
+}
+
+/* \brief transform V3B */
+static void _glhckGeometryTransformV3B(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   glhckVertexData3b *internal = geometry->vertices;
+
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
+
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData3b *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData3b);
+         glhckSetV3(&v1, &bdata->vertex);
+         kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
+         internal[weight->vertexIndex].vertex.z += v1.z * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V2S */
+static void _glhckGeometryTransformV2S(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   glhckVertexData2s *internal = geometry->vertices;
+
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
+
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData2s *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData2s);
+         glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
+         kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V3S */
+static void _glhckGeometryTransformV3S(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   glhckVertexData3s *internal = geometry->vertices;
+
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
+
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData3s *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData3s);
+         glhckSetV3(&v1, &bdata->vertex);
+         kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
+         internal[weight->vertexIndex].vertex.z += v1.z * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V2F */
+static void _glhckGeometryTransformV2F(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv;
+   glhckVertexData2f *internal = geometry->vertices;
+
+   /* scale is always 1.0f, we can skip it */
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Inverse(&biasinv, &bias);
+
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData2f *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData2f);
+         glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
+         kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
+      }
+   }
+}
+
+/* \brief transform V3F */
+static void _glhckGeometryTransformV3F(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
+{
+   unsigned int i, w;
+   kmMat4 bias, biasinv;
+   glhckVertexData3f *internal = geometry->vertices;
+
+   /* scale is always 1.0f, we can skip it */
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Inverse(&biasinv, &bias);
+
+   for (i = 0; i < memb; ++i) {
+      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
+      kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
+      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
+
+      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+         kmVec3 v1;
+         glhckVertexWeight *weight = &skinBones[i]->weights[w];
+         const glhckVertexData3f *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData3f);
+         kmVec3MultiplyMat4(&v1, (kmVec3*)&bdata->vertex, &poseMatrix);
+         internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
+         internal[weight->vertexIndex].vertex.y += v1.y * weight->weight;
+         internal[weight->vertexIndex].vertex.z += v1.z * weight->weight;
+      }
+   }
+}
+
+/* \brief get min && max of V2B vertices */
+static void _glhckGeometryMinMaxV2B(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
+{
+   int i = 0;
+   glhckVertexData2b *internal = geometry->vertices;
+   glhckSetV2(max, &internal[0].vertex);
+   glhckSetV2(min, &internal[0].vertex);
+   for (i = 1; i < geometry->vertexCount; ++i) {
+      glhckMaxV2(max, &internal[i].vertex);
+      glhckMinV2(min, &internal[i].vertex);
+   }
+}
+
+/* \brief get min && max of V3B vertices */
+static void _glhckGeometryMinMaxV3B(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
+{
+   int i = 0;
+   glhckVertexData3b *internal = geometry->vertices;
+   glhckSetV3(max, &internal[0].vertex);
+   glhckSetV3(min, &internal[0].vertex);
+   for (i = 1; i < geometry->vertexCount; ++i) {
+      glhckMaxV3(max, &internal[i].vertex);
+      glhckMinV3(min, &internal[i].vertex);
+   }
+}
+
+/* \brief get min && max of V2S vertices */
+static void _glhckGeometryMinMaxV2S(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
+{
+   int i = 0;
+   glhckVertexData2s *internal = geometry->vertices;
+   glhckSetV2(max, &internal[0].vertex);
+   glhckSetV2(min, &internal[0].vertex);
+   for (i = 1; i < geometry->vertexCount; ++i) {
+      glhckMaxV2(max, &internal[i].vertex);
+      glhckMinV2(min, &internal[i].vertex);
+   }
+}
+
+/* \brief get min && max of V3S vertices */
+static void _glhckGeometryMinMaxV3S(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
+{
+   int i = 0;
+   glhckVertexData3s *internal = geometry->vertices;
+   glhckSetV3(max, &internal[0].vertex);
+   glhckSetV3(min, &internal[0].vertex);
+   for (i = 1; i < geometry->vertexCount; ++i) {
+      glhckMaxV3(max, &internal[i].vertex);
+      glhckMinV3(min, &internal[i].vertex);
+   }
+}
+
+/* \brief get min && max of V2F vertices */
+static void _glhckGeometryMinMaxV2F(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
+{
+   int i = 0;
+   glhckVertexData2f *internal = geometry->vertices;
+   glhckSetV2(max, &internal[0].vertex);
+   glhckSetV2(min, &internal[0].vertex);
+   for (i = 1; i < geometry->vertexCount; ++i) {
+      glhckMaxV2(max, &internal[i].vertex);
+      glhckMinV2(min, &internal[i].vertex);
+   }
+}
+
+/* \brief get min && max of V3F vertices */
+static void _glhckGeometryMinMaxV3F(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
+{
+   int i = 0;
+   glhckVertexData3f *internal = geometry->vertices;
+   memcpy(min, &internal[0].vertex, sizeof(glhckVector3f));
+   memcpy(max, &internal[0].vertex, sizeof(glhckVector3f));
+   for (i = 1; i < geometry->vertexCount; ++i) {
+      glhckMaxV3(max, &internal[i].vertex);
+      glhckMinV3(min, &internal[i].vertex);
+   }
+}
+
+/* \brief convert import vertex data to V2B */
+static void _glhckGeometryConvertV2B(const glhckImportVertexData *import, int memb, void *out, glhckVector3f *bias, glhckVector3f *scale)
+{
+   const float srange = UCHAR_MAX - 1.0f;
+   const float brange = CHAR_MAX / srange;
+   int i;
+   glhckVector3f vmin, vmax;
+   glhckVertexData2b *internal;
+   CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
+   internal = out;
+
+   _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
+
+   /* center geometry */
+   for (i = 0; i < memb; ++i) {
+      internal[i].vertex.x = floorf(((import[i].vertex.x - vmin.x) / (vmax.x - vmin.x)) * UCHAR_MAX - CHAR_MAX + 0.5f);
+      internal[i].vertex.y = floorf(((import[i].vertex.y - vmin.y) / (vmax.y - vmin.y)) * UCHAR_MAX - CHAR_MAX + 0.5f);
+      internal[i].normal.x = import[i].normal.x * SHRT_MAX;
+      internal[i].normal.y = import[i].normal.y * SHRT_MAX;
+      internal[i].normal.z = import[i].normal.z * SHRT_MAX;
+      internal[i].coord.x = import[i].coord.x * SHRT_MAX;
+      internal[i].coord.y = import[i].coord.y * SHRT_MAX;
+      memcpy(&internal[i].color, &import[i].color, sizeof(glhckColorb));
+   }
+
+   /* fix bias after centering */
+   bias->x = brange * (vmax.x - vmin.x) + vmin.x;
+   bias->y = brange * (vmax.y - vmin.y) + vmin.y;
+   bias->z = brange * (vmax.z - vmin.z) + vmin.z;
+   scale->x = (vmax.x - vmin.x) / srange;
+   scale->y = (vmax.y - vmin.y) / srange;
+   scale->z = (vmax.z - vmin.z) / srange;
+}
+
+/* \brief convert import vertex data to V3B */
+static void _glhckGeometryConvertV3B(const glhckImportVertexData *import, int memb, void *out, glhckVector3f *bias, glhckVector3f *scale)
+{
+   const float srange = UCHAR_MAX - 1.0f;
+   const float brange = CHAR_MAX / srange;
+   int i;
+   glhckVector3f vmin, vmax;
+   glhckVertexData3b *internal;
+   CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
+   internal = out;
+
+   _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
+
+   /* center geometry */
+   for (i = 0; i < memb; ++i) {
+      internal[i].vertex.x = floorf(((import[i].vertex.x - vmin.x) / (vmax.x - vmin.x)) * UCHAR_MAX - CHAR_MAX + 0.5f);
+      internal[i].vertex.y = floorf(((import[i].vertex.y - vmin.y) / (vmax.y - vmin.y)) * UCHAR_MAX - CHAR_MAX + 0.5f);
+      internal[i].vertex.z = floorf(((import[i].vertex.z - vmin.z) / (vmax.z - vmin.z)) * UCHAR_MAX - CHAR_MAX + 0.5f);
+      internal[i].normal.x = import[i].normal.x * SHRT_MAX;
+      internal[i].normal.y = import[i].normal.y * SHRT_MAX;
+      internal[i].normal.z = import[i].normal.z * SHRT_MAX;
+      internal[i].coord.x = import[i].coord.x * SHRT_MAX;
+      internal[i].coord.y = import[i].coord.y * SHRT_MAX;
+      memcpy(&internal[i].color, &import[i].color, sizeof(glhckColorb));
+   }
+
+   /* fix bias after centering */
+   bias->x = brange * (vmax.x - vmin.x) + vmin.x;
+   bias->y = brange * (vmax.y - vmin.y) + vmin.y;
+   bias->z = brange * (vmax.z - vmin.z) + vmin.z;
+   scale->x = (vmax.x - vmin.x) / srange;
+   scale->y = (vmax.y - vmin.y) / srange;
+   scale->z = (vmax.z - vmin.z) / srange;
+}
+
+/* \brief convert import vertex data to V2S */
+static void _glhckGeometryConvertV2S(const glhckImportVertexData *import, int memb, void *out, glhckVector3f *bias, glhckVector3f *scale)
+{
+   const float srange = USHRT_MAX - 1.0f;
+   const float brange = SHRT_MAX / srange;
+   int i;
+   glhckVector3f vmin, vmax;
+   glhckVertexData2s *internal;
+   CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
+   internal = out;
+
+   _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
+
+   /* center geometry */
+   for (i = 0; i < memb; ++i) {
+      internal[i].vertex.x = floorf(((import[i].vertex.x - vmin.x) / (vmax.x - vmin.x)) * USHRT_MAX - SHRT_MAX + 0.5f);
+      internal[i].vertex.y = floorf(((import[i].vertex.y - vmin.y) / (vmax.y - vmin.y)) * USHRT_MAX - SHRT_MAX + 0.5f);
+      internal[i].normal.x = import[i].normal.x * SHRT_MAX;
+      internal[i].normal.y = import[i].normal.y * SHRT_MAX;
+      internal[i].normal.z = import[i].normal.z * SHRT_MAX;
+      internal[i].coord.x = import[i].coord.x * SHRT_MAX;
+      internal[i].coord.y = import[i].coord.y * SHRT_MAX;
+      memcpy(&internal[i].color, &import[i].color, sizeof(glhckColorb));
+   }
+
+   /* fix bias after centering */
+   bias->x = brange * (vmax.x - vmin.x) + vmin.x;
+   bias->y = brange * (vmax.y - vmin.y) + vmin.y;
+   bias->z = brange * (vmax.z - vmin.z) + vmin.z;
+   scale->x = (vmax.x - vmin.x) / srange;
+   scale->y = (vmax.y - vmin.y) / srange;
+   scale->z = (vmax.z - vmin.z) / srange;
+}
+
+/* \brief convert import vertex data to V3S */
+static void _glhckGeometryConvertV3S(const glhckImportVertexData *import, int memb, void *out, glhckVector3f *bias, glhckVector3f *scale)
+{
+   const float srange = USHRT_MAX - 1.0f;
+   const float brange = SHRT_MAX / srange;
+   int i;
+   glhckVector3f vmin, vmax;
+   glhckVertexData3s *internal;
+   CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
+   internal = out;
+
+   _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
+
+   /* center geometry */
+   for (i = 0; i < memb; ++i) {
+      internal[i].vertex.x = floorf(((import[i].vertex.x - vmin.x) / (vmax.x - vmin.x)) * USHRT_MAX - SHRT_MAX + 0.5f);
+      internal[i].vertex.y = floorf(((import[i].vertex.y - vmin.y) / (vmax.y - vmin.y)) * USHRT_MAX - SHRT_MAX + 0.5f);
+      internal[i].vertex.z = floorf(((import[i].vertex.z - vmin.z) / (vmax.z - vmin.z)) * USHRT_MAX - SHRT_MAX + 0.5f);
+      internal[i].normal.x = import[i].normal.x * SHRT_MAX;
+      internal[i].normal.y = import[i].normal.y * SHRT_MAX;
+      internal[i].normal.z = import[i].normal.z * SHRT_MAX;
+      internal[i].coord.x = import[i].coord.x * SHRT_MAX;
+      internal[i].coord.y = import[i].coord.y * SHRT_MAX;
+      memcpy(&internal[i].color, &import[i].color, sizeof(glhckColorb));
+   }
+
+   /* fix bias after centering */
+   bias->x = brange * (vmax.x - vmin.x) + vmin.x;
+   bias->y = brange * (vmax.y - vmin.y) + vmin.y;
+   bias->z = brange * (vmax.z - vmin.z) + vmin.z;
+   scale->x = (vmax.x - vmin.x) / srange;
+   scale->y = (vmax.y - vmin.y) / srange;
+   scale->z = (vmax.z - vmin.z) / srange;
+}
+
+/* \brief convert import vertex data to V2F */
+static void _glhckGeometryConvertV2F(const glhckImportVertexData *import, int memb, void *out, glhckVector3f *bias, glhckVector3f *scale)
+{
+   int i;
+   glhckVector3f vmin, vmax;
+   glhckVertexData2f *internal;
+   CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
+   internal = out;
+
+   _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
+
+   /* center geometry */
+   for (i = 0; i < memb; ++i) {
+      memcpy(&internal[i].normal, &import[i].normal, sizeof(glhckVector3f));
+      memcpy(&internal[i].coord, &import[i].coord, sizeof(glhckVector2f));
+      memcpy(&internal[i].color, &import[i].color, sizeof(glhckColorb));
+      internal[i].vertex.x = import[i].vertex.x + 0.5f * (vmax.x - vmin.x) + vmin.x;
+      internal[i].vertex.y = import[i].vertex.y + 0.5f * (vmax.y - vmin.y) + vmin.y;
+   }
+
+   /* fix bias after centering */
+   bias->x = 0.5f * (vmax.x - vmin.x) + vmin.x;
+   bias->y = 0.5f * (vmax.y - vmin.y) + vmin.y;
+   bias->z = 0.5f * (vmax.z - vmin.z) + vmin.z;
+}
+
+/* \brief convert import vertex data to V3F */
+static void _glhckGeometryConvertV3F(const glhckImportVertexData *import, int memb, void *out, glhckVector3f *bias, glhckVector3f *scale)
+{
+   int i;
+   glhckVector3f vmin, vmax;
+   glhckVertexData3f *internal;
+   CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
+   assert(sizeof(glhckImportVertexData) == sizeof(glhckVertexData3f));
+   internal = out;
+
+   _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
+   memcpy(internal, import, memb * sizeof(glhckVertexData3f));
+
+   /* center geometry */
+   for (i = 0; i < memb; ++i) {
+      internal[i].vertex.x -= 0.5f * (vmax.x - vmin.x) + vmin.x;
+      internal[i].vertex.y -= 0.5f * (vmax.y - vmin.y) + vmin.y;
+      internal[i].vertex.z -= 0.5f * (vmax.z - vmin.z) + vmin.z;
+   }
+
+   /* fix bias after centering */
+   bias->x = 0.5f * (vmax.x - vmin.x) + vmin.x;
+   bias->y = 0.5f * (vmax.y - vmin.y) + vmin.y;
+   bias->z = 0.5f * (vmax.z - vmin.z) + vmin.z;
+}
+
+/* \brief convert import index data to IUB */
+static void _glhckGeometryConvertIUB(const glhckImportIndexData *import, int memb, void *out)
+{
+   int i;
+   unsigned char *internal;
+   CALL(0, "%p, %d, %p", import, memb, out);
+   internal = out;
+   for (i = 0; i < memb; ++i) internal[i] = import[i];
+}
+
+/* \brief convert import index data to IUS */
+static void _glhckGeometryConvertIUS(const glhckImportIndexData *import, int memb, void *out)
+{
+   int i;
+   unsigned short *internal;
+   CALL(0, "%p, %d, %p", import, memb, out);
+   internal = out;
+   for (i = 0; i < memb; ++i) internal[i] = import[i];
+}
+
+/* \brief convert import index data to IUI */
+static void _glhckGeometryConvertIUI(const glhckImportIndexData *import, int memb, void *out)
+{
+   CALL(0, "%p, %d, %p", import, memb, out);
+   assert(sizeof(glhckImportIndexData) == sizeof(unsigned int));
+   memcpy(out, import, memb * GLHCKIT(GLHCK_IDX_UINT)->size);
+}
+
+#define GLHCK_API_CHECK(x) \
+if (!api->x) DEBUG(GLHCK_DBG_ERROR, "-!- \1missing geometry API function: %s", __STRING(x))
+
+/* \brief add new internal vertex type */
+int glhckGeometryAddVertexType(const glhckVertexTypeFunctionMap *api, const glhckDataType dataType[4], char memb[4], size_t offset[4], size_t size)
+{
+   void *tmp;
+   unsigned int i;
+   size_t oldCount = GLHCKW()->numVertexTypes;
+   size_t newCount = GLHCKW()->numVertexTypes + 1;
+   __GLHCKvertexType vertexType;
+   CALL(0, "%p, %p, %zu", dataType, memb, size);
+
+   GLHCK_API_CHECK(convert);
+   GLHCK_API_CHECK(minMax);
+   GLHCK_API_CHECK(transform);
+
+   for (i = 0; i < GLHCKW()->numVertexTypes; ++i) {
+      if (!memcmp(GLHCKW()->vertexType[i].dataType, dataType, 4 * sizeof(glhckDataType)) &&
+          !memcmp(GLHCKW()->vertexType[i].memb, memb, 4)) {
+         DEBUG(GLHCK_DBG_WARNING, "This vertexType already exists!");
+         RET(0, "%d", i);
+         return i;
+      }
+   }
+
+   if (newCount >= GLHCK_VTX_AUTO)
+      goto fail;
+
+   if (!(tmp = _glhckRealloc(GLHCKW()->vertexType, oldCount, newCount, sizeof(__GLHCKvertexType))))
+      goto fail;
+
+   for (i = 0; i < 4; ++i) _glhckDataTypeAttributes(dataType[i], &vertexType.msize[i], &vertexType.max[i], &vertexType.normalized[i]);
+   vertexType.normalized[0] = 0; /* vertices are never normalized */
+   memcpy(&vertexType.api, api, sizeof(glhckVertexTypeFunctionMap));
+   memcpy(vertexType.offset, offset, 4 * sizeof(size_t));
+   memcpy(vertexType.dataType, dataType, 4 * sizeof(glhckDataType));
+   memcpy(vertexType.memb, memb, 4);
+   vertexType.size = size;
+
+   GLHCKW()->vertexType = tmp;
+   GLHCKW()->numVertexTypes += 1;
+   memcpy(&GLHCKW()->vertexType[newCount-1], &vertexType, sizeof(__GLHCKvertexType));
+
+   RET(0, "%zu", newCount-1);
+   return newCount-1;
+
+fail:
+   RET(0, "%d", -1);
+   return -1;
+}
+
+/* \brief add new internal index type */
+int glhckGeometryAddIndexType(const glhckIndexTypeFunctionMap *api, glhckDataType dataType)
+{
+   void *tmp;
+   unsigned int i;
+   size_t oldCount = GLHCKW()->numIndexTypes;
+   size_t newCount = GLHCKW()->numIndexTypes + 1;
+   __GLHCKindexType indexType;
+   CALL(0, "%d", dataType);
+
+   GLHCK_API_CHECK(convert);
+
+   for (i = 0; i < GLHCKW()->numIndexTypes; ++i) {
+      if (GLHCKW()->indexType[i].dataType == dataType) {
+         DEBUG(GLHCK_DBG_WARNING, "This indexType already exists!");
+         RET(0, "%d", i);
+         return i;
+      }
+   }
+
+   if (newCount >= GLHCK_IDX_AUTO)
+      goto fail;
+
+   if (!(tmp = _glhckRealloc(GLHCKW()->indexType, oldCount, newCount, sizeof(__GLHCKindexType))))
+      goto fail;
+
+   _glhckDataTypeAttributes(dataType, &indexType.size, &indexType.max, NULL);
+   memcpy(&indexType.api, api, sizeof(glhckIndexTypeFunctionMap));
+   indexType.dataType = dataType;
+
+   GLHCKW()->indexType = tmp;
+   GLHCKW()->numIndexTypes += 1;
+   memcpy(&GLHCKW()->indexType[newCount-1], &indexType, sizeof(__GLHCKindexType));
+
+   RET(0, "%zu", newCount-1);
+   return newCount-1;
+
+fail:
+   RET(0, "%d", -1);
+   return -1;
+}
+
+#undef GLHCK_API_CHECK
+
+/* \brief init internal vertex/index types */
+int _glhckGeometryInit(void)
+{
+   TRACE(0);
+
+   /* UINT */
+   {
+      glhckIndexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckIndexTypeFunctionMap));
+      map.convert = _glhckGeometryConvertIUI;
+      if (glhckGeometryAddIndexType(&map, GLHCK_UNSIGNED_INT) != GLHCK_IDX_UINT)
+         goto fail;
+   }
+
+   /* USHRT */
+   {
+      glhckIndexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckIndexTypeFunctionMap));
+      map.convert = _glhckGeometryConvertIUS;
+      if (glhckGeometryAddIndexType(&map, GLHCK_UNSIGNED_SHORT) != GLHCK_IDX_USHRT)
+         goto fail;
+   }
+
+   /* UBYTE */
+   {
+      glhckIndexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckIndexTypeFunctionMap));
+      map.convert = _glhckGeometryConvertIUB;
+      if (glhckGeometryAddIndexType(&map, GLHCK_UNSIGNED_BYTE) != GLHCK_IDX_UBYTE)
+         goto fail;
+   }
+
+   /* V3F */
+   {
+      size_t offset[4] = {
+         offsetof(glhckVertexData3f, vertex),
+         offsetof(glhckVertexData3f, normal),
+         offsetof(glhckVertexData3f, coord),
+         offsetof(glhckVertexData3f, color)
+      };
+      char memb[4] = { 3, 3, 2, 4 };
+      glhckDataType dataType[4] = { GLHCK_FLOAT, GLHCK_FLOAT, GLHCK_FLOAT, GLHCK_UNSIGNED_BYTE };
+      glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
+      map.convert = _glhckGeometryConvertV3F;
+      map.minMax = _glhckGeometryMinMaxV3F;
+      map.transform = _glhckGeometryTransformV3F;
+      if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData3f)) != GLHCK_VTX_V3F)
+         goto fail;
+   }
+
+   /* V2F */
+   {
+      size_t offset[4] = {
+         offsetof(glhckVertexData2f, vertex),
+         offsetof(glhckVertexData2f, normal),
+         offsetof(glhckVertexData2f, coord),
+         offsetof(glhckVertexData2f, color)
+      };
+      char memb[4] = { 2, 3, 2, 4 };
+      glhckDataType dataType[4] = { GLHCK_FLOAT, GLHCK_FLOAT, GLHCK_FLOAT, GLHCK_UNSIGNED_BYTE };
+      glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
+      map.convert = _glhckGeometryConvertV2F;
+      map.minMax = _glhckGeometryMinMaxV2F;
+      map.transform = _glhckGeometryTransformV2F;
+      if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData2f)) != GLHCK_VTX_V2F)
+         goto fail;
+   }
+
+   /* V3S */
+   {
+      size_t offset[4] = {
+         offsetof(glhckVertexData3s, vertex),
+         offsetof(glhckVertexData3s, normal),
+         offsetof(glhckVertexData3s, coord),
+         offsetof(glhckVertexData3s, color)
+      };
+      char memb[4] = { 3, 3, 2, 4 };
+      glhckDataType dataType[4] = { GLHCK_SHORT, GLHCK_SHORT, GLHCK_SHORT, GLHCK_UNSIGNED_BYTE };
+      glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
+      map.convert = _glhckGeometryConvertV3S;
+      map.minMax = _glhckGeometryMinMaxV3S;
+      map.transform = _glhckGeometryTransformV3S;
+      if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData3s)) != GLHCK_VTX_V3S)
+         goto fail;
+   }
+
+   /* V2S */
+   {
+      size_t offset[4] = {
+         offsetof(glhckVertexData2s, vertex),
+         offsetof(glhckVertexData2s, normal),
+         offsetof(glhckVertexData2s, coord),
+         offsetof(glhckVertexData2s, color)
+      };
+      char memb[4] = { 2, 3, 2, 4 };
+      glhckDataType dataType[4] = { GLHCK_SHORT, GLHCK_SHORT, GLHCK_SHORT, GLHCK_UNSIGNED_BYTE };
+      glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
+      map.convert = _glhckGeometryConvertV2S;
+      map.minMax = _glhckGeometryMinMaxV2S;
+      map.transform = _glhckGeometryTransformV2S;
+      if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData2s)) != GLHCK_VTX_V2S)
+         goto fail;
+   }
+
+   /* V3B */
+   {
+      size_t offset[4] = {
+         offsetof(glhckVertexData3b, vertex),
+         offsetof(glhckVertexData3b, normal),
+         offsetof(glhckVertexData3b, coord),
+         offsetof(glhckVertexData3b, color)
+      };
+      char memb[4] = { 3, 3, 2, 4 };
+      glhckDataType dataType[4] = { GLHCK_BYTE, GLHCK_SHORT, GLHCK_SHORT, GLHCK_UNSIGNED_BYTE };
+      glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
+      map.convert = _glhckGeometryConvertV3B;
+      map.minMax = _glhckGeometryMinMaxV3B;
+      map.transform = _glhckGeometryTransformV3B;
+      if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData3b)) != GLHCK_VTX_V3B)
+         goto fail;
+   }
+
+   /* V2B */
+   {
+      size_t offset[4] = {
+         offsetof(glhckVertexData2b, vertex),
+         offsetof(glhckVertexData2b, normal),
+         offsetof(glhckVertexData2b, coord),
+         offsetof(glhckVertexData2b, color)
+      };
+      char memb[4] = { 2, 3, 2, 4 };
+      glhckDataType dataType[4] = { GLHCK_BYTE, GLHCK_SHORT, GLHCK_SHORT, GLHCK_UNSIGNED_BYTE };
+      glhckVertexTypeFunctionMap map;
+      memset(&map, 0, sizeof(glhckVertexTypeFunctionMap));
+      map.convert = _glhckGeometryConvertV2B;
+      map.minMax = _glhckGeometryMinMaxV2B;
+      map.transform = _glhckGeometryTransformV2B;
+      if (glhckGeometryAddVertexType(&map, dataType, memb, offset, sizeof(glhckVertexData2b)) != GLHCK_VTX_V2B)
+         goto fail;
+   }
+
+   return RETURN_OK;
+
+fail:
+   RET(0, "%d", RETURN_FAIL);
+   DEBUG(GLHCK_DBG_ERROR, "Not enough memory to allocate internal vertex types, going to fail now!");
+   return RETURN_FAIL;
+}
+
+/* \brief destroy internal vertex/index types */
+void _glhckGeometryTerminate(void)
+{
+   TRACE(0);
+   IFDO(_glhckFree, GLHCKW()->indexType);
+   GLHCKW()->numIndexTypes = 0;
+   IFDO(_glhckFree, GLHCKW()->vertexType);
+   GLHCKW()->numVertexTypes = 0;
 }
 
 /* \brief free geometry's vertex data */
 static void _glhckGeometryFreeVertices(glhckGeometry *object)
 {
-   IFDO(_glhckFree, object->vertices.any);
-   object->vertexType   = GLHCK_VERTEX_NONE;
+   IFDO(_glhckFree, object->vertices);
+   object->vertexType   = GLHCK_VTX_AUTO;
    object->vertexCount  = 0;
    object->textureRange = 1;
 }
 
 /* \brief assign vertices to object internally */
-static void _glhckGeometrySetVertices(glhckGeometry *object,
-      glhckGeometryVertexType type, void *data, int memb)
+static void _glhckGeometrySetVertices(glhckGeometry *object, unsigned char type, void *data, int memb)
 {
-   unsigned short textureRange = 1;
-
-   /* free old vertices */
    _glhckGeometryFreeVertices(object);
-
-   /* assign vertices depending on type */
-   switch (type) {
-      case GLHCK_VERTEX_V3B:
-         object->vertices.v3b = (glhckVertexData3b*)data;
-         textureRange = GLHCK_SHORT_CMAGIC;
-         break;
-
-      case GLHCK_VERTEX_V2B:
-         object->vertices.v2b = (glhckVertexData2b*)data;
-         textureRange = GLHCK_SHORT_CMAGIC;
-         break;
-
-      case GLHCK_VERTEX_V3S:
-         object->vertices.v3s = (glhckVertexData3s*)data;
-         textureRange = GLHCK_SHORT_CMAGIC;
-         break;
-
-      case GLHCK_VERTEX_V2S:
-         object->vertices.v2s = (glhckVertexData2s*)data;
-         textureRange = GLHCK_SHORT_CMAGIC;
-         break;
-
-      case GLHCK_VERTEX_V3FS:
-         object->vertices.v3fs = (glhckVertexData3fs*)data;
-         textureRange = GLHCK_SHORT_CMAGIC;
-         break;
-
-      case GLHCK_VERTEX_V2FS:
-         object->vertices.v2fs = (glhckVertexData2fs*)data;
-         textureRange = GLHCK_SHORT_CMAGIC;
-         break;
-
-      case GLHCK_VERTEX_V3F:
-         object->vertices.v3f = (glhckVertexData3f*)data;
-         break;
-
-      case GLHCK_VERTEX_V2F:
-         object->vertices.v2f = (glhckVertexData2f*)data;
-         break;
-
-      default:
-         assert(0 && "NOT IMPLEMENTED!");
-         break;
-   }
-
-   /* set vertex type */
+   object->vertices     = data;
    object->vertexType   = type;
    object->vertexCount  = memb;
-   object->textureRange = textureRange;
+   object->textureRange = GLHCKVT(type)->max[2];
 }
 
 /* \brief free indices from object */
 static void _glhckGeometryFreeIndices(glhckGeometry *object)
 {
    /* set index type to none */
-   IFDO(_glhckFree, object->indices.any);
-   object->indexType  = GLHCK_INDEX_NONE;
+   IFDO(_glhckFree, object->indices);
+   object->indexType  = GLHCK_IDX_AUTO;
    object->indexCount = 0;
 }
 
 /* \brief assign indices to object internally */
-static void _glhckGeometrySetIndices(glhckGeometry *object,
-      glhckGeometryIndexType type, void *data, int memb)
+static void _glhckGeometrySetIndices(glhckGeometry *object, unsigned char type, void *data, int memb)
 {
-   /* free old indices */
    _glhckGeometryFreeIndices(object);
-
-   /* assign indices depending on type */
-   switch (type) {
-      case GLHCK_INDEX_BYTE:
-         object->indices.ivb = (glhckIndexb*)data;
-         break;
-
-      case GLHCK_INDEX_SHORT:
-         object->indices.ivs = (glhckIndexs*)data;
-         break;
-
-      case GLHCK_INDEX_INTEGER:
-         object->indices.ivi = (glhckIndexi*)data;
-         break;
-
-      default:
-         assert(0 && "NOT IMPLEMENTED!");
-         break;
-   }
-
-   /* set index type */
+   object->indices    = data;
    object->indexType  = type;
    object->indexCount = memb;
 }
 
 /* \brief insert vertices into object */
-int _glhckGeometryInsertVertices(
-      glhckGeometry *object, int memb,
-      glhckGeometryVertexType type,
-      const glhckImportVertexData *vertices)
+int _glhckGeometryInsertVertices(glhckGeometry *object, int memb, unsigned char type, const glhckImportVertexData *vertices)
 {
    void *data = NULL;
-   glhckVertexData vd;
-   CALL(0, "%p, %d, %d, %p", object, memb, type, vertices);
+   CALL(0, "%p, %d, %u, %p", object, memb, type, vertices);
    assert(object);
 
    /* check vertex type */
    type = _glhckGeometryCheckVertexType(type);
 
    /* check vertex precision conflicts */
-   if ((unsigned int)memb > glhckIndexTypeMaxPrecision(object->indexType))
+   if (object->indexType != GLHCK_IDX_AUTO &&
+      (glhckImportIndexData)memb > GLHCKW()->indexType[object->indexType].max)
       goto bad_precision;
 
-   /* allocate depending on type */
-   switch (type) {
-      case GLHCK_VERTEX_V3B:
-         data = vd.v3b = _glhckMalloc(memb * sizeof(glhckVertexData3b));
-         break;
-
-      case GLHCK_VERTEX_V2B:
-         data = vd.v2b = _glhckMalloc(memb * sizeof(glhckVertexData2b));
-         break;
-
-      case GLHCK_VERTEX_V3S:
-         data = vd.v3s = _glhckMalloc(memb * sizeof(glhckVertexData3s));
-         break;
-
-      case GLHCK_VERTEX_V2S:
-         data = vd.v2s = _glhckMalloc(memb * sizeof(glhckVertexData2s));
-         break;
-
-       case GLHCK_VERTEX_V3FS:
-         data = vd.v3fs = _glhckMalloc(memb * sizeof(glhckVertexData3fs));
-         break;
-
-      case GLHCK_VERTEX_V2FS:
-         data = vd.v2fs = _glhckMalloc(memb * sizeof(glhckVertexData2fs));
-         break;
-
-      case GLHCK_VERTEX_V3F:
-         data = vd.v3f = _glhckMalloc(memb * sizeof(glhckVertexData3f));
-         break;
-
-      case GLHCK_VERTEX_V2F:
-         data = vd.v2f = _glhckMalloc(memb * sizeof(glhckVertexData2f));
-         break;
-
-      default:
-         assert(0 && "NOT IMPLEMNTED");
-         break;
-   }
-   if (!data) goto fail;
+   /* allocate vertex data */
+   if (!(data = _glhckMalloc(memb * GLHCKW()->vertexType[type].size)))
+      goto fail;
 
    /* convert and assign */
-   _glhckConvertVertexData(type, vd, vertices, memb, &object->bias, &object->scale);
+   memset(&object->bias, 0, sizeof(glhckVector3f));
+   object->scale.x = object->scale.y = object->scale.z = 1.0f;
+   GLHCKVT(type)->api.convert(vertices, memb, data, &object->bias, &object->scale);
    _glhckGeometrySetVertices(object, type, data, memb);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 bad_precision:
-   DEBUG(GLHCK_DBG_ERROR, "Internal indices precision is %s, however there are more vertices\n"
+   DEBUG(GLHCK_DBG_ERROR, "Internal indices precision is %zu, however there are more vertices\n"
                           "in geometry(%p) than index can hold.",
-                          glhckIndexTypeString(object->indexType),
+                          GLHCKIT(object->indexType)->max,
                           object);
 fail:
    RET(0, "%d", RETURN_FAIL);
@@ -500,54 +944,34 @@ fail:
 }
 
 /* \brief insert index data into object */
-int _glhckGeometryInsertIndices(
-      glhckGeometry *object, int memb,
-      glhckGeometryIndexType type,
-      const glhckImportIndexData *indices)
+int _glhckGeometryInsertIndices(glhckGeometry *object, int memb, unsigned char type, const glhckImportIndexData *indices)
 {
    void *data = NULL;
-   glhckIndexData id;
-   CALL(0, "%p, %d, %d, %p", object, memb, type, indices);
+   CALL(0, "%p, %d, %u, %p", object, memb, type, indices);
    assert(object);
 
    /* check index type */
-   type = _glhckGeometryCheckIndexType(indices, memb, type);
+   type = _glhckGeometryCheckIndexType(type, indices, memb);
 
    /* check vertex precision conflicts */
-   if ((unsigned int)object->vertexCount > glhckIndexTypeMaxPrecision(object->indexType))
+   if ((glhckImportIndexData)object->vertexCount > GLHCKIT(type)->max)
       goto bad_precision;
 
-   /* allocate depending on type */
-   switch (type) {
-      case GLHCK_INDEX_BYTE:
-         data = id.ivb = _glhckMalloc(memb * sizeof(glhckIndexb));
-         break;
-
-      case GLHCK_INDEX_SHORT:
-         data = id.ivs = _glhckMalloc(memb * sizeof(glhckIndexs));
-         break;
-
-      case GLHCK_INDEX_INTEGER:
-         data = id.ivi = _glhckMalloc(memb * sizeof(glhckIndexi));
-         break;
-
-      default:
-         assert(0 && "NOT IMPLEMENTED!");
-         break;
-   }
-   if (!data) goto fail;
+   /* allocate index data */
+   if (!(data = _glhckMalloc(memb * GLHCKIT(type)->size)))
+      goto fail;
 
    /* convert and assign */
-   _glhckConvertIndexData(type, id, indices, memb);
+   GLHCKIT(type)->api.convert(indices, memb, data);
    _glhckGeometrySetIndices(object, type, data, memb);
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 bad_precision:
-   DEBUG(GLHCK_DBG_ERROR, "Internal indices precision is %s, however there are more vertices\n"
+   DEBUG(GLHCK_DBG_ERROR, "Internal indices precision is %zu, however there are more vertices\n"
                           "in geometry(%p) than index can hold.",
-                          glhckIndexTypeString(object->indexType),
+                          GLHCKIT(type)->max,
                           object);
 fail:
    RET(0, "%d", RETURN_FAIL);
@@ -562,12 +986,8 @@ glhckGeometry* _glhckGeometryNew(void)
    if (!(object = _glhckCalloc(1, sizeof(glhckGeometry))))
       return NULL;
 
-   /* default geometry type */
    object->type = GLHCK_TRIANGLE_STRIP;
-
-   /* default scale */
    object->scale.x = object->scale.y = object->scale.z = 1.0f;
-
    return object;
 }
 
@@ -580,11 +1000,8 @@ glhckGeometry* _glhckGeometryCopy(glhckGeometry *src)
    if (!(object = _glhckCopy(src, sizeof(glhckGeometry))))
       return NULL;
 
-   if (src->vertices.any)
-      object->vertices.any =_glhckCopy(src->vertices.any, src->vertexCount * glhckVertexTypeElementSize(src->vertexType));
-   if (src->indices.any)
-      object->indices.any = _glhckCopy(src->indices.any, src->indexCount * glhckIndexTypeElementSize(src->indexType));
-
+   if (src->vertices) object->vertices =_glhckCopy(src->vertices, src->vertexCount * GLHCKVT(object->vertexType)->size);
+   if (src->indices) object->indices = _glhckCopy(src->indices, src->indexCount * GLHCKIT(object->indexType)->size);
    return object;
 }
 
@@ -601,507 +1018,24 @@ void _glhckGeometryFree(glhckGeometry *object)
  * public api
  ***/
 
-/* \brief get element size for index type */
-GLHCKAPI size_t glhckIndexTypeElementSize(glhckGeometryIndexType type)
+/* \brief calculate bounding box of the geometry */
+GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *object, kmAABB *aabb)
 {
-   switch (type) {
-      case GLHCK_INDEX_BYTE:
-         return sizeof(glhckIndexb);
-
-      case GLHCK_INDEX_SHORT:
-         return sizeof(glhckIndexs);
-
-      case GLHCK_INDEX_INTEGER:
-         return sizeof(glhckIndexi);
-
-      default:break;
-   }
-
-   /* default */
-   return 0;
-}
-
-/* \brief return the maxium index precision allowed for object */
-GLHCKAPI glhckIndexi glhckIndexTypeMaxPrecision(glhckGeometryIndexType type)
-{
-   switch (type) {
-      case GLHCK_INDEX_BYTE:
-         return UCHAR_MAX;
-
-      case GLHCK_INDEX_SHORT:
-         return USHRT_MAX;
-
-      case GLHCK_INDEX_INTEGER:
-         return UINT_MAX;
-
-      default:break;
-   }
-
-   /* default */
-   return UINT_MAX;
-}
-
-/* \brief get string for index precision type */
-GLHCKAPI const char* glhckIndexTypeString(glhckGeometryIndexType type)
-{
-   switch (type) {
-      case GLHCK_INDEX_BYTE:
-         return "GLHCK_INDEX_BYTE";
-
-      case GLHCK_INDEX_SHORT:
-         return "GLHCK_INDEX_SHORT";
-
-      case GLHCK_INDEX_INTEGER:
-         return "GLHCK_INDEX_INTEGER";
-
-      default:break;
-   }
-
-   /* default */
-   return "GLHCK_INDEX_NONE";
-}
-
-/* \brief is value withing precision range? */
-GLHCKAPI int glhckIndexTypeWithinRange(unsigned int value, glhckGeometryIndexType type)
-{
-   return (value <  glhckIndexTypeMaxPrecision(type));
-}
-
-/* \brief you should feed this function the value with highest precision */
-GLHCKAPI glhckGeometryIndexType glhckIndexTypeForValue(unsigned int value)
-{
-   glhckGeometryIndexType itype = GLHCK_INDEX_INTEGER;
-   if (glhckIndexTypeWithinRange(value, GLHCK_INDEX_BYTE))
-      itype = GLHCK_INDEX_BYTE;
-   else if (glhckIndexTypeWithinRange(value, GLHCK_INDEX_SHORT))
-      itype = GLHCK_INDEX_SHORT;
-
-   return itype;
-}
-
-/* \brief get element size for vertex type */
-GLHCKAPI size_t glhckVertexTypeElementSize(glhckGeometryVertexType type)
-{
-   switch (type) {
-      case GLHCK_VERTEX_V3B:
-         return sizeof(glhckVertexData3b);
-
-      case GLHCK_VERTEX_V2B:
-         return sizeof(glhckVertexData2b);
-
-      case GLHCK_VERTEX_V3S:
-         return sizeof(glhckVertexData3s);
-
-      case GLHCK_VERTEX_V2S:
-         return sizeof(glhckVertexData2s);
-
-      case GLHCK_VERTEX_V3FS:
-         return sizeof(glhckVertexData3fs);
-
-      case GLHCK_VERTEX_V2FS:
-         return sizeof(glhckVertexData2fs);
-
-      case GLHCK_VERTEX_V3F:
-         return sizeof(glhckVertexData3f);
-
-      case GLHCK_VERTEX_V2F:
-         return sizeof(glhckVertexData2f);
-
-      default:break;
-   }
-
-   /* default */
-   return 0;
-}
-
-/* \brief get maxium precision for vertex */
-GLHCKAPI float glhckVertexTypeMaxPrecision(glhckGeometryVertexType type)
-{
-   switch (type) {
-      case GLHCK_VERTEX_V3B:
-      case GLHCK_VERTEX_V2B:
-         return CHAR_MAX;
-
-      case GLHCK_VERTEX_V3S:
-      case GLHCK_VERTEX_V2S:
-         return SHRT_MAX;
-
-      case GLHCK_VERTEX_V3FS:
-      case GLHCK_VERTEX_V2FS:
-      case GLHCK_VERTEX_V3F:
-      case GLHCK_VERTEX_V2F:
-         break;
-
-      default:break;
-   }
-
-   /* default */
-   return 0;
-}
-
-/* \brief get string for vertex precision type */
-GLHCKAPI const char* glhckVertexTypeString(glhckGeometryVertexType type)
-{
-   switch (type) {
-      case GLHCK_VERTEX_V3B:
-         return "GLHCK_VERTEX_V3B";
-
-      case GLHCK_VERTEX_V2B:
-         return "GLHCK_VERTEX_V2B";
-
-      case GLHCK_VERTEX_V3S:
-         return "GLHCK_VERTEX_V3S";
-
-      case GLHCK_VERTEX_V2S:
-         return "GLHCK_VERTEX_V2S";
-
-      case GLHCK_VERTEX_V3FS:
-         return "GLHCK_VERTEX_V3FS";
-
-      case GLHCK_VERTEX_V2FS:
-         return "GLHCK_VERTEX_V2FS";
-
-      case GLHCK_VERTEX_V3F:
-         return "GLHCK_VERTEX_V3F";
-
-      case GLHCK_VERTEX_V2F:
-         return "GLHCK_VERTEX_V2F";
-
-      default:break;
-   }
-
-   /* default */
-   return "GLHCK_VERTEX_NONE";
-}
-
-/* \brief get v2 counterpart of the vertexdata */
-GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV2Counterpart(glhckGeometryVertexType type)
-{
-   switch (type) {
-      case GLHCK_VERTEX_V3B:
-      case GLHCK_VERTEX_V2B:
-         return GLHCK_VERTEX_V2B;
-
-      case GLHCK_VERTEX_V3S:
-      case GLHCK_VERTEX_V2S:
-         return GLHCK_VERTEX_V2S;
-
-      case GLHCK_VERTEX_V3FS:
-      case GLHCK_VERTEX_V2FS:
-         return GLHCK_VERTEX_V2FS;
-
-      case GLHCK_VERTEX_V3F:
-      case GLHCK_VERTEX_V2F:
-         return GLHCK_VERTEX_V2F;
-
-      default:
-         break;
-   }
-
-   /* default */
-   return type;
-}
-
-/* \brief get v3 counterpart of the vertexdata */
-GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetV3Counterpart(glhckGeometryVertexType type)
-{
-   switch (type) {
-      case GLHCK_VERTEX_V3B:
-      case GLHCK_VERTEX_V2B:
-         return GLHCK_VERTEX_V3B;
-
-      case GLHCK_VERTEX_V3S:
-      case GLHCK_VERTEX_V2S:
-         return GLHCK_VERTEX_V3S;
-
-      case GLHCK_VERTEX_V3FS:
-      case GLHCK_VERTEX_V2FS:
-         return GLHCK_VERTEX_V3FS;
-
-      case GLHCK_VERTEX_V3F:
-      case GLHCK_VERTEX_V2F:
-         return GLHCK_VERTEX_V3F;
-
-      default:
-         break;
-   }
-
-   /* default */
-   return type;
-}
-
-/* \brief get high precision counterpart of the vertexdata */
-GLHCKAPI glhckGeometryVertexType glhckVertexTypeGetFloatingPointCounterpart(glhckGeometryVertexType type)
-{
-   switch (type) {
-      case GLHCK_VERTEX_V3S:
-      case GLHCK_VERTEX_V3B:
-         return GLHCK_VERTEX_V3F;
-
-      case GLHCK_VERTEX_V2S:
-      case GLHCK_VERTEX_V2B:
-         return GLHCK_VERTEX_V2F;
-
-      case GLHCK_VERTEX_V3FS:
-      case GLHCK_VERTEX_V2FS:
-      case GLHCK_VERTEX_V3F:
-      case GLHCK_VERTEX_V2F:
-      default:
-         break;
-   }
-
-   /* default */
-   return type;
-}
-
-/* \brief is value withing precision range? */
-GLHCKAPI int glhckVertexTypeWithinRange(float value, glhckGeometryVertexType type)
-{
-   return (value <  glhckVertexTypeMaxPrecision(type) &&
-           value > -glhckVertexTypeMaxPrecision(type));
-}
-
-/* \brief get optimal vertex type for size */
-GLHCKAPI glhckGeometryVertexType glhckVertexTypeForSize(kmScalar width, kmScalar height)
-{
-   glhckGeometryVertexType vtype = GLHCK_VERTEX_V3F;
-   if (glhckVertexTypeWithinRange(width, GLHCK_VERTEX_V3B) &&
-         glhckVertexTypeWithinRange(height, GLHCK_VERTEX_V3B))
-      vtype = GLHCK_VERTEX_V3B;
-   else if (glhckVertexTypeWithinRange(width, GLHCK_VERTEX_V3S) &&
-         glhckVertexTypeWithinRange(height, GLHCK_VERTEX_V3S))
-      vtype = GLHCK_VERTEX_V3S;
-   return vtype;
-}
-
-/* \brief does vertex type have normal? */
-GLHCKAPI int glhckVertexTypeHasNormal(glhckGeometryVertexType type)
-{
-   (void)type;
-   return 1;
-}
-
-/* \brief does vertex type have color? */
-GLHCKAPI int glhckVertexTypeHasColor(glhckGeometryVertexType type)
-{
-   (void)type;
-   return 1;
-}
-
-/* \brief retieve vertex index from index array */
-GLHCKAPI glhckIndexi glhckGeometryGetVertexIndexForIndex(glhckGeometry *object, glhckIndexi ix)
-{
-   assert(object && ix < (glhckIndexi)object->indexCount);
-   switch (object->indexType) {
-      case GLHCK_INDEX_BYTE:
-         return object->indices.ivb[ix];
-      case GLHCK_INDEX_SHORT:
-         return object->indices.ivs[ix];
-      case GLHCK_INDEX_INTEGER:
-         return object->indices.ivi[ix];
-      default:
-         break;
-   }
-   return 0;
-}
-
-/* \brief set vertex index for index */
-GLHCKAPI void glhckGeometrySetVertexIndexForIndex(glhckGeometry *object, glhckIndexi ix, glhckIndexi vertexIndex)
-{
-   assert(object && ix < (glhckIndexi)object->indexCount);
-   switch (object->indexType) {
-      case GLHCK_INDEX_BYTE:
-         object->indices.ivb[ix] = vertexIndex;
-      case GLHCK_INDEX_SHORT:
-         object->indices.ivs[ix] = vertexIndex;
-      case GLHCK_INDEX_INTEGER:
-         object->indices.ivi[ix] = vertexIndex;
-      default:
-         break;
-   }
-}
-
-/* \brief retieve internal vertex data for index */
-GLHCKAPI void glhckGeometryGetVertexDataForIndex(
-      glhckGeometry *object, glhckIndexi ix,
-      glhckVector3f *vertex, glhckVector3f *normal,
-      glhckVector2f *coord, glhckColorb *color)
-{
-   assert(object && ix < (glhckIndexi)object->vertexCount);
-   if (vertex) memset(vertex, 0, sizeof(glhckVector3f));
-   if (normal) memset(normal, 0, sizeof(glhckVector3f));
-   if (coord)  memset(coord,  0, sizeof(glhckVector2f));
-   if (color)  memset(color,  0, sizeof(glhckColorb));
-
-   switch (object->vertexType) {
-      case GLHCK_VERTEX_V3B:
-         if (vertex) { glhckSetV3(vertex, &object->vertices.v3b[ix].vertex); }
-         if (normal) { glhckSetV3(normal, &object->vertices.v3b[ix].normal); }
-         if (coord)  { glhckSetV2(coord, &object->vertices.v3b[ix].coord); }
-         if (color)  { memcpy(color, &object->vertices.v3b[ix].color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V2B:
-         if (vertex) { glhckSetV2(vertex, &object->vertices.v2b[ix].vertex); }
-         if (normal) { glhckSetV3(normal, &object->vertices.v2b[ix].normal); }
-         if (coord)  { glhckSetV2(coord, &object->vertices.v2b[ix].coord); }
-         if (color)  { memcpy(color, &object->vertices.v2b[ix].color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V3S:
-         if (vertex) { glhckSetV3(vertex, &object->vertices.v3s[ix].vertex); }
-         if (normal) { glhckSetV3(normal, &object->vertices.v3s[ix].normal); }
-         if (coord)  { glhckSetV2(coord, &object->vertices.v3s[ix].coord); }
-         if (color)  { memcpy(color, &object->vertices.v3s[ix].color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V2S:
-         if (vertex) { glhckSetV2(vertex, &object->vertices.v2s[ix].vertex); }
-         if (normal) { glhckSetV3(normal, &object->vertices.v2s[ix].normal); }
-         if (coord)  { glhckSetV2(coord, &object->vertices.v2s[ix].coord); }
-         if (color)  { memcpy(color, &object->vertices.v2s[ix].color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V3FS:
-         if (vertex) { glhckSetV3(vertex, &object->vertices.v3fs[ix].vertex); }
-         if (normal) { glhckSetV3(normal, &object->vertices.v3fs[ix].normal); }
-         if (coord)  { glhckSetV2(coord, &object->vertices.v3fs[ix].coord); }
-         if (color)  { memcpy(color, &object->vertices.v3fs[ix].color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V2FS:
-         if (vertex) { glhckSetV2(vertex, &object->vertices.v2fs[ix].vertex); }
-         if (normal) { glhckSetV3(normal, &object->vertices.v2fs[ix].normal); }
-         if (coord)  { glhckSetV2(coord, &object->vertices.v2fs[ix].coord); }
-         if (color)  { memcpy(color, &object->vertices.v2fs[ix].color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V3F:
-         if (vertex) { glhckSetV3(vertex, &object->vertices.v3f[ix].vertex); }
-         if (normal) { glhckSetV3(normal, &object->vertices.v3f[ix].normal); }
-         if (coord)  { glhckSetV2(coord, &object->vertices.v3f[ix].coord); }
-         if (color)  { memcpy(color, &object->vertices.v3f[ix].color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V2F:
-         if (vertex) { glhckSetV2(vertex, &object->vertices.v2f[ix].vertex); }
-         if (normal) { glhckSetV3(normal, &object->vertices.v2f[ix].normal); }
-         if (coord)  { glhckSetV2(coord, &object->vertices.v2f[ix].coord); }
-         if (color)  { memcpy(color, &object->vertices.v2f[ix].color, sizeof(glhckColorb)); }
-         break;
-
-      default:
-         break;
-   }
-}
-
-/* \brief set vertexdata for index */
-GLHCKAPI void glhckGeometrySetVertexDataForIndex(
-      glhckGeometry *object, glhckIndexi ix,
-      const glhckVector3f *vertex, const glhckVector3f *normal,
-      const glhckVector2f *coord, const glhckColorb *color)
-{
-   assert(ix < (glhckIndexi)object->vertexCount);
-   switch (object->vertexType) {
-      case GLHCK_VERTEX_V3B:
-         if (vertex) { glhckSetV3(&object->vertices.v3b[ix].vertex, vertex); }
-         if (normal) { glhckSetV3(&object->vertices.v3b[ix].normal, normal); }
-         if (coord)  { glhckSetV2(&object->vertices.v3b[ix].coord, coord); }
-         if (color)  { memcpy(&object->vertices.v3b[ix].color, color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V2B:
-         if (vertex) { glhckSetV2(&object->vertices.v2b[ix].vertex, vertex); }
-         if (normal) { glhckSetV3(&object->vertices.v2b[ix].normal, normal); }
-         if (coord)  { glhckSetV2(&object->vertices.v2b[ix].coord, coord); }
-         if (color)  { memcpy(&object->vertices.v2b[ix].color, color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V3S:
-         if (vertex) { glhckSetV3(&object->vertices.v3s[ix].vertex, vertex); }
-         if (normal) { glhckSetV3(&object->vertices.v3s[ix].normal, normal); }
-         if (coord)  { glhckSetV2(&object->vertices.v3s[ix].coord, coord); }
-         if (color)  { memcpy(&object->vertices.v3s[ix].color, color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V2S:
-         if (vertex) { glhckSetV2(&object->vertices.v2s[ix].vertex, vertex); }
-         if (normal) { glhckSetV3(&object->vertices.v2s[ix].normal, normal); }
-         if (coord)  { glhckSetV2(&object->vertices.v2s[ix].coord, coord); }
-         if (color)  { memcpy(&object->vertices.v2s[ix].color, color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V3FS:
-         if (vertex) { glhckSetV3(&object->vertices.v3fs[ix].vertex, vertex); }
-         if (normal) { glhckSetV3(&object->vertices.v3fs[ix].normal, normal); }
-         if (coord)  { glhckSetV2(&object->vertices.v3fs[ix].coord, coord); }
-         if (color)  { memcpy(&object->vertices.v3fs[ix].color, color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V2FS:
-         if (vertex) { glhckSetV2(&object->vertices.v2fs[ix].vertex, vertex); }
-         if (normal) { glhckSetV3(&object->vertices.v2fs[ix].normal, normal); }
-         if (coord)  { glhckSetV2(&object->vertices.v2fs[ix].coord, coord); }
-         if (color)  { memcpy(&object->vertices.v2fs[ix].color, color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V3F:
-         if (vertex) { glhckSetV3(&object->vertices.v3f[ix].vertex, vertex); }
-         if (normal) { glhckSetV3(&object->vertices.v3f[ix].normal, normal); }
-         if (coord)  { glhckSetV2(&object->vertices.v3f[ix].coord, coord); }
-         if (color)  { memcpy(&object->vertices.v3f[ix].color, color, sizeof(glhckColorb)); }
-         break;
-
-      case GLHCK_VERTEX_V2F:
-         if (vertex) { glhckSetV2(&object->vertices.v2f[ix].vertex, vertex); }
-         if (normal) { glhckSetV3(&object->vertices.v2f[ix].normal, normal); }
-         if (coord)  { glhckSetV2(&object->vertices.v2f[ix].coord, coord); }
-         if (color)  { memcpy(&object->vertices.v2f[ix].color, color, sizeof(glhckColorb)); }
-         break;
-
-      default:
-         break;
-   }
-}
-
-/* \brief calculate object's bounding box */
-GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *object, kmAABB *bb)
-{
-   int i;
-   glhckVector3f vertex;
-   glhckVector3f min, max;
-   CALL(2, "%p, %p", object, bb);
-   assert(object && bb);
-
-   glhckGeometryGetVertexDataForIndex(object, 0, &vertex, NULL, NULL, NULL);
-   glhckSetV3(&max, &vertex);
-   glhckSetV3(&min, &vertex);
-
-   /* find min and max vertices */
-   for(i = 1; i != object->vertexCount; ++i) {
-      glhckGeometryGetVertexDataForIndex(object, i, &vertex, NULL, NULL, NULL);
-      glhckMaxV3(&max, &vertex);
-      glhckMinV3(&min, &vertex);
-   }
-
-   glhckSetV3(&bb->min, &min);
-   glhckSetV3(&bb->max, &max);
+   CALL(2, "%p, %p", object, aabb);
+   assert(object && aabb);
+   GLHCKVT(object->vertexType)->api.minMax(object, (glhckVector3f*)&aabb->min, (glhckVector3f*)&aabb->max);
 }
 
 /* \brief assign indices to object */
-GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *object,
-      glhckGeometryIndexType type, const void *data, int memb)
+GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *object, unsigned char type, const void *data, int memb)
 {
    void *idata;
-   int size;
-   CALL(0, "%p, %d, %p, %d", object, type, data, memb);
+   CALL(0, "%p, %u, %p, %d", object, type, data, memb);
    assert(object);
 
    if (data) {
-      /* check index type */
-      type = _glhckGeometryCheckIndexType(data, memb, type);
-      size = memb * glhckIndexTypeElementSize(type);
-      if (!(idata = _glhckCopy(data, size)))
+      type = _glhckGeometryCheckIndexType(type, data, memb);
+      if (!(idata = _glhckCopy(data, memb * GLHCKIT(type)->size)))
          goto fail;
 
       _glhckGeometrySetIndices(object, type, idata, memb);
@@ -1118,19 +1052,15 @@ fail:
 }
 
 /* \brief assign vertices to object */
-GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *object,
-      glhckGeometryVertexType type, const void *data, int memb)
+GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *object, unsigned char type, const void *data, int memb)
 {
    void *vdata;
-   int size;
-   CALL(0, "%p, %d, %p, %d", object, type, data, memb);
+   CALL(0, "%p, %u, %p, %d", object, type, data, memb);
    assert(object);
 
    if (data) {
-      /* check vertex type */
       type = _glhckGeometryCheckVertexType(type);
-      size = memb * glhckVertexTypeElementSize(type);
-      if (!(vdata = _glhckCopy(data, size)))
+      if (!(vdata = _glhckCopy(data, memb * GLHCKVT(type)->size)))
          goto fail;
 
       _glhckGeometrySetVertices(object, type, vdata, memb);

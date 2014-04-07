@@ -87,7 +87,7 @@ void _glhckRenderDefaultProjection(int width, int height)
 {
    CALL(1, "%d, %d", width, height);
    assert(width > 0 && height > 0);
-   glhckRenderProjection2D(width, height, -100.0f, 100.0f);
+   glhckRenderProjection2D(width, height, -1000.0f, 1000.0f);
 }
 
 /***
@@ -163,7 +163,7 @@ GLHCKAPI void glhckRenderViewport(const glhckRect *viewport)
 /* \brief set renderer's viewport (int) */
 GLHCKAPI void glhckRenderViewporti(int x, int y, int width, int height)
 {
-   glhckRect viewport = {x, y, width, height};
+   const glhckRect viewport = { x, y, width, height };
    glhckRenderViewport(&viewport);
 }
 
@@ -290,6 +290,16 @@ GLHCKAPI void glhckRenderClear(unsigned int bufferBits)
    GLHCK_INITIALIZED();
    CALL(2, "%u", bufferBits);
    if (!_glhckRenderInitialized()) return;
+
+#if EMSCRIPTEN
+   /* when there is no framebuffers bound assume we are in
+    * main loop don't do clear since webgl does clear itself.
+    * XXX: document this behaviour */
+   int i;
+   for (i = 0; i < GLHCK_FRAMEBUFFER_TYPE_LAST && !GLHCKRD()->framebuffer[i]; ++i);
+   if (i == GLHCK_FRAMEBUFFER_TYPE_LAST) return;
+#endif
+
    GLHCKRA()->clear(bufferBits);
 }
 

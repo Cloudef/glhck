@@ -78,8 +78,10 @@ int main(int argc, char **argv)
 
    puts("-!- glhck init");
 
-   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_OPENGL))
+   if (!glhckDisplayCreate(WIDTH, HEIGHT, GLHCK_RENDER_OPENGL)) {
+      puts("-!- needs shaders, sorry!");
       return EXIT_FAILURE;
+   }
 
    puts("-!- glhck display create");
 
@@ -145,7 +147,7 @@ int main(int argc, char **argv)
 
    // twidth = width, theight = height;
    glhckTexture *distanceTexture = glhckTextureNew();
-   glhckTextureCreate(distanceTexture, GLHCK_TEXTURE_2D, 0, twidth, theight, 0, 0, GLHCK_RGBA, GLHCK_DATA_UNSIGNED_BYTE, 0, NULL);
+   glhckTextureCreate(distanceTexture, GLHCK_TEXTURE_2D, 0, twidth, theight, 0, 0, GLHCK_RGBA, GLHCK_UNSIGNED_BYTE, 0, NULL);
    glhckTextureParameter(distanceTexture, glhckTextureDefaultLinearParameters());
 
    glhckFramebuffer *fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER);
@@ -154,7 +156,7 @@ int main(int argc, char **argv)
    glhckFramebufferBegin(fbo);
    glhckRenderClearColorb(0,0,0,0);
    glhckRenderPass(GLHCK_PASS_TEXTURE);
-   glhckRenderClear(GLHCK_COLOR_BUFFER);
+   glhckRenderClear(GLHCK_COLOR_BUFFER_BIT);
    glhckObjectScalef(object, (float)twidth/width, (float)theight/height, 1.0f);
    glhckObjectPositionf(object, twidth/2, theight/2, 0.0f);
    glhckObjectRender(object);
@@ -199,7 +201,7 @@ int main(int argc, char **argv)
 
       /* actual swap and clear */
       glfwSwapBuffers(window);
-      glhckRenderClear(GLHCK_COLOR_BUFFER | GLHCK_DEPTH_BUFFER);
+      glhckRenderClear(GLHCK_COLOR_BUFFER_BIT | GLHCK_DEPTH_BUFFER_BIT);
 
       /* fps calc */
       if (fpsDelay < now) {
