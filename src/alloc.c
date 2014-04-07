@@ -207,7 +207,10 @@ void* __glhckRealloc(const char *channel, void *ptr, size_t omemb, size_t nmemb,
    }
 
 #ifndef NDEBUG
+   /* http://llvm.org/bugs/show_bug.cgi?id=16499 */
+#ifndef __clang_analyzer__
    trackRealloc(channel, ptr, ptr2, nmemb * size);
+#endif
 #endif
 
    RET(3, "%p", ptr2);
