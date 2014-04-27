@@ -394,4 +394,19 @@ GLHCKAPI kmRay3* glhckCameraCastRayFromPointf(glhckCamera *object, kmRay3 *pOut,
    return glhckCameraCastRayFromPoint(object, pOut, &point);
 }
 
+/* \brief calculates relative view coordinates for a point in world coordinates */
+GLHCKAPI kmVec2* glhckCameraPointViewCoordinates(glhckCamera *object, kmVec2 *pOut, const kmVec3 *point)
+{
+  CALL(2, "%p, "VEC3S, pOut, VEC3(point));
+
+  if(!glhckFrustumContainsPoint(&object->frustum, point))
+    return NULL;
+
+  kmVec3 p;
+  kmVec3TransformCoord(&p, point, &object->view.viewProj);
+  pOut->x = (p.x + 1)/2;
+  pOut->y = (p.y + 1)/2;
+  return pOut;
+}
+
 /* vim: set ts=8 sw=3 tw=0 :*/
