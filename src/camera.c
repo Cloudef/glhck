@@ -399,13 +399,15 @@ GLHCKAPI kmVec2* glhckCameraPointViewCoordinates(glhckCamera *object, kmVec2 *pO
 {
   CALL(2, "%p, "VEC3S, pOut, VEC3(point));
 
-  if(!glhckFrustumContainsPoint(&object->frustum, point))
+  if (!glhckFrustumContainsPoint(&object->frustum, point))
     return NULL;
 
   kmVec3 p;
   kmVec3TransformCoord(&p, point, &object->view.viewProj);
   pOut->x = (p.x + 1)/2;
   pOut->y = (p.y + 1)/2;
+  
+  RET(2, VEC2S, VEC2(pOut));
   return pOut;
 }
 
