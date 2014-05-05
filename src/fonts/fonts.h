@@ -14,7 +14,8 @@
  * 3*3+3 = 12, and the position x/y at pixel size 12 would be 12*3 = 36 = 36,36 */
 typedef struct _glhckBitmapFontInfo {
    const char *name;
-   int fontSize, ascent, descent, lineGap;
+   short fontSize;
+   int ascent, descent, lineGap;
    unsigned int columns, rows;
    glhckTextureFormat format;
    glhckDataType type;

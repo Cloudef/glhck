@@ -590,27 +590,29 @@ static void rAABBRender(const glhckObject *object)
 /* \brief render object's bones */
 static void rBonesRender(const glhckObject *object)
 {
-   unsigned int i;
-   kmMat4 bias, scale, transform;
-   kmVec3 *points;
-
-   if (!object->skinBones || !object->geometry) return;
-
-   if (!(points = _glhckMalloc(object->numSkinBones * sizeof(kmVec3))))
+   if (!object->skinBones || !object->geometry)
       return;
 
+   kmVec3 *points;
+   if (!(points = _glhckMalloc(chckArrayCount(object->skinBones) * sizeof(kmVec3))))
+      return;
+
+   kmMat4 bias, scale, transform;
    kmMat4Translation(&bias, object->geometry->bias.x, object->geometry->bias.y, object->geometry->bias.z);
    kmMat4Scaling(&scale, object->geometry->scale.x, object->geometry->scale.y, object->geometry->scale.z);
    kmMat4Inverse(&bias, &bias);
    kmMat4Inverse(&scale, &scale);
 
-   for (i = 0; i != object->numSkinBones; ++i) {
-      if (!object->skinBones[i]->bone) continue;
-      kmMat4Multiply(&transform, &bias, &object->skinBones[i]->bone->transformedMatrix);
+   glhckSkinBone *skinBone;
+   for (chckArrayIndex iter = 0; (skinBone = chckArrayIter(object->skinBones, &iter));) {
+      if (skinBone->bone)
+         continue;
+
+      kmMat4Multiply(&transform, &bias, &skinBone->bone->transformedMatrix);
       kmMat4Multiply(&transform, &scale, &transform);
-      points[i].x = transform.mat[12];
-      points[i].y = transform.mat[13];
-      points[i].z = transform.mat[14];
+      points[iter - 1].x = transform.mat[12];
+      points[iter - 1].y = transform.mat[13];
+      points[iter - 1].z = transform.mat[14];
    }
 
    GL_CALL(glPointSize(5.0f));
@@ -619,7 +621,7 @@ static void rBonesRender(const glhckObject *object)
    glhckShaderUniform(GLHCKRD()->shader, "GlhckModel", 1, (GLfloat*)&object->view.matrix);
    GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 3, GL_FLOAT, 0, 0, &points[0]));
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1, &((GLfloat[]){255,0,0,255}));
-   GL_CALL(glDrawArrays(GL_POINTS, 0, object->numSkinBones));
+   GL_CALL(glDrawArrays(GL_POINTS, 0, chckArrayCount(object->skinBones)));
    GL_CALL(glEnable(GL_DEPTH_TEST));
 
    _glhckFree(points);
@@ -821,7 +823,6 @@ static void rObjectRender(const glhckObject *object)
 /* \brief render text */
 static void rTextRender(const glhckText *text)
 {
-   __GLHCKtextTexture *texture;
    CALL(2, "%p", text);
 
    if (!GL_HAS_STATE(GL_STATE_OVERDRAW)) {
@@ -880,29 +881,30 @@ static void rTextRender(const glhckText *text)
    glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.Diffuse", 1,
          &((GLfloat[]){diffuse.r, diffuse.g, diffuse.b, diffuse.a}));
 
-   for (texture = text->textureCache; texture; texture = texture->next) {
-      if (!texture->geometry.vertexCount)
+   __GLHCKtextTexture *t;
+   for (chckPoolIndex iter = 0; (t = chckPoolIter(text->textures, &iter));) {
+      if (!t->geometry.vertexCount)
          continue;
 
-      if (GL_HAS_STATE(GL_STATE_TEXTURE)) glhckTextureBind(texture->texture);
-      glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureScale", 1, &texture->texture->internalScale);
+      if (GL_HAS_STATE(GL_STATE_TEXTURE))
+         glhckTextureBind(t->texture);
 
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT), 0,
-               (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
-               &texture->geometry.vertexData[0].vertex));
+      glhckShaderUniform(GLHCKRD()->shader, "GlhckMaterial.TextureScale", 1, &t->texture->internalScale);
 
-      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
-               (GLHCK_TEXT_FLOAT_PRECISION?0:1),
-               (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
-               &texture->geometry.vertexData[0].coord));
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_VERTEX, 2, (GLHCK_TEXT_FLOAT_PRECISION ? GL_FLOAT : GL_SHORT), 0,
+               (GLHCK_TEXT_FLOAT_PRECISION ? sizeof(glhckVertexData2f) : sizeof(glhckVertexData2s)),
+               &t->geometry.vertexData[0].vertex));
 
-      GL_CALL(glDrawArrays(GLHCK_TRISTRIP?GL_TRIANGLE_STRIP:GL_TRIANGLES,
-               0, texture->geometry.vertexCount));
+      GL_CALL(glVertexAttribPointer(GLHCK_ATTRIB_TEXTURE, 2, (GLHCK_TEXT_FLOAT_PRECISION ? GL_FLOAT : GL_SHORT),
+               (GLHCK_TEXT_FLOAT_PRECISION ? 0 : 1),
+               (GLHCK_TEXT_FLOAT_PRECISION ? sizeof(glhckVertexData2f) : sizeof(glhckVertexData2s)),
+               &t->geometry.vertexData[0].coord));
+
+      GL_CALL(glDrawArrays((GLHCK_TRISTRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES), 0, t->geometry.vertexCount));
    }
 
-   if (GLPOINTER()->state.frontFace != GLHCK_CCW) {
+   if (GLPOINTER()->state.frontFace != GLHCK_CCW)
       glhFrontFace(GLPOINTER()->state.frontFace);
-   }
 
    if (GL_HAS_STATE(GL_STATE_DEPTH)) {
       GL_CALL(glEnable(GL_DEPTH_TEST));
@@ -1107,14 +1109,14 @@ static void renderTerminate(void)
    TRACE(0);
 
    /* free shaders */
-   if (GLHCKW()->shader) {
+   if (GLHCKW()->shaders && chckArrayCount(GLHCKW()->shaders) > 0) {
       for (i = 0; i != GL_SHADER_LAST; ++i) {
          NULLDO(glhckShaderFree, GLPOINTER()->shader[i]);
       }
    }
 
    /* free hw buffers */
-   if (GLHCKW()->hwbuffer) {
+   if (GLHCKW()->hwbuffers && chckArrayCount(GLHCKW()->hwbuffers) > 0) {
       NULLDO(glhckHwBufferFree, GLPOINTER()->sharedUBO);
    }
 
@@ -1183,9 +1185,9 @@ void _glhckRenderOpenGL(void)
    GLHCK_RENDER_FUNC(programLink, rProgramLink);
    GLHCK_RENDER_FUNC(programDelete, glhProgramDelete);
    GLHCK_RENDER_FUNC(programUniform, glhProgramUniform);
-   GLHCK_RENDER_FUNC(programUniformBufferList, glhProgramUniformBufferList);
-   GLHCK_RENDER_FUNC(programAttributeList, glhProgramAttributeList);
-   GLHCK_RENDER_FUNC(programUniformList, glhProgramUniformList);
+   GLHCK_RENDER_FUNC(programUniformBufferPool, glhProgramUniformBufferPool);
+   GLHCK_RENDER_FUNC(programAttributePool, glhProgramAttributePool);
+   GLHCK_RENDER_FUNC(programUniformPool, glhProgramUniformPool);
    GLHCK_RENDER_FUNC(programAttachUniformBuffer, glhProgramAttachUniformBuffer);
    GLHCK_RENDER_FUNC(shaderCompile, rShaderCompile);
    GLHCK_RENDER_FUNC(shaderDelete, glhShaderDelete);

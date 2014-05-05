@@ -13,13 +13,14 @@
 /* \brief check if texture is in cache, returns reference if found */
 static glhckTexture* _glhckTextureCacheCheck(const char *file)
 {
+   size_t i;
    glhckTexture *cache;
    CALL(1, "%s", file);
 
    if (!file)
       goto nothing;
 
-   for (cache = GLHCKW()->texture; cache; cache = cache->next) {
+   for (i = 0; GLHCKW()->textures && (cache = chckArrayIter(GLHCKW()->textures, &i));) {
       if (cache->file && !strcmp(cache->file, file))
          return glhckTextureRef(cache);
    }
@@ -27,37 +28,6 @@ static glhckTexture* _glhckTextureCacheCheck(const char *file)
 nothing:
    RET(1, "%p", NULL);
    return NULL;
-}
-
-/* \brief assign texture to draw list */
-void _glhckTextureInsertToQueue(glhckTexture *object)
-{
-   __GLHCKtextureQueue *textures;
-   glhckTexture **queue;
-   unsigned int i;
-
-   textures = &GLHCKRD()->textures;
-
-   /* check duplicate */
-   for (i = 0; i != textures->count; ++i)
-      if (textures->queue[i] == object) return;
-
-   /* need alloc dynamically more? */
-   if (textures->allocated <= textures->count+1) {
-      queue = _glhckRealloc(textures->queue,
-            textures->allocated,
-            textures->allocated + GLHCK_QUEUE_ALLOC_STEP,
-            sizeof(glhckTexture*));
-
-      /* epic fail here */
-      if (!queue) return;
-      textures->queue = queue;
-      textures->allocated += GLHCK_QUEUE_ALLOC_STEP;
-   }
-
-   /* assign the texture to list */
-   textures->queue[textures->count] = glhckTextureRef(object);
-   textures->count++;
 }
 
 /* \brief guess unit size for texture */
@@ -230,7 +200,7 @@ GLHCKAPI glhckTexture* glhckTextureNew(void)
    object->target = GLHCK_TEXTURE_2D;
 
    /* insert to world */
-   _glhckWorldInsert(texture, object, glhckTexture*);
+   _glhckWorldAdd(&GLHCKW()->textures, object);
 
    RET(0, "%p", object);
    return object;
@@ -317,7 +287,7 @@ GLHCKAPI unsigned int glhckTextureFree(glhckTexture *object)
    IFDO(_glhckFree, object->file);
 
    /* remove from world */
-   _glhckWorldRemove(texture, object, glhckTexture*);
+   _glhckWorldRemove(&GLHCKW()->textures, object);
 
    /* free */
    NULLDO(_glhckFree, object);

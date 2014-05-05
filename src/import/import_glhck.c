@@ -455,7 +455,7 @@ static int _glhckReadOBD(const char *file, uint8_t *version, FILE *f, glhckObjec
       if (chckBufferReadString(buf, 1, &str) != RETURN_OK)
          goto fail;
 
-      if (str) {
+      if (str && params->animated) {
          bone = glhckObjectGetBone(root, str);
          _glhckFree(str);
       }

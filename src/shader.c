@@ -6,26 +6,26 @@
 /* \brief free current list of shader attributes */
 static void _glhckShaderFreeAttributes(glhckShader *object)
 {
-   _glhckShaderAttribute *a, *an;
    assert(object);
-   for (a = object->attributes; a; a = an) {
-      an = a->next;
+
+   _glhckShaderAttribute *a;
+   for (chckPoolIndex iter = 0; (a = chckPoolIter(object->attributes, &iter));)
       _glhckFree(a->name);
-      _glhckFree(a);
-   }
+
+   IFDO(chckPoolFree, object->attributes);
    object->attributes = NULL;
 }
 
 /* \brief free current list of shader uniforms */
 static void _glhckShaderFreeUniforms(glhckShader *object)
 {
-   _glhckShaderUniform *u, *un;
    assert(object);
-   for (u = object->uniforms; u; u = un) {
-      un = u->next;
+
+   _glhckShaderUniform *u;
+   for (chckPoolIndex iter = 0; (u = chckPoolIter(object->uniforms, &iter));)
       _glhckFree(u->name);
-      _glhckFree(u);
-   }
+
+   IFDO(chckPoolFree, object->uniforms);
    object->uniforms = NULL;
 }
 
@@ -39,9 +39,8 @@ static void _glhckShaderFreeUniforms(glhckShader *object)
  * NOTE: you need to free shaderObjects yourself! */
 GLHCKAPI unsigned int glhckCompileShaderObject(glhckShaderType type, const char *effectKey, const char *contentsFromMemory)
 {
-   unsigned int obj = 0;
    CALL(0, "%u, %s, %s", type, effectKey, contentsFromMemory);
-   obj = GLHCKRA()->shaderCompile(type, effectKey, contentsFromMemory);
+   unsigned int obj = GLHCKRA()->shaderCompile(type, effectKey, contentsFromMemory);
    RET(0, "%u", obj);
    return obj;
 }
@@ -98,22 +97,19 @@ GLHCKAPI glhckShader* glhckShaderNewWithShaderObjects(unsigned int vertexShader,
       goto fail;
 
    /* get uniform and attribute lists */
-   object->attributes = GLHCKRA()->programAttributeList(object->program);
-   object->uniforms   = GLHCKRA()->programUniformList(object->program);
+   object->attributes = GLHCKRA()->programAttributePool(object->program);
+   object->uniforms = GLHCKRA()->programUniformPool(object->program);
 
    _glhckShaderAttribute *a;
-   _glhckShaderUniform *u;
-   for (a = object->attributes; a; a = a->next) {
-      _glhckTrackSteal(a);
+   for (chckPoolIndex iter = 0; (a = chckPoolIter(object->attributes, &iter));)
       printf("(%s:%u) %d : %d [%s]\n", a->name, a->location, a->type, a->size, a->typeName);
-   }
-   for (u = object->uniforms; u; u = u->next) {
-      _glhckTrackSteal(u);
+
+   _glhckShaderUniform *u;
+   for (chckPoolIndex iter = 0; (u = chckPoolIter(object->uniforms, &iter));)
       printf("(%s:%u) %d : %d [%s]\n", u->name, u->location, u->type, u->size, u->typeName);
-   }
 
    /* insert to world */
-   _glhckWorldInsert(shader, object, glhckShader*);
+   _glhckWorldAdd(&GLHCKW()->shaders, object);
 
    RET(0, "%p", object);
    return object;
@@ -163,20 +159,22 @@ GLHCKAPI unsigned int glhckShaderFree(glhckShader *object)
    _glhckShaderFreeUniforms(object);
 
    /* remove from world */
-   _glhckWorldRemove(shader, object, glhckShader*);
+   _glhckWorldRemove(&GLHCKW()->shaders, object);
 
    /* free */
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief bind shader */
 GLHCKAPI void glhckShaderBind(glhckShader *object)
 {
-   if (GLHCKRD()->shader == object) return;
+   if (GLHCKRD()->shader == object)
+      return;
+
    GLHCKRA()->programBind(object?object->program:0);
    GLHCKRD()->shader = object;
 }
@@ -184,19 +182,21 @@ GLHCKAPI void glhckShaderBind(glhckShader *object)
 /* \brief set uniform to shader */
 GLHCKAPI void glhckShaderUniform(glhckShader *object, const char *uniform, int count, void *value)
 {
-   glhckShader *old;
-   _glhckShaderUniform *u;
    assert(object);
 
    /* store old shader */
-   old = GLHCKRD()->shader;
+   glhckShader *old = GLHCKRD()->shader;
 
    /* search uniform */
-   for (u = object->uniforms; u; u = u->next)
-      if (!strcmp(uniform, u->name)) break;
+   _glhckShaderUniform *u;
+   for (chckPoolIndex iter = 0; (u = chckPoolIter(object->uniforms, &iter));) {
+      if (!strcmp(uniform, u->name))
+         break;
+   }
 
    /* uniform not found */
-   if (!u) return;
+   if (!u)
+      return;
 
    /* shader isn't binded, bind it. */
    if (GLHCKRD()->shader != object)
@@ -208,20 +208,20 @@ GLHCKAPI void glhckShaderUniform(glhckShader *object, const char *uniform, int c
    GLHCKRA()->programUniform(object->program, u, count, value);
 
    /* restore old bind */
-   if (old) glhckShaderBind(old);
+   if (old)
+      glhckShaderBind(old);
 }
 
 /* \brief attach uniform buffer object to shader
  * name can be left NULL, if uniform buffer was created from shader before */
 GLHCKAPI int glhckShaderAttachHwBuffer(glhckShader *object, glhckHwBuffer *buffer, const char *name, unsigned int index)
 {
-   unsigned int location;
    assert(object && buffer);
    assert(name || buffer->name);
    assert(index != 0 && "index 0 is already taken by GLhck");
-   location = GLHCKRA()->programAttachUniformBuffer(object->program, (name?name:buffer->name), index);
+   unsigned int location = GLHCKRA()->programAttachUniformBuffer(object->program, (name ? name : buffer->name), index);
    glhckHwBufferBindRange(buffer, index, 0, buffer->size);
-   return (location?RETURN_OK:RETURN_FAIL);
+   return (location ? RETURN_OK : RETURN_FAIL);
 }
 
 /* vm: set ts=8 sw=3 tw=0 :*/

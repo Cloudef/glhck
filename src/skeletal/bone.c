@@ -21,7 +21,7 @@ GLHCKAPI glhckBone* glhckBoneNew(void)
    kmMat4Identity(&object->transformationMatrix);
 
    /* insert to world */
-   _glhckWorldInsert(bone, object, glhckBone*);
+   _glhckWorldAdd(&GLHCKW()->bones, object);
 
    RET(0, "%p", object);
    return object;
@@ -46,9 +46,6 @@ GLHCKAPI glhckBone* glhckBoneRef(glhckBone *object)
 /* \brief free bone object */
 GLHCKAPI unsigned int glhckBoneFree(glhckBone *object)
 {
-   glhckBone *b;
-   glhckSkinBone *sb;
-
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
    assert(object);
@@ -60,13 +57,20 @@ GLHCKAPI unsigned int glhckBoneFree(glhckBone *object)
    IFDO(_glhckFree, object->name);
 
    /* get rid of uncounted references */
-   for (b = GLHCKW()->bone; b; b = b->next)
-      if (b->parent == object) b->parent = NULL;
-   for (sb = GLHCKW()->skinBone; sb; sb = sb->next)
-      if (sb->bone == object) sb->bone = NULL;
+   glhckBone *b;
+   for (chckArrayIndex iter = 0; GLHCKW()->bones && (b = chckArrayIter(GLHCKW()->bones, &iter));) {
+      if (b->parent == object)
+         b->parent = NULL;
+   }
+
+   glhckSkinBone *sb;
+   for (chckArrayIndex iter = 0; GLHCKW()->skinBones && (sb = chckArrayIter(GLHCKW()->skinBones, &iter));) {
+      if (sb->bone == object)
+         sb->bone = NULL;
+   }
 
    /* remove from world */
-   _glhckWorldRemove(bone, object, glhckBone*);
+   _glhckWorldRemove(&GLHCKW()->bones, object);
 
    /* free */
    NULLDO(_glhckFree, object);

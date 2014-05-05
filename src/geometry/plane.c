@@ -140,7 +140,7 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmSc
    if (vtype == GLHCK_VTX_AUTO) {
       unsigned int i;
       kmScalar max = (texture->width>texture->height?texture->width:texture->height);
-      for (vtype = GLHCK_VTX_V2F, i = 0; i < GLHCKW()->numVertexTypes; ++i) {
+      for (vtype = GLHCK_VTX_V2F, i = 0; i < chckPoolCount(GLHCKW()->vertexTypes); ++i) {
          if (i == vtype || GLHCKVT(i)->memb[0] != 2) continue;
          if (GLHCKVT(i)->max[0] >= max && GLHCKVT(i)->max[0] < GLHCKVT(vtype)->max[0])
             vtype = i;

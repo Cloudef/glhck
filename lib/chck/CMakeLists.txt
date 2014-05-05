@@ -1,8 +1,12 @@
 # We could add_subdirectory(src) here,
 # but we only compile the tools we really need from chck
 
-PROJECT(chckBuffer)
-SET(CHCK_SRC src/buffer/buffer.c)
+PROJECT(chckGlhck)
+SET(CHCK_SRC
+   src/buffer/buffer.c
+   src/array/array.c
+   src/pool/pool.c
+   )
 
 IF (UNIX AND CMAKE_COMPILER_IS_GNUCC)
    SET(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -11,5 +15,5 @@ IF (UNIX AND CMAKE_COMPILER_IS_GNUCC)
    ENDIF ()
 ENDIF ()
 
-ADD_LIBRARY(chckBuffer ${CHCK_SRC})
-TARGET_LINK_LIBRARIES(chckBuffer)
+ADD_LIBRARY(chckGlhck ${CHCK_SRC})
+TARGET_LINK_LIBRARIES(chckGlhck)

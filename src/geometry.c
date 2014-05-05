@@ -81,7 +81,7 @@ static unsigned char _glhckGeometryCheckVertexType(unsigned char type)
 /* \brief check for valid index type  */
 static unsigned char _glhckGeometryCheckIndexType(unsigned char type, const glhckImportIndexData *indices, int memb)
 {
-   int i;
+   size_t i;
    glhckImportIndexData max;
 
 #if EMSCRIPTEN
@@ -98,8 +98,9 @@ static unsigned char _glhckGeometryCheckIndexType(unsigned char type, const glhc
    if (type != GLHCK_IDX_AUTO) return type;
 
    /* autodetect */
-   for (i = 0, max = 0; i < memb; ++i) if (max < indices[i]) max = indices[i];
-   for (type = GLHCK_IDX_UINT, i = 0; i < GLHCKW()->numIndexTypes; ++i) {
+   for (i = 0, max = 0; (int)i < memb; ++i) if (max < indices[i]) max = indices[i];
+
+   for (type = GLHCK_IDX_UINT, i = 0; i < chckPoolCount(GLHCKW()->indexTypes); ++i) {
       if (GLHCKIT(i)->max >= max && GLHCKIT(i)->max < GLHCKIT(type)->max)
          type = i;
    }
@@ -127,7 +128,7 @@ static void _glhckImportVertexDataMaxMin(const glhckImportVertexData *import, in
 /* \brief transform V2B */
 static void _glhckGeometryTransformV2B(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i, w;
+   unsigned int i;
    kmMat4 bias, biasinv, scale, scaleinv;
    glhckVertexData3b *internal = geometry->vertices;
 
@@ -144,9 +145,9 @@ static void _glhckGeometryTransformV2B(glhckGeometry *geometry, const void *bind
       kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+      glhckVertexWeight *weight;
+      for (chckPoolIndex iter = 0; (weight = chckIterPoolIter(skinBones[i]->weights, &iter));) {
          kmVec3 v1;
-         glhckVertexWeight *weight = &skinBones[i]->weights[w];
          const glhckVertexData2b *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData2b);
          glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
          kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
@@ -159,7 +160,7 @@ static void _glhckGeometryTransformV2B(glhckGeometry *geometry, const void *bind
 /* \brief transform V3B */
 static void _glhckGeometryTransformV3B(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i, w;
+   unsigned int i;
    kmMat4 bias, biasinv, scale, scaleinv;
    glhckVertexData3b *internal = geometry->vertices;
 
@@ -176,9 +177,9 @@ static void _glhckGeometryTransformV3B(glhckGeometry *geometry, const void *bind
       kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+      glhckVertexWeight *weight;
+      for (chckPoolIndex iter = 0; (weight = chckIterPoolIter(skinBones[i]->weights, &iter));) {
          kmVec3 v1;
-         glhckVertexWeight *weight = &skinBones[i]->weights[w];
          const glhckVertexData3b *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData3b);
          glhckSetV3(&v1, &bdata->vertex);
          kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
@@ -192,7 +193,7 @@ static void _glhckGeometryTransformV3B(glhckGeometry *geometry, const void *bind
 /* \brief transform V2S */
 static void _glhckGeometryTransformV2S(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i, w;
+   unsigned int i;
    kmMat4 bias, biasinv, scale, scaleinv;
    glhckVertexData2s *internal = geometry->vertices;
 
@@ -209,9 +210,9 @@ static void _glhckGeometryTransformV2S(glhckGeometry *geometry, const void *bind
       kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+      glhckVertexWeight *weight;
+      for (chckPoolIndex iter = 0; (weight = chckIterPoolIter(skinBones[i]->weights, &iter));) {
          kmVec3 v1;
-         glhckVertexWeight *weight = &skinBones[i]->weights[w];
          const glhckVertexData2s *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData2s);
          glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
          kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
@@ -224,7 +225,7 @@ static void _glhckGeometryTransformV2S(glhckGeometry *geometry, const void *bind
 /* \brief transform V3S */
 static void _glhckGeometryTransformV3S(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i, w;
+   unsigned int i;
    kmMat4 bias, biasinv, scale, scaleinv;
    glhckVertexData3s *internal = geometry->vertices;
 
@@ -241,9 +242,9 @@ static void _glhckGeometryTransformV3S(glhckGeometry *geometry, const void *bind
       kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+      glhckVertexWeight *weight;
+      for (chckPoolIndex iter = 0; (weight = chckIterPoolIter(skinBones[i]->weights, &iter));) {
          kmVec3 v1;
-         glhckVertexWeight *weight = &skinBones[i]->weights[w];
          const glhckVertexData3s *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData3s);
          glhckSetV3(&v1, &bdata->vertex);
          kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
@@ -257,7 +258,7 @@ static void _glhckGeometryTransformV3S(glhckGeometry *geometry, const void *bind
 /* \brief transform V2F */
 static void _glhckGeometryTransformV2F(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i, w;
+   unsigned int i;
    kmMat4 bias, biasinv;
    glhckVertexData2f *internal = geometry->vertices;
 
@@ -271,9 +272,9 @@ static void _glhckGeometryTransformV2F(glhckGeometry *geometry, const void *bind
       kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+      glhckVertexWeight *weight;
+      for (chckPoolIndex iter = 0; (weight = chckIterPoolIter(skinBones[i]->weights, &iter));) {
          kmVec3 v1;
-         glhckVertexWeight *weight = &skinBones[i]->weights[w];
          const glhckVertexData2f *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData2f);
          glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
          kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
@@ -286,7 +287,7 @@ static void _glhckGeometryTransformV2F(glhckGeometry *geometry, const void *bind
 /* \brief transform V3F */
 static void _glhckGeometryTransformV3F(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i, w;
+   unsigned int i;
    kmMat4 bias, biasinv;
    glhckVertexData3f *internal = geometry->vertices;
 
@@ -300,9 +301,9 @@ static void _glhckGeometryTransformV3F(glhckGeometry *geometry, const void *bind
       kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      for (w = 0; w < skinBones[i]->numWeights; ++w) {
+      glhckVertexWeight *weight;
+      for (chckPoolIndex iter = 0; (weight = chckIterPoolIter(skinBones[i]->weights, &iter));) {
          kmVec3 v1;
-         glhckVertexWeight *weight = &skinBones[i]->weights[w];
          const glhckVertexData3f *bdata = bindPose + weight->vertexIndex * sizeof(glhckVertexData3f);
          kmVec3MultiplyMat4(&v1, (kmVec3*)&bdata->vertex, &poseMatrix);
          internal[weight->vertexIndex].vertex.x += v1.x * weight->weight;
@@ -614,46 +615,38 @@ if (!api->x) DEBUG(GLHCK_DBG_ERROR, "-!- \1missing geometry API function: %s", _
 /* \brief add new internal vertex type */
 int glhckGeometryAddVertexType(const glhckVertexTypeFunctionMap *api, const glhckDataType dataType[4], char memb[4], size_t offset[4], size_t size)
 {
-   void *tmp;
    unsigned int i;
-   size_t oldCount = GLHCKW()->numVertexTypes;
-   size_t newCount = GLHCKW()->numVertexTypes + 1;
-   __GLHCKvertexType vertexType;
+   chckPoolIndex iter;
+   __GLHCKvertexType *vertexType;
    CALL(0, "%p, %p, %zu", dataType, memb, size);
+
+   for (iter = 0; (vertexType = chckPoolIter(GLHCKW()->vertexTypes, &iter));) {
+      if (!memcmp(vertexType->dataType, dataType, 4 * sizeof(glhckDataType)) &&
+          !memcmp(vertexType->memb, memb, 4)) {
+         DEBUG(GLHCK_DBG_WARNING, "This vertexType already exists!");
+         RET(0, "%zu", iter - 1);
+         return iter - 1;
+      }
+   }
 
    GLHCK_API_CHECK(convert);
    GLHCK_API_CHECK(minMax);
    GLHCK_API_CHECK(transform);
 
-   for (i = 0; i < GLHCKW()->numVertexTypes; ++i) {
-      if (!memcmp(GLHCKW()->vertexType[i].dataType, dataType, 4 * sizeof(glhckDataType)) &&
-          !memcmp(GLHCKW()->vertexType[i].memb, memb, 4)) {
-         DEBUG(GLHCK_DBG_WARNING, "This vertexType already exists!");
-         RET(0, "%d", i);
-         return i;
-      }
-   }
-
-   if (newCount >= GLHCK_VTX_AUTO)
+   if (!(vertexType = chckPoolAdd(GLHCKW()->vertexTypes, NULL, NULL)))
       goto fail;
 
-   if (!(tmp = _glhckRealloc(GLHCKW()->vertexType, oldCount, newCount, sizeof(__GLHCKvertexType))))
-      goto fail;
+   for (i = 0; i < 4; ++i) _glhckDataTypeAttributes(dataType[i], &vertexType->msize[i], &vertexType->max[i], &vertexType->normalized[i]);
+   vertexType->normalized[0] = 0; /* vertices are never normalized */
+   memcpy(&vertexType->api, api, sizeof(glhckVertexTypeFunctionMap));
+   memcpy(vertexType->offset, offset, 4 * sizeof(size_t));
+   memcpy(vertexType->dataType, dataType, 4 * sizeof(glhckDataType));
+   memcpy(vertexType->memb, memb, 4);
+   vertexType->size = size;
 
-   for (i = 0; i < 4; ++i) _glhckDataTypeAttributes(dataType[i], &vertexType.msize[i], &vertexType.max[i], &vertexType.normalized[i]);
-   vertexType.normalized[0] = 0; /* vertices are never normalized */
-   memcpy(&vertexType.api, api, sizeof(glhckVertexTypeFunctionMap));
-   memcpy(vertexType.offset, offset, 4 * sizeof(size_t));
-   memcpy(vertexType.dataType, dataType, 4 * sizeof(glhckDataType));
-   memcpy(vertexType.memb, memb, 4);
-   vertexType.size = size;
-
-   GLHCKW()->vertexType = tmp;
-   GLHCKW()->numVertexTypes += 1;
-   memcpy(&GLHCKW()->vertexType[newCount-1], &vertexType, sizeof(__GLHCKvertexType));
-
-   RET(0, "%zu", newCount-1);
-   return newCount-1;
+   i = chckPoolCount(GLHCKW()->vertexTypes) - 1;
+   RET(0, "%u", i);
+   return i;
 
 fail:
    RET(0, "%d", -1);
@@ -663,39 +656,31 @@ fail:
 /* \brief add new internal index type */
 int glhckGeometryAddIndexType(const glhckIndexTypeFunctionMap *api, glhckDataType dataType)
 {
-   void *tmp;
    unsigned int i;
-   size_t oldCount = GLHCKW()->numIndexTypes;
-   size_t newCount = GLHCKW()->numIndexTypes + 1;
-   __GLHCKindexType indexType;
+   chckPoolIndex iter;
+   __GLHCKindexType *indexType;
    CALL(0, "%d", dataType);
 
    GLHCK_API_CHECK(convert);
 
-   for (i = 0; i < GLHCKW()->numIndexTypes; ++i) {
-      if (GLHCKW()->indexType[i].dataType == dataType) {
+   for (iter = 0; (indexType = chckPoolIter(GLHCKW()->indexTypes, &iter));) {
+      if (indexType->dataType == dataType) {
          DEBUG(GLHCK_DBG_WARNING, "This indexType already exists!");
-         RET(0, "%d", i);
-         return i;
+         RET(0, "%zu", iter - 1);
+         return iter - 1;
       }
    }
 
-   if (newCount >= GLHCK_IDX_AUTO)
+   if (!(indexType = chckPoolAdd(GLHCKW()->indexTypes, NULL, NULL)))
       goto fail;
 
-   if (!(tmp = _glhckRealloc(GLHCKW()->indexType, oldCount, newCount, sizeof(__GLHCKindexType))))
-      goto fail;
+   _glhckDataTypeAttributes(dataType, &indexType->size, &indexType->max, NULL);
+   memcpy(&indexType->api, api, sizeof(glhckIndexTypeFunctionMap));
+   indexType->dataType = dataType;
 
-   _glhckDataTypeAttributes(dataType, &indexType.size, &indexType.max, NULL);
-   memcpy(&indexType.api, api, sizeof(glhckIndexTypeFunctionMap));
-   indexType.dataType = dataType;
-
-   GLHCKW()->indexType = tmp;
-   GLHCKW()->numIndexTypes += 1;
-   memcpy(&GLHCKW()->indexType[newCount-1], &indexType, sizeof(__GLHCKindexType));
-
-   RET(0, "%zu", newCount-1);
-   return newCount-1;
+   i =  chckPoolCount(GLHCKW()->indexTypes) - 1;
+   RET(0, "%u", i);
+   return i;
 
 fail:
    RET(0, "%d", -1);
@@ -708,6 +693,9 @@ fail:
 int _glhckGeometryInit(void)
 {
    TRACE(0);
+
+   GLHCKW()->indexTypes = chckPoolNew(32, 32, sizeof(__GLHCKindexType));
+   GLHCKW()->vertexTypes = chckPoolNew(32, 32, sizeof(__GLHCKvertexType));
 
    /* UINT */
    {
@@ -862,10 +850,8 @@ fail:
 void _glhckGeometryTerminate(void)
 {
    TRACE(0);
-   IFDO(_glhckFree, GLHCKW()->indexType);
-   GLHCKW()->numIndexTypes = 0;
-   IFDO(_glhckFree, GLHCKW()->vertexType);
-   GLHCKW()->numVertexTypes = 0;
+   IFDO(chckPoolFree, GLHCKW()->indexTypes);
+   IFDO(chckPoolFree, GLHCKW()->vertexTypes);
 }
 
 /* \brief free geometry's vertex data */
@@ -917,11 +903,11 @@ int _glhckGeometryInsertVertices(glhckGeometry *object, int memb, unsigned char 
 
    /* check vertex precision conflicts */
    if (object->indexType != GLHCK_IDX_AUTO &&
-      (glhckImportIndexData)memb > GLHCKW()->indexType[object->indexType].max)
+      (glhckImportIndexData)memb > GLHCKIT(object->indexType)->max)
       goto bad_precision;
 
    /* allocate vertex data */
-   if (!(data = _glhckMalloc(memb * GLHCKW()->vertexType[type].size)))
+   if (!(data = _glhckMalloc(memb * GLHCKVT(type)->size)))
       goto fail;
 
    /* convert and assign */

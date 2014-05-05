@@ -3,26 +3,23 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_SKINBONE
 
-#define PERFORM_ON_CHILDS(parent, function, ...) \
-   { unsigned int _cbc_;                                   \
-   for (_cbc_ = 0; _cbc_ != parent->numChilds; ++_cbc_)    \
-      function(parent->childs[_cbc_], ##__VA_ARGS__); }
-
 /* \brief update bone structure's transformed matrices */
-static void _glhckSkinBoneUpdateBones(glhckSkinBone **skinBones, unsigned int memb)
+static void _glhckSkinBoneUpdateBones(chckArray *skinBones)
 {
-   glhckBone *bone, *parent;
-   unsigned int n;
    assert(skinBones);
 
    /* 1. Transform bone to 0,0,0 using offset matrix so we can transform it locally
     * 2. Apply all transformations from parent bones
     * 3. We'll end up back to bone space with the transformed matrix */
 
-   for (n = 0; n != memb; ++n) {
-      if (!(bone = skinBones[n]->bone)) continue;
+   glhckSkinBone *skinBone;
+   for (chckPoolIndex iter = 0; (skinBone = chckArrayIter(skinBones, &iter));) {
+      if (!skinBone->bone)
+         continue;
+
+      glhckBone *bone = skinBone->bone;
       memcpy(&bone->transformedMatrix, &bone->transformationMatrix, sizeof(kmMat4));
-      for (parent = bone->parent; parent; parent = parent->parent)
+      for (glhckBone *parent = bone->parent; parent; parent = parent->parent)
          kmMat4Multiply(&bone->transformedMatrix, &parent->transformationMatrix, &bone->transformedMatrix);
    }
 }
@@ -31,20 +28,25 @@ static void _glhckSkinBoneUpdateBones(glhckSkinBone **skinBones, unsigned int me
 void _glhckSkinBoneTransformObject(glhckObject *object, int updateBones)
 {
    /* we are root, perform this transform on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, _glhckSkinBoneTransformObject, updateBones);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, _glhckSkinBoneTransformObject, updateBones);
 
    /* ah, we can't do this ;_; */
-   if (!object->geometry || !object->skinBones) return;
+   if (!object->geometry || !object->skinBones)
+      return;
 
    /* update bones, if requested */
-   if (updateBones) _glhckSkinBoneUpdateBones(object->skinBones, object->numSkinBones);
+   if (updateBones)
+      _glhckSkinBoneUpdateBones(object->skinBones);
 
    assert(object->zero && object->bind);
    __GLHCKvertexType *type = GLHCKVT(object->geometry->vertexType);
    memcpy(object->geometry->vertices, object->zero, object->geometry->vertexCount * type->size);
-   type->api.transform(object->geometry, object->bind, object->skinBones, object->numSkinBones);
+
+   /* type api is public, so convert to C Array */
+   size_t memb;
+   glhckSkinBone **skinBones = chckArrayToCArray(object->skinBones, &memb);
+   type->api.transform(object->geometry, object->bind, skinBones, memb);
 
    /* update bounding box for object */
    glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
@@ -68,7 +70,7 @@ GLHCKAPI glhckSkinBone* glhckSkinBoneNew(void)
    kmMat4Identity(&object->offsetMatrix);
 
    /* insert to world */
-   _glhckWorldInsert(skinBone, object, glhckSkinBone*);
+   _glhckWorldAdd(&GLHCKW()->skinBones, object);
 
    RET(0, "%p", object);
    return object;
@@ -104,7 +106,7 @@ GLHCKAPI unsigned int glhckSkinBoneFree(glhckSkinBone *object)
    glhckSkinBoneInsertWeights(object, NULL, 0);
 
    /* remove from world */
-   _glhckWorldRemove(skinBone, object, glhckSkinBone*);
+   _glhckWorldRemove(&GLHCKW()->skinBones, object);
 
    /* free */
    NULLDO(_glhckFree, object);
@@ -134,27 +136,27 @@ GLHCKAPI glhckBone* glhckSkinBoneGetBone(glhckSkinBone *object)
 /* \brief get name of skin bone (needs real bone) */
 GLHCKAPI const char* glhckSkinBoneGetName(glhckSkinBone *object)
 {
-   if (object->bone) return glhckBoneGetName(object->bone);
+   if (object->bone)
+      return glhckBoneGetName(object->bone);
    return NULL;
 }
 
 /* \brief set weights to skin bone */
 GLHCKAPI int glhckSkinBoneInsertWeights(glhckSkinBone *object, const glhckVertexWeight *weights, unsigned int memb)
 {
-   glhckVertexWeight *weightsCopy = NULL;
+   chckIterPool *pool = NULL;
    CALL(0, "%p, %p, %u", object, weights, memb);
    assert(object);
 
-   /* copy weights, if they exist */
-   if (weights && !(weightsCopy = _glhckCopy(weights, memb * sizeof(glhckVertexWeight))))
+   if (weights && memb > 0 && !(pool = chckIterPoolNewFromCArray(weights, memb, 32, sizeof(glhckVertexWeight))))
       goto fail;
 
-   IFDO(_glhckFree, object->weights);
-   object->weights = weightsCopy;
-   object->numWeights = (weightsCopy?memb:0);
+   IFDO(chckIterPoolFree, object->weights);
+   object->weights = pool;
    return RETURN_OK;
 
 fail:
+   IFDO(chckIterPoolFree, pool);
    return RETURN_FAIL;
 }
 
@@ -162,9 +164,15 @@ fail:
 GLHCKAPI const glhckVertexWeight* glhckSkinBoneWeights(glhckSkinBone *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
-   if (memb) *memb = object->numWeights;
-   RET(2, "%p", object->weights);
-   return object->weights;
+
+   size_t nmemb = 0;
+   const glhckVertexWeight *weights = (object->weights ? chckIterPoolToCArray(object->weights, &nmemb) : NULL);
+
+   if (memb)
+      *memb = nmemb;
+
+   RET(2, "%p", weights);
+   return weights;
 }
 
 /* \brief set offset matrix to skin bone */

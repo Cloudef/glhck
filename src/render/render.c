@@ -11,7 +11,7 @@
 
 /* \brief internal glhck flip matrix
  * every model matrix is multiplied with this when glhckRenderFlip(1) is used */
-const kmMat4 _glhckFlipMatrix = {
+static const kmMat4 _glhckFlipMatrix = {
    .mat = {
       1.0f,  0.0f, 0.0f, 0.0f,
       0.0f, -1.0f, 0.0f, 0.0f,
@@ -23,7 +23,13 @@ const kmMat4 _glhckFlipMatrix = {
 /* \brief is renderer initialized? */
 int _glhckRenderInitialized(void)
 {
-   return (GLHCKR()->name?1:0);
+   return (GLHCKR()->name ? 1 : 0);
+}
+
+/* \brief get flip matrix */
+const kmMat4* _glhckRenderGetFlipMatrix(void)
+{
+   return &_glhckFlipMatrix;
 }
 
 /* \brief macro and function for checking render api calls */
@@ -70,9 +76,9 @@ void _glhckRenderCheckApi(void)
    GLHCK_API_CHECK(hwBufferUnmap);
    GLHCK_API_CHECK(programLink);
    GLHCK_API_CHECK(programDelete);
-   GLHCK_API_CHECK(programUniformBufferList);
-   GLHCK_API_CHECK(programAttributeList);
-   GLHCK_API_CHECK(programUniformList);
+   GLHCK_API_CHECK(programUniformBufferPool);
+   GLHCK_API_CHECK(programAttributePool);
+   GLHCK_API_CHECK(programUniformPool);
    GLHCK_API_CHECK(programUniform);
    GLHCK_API_CHECK(programAttachUniformBuffer);
    GLHCK_API_CHECK(shaderCompile);
@@ -127,7 +133,9 @@ GLHCKAPI void glhckRenderResize(int width, int height)
    GLHCK_INITIALIZED();
    CALL(1, "%d, %d", width, height);
    assert(width > 0 && height > 0);
-   if (!_glhckRenderInitialized()) return;
+
+   if (!_glhckRenderInitialized())
+      return;
 
    /* nothing to resize */
    if (GLHCKR()->width == width && GLHCKR()->height == height)
@@ -148,7 +156,9 @@ GLHCKAPI void glhckRenderViewport(const glhckRect *viewport)
    GLHCK_INITIALIZED();
    CALL(1, RECTS, RECT(viewport));
    assert(viewport->x >= 0 && viewport->y >= 0 && viewport->w > 0 && viewport->h > 0);
-   if (!_glhckRenderInitialized()) return;
+
+   if (!_glhckRenderInitialized())
+      return;
 
    /* set viewport on render */
    GLHCKRA()->viewport(viewport->x, viewport->y, viewport->w, viewport->h);
@@ -174,14 +184,16 @@ GLHCKAPI void glhckRenderStatePush(void)
    GLHCK_INITIALIZED();
    TRACE(2);
 
-   if (!(state = _glhckMalloc(sizeof(__GLHCKrenderState))))
+   if (!GLHCKR()->state && !(GLHCKR()->state = chckIterPoolNew(32, 1, sizeof(__GLHCKrenderState))))
+      return;
+
+   if (!(state = chckIterPoolAdd(GLHCKR()->state, NULL, NULL)))
       return;
 
    memcpy(&state->pass, &GLHCKR()->pass, sizeof(__GLHCKrenderPass));
    memcpy(&state->view, &GLHCKRD()->view, sizeof(__GLHCKrenderView));
-   state->width = GLHCKR()->width; state->height = GLHCKR()->height;
-   state->next = GLHCKR()->stack;
-   GLHCKR()->stack = state;
+   state->width = GLHCKR()->width;
+   state->height = GLHCKR()->height;
 }
 
 /* \brief push 2D drawing state */
@@ -197,9 +209,9 @@ GLHCKAPI void glhckRenderStatePush2D(int width, int height, kmScalar near, kmSca
 /* \brief pop render state from stack */
 GLHCKAPI void glhckRenderStatePop(void)
 {
-   __GLHCKrenderState *state, *newState;
+   __GLHCKrenderState *state;
 
-   if (!(state = GLHCKR()->stack))
+   if (!(state = chckIterPoolGetLast(GLHCKR()->state)))
       return;
 
    glhckRenderResize(state->width, state->height);
@@ -213,9 +225,7 @@ GLHCKAPI void glhckRenderStatePop(void)
    memcpy(&GLHCKRD()->view.orthographic, &state->view.orthographic, sizeof(kmMat4));
    glhckRenderFlip(state->view.flippedProjection);
 
-   newState = (state?state->next:NULL);
-   IFDO(_glhckFree, state);
-   GLHCKR()->stack = newState;
+   chckIterPoolRemove(GLHCKR()->state, chckIterPoolCount(GLHCKR()->state) - 1);
 }
 
 /* \brief default render pass flags */
@@ -254,7 +264,10 @@ GLHCKAPI void glhckRenderTime(float time)
 {
    GLHCK_INITIALIZED();
    CALL(2, "%f", time);
-   if (!_glhckRenderInitialized()) return;
+
+   if (!_glhckRenderInitialized())
+      return;
+
    GLHCKRA()->time(time);
 }
 
@@ -263,7 +276,10 @@ GLHCKAPI void glhckRenderClearColor(const glhckColorb *color)
 {
    GLHCK_INITIALIZED();
    CALL(2, "%p", color);
-   if (!_glhckRenderInitialized()) return;
+
+   if (!_glhckRenderInitialized())
+      return;
+
    GLHCKRA()->clearColor(color);
    memcpy(&GLHCKRP()->clearColor, color, sizeof(glhckColorb));
 }
@@ -271,7 +287,7 @@ GLHCKAPI void glhckRenderClearColor(const glhckColorb *color)
 /* \brief set clear color to render */
 GLHCKAPI void glhckRenderClearColorb(char r, char g, char b, char a)
 {
-   glhckColorb color = {r,g,b,a};
+   glhckColorb color = { r, g, b, a };
    glhckRenderClearColor(&color);
 }
 
@@ -289,7 +305,9 @@ GLHCKAPI void glhckRenderClear(unsigned int bufferBits)
 {
    GLHCK_INITIALIZED();
    CALL(2, "%u", bufferBits);
-   if (!_glhckRenderInitialized()) return;
+
+   if (!_glhckRenderInitialized())
+      return;
 
 #if EMSCRIPTEN
    /* when there is no framebuffers bound assume we are in
@@ -395,7 +413,10 @@ GLHCKAPI void glhckRenderProjection(const kmMat4 *mat)
 {
    GLHCK_INITIALIZED();
    CALL(2, "%p", mat);
-   if (!_glhckRenderInitialized()) return;
+
+   if (!_glhckRenderInitialized())
+      return;
+
    GLHCKRA()->setProjection(mat);
    memcpy(&GLHCKRD()->view.projection, mat, sizeof(kmMat4));
 }
@@ -445,7 +466,10 @@ GLHCKAPI void glhckRenderView(const kmMat4 *mat)
 {
    GLHCK_INITIALIZED();
    CALL(2, "%p", mat);
-   if (!_glhckRenderInitialized()) return;
+
+   if (!_glhckRenderInitialized())
+      return;
+
    GLHCKRA()->setView(mat);
    memcpy(&GLHCKRD()->view.view, mat, sizeof(kmMat4));
 }
@@ -462,44 +486,36 @@ GLHCKAPI const kmMat4* glhckRenderGetView(void)
 /* \brief output queued objects */
 GLHCKAPI void glhckRenderPrintObjectQueue(void)
 {
-   unsigned int i;
-   __GLHCKobjectQueue *objects;
    GLHCK_INITIALIZED();
 
-   objects = &GLHCKRD()->objects;
+   glhckObject *object;
    _glhckPuts("\n--- Object Queue ---");
-   for (i = 0; i != objects->count; ++i)
-      _glhckPrintf("%u. %p", i, objects->queue[i]);
+   for (chckArrayIndex iter = 0; (object = chckArrayIter(GLHCKRD()->objects, &iter));)
+      _glhckPrintf("%zu. %p", iter - 1, object);
    _glhckPuts("--------------------");
-   _glhckPrintf("count/alloc: %u/%u", objects->count, objects->allocated);
+   _glhckPrintf("count: %zu", chckArrayCount(GLHCKRD()->objects));
    _glhckPuts("--------------------\n");
 }
 
  /* \brief output queued textures */
 GLHCKAPI void glhckRenderPrintTextureQueue(void)
 {
-   unsigned int i;
-   __GLHCKtextureQueue *textures;
    GLHCK_INITIALIZED();
 
-   textures = &GLHCKRD()->textures;
+   glhckTexture *texture;
    _glhckPuts("\n--- Texture Queue ---");
-   for (i = 0; i != textures->count; ++i)
-      _glhckPrintf("%u. %p", i, textures->queue[i]);
-   _glhckPuts("---------------------");
-   _glhckPrintf("count/alloc: %u/%u", textures->count, textures->allocated);
+   for (chckArrayIndex iter = 0; (texture = chckArrayIter(GLHCKRD()->textures, &iter));)
+      _glhckPrintf("%zu. %p", iter - 1, texture);
+   _glhckPuts("--------------------");
+   _glhckPrintf("count: %zu", chckArrayCount(GLHCKRD()->textures));
    _glhckPuts("--------------------\n");
 }
 
 /* \brief render scene */
 GLHCKAPI void glhckRender(void)
 {
-   unsigned int ti, oi, ts, os, tc, oc;
-   char kt;
-   glhckTexture *t;
    glhckObject *o;
-   __GLHCKobjectQueue *objects;
-   __GLHCKtextureQueue *textures;
+   glhckTexture *t;
    GLHCK_INITIALIZED();
    TRACE(2);
 
@@ -507,25 +523,28 @@ GLHCKAPI void glhckRender(void)
    if (!glhckInitialized() || !_glhckRenderInitialized())
       return;
 
-   objects  = &GLHCKRD()->objects;
-   textures = &GLHCKRD()->textures;
+   glhckTexture **textures = chckArrayToCArray(GLHCKRD()->textures, NULL);
+   glhckObject **objects = chckArrayToCArray(GLHCKRD()->objects, NULL);
 
    /* store counts for enumeration, +1 for untexture objects */
-   tc = textures->count+1;
-   oc = objects->count;
+   unsigned int tc = chckArrayCount(GLHCKRD()->textures) + 1;
+   unsigned int oc = chckArrayCount(GLHCKRD()->objects);
+   unsigned int tcc = tc;
+   unsigned int occ = oc;
 
    /* nothing to draw */
    if (!oc)
       return;
 
    /* draw in sorted texture order */
-   for (ti = 0, ts = 0; ti != tc; ++ti) {
-      if (ti < tc-1) {
-         if (!(t = textures->queue[ti])) continue;
+   for (unsigned int ti = 0, ts = 0; ti != tc; ++ti) {
+      if (ti < tc - 1) {
+         if (!(t = textures[ti])) continue;
       } else t = NULL; /* untextured object */
 
-      for (oi = 0, os = 0, kt = 0; oi != oc; ++oi) {
-         if (!(o = objects->queue[oi])) continue;
+      int kt = 0;
+      for (unsigned int oi = 0, os = 0; oi != oc; ++oi) {
+         if (!(o = objects[oi])) continue;
 
          if (o->material) {
             /* don't draw if not same texture or opaque,
@@ -533,40 +552,40 @@ GLHCKAPI void glhckRender(void)
             if (o->material->texture != t ||
                   (o->material->blenda != GLHCK_ZERO || o->material->blendb != GLHCK_ZERO)) {
                if (o->material->texture == t) kt = 1; /* don't remove texture from queue */
-               if (os != oi) objects->queue[oi] = NULL;
-               objects->queue[os++] = o;
+               if (os != oi) objects[oi] = NULL;
+               objects[os++] = o;
                continue;
             }
          } else if (t) {
             /* no material, but texture requested */
-            if (os != oi) objects->queue[oi] = NULL;
-            objects->queue[os++] = o;
+            if (os != oi) objects[oi] = NULL;
+            objects[os++] = o;
             continue;
          }
 
          /* render object */
          glhckObjectRender(o);
          glhckObjectFree(o); /* referenced on draw call */
-         objects->queue[oi] = NULL;
-         --objects->count;
+         objects[oi] = NULL;
+         tcc--;
       }
 
       /* check if we need texture again or not */
       if (kt) {
-         if (ts != ti) textures->queue[ti] = NULL;
-         textures->queue[ts++] = t;
+         if (ts != ti) textures[ti] = NULL;
+         textures[ts++] = t;
       } else {
          if (t) {
             glhckTextureFree(t); /* ref is increased on draw call! */
-            textures->queue[ti] = NULL;
-            --textures->count;
+            textures[ti] = NULL;
+            occ--;
          }
       }
    }
 
    /* store counts for enumeration, +1 for untextured objects */
-   tc = textures->count+1;
-   oc = objects->count;
+   tc = tcc + 1;
+   oc = occ;
 
    /* FIXME: shift queue here */
    if (oc) {
@@ -575,39 +594,39 @@ GLHCKAPI void glhckRender(void)
    /* draw opaque objects next,
     * FIXME: this should not be done in texture order,
     * instead draw from farthest to nearest. (I hate opaque objects) */
-   for (ti = 0; ti != tc && oc; ++ti) {
-      if (ti < tc-1) {
-         if (!(t = textures->queue[ti])) continue;
+   for (unsigned int ti = 0; ti != tc && oc; ++ti) {
+      if (ti < tc - 1) {
+         if (!(t = textures[ti])) continue;
       } else t = NULL; /* untextured object */
 
-      for (oi = 0, os = 0; oi != oc; ++oi) {
-         if (!(o = objects->queue[oi])) continue;
+      for (unsigned int oi = 0, os = 0; oi != oc; ++oi) {
+         if (!(o = objects[oi])) continue;
 
          if (o->material) {
             /* don't draw if not same texture */
             if (o->material->texture != t) {
-               if (os != oi) objects->queue[oi] = NULL;
-               objects->queue[os++] = o;
+               if (os != oi) objects[oi] = NULL;
+               objects[os++] = o;
                continue;
             }
          } else if (t) {
-            if (os != oi) objects->queue[oi] = NULL;
-            objects->queue[os++] = o;
+            if (os != oi) objects[oi] = NULL;
+            objects[os++] = o;
             continue;
          }
 
          /* render object */
          glhckObjectRender(o);
          glhckObjectFree(o); /* referenced on draw call */
-         objects->queue[oi] = NULL;
-         --objects->count;
+         objects[oi] = NULL;
+         --occ;
       }
 
       /* this texture is done for */
       if (t) {
          glhckTextureFree(t); /* ref is increased on draw call! */
-         textures->queue[ti] = NULL;
-         --textures->count;
+         textures[ti] = NULL;
+         --tcc;
       }
 
       /* no texture, time to break */
@@ -615,22 +634,8 @@ GLHCKAPI void glhckRender(void)
    }
 
    /* FIXME: shift queue here if leftovers */
-
-   /* good we got no leftovers \o/ */
-   if (objects->count) {
-      /* something was left un-drawn :o? */
-      for (oi = 0; oi != objects->count; ++oi) glhckObjectFree(objects->queue[oi]);
-      memset(objects->queue, 0, objects->count * sizeof(glhckObject*));
-      objects->count = 0;
-   }
-
-   if (textures->count) {
-      /* something was left un-drawn :o? */
-      DEBUG(GLHCK_DBG_CRAP, "COUNT UNLEFT %u", textures->count);
-      for (ti = 0; ti != textures->count; ++ti) glhckTextureFree(textures->queue[ti]);
-      memset(textures->queue, 0, textures->count * sizeof(glhckTexture*));
-      textures->count = 0;
-   }
+   chckArrayFlush(GLHCKRD()->objects);
+   chckArrayFlush(GLHCKRD()->textures);
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

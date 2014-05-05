@@ -658,6 +658,9 @@ typedef struct glhckCollisionOutData {
    void *userData;
 } glhckCollisionOutData;
 
+typedef unsigned int glhckFont;
+#define GLHCK_INVALID_FONT (unsigned int)-1
+
 /* typedefs for better typing */
 typedef struct _glhckMaterial           glhckMaterial;
 typedef struct _glhckTexture            glhckTexture;
@@ -882,7 +885,7 @@ GLHCKAPI glhckSkinBone* glhckSkinBoneRef(glhckSkinBone *object);
 GLHCKAPI unsigned int glhckSkinBoneFree(glhckSkinBone *object);
 GLHCKAPI void glhckSkinBoneBone(glhckSkinBone *object, glhckBone *bone);
 GLHCKAPI glhckBone* glhckSkinBoneGetBone(glhckSkinBone *object);
-GLHCKAPI const char* glhckSkineBoneGetName(glhckSkinBone *object);
+GLHCKAPI const char* glhckSkinBoneGetName(glhckSkinBone *object);
 GLHCKAPI int glhckSkinBoneInsertWeights(glhckSkinBone *object, const glhckVertexWeight *weights, unsigned int memb);
 GLHCKAPI const glhckVertexWeight* glhckSkinBoneWeights(glhckSkinBone *object, unsigned int *memb);
 GLHCKAPI void glhckSkinBoneOffsetMatrix(glhckSkinBone *object, const kmMat4 *offsetMatrix);
@@ -928,28 +931,26 @@ GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime);
 GLHCKAPI glhckText* glhckTextNew(int cacheWidth, int cacheHeight);
 GLHCKAPI glhckText* glhckTextRef(glhckText *object);
 GLHCKAPI unsigned int glhckTextFree(glhckText *object);
-GLHCKAPI void glhckTextFontFree(glhckText *object, unsigned int font_id);
+GLHCKAPI void glhckTextFontFree(glhckText *object, glhckFont fontId);
 GLHCKAPI void glhckTextFlushCache(glhckText *object);
-GLHCKAPI void glhckTextGetMetrics(glhckText *object, unsigned int font_id, float size, float *ascender, float *descender, float *lineHeight);
-GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float size, const char *s, kmVec2 *min, kmVec2 *max);
+GLHCKAPI void glhckTextGetMetrics(glhckText *object, glhckFont fontId, float size, float *ascender, float *descender, float *lineHeight);
+GLHCKAPI void glhckTextGetMinMax(glhckText *object, glhckFont fontId, float size, const char *s, kmVec2 *min, kmVec2 *max);
 GLHCKAPI void glhckTextColor(glhckText *object, const glhckColorb *color);
 GLHCKAPI void glhckTextColorb(glhckText *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 GLHCKAPI const glhckColorb* glhckTextGetColor(glhckText *object);
-GLHCKAPI unsigned int glhckTextFontNewKakwafont(glhckText *object, int *nativeSize);
-GLHCKAPI unsigned int glhckTextFontNewFromMemory(glhckText *object, const void *data, size_t size);
-GLHCKAPI unsigned int glhckTextFontNew(glhckText *object, const char *file);
-GLHCKAPI unsigned int glhckTextFontNewFromTexture(glhckText *object, glhckTexture *texture, int ascent, int descent, int lineGap);
-GLHCKAPI unsigned int glhckTextFontNewFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap);
-GLHCKAPI void glhckTextGlyphNew(glhckText *object, unsigned int font_id, const char *s,
-      short size, short base, int x, int y, int w, int h,
-      float xoff, float yoff, float xadvance);
-GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size, float x, float y, const char *s, float *width);
+GLHCKAPI glhckFont glhckTextFontNewKakwafont(glhckText *object, int *nativeSize);
+GLHCKAPI glhckFont glhckTextFontNewFromMemory(glhckText *object, const void *data, size_t size);
+GLHCKAPI glhckFont glhckTextFontNew(glhckText *object, const char *file);
+GLHCKAPI glhckFont glhckTextFontNewFromTexture(glhckText *object, glhckTexture *texture, int ascent, int descent, int lineGap);
+GLHCKAPI glhckFont glhckTextFontNewFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap);
+GLHCKAPI void glhckTextGlyphNew(glhckText *object, glhckFont fontId, const char *s, short size, short base, int x, int y, int w, int h, float xoff, float yoff, float xadvance);
+GLHCKAPI void glhckTextStash(glhckText *object, glhckFont fontId, float size, float x, float y, const char *s, float *width);
 GLHCKAPI void glhckTextClear(glhckText *object);
 GLHCKAPI void glhckTextRender(glhckText *object);
 GLHCKAPI void glhckTextShader(glhckText *object, glhckShader *shader);
 GLHCKAPI glhckShader* glhckTextGetShader(const glhckText *object);
-GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, float size, const char *s, const glhckTextureParameters *params);
-GLHCKAPI glhckObject* glhckTextPlane(glhckText *object, unsigned int font_id, float size, const char *s, const glhckTextureParameters *params);
+GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, glhckFont fontId, float size, const char *s, const glhckTextureParameters *params);
+GLHCKAPI glhckObject* glhckTextPlane(glhckText *object, glhckFont fontId, float size, const char *s, const glhckTextureParameters *params);
 
 /* materials */
 GLHCKAPI glhckMaterial* glhckMaterialNew(glhckTexture *texture);

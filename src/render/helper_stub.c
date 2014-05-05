@@ -242,7 +242,7 @@ unsigned int stubProgramAttachUniformBuffer(unsigned int program, const char *ub
 }
 
 /* \brief create uniform buffer from shader */
-_glhckHwBufferShaderUniform* stubProgramUniformBufferList(unsigned int program, const char *uboName, int *uboSize)
+chckPool* stubProgramUniformBufferPool(unsigned int program, const char *uboName, int *uboSize)
 {
    CALL(0, "%u, %s, %p", program, uboName, uboSize);
    if (uboSize) *uboSize = 0;
@@ -251,7 +251,7 @@ _glhckHwBufferShaderUniform* stubProgramUniformBufferList(unsigned int program, 
 }
 
 /* \brief get attribute list from program */
-_glhckShaderAttribute* stubProgramAttributeList(unsigned int obj)
+chckPool* stubProgramAttributePool(unsigned int obj)
 {
    CALL(0, "%u", obj);
    RET(0, "%p", NULL);
@@ -259,7 +259,7 @@ _glhckShaderAttribute* stubProgramAttributeList(unsigned int obj)
 }
 
 /* \brief get uniform list from program */
-_glhckShaderUniform* stubProgramUniformList(unsigned int obj)
+chckPool* stubProgramUniformPool(unsigned int obj)
 {
    CALL(0, "%u", obj);
    RET(0, "%p", NULL);

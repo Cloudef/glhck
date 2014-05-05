@@ -667,7 +667,6 @@ static void rObjectRender(const glhckObject *object)
 /* \brief draw text */
 static void rTextRender(const glhckText *text)
 {
-   __GLHCKtextTexture *texture;
    CALL(2, "%p", text);
 
    /* set states */
@@ -739,23 +738,25 @@ static void rTextRender(const glhckText *text)
    if (GL_HAS_STATE(GL_STATE_OVERDRAW)) memcpy(&diffuse, &overdrawColor, sizeof(glhckColorb));
    GL_CALL(glColor4ub(diffuse.r, diffuse.b, diffuse.g, diffuse.a));
 
+   __GLHCKtextTexture *t;
    GL_CALL(glMatrixMode(GL_TEXTURE));
-   for (texture = text->textureCache; texture;
-        texture = texture->next) {
-      if (!texture->geometry.vertexCount)
+   for (chckPoolIndex iter = 0; (t = chckPoolIter(text->textures, &iter));) {
+      if (!t->geometry.vertexCount)
          continue;
 
-      if (GL_HAS_STATE(GL_STATE_TEXTURE)) glhckTextureBind(texture->texture);
+      if (GL_HAS_STATE(GL_STATE_TEXTURE))
+         glhckTextureBind(t->texture);
+
       GL_CALL(glLoadIdentity());
-      GL_CALL(glScalef(texture->texture->internalScale.x, texture->texture->internalScale.y, 1.0f));
-      GL_CALL(glVertexPointer(2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
-            (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
-            &texture->geometry.vertexData[0].vertex));
-      GL_CALL(glTexCoordPointer(2, (GLHCK_TEXT_FLOAT_PRECISION?GL_FLOAT:GL_SHORT),
-            (GLHCK_TEXT_FLOAT_PRECISION?sizeof(glhckVertexData2f):sizeof(glhckVertexData2s)),
-            &texture->geometry.vertexData[0].coord));
-      GL_CALL(glDrawArrays(GLHCK_TRISTRIP?GL_TRIANGLE_STRIP:GL_TRIANGLES,
-               0, texture->geometry.vertexCount));
+      GL_CALL(glScalef(t->texture->internalScale.x, t->texture->internalScale.y, 1.0f));
+      GL_CALL(glVertexPointer(2, (GLHCK_TEXT_FLOAT_PRECISION ? GL_FLOAT : GL_SHORT),
+            (GLHCK_TEXT_FLOAT_PRECISION ? sizeof(glhckVertexData2f) : sizeof(glhckVertexData2s)),
+            &t->geometry.vertexData[0].vertex));
+      GL_CALL(glTexCoordPointer(2, (GLHCK_TEXT_FLOAT_PRECISION ? GL_FLOAT : GL_SHORT),
+            (GLHCK_TEXT_FLOAT_PRECISION ? sizeof(glhckVertexData2f) : sizeof(glhckVertexData2s)),
+            &t->geometry.vertexData[0].coord));
+      GL_CALL(glDrawArrays((GLHCK_TRISTRIP ? GL_TRIANGLE_STRIP : GL_TRIANGLES),
+               0, t->geometry.vertexCount));
    }
 
    if (GLPOINTER()->state.frontFace != GLHCK_CCW) {
@@ -870,9 +871,9 @@ void _glhckRenderOpenGLFixedPipeline(void)
    GLHCK_RENDER_FUNC(programLink, stubProgramLink);
    GLHCK_RENDER_FUNC(programDelete, stubProgramDelete);
    GLHCK_RENDER_FUNC(programUniform, stubProgramUniform);
-   GLHCK_RENDER_FUNC(programUniformBufferList, stubProgramUniformBufferList);
-   GLHCK_RENDER_FUNC(programAttributeList, stubProgramAttributeList);
-   GLHCK_RENDER_FUNC(programUniformList, stubProgramUniformList);
+   GLHCK_RENDER_FUNC(programUniformBufferPool, stubProgramUniformBufferPool);
+   GLHCK_RENDER_FUNC(programAttributePool, stubProgramAttributePool);
+   GLHCK_RENDER_FUNC(programUniformPool, stubProgramUniformPool);
    GLHCK_RENDER_FUNC(programAttachUniformBuffer, stubProgramAttachUniformBuffer);
    GLHCK_RENDER_FUNC(shaderCompile, stubShaderCompile);
    GLHCK_RENDER_FUNC(shaderDelete, stubShaderDelete);

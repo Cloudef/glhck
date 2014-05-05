@@ -33,7 +33,7 @@ GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferTarget target)
    object->target = target;
 
    /* insert to world */
-   _glhckWorldInsert(framebuffer, object, glhckFramebuffer*);
+   _glhckWorldAdd(&GLHCKW()->framebuffers, object);
 
    RET(0, "%p", object);
    return object;
@@ -75,7 +75,7 @@ GLHCKAPI unsigned int glhckFramebufferFree(glhckFramebuffer *object)
    GLHCKRA()->framebufferDelete(1, &object->object);
 
    /* remove from world */
-   _glhckWorldRemove(framebuffer, object, glhckFramebuffer*);
+   _glhckWorldRemove(&GLHCKW()->framebuffers, object);
 
    /* free */
    NULLDO(_glhckFree, object);

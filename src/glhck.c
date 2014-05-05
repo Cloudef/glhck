@@ -33,8 +33,9 @@ int feenableexcept(int excepts);
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GLHCK
 
-/* thread-local storage glhck context (see internal.h for more) */
-_GLHCK_TLS struct __GLHCKcontext *_glhckContext = NULL;
+/* thread-local storage glhck context, allows in theory to use opengl on different threads.
+ * (as long as each thread has own gl context as well) */
+static _GLHCK_TLS struct __GLHCKcontext *_glhckContext = NULL;
 
 /* dirty debug build stuff */
 #ifndef NDEBUG
@@ -121,6 +122,28 @@ static void _glhckSetBacktrace(void)
 
 #endif /* NDEBUG */
 
+void _glhckWorldAdd(chckArray **pArray, void *object)
+{
+   assert(pArray && object);
+
+   if (!*pArray)
+      *pArray = chckArrayNew(32, 32);
+
+   chckArrayAdd(*pArray, object);
+}
+
+void _glhckWorldRemove(chckArray **pArray, void *object)
+{
+   assert(pArray && object);
+
+   chckArrayRemove(*pArray, object);
+
+   if (chckArrayCount(*pArray) <= 0) {
+      chckArrayFree(*pArray);
+      *pArray = NULL;
+   }
+}
+
 /***
  * public api
  ***/
@@ -146,7 +169,7 @@ GLHCKAPI void glhckGetCompileFeatures(glhckCompileFeatures *features)
 /* \brief is glhck initialized? */
 GLHCKAPI int glhckInitialized(void)
 {
-   return (_glhckContext?1:0);
+   return (_glhckContext ? 1 : 0);
 }
 
 /* \brief get current glhck context */
@@ -206,10 +229,8 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
    glhckSetGlobalPrecision(GLHCK_IDX_AUTO, GLHCK_IDX_AUTO);
 
    /* pre-allocate render queues */
-   GLHCKRD()->objects.queue = _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckObject*));
-   GLHCKRD()->objects.allocated += GLHCK_QUEUE_ALLOC_STEP;
-   GLHCKRD()->textures.queue = _glhckMalloc(GLHCK_QUEUE_ALLOC_STEP * sizeof(_glhckTexture*));
-   GLHCKRD()->textures.allocated += GLHCK_QUEUE_ALLOC_STEP;
+   GLHCKRD()->objects = chckArrayNew(32, 32);
+   GLHCKRD()->textures = chckArrayNew(32, 32);
 
    /* switch back to old context, if there was one */
    if (oldCtx) glhckContextSet(oldCtx);
@@ -223,8 +244,8 @@ GLHCKAPI void glhckContextTerminate(void)
    TRACE(0);
 
    /* destroy queues */
-   _glhckFree(GLHCKRD()->objects.queue);
-   _glhckFree(GLHCKRD()->textures.queue);
+   chckArrayFree(GLHCKRD()->objects);
+   chckArrayFree(GLHCKRD()->textures);
 
    /* destroy world */
    glhckMassacreWorld();
@@ -382,37 +403,37 @@ GLHCKAPI void glhckGetGlobalPrecision(unsigned char *itype, unsigned char *vtype
    if (vtype) *vtype = GLHCKM()->globalVertexType;
 }
 
-#define _massacre(list, func) {                       \
-   void *c;                                           \
-   while ((c = GLHCKW()->list)) { while (func(c)); }  \
-   GLHCKW()->list = NULL;                             \
-}
-
 /* \brief frees all objects that are handled by glhck */
 GLHCKAPI void glhckMassacreWorld(void)
 {
    GLHCK_INITIALIZED();
    TRACE(0);
 
-   /* destroy the world */
-   _massacre(atlas, glhckAtlasFree);
-   _massacre(camera, glhckCameraFree);
-   _massacre(framebuffer, glhckFramebufferFree);
-   _massacre(hwbuffer, glhckHwBufferFree);
-   _massacre(light, glhckLightFree);
-   _massacre(object, glhckObjectFree);
-   _massacre(skinBone, glhckSkinBoneFree);
-   _massacre(bone, glhckBoneFree);
-   _massacre(animation, glhckAnimationFree);
-   _massacre(animationNode, glhckAnimationNodeFree);
-   _massacre(animator, glhckAnimatorFree);
-   _massacre(renderbuffer, glhckRenderbufferFree);
-   _massacre(shader,  glhckShaderFree);
-   _massacre(text, glhckTextFree);
-   _massacre(material, glhckMaterialFree);
-   _massacre(texture, glhckTextureFree);
+#define _massacre(list, func) {                                                          \
+   void *c;                                                                              \
+   while (GLHCKW()->list && (c = chckArrayGet(GLHCKW()->list, 0))) { while (func(c)); }  \
+   IFDO(chckArrayFree, GLHCKW()->list);                                                  \
 }
 
+   /* destroy the world */
+   _massacre(atlases, glhckAtlasFree);
+   _massacre(cameras, glhckCameraFree);
+   _massacre(framebuffers, glhckFramebufferFree);
+   _massacre(hwbuffers, glhckHwBufferFree);
+   _massacre(lights, glhckLightFree);
+   _massacre(objects, glhckObjectFree);
+   _massacre(skinBones, glhckSkinBoneFree);
+   _massacre(bones, glhckBoneFree);
+   _massacre(animations, glhckAnimationFree);
+   _massacre(animationNodes, glhckAnimationNodeFree);
+   _massacre(animators, glhckAnimatorFree);
+   _massacre(renderbuffers, glhckRenderbufferFree);
+   _massacre(shaders,  glhckShaderFree);
+   _massacre(texts, glhckTextFree);
+   _massacre(materials, glhckMaterialFree);
+   _massacre(textures, glhckTextureFree);
+
 #undef _massacre
+}
 
 /* vim: set ts=8 sw=3 tw=0 :*/

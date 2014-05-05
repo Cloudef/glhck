@@ -17,7 +17,7 @@ GLHCKAPI glhckAnimationNode* glhckAnimationNodeNew(void)
    object->refCounter++;
 
    /* insert to world */
-   _glhckWorldInsert(animationNode, object, glhckAnimationNode*);
+   _glhckWorldAdd(&GLHCKW()->animationNodes, object);
 
    RET(0, "%p", object);
    return object;
@@ -58,7 +58,7 @@ GLHCKAPI unsigned int glhckAnimationNodeFree(glhckAnimationNode *object)
    glhckAnimationNodeInsertScalings(object, NULL, 0);
 
    /* remove from world */
-   _glhckWorldRemove(animationNode, object, glhckAnimationNode*);
+   _glhckWorldRemove(&GLHCKW()->animationNodes, object);
 
    /* free */
    NULLDO(_glhckFree, object);
@@ -71,10 +71,10 @@ success:
 /* \brief set bone index to animation node */
 GLHCKAPI void glhckAnimationNodeBoneName(glhckAnimationNode *object, const char *name)
 {
-   char *nameCopy = NULL;
    CALL(0, "%p, %s", object, name);
    assert(object);
 
+   char *nameCopy = NULL;
    if (name && !(nameCopy = _glhckStrdup(name)))
       return;
 
@@ -94,20 +94,19 @@ GLHCKAPI const char* glhckAnimationNodeGetBoneName(glhckAnimationNode *object)
 /* \brief set translations to key animation node */
 GLHCKAPI int glhckAnimationNodeInsertTranslations(glhckAnimationNode *object, const glhckAnimationVectorKey *keys, unsigned int memb)
 {
-   glhckAnimationVectorKey *keysCopy = NULL;
+   chckIterPool *pool = NULL;
    CALL(0, "%p, %p, %u", object, keys, memb);
    assert(object);
 
-   /* copy keys, if they exist */
-   if (keys && !(keysCopy = _glhckCopy(keys, memb * sizeof(glhckAnimationVectorKey))))
+   if (keys && memb > 0 && !(pool = chckIterPoolNewFromCArray(keys, memb, 32, sizeof(glhckAnimationVectorKey))))
       goto fail;
 
-   IFDO(_glhckFree, object->translations);
-   object->translations = keysCopy;
-   object->numTranslations = (keysCopy?memb:0);
+   IFDO(chckIterPoolFree, object->translations);
+   object->translations = pool;
    return RETURN_OK;
 
 fail:
+   IFDO(chckIterPoolFree, pool);
    return RETURN_FAIL;
 }
 
@@ -115,28 +114,33 @@ fail:
 GLHCKAPI const glhckAnimationVectorKey* glhckAnimationNodeTranslations(glhckAnimationNode *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
-   if (memb) *memb = object->numTranslations;
-   RET(2, "%p", object->translations);
-   return object->translations;
+
+   size_t nmemb = 0;
+   const glhckAnimationVectorKey *translations = (object->translations ? chckIterPoolToCArray(object->translations, &nmemb) : NULL);
+
+   if (memb)
+      *memb = nmemb;
+
+   RET(2, "%p", translations);
+   return translations;
 }
 
 /* \brief set scalings to key animation node */
 GLHCKAPI int glhckAnimationNodeInsertScalings(glhckAnimationNode *object, const glhckAnimationVectorKey *keys, unsigned int memb)
 {
-   glhckAnimationVectorKey *keysCopy = NULL;
+   chckIterPool *pool = NULL;
    CALL(0, "%p, %p, %u", object, keys, memb);
    assert(object);
 
-   /* copy keys, if they exist */
-   if (keys && !(keysCopy = _glhckCopy(keys, memb * sizeof(glhckAnimationVectorKey))))
+   if (keys && memb > 0 && !(pool = chckIterPoolNewFromCArray(keys, memb, 32, sizeof(glhckAnimationVectorKey))))
       goto fail;
 
-   IFDO(_glhckFree, object->scalings);
-   object->scalings = keysCopy;
-   object->numScalings = (keysCopy?memb:0);
+   IFDO(chckIterPoolFree, object->scalings);
+   object->scalings = pool;
    return RETURN_OK;
 
 fail:
+   IFDO(chckIterPoolFree, pool);
    return RETURN_FAIL;
 }
 
@@ -144,28 +148,33 @@ fail:
 GLHCKAPI const glhckAnimationVectorKey* glhckAnimationNodeScalings(glhckAnimationNode *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
-   if (memb) *memb = object->numScalings;
-   RET(2, "%p", object->scalings);
-   return object->scalings;
+
+   size_t nmemb = 0;
+   const glhckAnimationVectorKey *scalings = (object->scalings ? chckIterPoolToCArray(object->scalings, &nmemb) : NULL);
+
+   if (memb)
+      *memb = nmemb;
+
+   RET(2, "%p", scalings);
+   return scalings;
 }
 
 /* \brief set rotations to key animation node */
 GLHCKAPI int glhckAnimationNodeInsertRotations(glhckAnimationNode *object, const glhckAnimationQuaternionKey *keys, unsigned int memb)
 {
-   glhckAnimationQuaternionKey *keysCopy = NULL;
+   chckIterPool *pool = NULL;
    CALL(0, "%p, %p, %u", object, keys, memb);
    assert(object);
 
-   /* copy keys, if they exist */
-   if (keys && !(keysCopy = _glhckCopy(keys, memb * sizeof(glhckAnimationQuaternionKey))))
+   if (keys && memb > 0 && !(pool = chckIterPoolNewFromCArray(keys, memb, 32, sizeof(glhckAnimationQuaternionKey))))
       goto fail;
 
-   IFDO(_glhckFree, object->rotations);
-   object->rotations = keysCopy;
-   object->numRotations = (keysCopy?memb:0);
+   IFDO(chckIterPoolFree, object->rotations);
+   object->rotations = pool;
    return RETURN_OK;
 
 fail:
+   IFDO(chckIterPoolFree, pool);
    return RETURN_FAIL;
 }
 
@@ -173,9 +182,15 @@ fail:
 GLHCKAPI const glhckAnimationQuaternionKey* glhckAnimationNodeRotations(glhckAnimationNode *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
-   if (memb) *memb = object->numRotations;
-   RET(2, "%p", object->rotations);
-   return object->rotations;
+
+   size_t nmemb = 0;
+   const glhckAnimationQuaternionKey *rotations = (object->rotations ? chckIterPoolToCArray(object->rotations, &nmemb) : NULL);
+
+   if (memb)
+      *memb = nmemb;
+
+   RET(2, "%p", rotations);
+   return rotations;
 }
 
 /* \brief allocate new key animation object */
@@ -195,7 +210,7 @@ GLHCKAPI glhckAnimation* glhckAnimationNew(void)
    object->refCounter++;
 
    /* insert to world */
-   _glhckWorldInsert(animation, object, glhckAnimation*);
+   _glhckWorldAdd(&GLHCKW()->animations, object);
 
    RET(0, "%p", object);
    return object;
@@ -234,7 +249,7 @@ GLHCKAPI unsigned int glhckAnimationFree(glhckAnimation *object)
    glhckAnimationInsertNodes(object, NULL, 0);
 
    /* remove from world */
-   _glhckWorldRemove(animation, object, glhckAnimation*);
+   _glhckWorldRemove(&GLHCKW()->animations, object);
 
    /* free */
    NULLDO(_glhckFree, object);
@@ -304,34 +319,29 @@ GLHCKAPI float glhckAnimationGetTicksPerSecond(glhckAnimation *object)
 /* \brief set nodes to animation */
 GLHCKAPI int glhckAnimationInsertNodes(glhckAnimation *object, glhckAnimationNode **nodes, unsigned int memb)
 {
-   unsigned int i;
-   glhckAnimationNode **nodesCopy = NULL;
    CALL(0, "%p, %p, %u", object, nodes, memb);
    assert(object);
 
-   /* copy nodes, if they exist */
-   if (nodes && !(nodesCopy = _glhckCopy(nodes, memb * sizeof(glhckAnimationNode*))))
-      goto fail;
-
-   /* free old nodes */
+   /* free old animations */
    if (object->nodes) {
-      for (i = 0; i != object->numNodes; ++i)
-         glhckAnimationNodeFree(object->nodes[i]);
-      _glhckFree(object->nodes);
+      chckArrayIterCall(object->nodes, glhckAnimationNodeFree);
+      chckArrayFree(object->nodes);
+      object->nodes = NULL;
    }
 
-   object->nodes = nodesCopy;
-   object->numNodes = (nodesCopy?memb:0);
-
-   /* reference new nodes */
-   if (object->nodes) {
-      for (i = 0; i != object->numNodes; ++i)
-         glhckAnimationNodeRef(object->nodes[i]);
+   if (nodes && memb > 0) {
+      if ((object->nodes = chckArrayNewFromCArray(nodes, memb, 32))) {
+         chckArrayIterCall(object->nodes, glhckAnimationNodeRef);
+      } else {
+         goto fail;
+      }
    }
 
+   RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
+   RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
@@ -339,9 +349,15 @@ fail:
 GLHCKAPI glhckAnimationNode** glhckAnimationNodes(glhckAnimation *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
-   if (memb) *memb = object->numNodes;
-   RET(2, "%p", object->nodes);
-   return object->nodes;
+
+   size_t nmemb = 0;
+   glhckAnimationNode **nodes = (object->nodes ? chckArrayToCArray(object->nodes, &nmemb) : NULL);
+
+   if (memb)
+      *memb = nmemb;
+
+   RET(2, "%p", nodes);
+   return nodes;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

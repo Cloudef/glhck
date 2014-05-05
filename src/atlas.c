@@ -62,7 +62,7 @@ GLHCKAPI glhckAtlas* glhckAtlasNew(void)
    object->refCounter++;
 
    /* insert to world */
-   _glhckWorldInsert(atlas, object, glhckAtlas*);
+   _glhckWorldAdd(&GLHCKW()->atlases, object);
 
    RET(0, "%p", object);
    return object;
@@ -89,7 +89,7 @@ GLHCKAPI unsigned int glhckAtlasFree(glhckAtlas *object)
    IFDO(glhckTextureFree, object->texture);
 
    /* remove from world */
-   _glhckWorldRemove(atlas, object, glhckAtlas*);
+   _glhckWorldRemove(&GLHCKW()->atlases, object);
 
    /* free */
    NULLDO(_glhckFree, object);

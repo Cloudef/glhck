@@ -117,9 +117,9 @@ void glhRenderbufferStorage(GLsizei width, GLsizei height, glhckTextureFormat fo
 GLint glhFramebufferTexture(glhckFramebufferTarget framebufferTarget, glhckTextureTarget textureTarget, GLuint texture, glhckFramebufferAttachmentType attachment);
 GLint glhFramebufferRenderbuffer(glhckFramebufferTarget framebufferTarget, GLuint buffer, glhckFramebufferAttachmentType attachment);
 GLuint glhProgramAttachUniformBuffer(GLuint program, const GLchar *uboName, GLuint location);
-_glhckHwBufferShaderUniform* glhProgramUniformBufferList(GLuint program, const GLchar *uboName, GLsizei *size);
-_glhckShaderAttribute* glhProgramAttributeList(GLuint obj);
-_glhckShaderUniform* glhProgramUniformList(GLuint obj);
+chckPool* glhProgramUniformBufferPool(GLuint program, const GLchar *uboName, GLsizei *size);
+chckPool* glhProgramAttributePool(GLuint obj);
+chckPool* glhProgramUniformPool(GLuint obj);
 void glhProgramUniform(GLuint obj, _glhckShaderUniform *uniform, GLsizei count, const GLvoid *value);
 void glhGeometryRender(const glhckGeometry *geometry, glhckGeometryType type);
 

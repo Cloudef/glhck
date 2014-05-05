@@ -14,29 +14,6 @@
  * used mainly to shorten free(x); x = NULL; */
 #define NULLDO(f, x) { f(x); x = NULL; }
 
-/* insert to glhck world */
-#define _glhckWorldInsert(list, object, cast) { \
-   cast i;                                      \
-   if (!(i = GLHCKW()->list))                   \
-      GLHCKW()->list = object;                  \
-   else {                                       \
-      for (; i && i->next; i = i->next);        \
-      i->next = object;                         \
-   }                                            \
-}
-
-/* remove from glhck world */
-#define _glhckWorldRemove(list, object, cast) {    \
-   cast i;                                         \
-   if (object == (i = GLHCKW()->list))             \
-      GLHCKW()->list = object->next;               \
-   else {                                          \
-      for (; i && i->next != object; i = i->next); \
-      if (i) i->next = object->next;               \
-      else GLHCKW()->list = NULL;                  \
-   }                                               \
-}
-
 /*** format macros ***/
 
 #define RECT(r)   (r)?(r)->x:-1, (r)?(r)->y:-1, (r)?(r)->w:-1, (r)?(r)->h:-1

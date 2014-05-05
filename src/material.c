@@ -25,10 +25,11 @@ GLHCKAPI glhckMaterial* glhckMaterialNew(glhckTexture *texture)
    glhckMaterialOptions(object, GLHCK_MATERIAL_LIGHTING);
 
    /* assign initial texture */
-   if (texture) glhckMaterialTexture(object, texture);
+   if (texture)
+      glhckMaterialTexture(object, texture);
 
    /* insert to world */
-   _glhckWorldInsert(material, object, glhckMaterial*);
+   _glhckWorldAdd(&GLHCKW()->materials, object);
 
    RET(0, "%p", object);
    return object;
@@ -67,7 +68,7 @@ GLHCKAPI unsigned int glhckMaterialFree(glhckMaterial *object)
    glhckMaterialShader(object, NULL);
 
    /* remove from world */
-   _glhckWorldRemove(material, object, glhckMaterial*);
+   _glhckWorldRemove(&GLHCKW()->materials, object);
 
    /* free */
    NULLDO(_glhckFree, object);

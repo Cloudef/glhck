@@ -120,7 +120,7 @@ INCLUDE_DIRECTORIES(
    ${glew-glhck_SOURCE_DIR}/include
    ${kazmath_SOURCE_DIR}/src
    ${GLSW_SOURCE_DIR}/src
-   ${chckBuffer_SOURCE_DIR}/src
+   ${chckGlhck_SOURCE_DIR}/src
    ${texhck_SOURCE_DIR}
    ${GLHCK_INCL}
    ${OPT_INCL}
@@ -133,7 +133,7 @@ IF (UNIX AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX))
    ENDIF ()
 ENDIF ()
 
-ADD_DEFINITIONS(-DGLEW_STATIC)
+ADD_DEFINITIONS(-std=c99 -DGLEW_STATIC)
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck chckBuffer texhck kazmath glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
+TARGET_LINK_LIBRARIES(glhck chckGlhck texhck kazmath glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
 INSTALL(TARGETS glhck DESTINATION lib)

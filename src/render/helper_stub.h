@@ -50,9 +50,9 @@ unsigned int stubProgramLink(unsigned int vsobj, unsigned int fsobj);
 int stubShadersPath(const char *pathPrefix, const char *pathSuffix);
 int stubShadersDirectiveToken(const char *token, const char *directive);
 unsigned int stubProgramAttachUniformBuffer(unsigned int program, const char *uboName, unsigned int location);
-_glhckHwBufferShaderUniform* stubProgramUniformBufferList(unsigned int program, const char *uboName, int *size);
-_glhckShaderAttribute* stubProgramAttributeList(unsigned int obj);
-_glhckShaderUniform* stubProgramUniformList(unsigned int obj);
+chckPool* stubProgramUniformBufferPool(unsigned int program, const char *uboName, int *size);
+chckPool* stubProgramAttributePool(unsigned int obj);
+chckPool* stubProgramUniformPool(unsigned int obj);
 void stubProgramUniform(unsigned int obj, _glhckShaderUniform *uniform, int count, const void *value);
 
 #endif /* __glhck_stub_helper_h__ */

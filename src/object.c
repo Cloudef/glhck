@@ -5,42 +5,6 @@
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
 
-#define PERFORM_ON_CHILDS(parent, function, ...)         \
-   { unsigned int _cbc_;                                 \
-   for (_cbc_ = 0; _cbc_ != parent->numChilds; ++_cbc_)  \
-      function(parent->childs[_cbc_], ##__VA_ARGS__); }
-
-/* \brief assign object to draw list */
-void _glhckObjectInsertToQueue(glhckObject *object)
-{
-   __GLHCKobjectQueue *objects;
-   glhckObject **queue;
-   unsigned int i;
-
-   objects = &GLHCKRD()->objects;
-
-   /* check duplicate */
-   for (i = 0; i != objects->count; ++i)
-      if (objects->queue[i] == object) return;
-
-   /* need alloc dynamically more? */
-   if (objects->allocated <= objects->count+1) {
-      queue = _glhckRealloc(objects->queue,
-            objects->allocated,
-            objects->allocated + GLHCK_QUEUE_ALLOC_STEP,
-            sizeof(glhckObject*));
-
-      /* epic fail here */
-      if (!queue) return;
-      objects->queue = queue;
-      objects->allocated += GLHCK_QUEUE_ALLOC_STEP;
-   }
-
-   /* assign the object to list */
-   objects->queue[objects->count] = glhckObjectRef(object);
-   objects->count++;
-}
-
 /* update target from rotation */
 static void _glhckObjectUpdateTargetFromRotation(glhckObject *object)
 {
@@ -132,12 +96,12 @@ static void _glhckObjectBuildScaling(glhckObject *object, kmMat4 *scaling)
 /* \brief build parent affection matrix for object */
 static void _glhckObjectBuildParent(glhckObject *object, kmMat4 *parentMatrix)
 {
-   kmMat4 matrix, tmp;
    glhckObject *parent, *child;
 
    kmMat4Identity(parentMatrix);
    for (parent = object->parent, child = object; parent;
         parent = parent->parent, child = child->parent) {
+      kmMat4 matrix, tmp;
       kmMat4Identity(&matrix);
 
       if (child->affectionFlags & GLHCK_AFFECT_SCALING) {
@@ -230,13 +194,14 @@ void _glhckObjectUpdateBoxes(glhckObject *object)
    memcpy(&object->view.obbFull, &object->view.obb, sizeof(kmAABB));
 
    /* update full aabb && obb */
-   if (object->numChilds) {
-      unsigned int i;
+   if (object->childs && chckArrayCount(object->childs)) {
+      glhckObject *child;
       const kmAABB *caabb, *cobb;
       kmAABB *aabb = &object->view.aabbFull, *obb = &object->view.obbFull;
-      for (i = 0; i < object->numChilds; ++i) {
-         caabb = glhckObjectGetAABBWithChildren(object->childs[i]);
-         cobb = glhckObjectGetOBBWithChildren(object->childs[i]);
+
+      for (chckPoolIndex iter = 0; (child = chckArrayIter(object->childs, &iter));) {
+         caabb = glhckObjectGetAABBWithChildren(child);
+         cobb = glhckObjectGetOBBWithChildren(child);
          glhckMinV3(&aabb->min, &caabb->min);
          glhckMaxV3(&aabb->max, &caabb->max);
          glhckMinV3(&obb->min, &cobb->min);
@@ -248,7 +213,6 @@ void _glhckObjectUpdateBoxes(glhckObject *object)
 /* \brief update view matrix of object */
 static void _glhckObjectUpdateMatrix(glhckObject *object)
 {
-   unsigned int i;
    kmMat4 translation, rotation, scaling, parentMatrix;
    CALL(2, "%p", object);
 
@@ -267,14 +231,17 @@ static void _glhckObjectUpdateMatrix(glhckObject *object)
 
    /* we need to flip the matrix for 2D drawing */
    if (GLHCKRD()->view.flippedProjection)
-      kmMat4Multiply(&object->view.matrix, &object->view.matrix, &_glhckFlipMatrix);
+      kmMat4Multiply(&object->view.matrix, &object->view.matrix, _glhckRenderGetFlipMatrix());
 
    /* update bounding boxes */
    _glhckObjectUpdateBoxes(object);
 
    /* update childs on next draw */
-   for (i = 0; i != object->numChilds; ++i)
-      object->childs[i]->view.update = 1;
+   if (object->childs) {
+      glhckObject *child;
+      for (chckPoolIndex iter = 0; (child = chckArrayIter(object->childs, &iter));)
+         child->view.update = 1;
+   }
 
    /* done */
    object->view.update = 0;
@@ -329,7 +296,7 @@ GLHCKAPI glhckObject* glhckObjectNew(void)
    object->transformedGeometryTime = FLT_MAX;
 
    /* insert to world */
-   _glhckWorldInsert(object, object, glhckObject*);
+   _glhckWorldAdd(&GLHCKW()->objects, object);
 
    RET(0, "%p", object);
    return object;
@@ -372,7 +339,7 @@ GLHCKAPI glhckObject* glhckObjectCopy(const glhckObject *src)
    glhckObjectUpdate(object);
 
    /* insert to world */
-   _glhckWorldInsert(object, object, glhckObject*);
+   _glhckWorldAdd(&GLHCKW()->objects, object);
 
    RET(0, "%p", object);
    return object;
@@ -432,7 +399,7 @@ GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
    IFDO(_glhckGeometryFree, object->geometry);
 
    /* remove from world */
-   _glhckWorldRemove(object, object, glhckObject*);
+   _glhckWorldRemove(&GLHCKW()->objects, object);
 
    /* free */
    NULLDO(_glhckFree, object);
@@ -482,9 +449,8 @@ GLHCKAPI void glhckObjectParentAffection(glhckObject *object, unsigned char affe
    object->affectionFlags = affectionFlags;
 
    /* perform on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectParentAffection, affectionFlags);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectParentAffection, affectionFlags);
 }
 
 /* \brief get object's parent */
@@ -497,83 +463,88 @@ GLHCKAPI glhckObject* glhckObjectParent(glhckObject *object)
 }
 
 /* \brief get object's children */
-GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, unsigned int *num_children)
+GLHCKAPI glhckObject** glhckObjectChildren(glhckObject *object, unsigned int *numChildren)
 {
-   CALL(2, "%p, %p", object, num_children);
+   CALL(2, "%p, %p", object, numChildren);
    assert(object);
-   if (num_children) *num_children = object->numChilds;
-   RET(2, "%p", object->childs);
-   return object->childs;
+
+   size_t memb = 0;
+   glhckObject **childs = (object->childs ? chckArrayToCArray(object->childs, &memb) : NULL);
+
+   if (numChildren)
+      *numChildren = memb;
+
+   RET(2, "%p", childs);
+   return childs;
 }
 
 /* \brief add child object */
 GLHCKAPI void glhckObjectAddChild(glhckObject *object, glhckObject *child)
 {
-   size_t i;
-   glhckObject **newChilds = NULL;
    CALL(0, "%p, %p", object, child);
    assert(object && child && object != child);
 
    /* already added? */
-   if (child->parent == object) return;
-   if (child->parent) glhckObjectRemoveChild(child->parent, child);
-
-   /* add child */
-   if (!(newChilds = _glhckMalloc((object->numChilds+1) * sizeof(glhckObject*))))
+   if (child->parent == object)
       return;
 
-   for (i = 0; i != object->numChilds; ++i) newChilds[i] = object->childs[i];
-   newChilds[object->numChilds] = glhckObjectRef(child);
-   child->parent = object;
+   /* keep child alive */
+   glhckObjectRef(child);
 
-   IFDO(_glhckFree, object->childs);
-   object->childs = newChilds;
-   object->numChilds++;
+   if (child->parent)
+      glhckObjectRemoveChild(child->parent, child);
+
+   if (!object->childs && !(object->childs = chckArrayNew(32, 1))) {
+      glhckObjectFree(child);
+      return;
+   }
+
+   if (!chckArrayAdd(object->childs, child)) {
+      glhckObjectFree(child);
+      return;
+   }
+
+   child->parent = object;
 }
 
 /* \brief remove child object */
 GLHCKAPI void glhckObjectRemoveChild(glhckObject *object, glhckObject *child)
 {
-   size_t i, newCount;
-   glhckObject **newChilds = NULL;
    CALL(0, "%p, %p", object, child);
    assert(object && child && object != child);
 
    /* do we have the child? */
-   if (child->parent != object) return;
-
-   /* remove child */
-   if ((object->numChilds-1) != 0 &&
-      !(newChilds = _glhckMalloc((object->numChilds-1) * sizeof(glhckObject*))))
+   if (child->parent != object)
       return;
+
+   chckArrayRemove(object->childs, child);
 
    child->parent = NULL;
    glhckObjectFree(child);
-   for (i = 0, newCount = 0; i != object->numChilds && newChilds; ++i) {
-      if (object->childs[i] == child) continue;
-      newChilds[newCount++] = object->childs[i];
-   }
 
-   IFDO(_glhckFree, object->childs);
-   object->childs = newChilds;
-   object->numChilds = newCount;
+   if (chckArrayCount(object->childs) <= 0) {
+      chckArrayFree(object->childs);
+      object->childs = NULL;
+   }
 }
 
 /* \brief remove children objects */
 GLHCKAPI void glhckObjectRemoveChildren(glhckObject *object)
 {
-   size_t i;
    CALL(0, "%p", object);
    assert(object);
 
-   if (!object->childs) return;
-   for (i = 0; i != object->numChilds; ++i) {
-      object->childs[i]->parent = NULL;
-      glhckObjectFree(object->childs[i]);
+   if (!object->childs)
+      return;
+
+   glhckObject *child;
+   for (chckPoolIndex iter = 0; (child = chckArrayIter(object->childs, &iter));) {
+      child->parent = NULL;
+      glhckObjectFree(child);
    }
 
-   NULLDO(_glhckFree, object->childs);
-   object->numChilds = 0;
+   chckArrayFree(object->childs);
+   object->childs = NULL;
 }
 
 /* \brief remove object from parent */
@@ -581,7 +552,10 @@ GLHCKAPI void glhckObjectRemoveFromParent(glhckObject *object)
 {
    CALL(0, "%p", object);
    assert(object);
-   if (!object->parent) return;
+
+   if (!object->parent)
+      return;
+
    glhckObjectRemoveChild(object->parent, object);
 }
 
@@ -603,9 +577,8 @@ GLHCKAPI void glhckObjectMaterial(glhckObject *object, glhckMaterial *material)
    }
 
    /* perform on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectMaterial, material);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectMaterial, material);
 }
 
 /* \brief get material from object */
@@ -624,18 +597,19 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
    assert(object);
 
    /* insert to draw queue, referenced until glhckRender */
-   _glhckObjectInsertToQueue(object);
+   if (chckArrayAdd(GLHCKRD()->objects, object))
+      glhckObjectRef(object);
 
    /* insert texture to drawing queue? */
    if (object->material && object->material->texture) {
       /* insert object's texture to textures queue, referenced until glhckRender */
-      _glhckTextureInsertToQueue(object->material->texture);
+      if (chckArrayAdd(GLHCKRD()->textures, object->material->texture))
+         glhckTextureRef(object->material->texture);
    }
 
    /* draw childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectDraw);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectDraw);
 }
 
 /* \brief render object */
@@ -669,8 +643,11 @@ GLHCKAPI void glhckObjectRenderAll(glhckObject *object)
 {
    CALL(2, "%p", object);
    assert(object);
+
    glhckObjectRender(object);
-   PERFORM_ON_CHILDS(object, glhckObjectRenderAll);
+
+   if (object->childs)
+      chckArrayIterCall(object->childs, glhckObjectRenderAll);
 }
 
 /* \brief set whether object should use vertex colors */
@@ -682,9 +659,8 @@ GLHCKAPI void glhckObjectVertexColors(glhckObject *object, int vertexColors)
    else object->flags &= ~GLHCK_OBJECT_VERTEX_COLOR;
 
    /* perform on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectVertexColors, vertexColors);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectVertexColors, vertexColors);
 }
 
 /* \brief get whether object should use vertex colors */
@@ -705,9 +681,8 @@ GLHCKAPI void glhckObjectCull(glhckObject *object, int cull)
    else object->flags &= ~GLHCK_OBJECT_CULL;
 
    /* perform on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectCull, cull);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectCull, cull);
 }
 
 /* \brief get whether object is culled */
@@ -728,9 +703,8 @@ GLHCKAPI void glhckObjectDepth(glhckObject *object, int depth)
    else object->flags &= ~GLHCK_OBJECT_DEPTH;
 
    /* perform on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectDepth, depth);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectDepth, depth);
 }
 
 /* \brief get wether object should be depth tested */
@@ -751,9 +725,8 @@ GLHCKAPI void glhckObjectDrawAABB(glhckObject *object, int drawAABB)
    else object->flags &= ~GLHCK_OBJECT_DRAW_AABB;
 
    /* perform on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectDrawAABB, drawAABB);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectDrawAABB, drawAABB);
 }
 
 /* \brief get object's AABB drawing */
@@ -774,9 +747,8 @@ GLHCKAPI void glhckObjectDrawOBB(glhckObject *object, int drawOBB)
    else object->flags &= ~GLHCK_OBJECT_DRAW_OBB;
 
    /* perform on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectDrawOBB, drawOBB);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectDrawOBB, drawOBB);
 }
 
 /* \brief get object's OBB drawing */
@@ -797,9 +769,8 @@ GLHCKAPI void glhckObjectDrawSkeleton(glhckObject *object, int drawSkeleton)
    else object->flags &= ~GLHCK_OBJECT_DRAW_SKELETON;
 
    /* perform on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectDrawSkeleton, drawSkeleton);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectDrawSkeleton, drawSkeleton);
 }
 
 /* \brief get object's skeleton drawing */
@@ -820,9 +791,8 @@ GLHCKAPI void glhckObjectDrawWireframe(glhckObject *object, int drawWireframe)
    else object->flags &= ~GLHCK_OBJECT_DRAW_WIREFRAME;
 
    /* perform on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectDrawWireframe, drawWireframe);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectDrawWireframe, drawWireframe);
 }
 
 /* \brief get object's wireframe drawing */
@@ -854,7 +824,7 @@ GLHCKAPI const kmAABB* glhckObjectGetOBB(glhckObject *object)
    assert(object);
 
    /* if performed on root, return the full obb instead */
-   if (object->flags & GLHCK_OBJECT_ROOT)
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
       return glhckObjectGetOBBWithChildren(object);
 
    /* update matrix first, if needed */
@@ -884,7 +854,7 @@ GLHCKAPI const kmAABB* glhckObjectGetAABB(glhckObject *object)
    assert(object);
 
    /* if performed on root, return the full aabb instead */
-   if (object->flags & GLHCK_OBJECT_ROOT)
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
       return glhckObjectGetAABBWithChildren(object);
 
    /* update matrix first, if needed */
@@ -1046,9 +1016,8 @@ GLHCKAPI void glhckObjectScale(glhckObject *object, const kmVec3 *scale)
    object->view.update = 1;
 
    /* perform scale on childs as well */
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectScale, scale);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectScale, scale);
 }
 
 /* \brief scale object (with kmScalar) */
@@ -1061,28 +1030,23 @@ GLHCKAPI void glhckObjectScalef(glhckObject *object, const kmScalar x, const kmS
 /* \brief insert bones to object */
 GLHCKAPI int glhckObjectInsertBones(glhckObject *object, glhckBone **bones, unsigned int memb)
 {
-   unsigned int i;
-   glhckBone **bonesCopy = NULL;
    CALL(0, "%p, %p, %u", object, bones, memb);
    assert(object);
 
-   /* copy bones, if they exist */
-   if (bones && !(bonesCopy = _glhckCopy(bones, memb * sizeof(glhckBone*))))
-      goto fail;
-
    /* free old bones */
    if (object->bones) {
-      for (i = 0; i != object->numBones; ++i)
-         glhckBoneFree(object->bones[i]);
-      _glhckFree(object->bones);
+      chckArrayIterCall(object->bones, glhckBoneFree);
+      chckArrayFree(object->bones);
+      object->bones = NULL;
    }
 
-   object->bones = bonesCopy;
-   object->numBones = (bonesCopy?memb:0);
-
-   /* reference new bones */
-   for (i = 0; object->bones && i != object->numBones; ++i)
-      glhckBoneRef(object->bones[i]);
+   if (bones && memb > 0) {
+      if ((object->bones = chckArrayNewFromCArray(bones, memb, 32))) {
+         chckArrayIterCall(object->bones, glhckBoneRef);
+      } else {
+         goto fail;
+      }
+   }
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -1096,54 +1060,65 @@ fail:
 GLHCKAPI glhckBone** glhckObjectBones(glhckObject *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
-   if (memb) *memb = object->numBones;
+
+   size_t nmemb = 0;
+   glhckBone **bones = (object->bones ? chckArrayToCArray(object->bones, &nmemb) : NULL);
+
+   if (memb)
+      *memb = nmemb;
+
    RET(2, "%p", object->bones);
-   return object->bones;
+   return bones;
 }
 
 /* \brief get bone by name */
 GLHCKAPI glhckBone* glhckObjectGetBone(glhckObject *object, const char *name)
 {
-   unsigned int i;
-   for (i = 0; i != object->numBones && strcmp(glhckBoneGetName(object->bones[i]), name); ++i);
-   return (i<object->numBones?object->bones[i]:NULL);
+   assert(object && name);
+   CALL(2, "%p, %s", object, name);
+
+   glhckBone *bone;
+   for (chckPoolIndex iter = 0; (bone = chckArrayIter(object->bones, &iter));) {
+      const char *bname = glhckBoneGetName(bone);
+      if (bname && !strcmp(bname, name)) {
+         RET(2, "%p", bone);
+         return bone;
+      }
+   }
+
+   RET(2, "%p", NULL);
+   return NULL;
 }
 
 /* \brief insert skin bones to object */
 GLHCKAPI int glhckObjectInsertSkinBones(glhckObject *object, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i;
-   glhckSkinBone **skinBonesCopy = NULL;
    CALL(0, "%p, %p, %u", object, skinBones, memb);
    assert(object);
 
-   /* copy skin bones, if they exist */
-   if (skinBones && !(skinBonesCopy = _glhckCopy(skinBones, memb * sizeof(glhckSkinBone*))))
-      goto fail;
-
    /* free old skin bones */
    if (object->skinBones) {
-      for (i = 0; i != object->numSkinBones; ++i)
-         glhckSkinBoneFree(object->skinBones[i]);
-      _glhckFree(object->skinBones);
+      chckArrayIterCall(object->skinBones, glhckSkinBoneFree);
+      chckArrayFree(object->skinBones);
+      object->skinBones = NULL;
    }
 
-   object->skinBones = skinBonesCopy;
-   object->numSkinBones = (skinBonesCopy?memb:0);
+   if (skinBones && memb > 0) {
+      if ((object->skinBones = chckArrayNewFromCArray(skinBones, memb, 32))) {
+         chckArrayIterCall(object->skinBones, glhckSkinBoneRef);
+      } else {
+         goto fail;
+      }
+   }
 
-   /* reference new skin bones */
    if (object->skinBones) {
-      for (i = 0; i != object->numSkinBones; ++i)
-         glhckSkinBoneRef(object->skinBones[i]);
-
       __GLHCKvertexType *type = GLHCKVT(object->geometry->vertexType);
       if (!object->bind && !(object->bind = _glhckCopy(object->geometry->vertices, object->geometry->vertexCount * type->size)))
          goto fail;
       if (!object->zero && !(object->zero = _glhckCopy(object->geometry->vertices, object->geometry->vertexCount * type->size)))
          goto fail;
 
-      int v;
-      for (v = 0; v < object->geometry->vertexCount; ++v)
+      for (int v = 0; v < object->geometry->vertexCount; ++v)
          memset(object->zero + type->size * v + type->offset[0], 0, type->msize[0] * type->memb[0]);
       _glhckSkinBoneTransformObject(object, 1);
    } else {
@@ -1164,47 +1139,56 @@ fail:
 GLHCKAPI glhckSkinBone** glhckObjectSkinBones(glhckObject *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
-   if (memb) *memb = object->numSkinBones;
+
+   size_t nmemb = 0;
+   glhckSkinBone **skinBones = (object->skinBones ? chckArrayToCArray(object->skinBones, &nmemb) : NULL);
+
+   if (memb)
+      *memb = nmemb;
+
    RET(2, "%p", object->skinBones);
-   return object->skinBones;
+   return skinBones;
 }
 
 /* \brief get skin bone by name */
 GLHCKAPI glhckSkinBone* glhckObjectGetSkinBone(glhckObject *object, const char *name)
 {
-   unsigned int i;
-   for (i = 0; i != object->numSkinBones; ++i) {
-      if (object->skinBones[i]->bone && !strcmp(glhckBoneGetName(object->skinBones[i]->bone), name))
-         break;
+   glhckSkinBone *skinBone;
+   assert(object && name);
+   CALL(2, "%p, %s", object, name);
+
+   for (chckPoolIndex iter = 0; (skinBone = chckArrayIter(object->skinBones, &iter));) {
+      const char *sbname = glhckSkinBoneGetName(skinBone);
+      if (sbname && !strcmp(sbname, name)) {
+         RET(2, "%p", skinBone);
+         return skinBone;
+      }
    }
-   return (i<object->numSkinBones?object->skinBones[i]:NULL);
+
+   RET(2, "%p", NULL);
+   return NULL;
 }
 
 /* \brief insert animations to object */
 GLHCKAPI int glhckObjectInsertAnimations(glhckObject *object, glhckAnimation **animations, unsigned int memb)
 {
-   unsigned int i;
-   glhckAnimation **animationsCopy = NULL;
    CALL(0, "%p, %p, %u", object, animations, memb);
    assert(object);
 
-   /* copy animations, if they exist */
-   if (animations && !(animationsCopy = _glhckCopy(animations, memb * sizeof(glhckAnimation*))))
-      goto fail;
-
    /* free old animations */
    if (object->animations) {
-      for (i = 0; i != object->numAnimations; ++i)
-         glhckAnimationFree(object->animations[i]);
-      _glhckFree(object->animations);
+      chckArrayIterCall(object->animations, glhckAnimationFree);
+      chckArrayFree(object->animations);
+      object->animations = NULL;
    }
 
-   object->animations = animationsCopy;
-   object->numAnimations = (animationsCopy?memb:0);
-
-   /* reference new animations */
-   for (i = 0; object->animations && i != object->numAnimations; ++i)
-      glhckAnimationRef(object->animations[i]);
+   if (animations && memb > 0) {
+      if ((object->animations = chckArrayNewFromCArray(animations, memb, 32))) {
+         chckArrayIterCall(object->animations, glhckAnimationRef);
+      } else {
+         goto fail;
+      }
+   }
 
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
@@ -1218,9 +1202,15 @@ fail:
 GLHCKAPI glhckAnimation** glhckObjectAnimations(glhckObject *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
-   if (memb) *memb = object->numAnimations;
+
+   size_t nmemb = 0;
+   glhckAnimation **animations = (object->animations ? chckArrayToCArray(object->animations, &nmemb) : NULL);
+
+   if (memb)
+      *memb = nmemb;
+
    RET(2, "%p", object->animations);
-   return object->animations;
+   return animations;
 }
 
 /* \brief create new geometry for object, replacing existing one. */
@@ -1323,9 +1313,8 @@ GLHCKAPI void glhckObjectUpdate(glhckObject *object)
    _glhckObjectUpdateBoxes(object);
    object->drawFunc = GLHCKRA()->objectRender;
 
-   if (object->flags & GLHCK_OBJECT_ROOT) {
-      PERFORM_ON_CHILDS(object, glhckObjectUpdate);
-   }
+   if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
+      chckArrayIterCall(object->childs, glhckObjectUpdate);
 }
 
 /* \brief return intersecting texture coordinate from object's geometry using ray */

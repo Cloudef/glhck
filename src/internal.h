@@ -17,6 +17,10 @@
 #include "helper/common.h" /* for macros, etc */
 #include <string.h> /* for strrchr */
 
+/* chck types */
+#include "array/array.h"
+#include "pool/pool.h"
+
 /* check compile time options
  * these are supposed to make compile
  * without cmake bit more painless */
@@ -255,17 +259,15 @@ typedef enum _glhckShaderVariableType {
 } _glhckShaderVariableType;
 
 /* mark internal type reference counted.
- * takes variable names refCounter and next in struct.
+ * takes variable name refCounter in struct.
  * all reference counted objects should be defined in __GLHCKworld world as well. */
-#define REFERENCE_COUNTED(type) \
-   struct type *next;           \
-unsigned int refCounter
+#define REFERENCE_COUNTED() unsigned int refCounter
 
 /* texture container */
 typedef struct _glhckTexture {
    struct glhckTextureParameters params;
    char *file;
-   REFERENCE_COUNTED(_glhckTexture);
+   REFERENCE_COUNTED();
    kmVec3 internalScale;
    unsigned int object;
    unsigned int flags, importFlags;
@@ -300,7 +302,7 @@ typedef struct _glhckAtlasRect {
 typedef struct _glhckAtlas {
    struct _glhckAtlasRect *rect;
    struct _glhckTexture *texture;
-   REFERENCE_COUNTED(_glhckAtlas);
+   REFERENCE_COUNTED();
 } _glhckAtlas;
 
 /* material container */
@@ -314,7 +316,7 @@ typedef struct _glhckMaterial {
    struct glhckColorb diffuse;
    struct glhckColorb emissive;
    struct glhckColorb specular;
-   REFERENCE_COUNTED(_glhckMaterial);
+   REFERENCE_COUNTED();
    float shininess;
    glhckBlendingMode blenda, blendb;
    unsigned int flags;
@@ -345,19 +347,15 @@ typedef struct _glhckObject {
    struct __GLHCKobjectView view;
    struct _glhckMaterial *material;
    struct _glhckObject *parent;
-   struct _glhckObject **childs;
-   struct _glhckBone **bones;
-   struct _glhckSkinBone **skinBones;
-   struct _glhckAnimation **animations;
+   chckArray *childs;
+   chckArray *bones;
+   chckArray *skinBones;
+   chckArray *animations;
    struct glhckGeometry *geometry;
    __GLHCKobjectDraw drawFunc;
    char *file, *name;
-   REFERENCE_COUNTED(_glhckObject);
+   REFERENCE_COUNTED();
    float transformedGeometryTime; /* stores skeletal animated transformation time (to avoid retransform) */
-   unsigned int numChilds;
-   unsigned int numBones;
-   unsigned int numSkinBones;
-   unsigned int numAnimations;
    unsigned char affectionFlags; /* flags how parent affects us */
    unsigned char flags;
 } _glhckObject;
@@ -368,45 +366,40 @@ typedef struct _glhckBone {
    kmMat4 transformedMatrix; /* final bone space transformation */
    struct _glhckBone *parent;
    char *name;
-   REFERENCE_COUNTED(_glhckBone);
+   REFERENCE_COUNTED();
 } _glhckBone;
 
 /* skinbone container */
 typedef struct _glhckSkinBone {
    kmMat4 offsetMatrix; /* bone -> mesh space transformation */
-   struct glhckVertexWeight *weights;
-   struct _glhckBone *bone;
-   REFERENCE_COUNTED(_glhckSkinBone);
-   unsigned int numWeights;
+   chckIterPool *weights;
+   struct _glhckBone *bone; /* TODO: use index? */
+   REFERENCE_COUNTED();
 } _glhckSkinBone;
 
 /* animation node container
  * contains keys for each bone (translation, rotation, scaling) */
 typedef struct _glhckAnimationNode {
-   struct glhckAnimationQuaternionKey *rotations;
-   struct glhckAnimationVectorKey *translations;
-   struct glhckAnimationVectorKey *scalings;
+   chckIterPool *rotations;
+   chckIterPool *translations;
+   chckIterPool *scalings;
    char *boneName;
-   REFERENCE_COUNTED(_glhckAnimationNode);
-   unsigned int numTranslations;
-   unsigned int numRotations;
-   unsigned int numScalings;
+   REFERENCE_COUNTED();
 } _glhckAnimationNode;
 
 /* animation container
  * stores information for single animation */
 typedef struct _glhckAnimation {
-   struct _glhckAnimationNode **nodes;
+   chckArray *nodes;
    char *name;
-   REFERENCE_COUNTED(_glhckAnimation);
+   REFERENCE_COUNTED();
    float ticksPerSecond;
    float duration;
-   unsigned int numNodes;
 } _glhckAnimation;
 
 /* stores history of glhckAnimatioNode */
 typedef struct _glhckAnimatorState {
-   struct _glhckBone *bone;
+   struct _glhckBone *bone; /* TODO: use index? */
    unsigned int translationFrame;
    unsigned int rotationFrame;
    unsigned int scalingFrame;
@@ -416,11 +409,10 @@ typedef struct _glhckAnimatorState {
  * animates glhckObject, using glhckBones and glhckAnimation */
 typedef struct _glhckAnimator {
    struct _glhckAnimation *animation;
-   struct _glhckAnimatorState *previousNodes;
-   struct _glhckBone **bones;
-   REFERENCE_COUNTED(_glhckAnimator);
+   chckIterPool *previousNodes;
+   chckArray *bones;
+   REFERENCE_COUNTED();
    float lastTime;
-   unsigned int numBones;
    char dirty;
 } _glhckAnimator;
 
@@ -441,20 +433,19 @@ typedef struct __GLHCKtextGeometry {
 
 /* text texture container */
 typedef struct __GLHCKtextTexture {
+   chckIterPool *rows;
    struct __GLHCKtextGeometry geometry;
-   struct __GLHCKtextTextureRow *rows;
-   struct __GLHCKtextTexture *next;
    struct _glhckTexture *texture;
    float internalWidth, internalHeight;
-   int rowsCount, allocatedCount;
+   char bitmap;
 } __GLHCKtextTexture;
 
 /* text container */
 typedef struct _glhckText {
    struct _glhckShader *shader;
-   struct __GLHCKtextFont *fontCache;
-   struct __GLHCKtextTexture *textureCache;
-   REFERENCE_COUNTED(_glhckText);
+   chckPool *fonts;
+   chckPool *textures;
+   REFERENCE_COUNTED();
    unsigned int textureRange;
    int cacheWidth, cacheHeight;
    struct glhckColorb color;
@@ -475,7 +466,7 @@ typedef struct _glhckCamera {
    struct __GLHCKcameraView view;
    struct glhckFrustum frustum;
    struct _glhckObject *object;
-   REFERENCE_COUNTED(_glhckCamera);
+   REFERENCE_COUNTED();
 } _glhckCamera;
 
 /* \brief light's internal camera && object state */
@@ -497,12 +488,12 @@ typedef struct _glhckLight {
    struct __GLHCKlightState current;
    struct __GLHCKlightOptions options;
    struct _glhckObject *object;
-   REFERENCE_COUNTED(_glhckLight);
+   REFERENCE_COUNTED();
 } _glhckLight;
 
 /* renderbuffer object */
 typedef struct _glhckRenderbuffer {
-   REFERENCE_COUNTED(_glhckRenderbuffer);
+   REFERENCE_COUNTED();
    unsigned int object;
    int width, height;
    glhckTextureFormat format;
@@ -511,14 +502,13 @@ typedef struct _glhckRenderbuffer {
 /* framebuffer object */
 typedef struct _glhckFramebuffer {
    glhckRect rect;
-   REFERENCE_COUNTED(_glhckFramebuffer);
+   REFERENCE_COUNTED();
    unsigned int object;
    glhckFramebufferTarget target;
 } _glhckFramebuffer;
 
 /* glhck hw buffer uniform location type */
 typedef struct _glhckHwBufferShaderUniform {
-   struct _glhckHwBufferShaderUniform *next;
    char *name;
    const char *typeName;
    int offset, size;
@@ -527,9 +517,9 @@ typedef struct _glhckHwBufferShaderUniform {
 
 /* glhck hw buffer object type */
 typedef struct _glhckHwBuffer {
-   struct _glhckHwBufferShaderUniform *uniforms;
+   chckPool *uniforms;
    char *name;
-   REFERENCE_COUNTED(_glhckHwBuffer);
+   REFERENCE_COUNTED();
    unsigned int object;
    int size;
    glhckHwBufferTarget target;
@@ -539,7 +529,6 @@ typedef struct _glhckHwBuffer {
 
 /* glhck shader attribute type */
 typedef struct _glhckShaderAttribute {
-   struct _glhckShaderAttribute *next;
    char *name;
    const char *typeName;
    unsigned int location;
@@ -549,7 +538,6 @@ typedef struct _glhckShaderAttribute {
 
 /* glhck shader uniform type */
 typedef struct _glhckShaderUniform {
-   struct _glhckShaderUniform *next;
    char *name;
    const char *typeName;
    unsigned int location;
@@ -559,9 +547,9 @@ typedef struct _glhckShaderUniform {
 
 /* glhck shader type */
 typedef struct _glhckShader {
-   struct _glhckShaderAttribute *attributes;
-   struct _glhckShaderUniform *uniforms;
-   REFERENCE_COUNTED(_glhckShader);
+   chckPool *attributes;
+   chckPool *uniforms;
+   REFERENCE_COUNTED();
    unsigned int program;
 } _glhckShader;
 
@@ -631,9 +619,9 @@ typedef unsigned int (*__GLHCKrenderAPIprogramLink) (unsigned int vertexShader, 
 typedef void (*__GLHCKrenderAPIprogramDelete) (unsigned int program);
 typedef unsigned int (*__GLHCKrenderAPIshaderCompile) (glhckShaderType type, const char *effectKey, const char *contentsFromMemory);
 typedef void (*__GLHCKrenderAPIshaderDelete) (unsigned int shader);
-typedef _glhckHwBufferShaderUniform* (*__GLHCKrenderAPIprogramUniformBufferList) (unsigned int program, const char *uboName, int *size);
-typedef _glhckShaderAttribute* (*__GLHCKrenderAPIprogramAttributeList) (unsigned int program);
-typedef _glhckShaderUniform* (*__GLHCKrenderAPIprogramUniformList) (unsigned int program);
+typedef chckPool* (*__GLHCKrenderAPIprogramUniformBufferPool) (unsigned int program, const char *uboName, int *size);
+typedef chckPool* (*__GLHCKrenderAPIprogramAttributePool) (unsigned int program);
+typedef chckPool* (*__GLHCKrenderAPIprogramUniformPool) (unsigned int program);
 typedef void (*__GLHCKrenderAPIprogramUniform) (unsigned int program, _glhckShaderUniform *uniform, int count, const void *value);
 typedef unsigned int (*__GLHCKrenderAPIprogramAttachUniformBuffer) (unsigned int program, const char *name, unsigned int location);
 typedef int (*__GLHCKrenderAPIshadersPath) (const char *pathPrefix, const char *pathSuffix);
@@ -697,9 +685,9 @@ typedef struct __GLHCKrenderAPI {
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programBind);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programLink);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programDelete);
-   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniformBufferList);
-   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programAttributeList);
-   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniformList);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniformBufferPool);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programAttributePool);
+   GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniformPool);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programUniform);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(programAttachUniformBuffer);
    GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION(shaderCompile);
@@ -709,20 +697,6 @@ typedef struct __GLHCKrenderAPI {
 } __GLHCKrenderAPI;
 
 #undef GLHCK_INCLUDE_INTERNAL_RENDER_API_FUNCTION
-
-#define GLHCK_QUEUE_ALLOC_STEP 15
-
-/* context object queue */
-typedef struct __GLHCKobjectQueue {
-   struct _glhckObject **queue;
-   unsigned int allocated, count;
-} __GLHCKobjectQueue;
-
-/* context texture queue */
-typedef struct __GLHCKtextureQueue {
-   struct _glhckTexture **queue;
-   unsigned int allocated, count;
-} __GLHCKtextureQueue;
 
 /* view matrices */
 typedef struct __GLHCKrenderView {
@@ -734,8 +708,8 @@ typedef struct __GLHCKrenderView {
 
 /* context render draw state */
 typedef struct __GLHCKrenderDraw {
-   struct __GLHCKobjectQueue objects;
-   struct __GLHCKtextureQueue textures;
+   chckArray *objects;
+   chckArray *textures;
    struct __GLHCKrenderView view;
    struct _glhckTexture *texture[GLHCK_MAX_ACTIVE_TEXTURE][GLHCK_TEXTURE_TYPE_LAST];
    struct _glhckFramebuffer *framebuffer[GLHCK_FRAMEBUFFER_TYPE_LAST];
@@ -763,13 +737,12 @@ typedef struct __GLHCKrenderPass {
 typedef struct __GLHCKrenderState {
    struct __GLHCKrenderView view;
    struct __GLHCKrenderPass pass;
-   struct __GLHCKrenderState *next;
    int width, height;
 } __GLHCKrenderState;
 
 /* context render properties */
 typedef struct __GLHCKrender {
-   struct __GLHCKrenderState *stack;
+   chckIterPool *state;
    struct __GLHCKrenderAPI api;
    struct __GLHCKrenderPass pass;
    struct __GLHCKrenderDraw draw;
@@ -800,25 +773,24 @@ typedef struct __GLHCKindexType {
 
 /* context's world */
 typedef struct __GLHCKworld {
-   struct _glhckObject           *object;
-   struct _glhckBone             *bone;
-   struct _glhckSkinBone         *skinBone;
-   struct _glhckAnimationNode    *animationNode;
-   struct _glhckAnimation        *animation;
-   struct _glhckAnimator         *animator;
-   struct _glhckCamera           *camera;
-   struct _glhckLight            *light;
-   struct _glhckAtlas            *atlas;
-   struct _glhckRenderbuffer     *renderbuffer;
-   struct _glhckFramebuffer      *framebuffer;
-   struct _glhckMaterial         *material;
-   struct _glhckTexture          *texture;
-   struct _glhckText             *text;
-   struct _glhckHwBuffer         *hwbuffer;
-   struct _glhckShader           *shader;
-   struct __GLHCKvertexType      *vertexType;
-   struct __GLHCKindexType       *indexType;
-   unsigned char numVertexTypes, numIndexTypes;
+   chckArray *objects;
+   chckArray *bones;
+   chckArray *skinBones;
+   chckArray *animationNodes;
+   chckArray *animations;
+   chckArray *animators;
+   chckArray *cameras;
+   chckArray *lights;
+   chckArray *atlases;
+   chckArray *renderbuffers;
+   chckArray *framebuffers;
+   chckArray *materials;
+   chckArray *textures;
+   chckArray *texts;
+   chckArray *hwbuffers;
+   chckArray *shaders;
+   chckPool *vertexTypes;
+   chckPool *indexTypes;
 } __GLHCKworld;
 
 /* context trace channel */
@@ -838,7 +810,6 @@ typedef struct __GLHCKtrace {
 /* context allocation tracing */
 typedef struct __GLHCKalloc {
    size_t size;
-   struct __GLHCKalloc *next;
    void *ptr;
    const char *channel;
 } __GLHCKalloc;
@@ -857,22 +828,14 @@ typedef struct __GLHCKcontext {
    struct __GLHCKtrace trace;
    struct __GLHCKmisc misc;
 #ifndef NDEBUG
-   struct __GLHCKalloc *alloc;
+   chckIterPool *allocs;
 #endif
 } __GLHCKcontext;
-
-/* thread-local storage glhck context, allows in theory to use opengl on different threads.
- * (as long as each thread has own gl context as well) */
-extern _GLHCK_TLS struct __GLHCKcontext *_glhckContext;
-
-/* internal glhck flip matrix
- * every model matrix is multiplied with this when glhckRenderFlip(1) is used */
-extern const kmMat4 _glhckFlipMatrix;
 
 /* api check macro
  * don't use with internal api
  * should be first call in GLHCKAPI public functions that access _GLHCKlibrary */
-#define GLHCK_INITIALIZED() assert(_glhckContext != NULL && "call glhckInit() first");
+#define GLHCK_INITIALIZED() assert(glhckInitialized() && "call glhckContextCreate(argc, argv) first");
 
 /* macros for faster typing */
 #define GLHCKR() (&glhckContextGet()->render)
@@ -883,8 +846,8 @@ extern const kmMat4 _glhckFlipMatrix;
 #define GLHCKW() (&glhckContextGet()->world)
 #define GLHCKT() (&glhckContextGet()->trace)
 #define GLHCKM() (&glhckContextGet()->misc)
-#define GLHCKVT(x) (&glhckContextGet()->world.vertexType[x])
-#define GLHCKIT(x) (&glhckContextGet()->world.indexType[x])
+#define GLHCKVT(x) ((__GLHCKvertexType*)chckPoolGet(glhckContextGet()->world.vertexTypes, x))
+#define GLHCKIT(x) ((__GLHCKindexType*)chckPoolGet(glhckContextGet()->world.indexTypes, x))
 
 /* tracking allocation macros */
 #define _glhckMalloc(x)       __glhckMalloc(GLHCK_CHANNEL, x)
@@ -952,6 +915,10 @@ char* _glhckStrupstr(const char *hay, const char *needle);
 int _glhckStrupcmp(const char *hay, const char *needle);
 int _glhckStrnupcmp(const char *hay, const char *needle, size_t len);
 
+/* world functions */
+void _glhckWorldAdd(chckArray **pArray, void *object);
+void _glhckWorldRemove(chckArray **pArray, void *object);
+
 /* texture packing functions */
 void _glhckTexturePackerCount(_glhckTexturePacker *tp, short textureCount);
 short _glhckTexturePackerAdd(_glhckTexturePacker *tp, int width, int height);
@@ -962,6 +929,7 @@ void _glhckTexturePackerFree(_glhckTexturePacker *tp);
 
 /* render functions */
 int _glhckRenderInitialized(void);
+const kmMat4* _glhckRenderGetFlipMatrix(void);
 void _glhckRenderDefaultProjection(int width, int height);
 void _glhckRenderCheckApi(void);
 

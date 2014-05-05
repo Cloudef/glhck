@@ -80,15 +80,14 @@ static void _glhckCameraViewMatrix(glhckCamera *object)
 /* \brief update the camera stack after window resize */
 void _glhckCameraWorldUpdate(int width, int height)
 {
-   glhckCamera *camera;
-   int diffw, diffh;
    CALL(2, "%d, %d", width, height);
 
    /* get difference of old dimensions and now */
-   diffw = width  - GLHCKR()->width;
-   diffh = height - GLHCKR()->height;
+   int diffw = width  - GLHCKR()->width;
+   int diffh = height - GLHCKR()->height;
 
-   for (camera = GLHCKW()->camera; camera; camera = camera->next) {
+   glhckCamera *camera;
+   for (chckArrayIndex iter = 0; GLHCKW()->cameras && (camera = chckArrayIter(GLHCKW()->cameras, &iter));) {
       glhckCameraViewporti(camera,
 	    camera->view.viewport.x,
 	    camera->view.viewport.y,
@@ -138,7 +137,7 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    glhckCameraReset(object);
 
    /* insert to world */
-   _glhckWorldInsert(camera, object, glhckCamera*);
+   _glhckWorldAdd(&GLHCKW()->cameras, object);
 
    RET(0, "%p", object);
    return object;
@@ -180,7 +179,7 @@ GLHCKAPI unsigned int glhckCameraFree(glhckCamera *object)
    NULLDO(glhckObjectFree, object->object);
 
    /* remove camera from world */
-   _glhckWorldRemove(camera, object, glhckCamera*);
+   _glhckWorldRemove(&GLHCKW()->cameras, object);
 
    /* free */
    NULLDO(_glhckFree, object);

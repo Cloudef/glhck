@@ -247,9 +247,9 @@ int main(int argc, char **argv)
    glhckText *text = glhckTextNew(512, 512);
    if (!text) return EXIT_FAILURE;
 
-   unsigned int font  = glhckTextFontNew(text, "example/media/sazanami-gothic.ttf");
-   unsigned int font2 = glhckTextFontNew(text, "example/media/DejaVuSans.ttf");
-   unsigned int font3 = glhckTextFontNewKakwafont(text, NULL);
+   glhckFont font  = glhckTextFontNew(text, "example/media/sazanami-gothic.ttf");
+   glhckFont font2 = glhckTextFontNew(text, "example/media/DejaVuSans.ttf");
+   glhckFont font3 = glhckTextFontNewKakwafont(text, NULL);
 
    glhckObject *rttText = NULL, *rttText2 = NULL;
    glhckTextColorb(text, 255, 255, 255, 255);

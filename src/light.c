@@ -25,7 +25,7 @@ GLHCKAPI glhckLight* glhckLightNew(void)
    glhckLightPointLightFactor(object, 1.0);
 
     /* insert to world */
-   _glhckWorldInsert(light, object, glhckLight*);
+   _glhckWorldAdd(&GLHCKW()->lights, object);
 
    RET(0, "%p", object);
    return object;
@@ -63,7 +63,7 @@ GLHCKAPI unsigned int glhckLightFree(glhckLight *object)
    NULLDO(glhckObjectFree, object->object);
 
    /* remove object from world */
-   _glhckWorldRemove(light, object, glhckLight*);
+   _glhckWorldRemove(&GLHCKW()->lights, object);
 
    /* free */
    NULLDO(_glhckFree, object);

@@ -61,9 +61,9 @@ void _glhckRenderStub(void)
    GLHCK_RENDER_FUNC(programLink, stubProgramLink);
    GLHCK_RENDER_FUNC(programDelete, stubProgramDelete);
    GLHCK_RENDER_FUNC(programUniform, stubProgramUniform);
-   GLHCK_RENDER_FUNC(programUniformBufferList, stubProgramUniformBufferList);
-   GLHCK_RENDER_FUNC(programAttributeList, stubProgramAttributeList);
-   GLHCK_RENDER_FUNC(programUniformList, stubProgramUniformList);
+   GLHCK_RENDER_FUNC(programUniformBufferPool, stubProgramUniformBufferPool);
+   GLHCK_RENDER_FUNC(programAttributePool, stubProgramAttributePool);
+   GLHCK_RENDER_FUNC(programUniformPool, stubProgramUniformPool);
    GLHCK_RENDER_FUNC(programAttachUniformBuffer, stubProgramAttachUniformBuffer);
    GLHCK_RENDER_FUNC(shaderCompile, stubShaderCompile);
    GLHCK_RENDER_FUNC(shaderDelete, stubShaderDelete);

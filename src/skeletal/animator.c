@@ -5,15 +5,14 @@
 #define GLHCK_CHANNEL GLHCK_CHANNEL_ANIMATOR
 
 /* TODO: Eventually do interpolation using splines for even smoother animation
- * We can also safe some keyframes in glhckm format by doing this. */
+ * We can also save some keyframes in glhckm format by doing this. */
 
 /* \brief interpolate beetwen two vector keys */
 static void _glhckAnimatorInterpolateVectorKeys(kmVec3 *out, float time, float duration,
       const glhckAnimationVectorKey *current, const glhckAnimationVectorKey *next)
 {
-   float interp;
    assert(out);
-   interp = (time < next->time ? time/next->time : time/(duration+next->time));
+   float interp = (time < next->time ? time/next->time : time/(duration+next->time));
    out->x = current->vector.x + (next->vector.x - current->vector.x) * interp;
    out->y = current->vector.y + (next->vector.y - current->vector.y) * interp;
    out->z = current->vector.z + (next->vector.z - current->vector.z) * interp;
@@ -23,27 +22,39 @@ static void _glhckAnimatorInterpolateVectorKeys(kmVec3 *out, float time, float d
 static void _glhckAnimatorInterpolateQuaternionKeys(kmQuaternion *out, float time, float duration,
       const glhckAnimationQuaternionKey *current, const glhckAnimationQuaternionKey *next)
 {
-   float interp;
    assert(out);
-   interp = (time < next->time ? time/next->time : time/(duration+next->time));
+   float interp = (time < next->time ? time/next->time : time/(duration+next->time));
    kmQuaternionSlerp(out, &current->quaternion, &next->quaternion, interp);
 }
 
 /* \brief lookup bone from animator */
 static glhckBone* _glhckAnimatorLookupBone(glhckAnimator *object, const char *name)
 {
-   unsigned int i;
-   for (i = 0; i != object->numBones && strcmp(object->bones[i]->name, name); ++i);
-   return (i<object->numBones?object->bones[i]:NULL);
+   glhckBone *bone;
+   for (chckArrayIndex iter = 0; (bone = chckArrayIter(object->bones, &iter));) {
+      const char *bname = glhckBoneGetName(bone);
+      if (bone && !strcmp(bname, name))
+         return bone;
+   }
+
+   return NULL;
 }
 
 /* \brief resetup animation after bone/animation change */
 static void _glhckAnimatorSetupAnimation(glhckAnimator *object)
 {
-   unsigned int i;
-   if (!object->bones || !object->animation) return;
-   for (i = 0; i != object->animation->numNodes; ++i)
-      object->previousNodes[i].bone = _glhckAnimatorLookupBone(object, object->animation->nodes[i]->boneName);
+   if (!object->bones || !object->animation)
+      return;
+
+   IFDO(chckIterPoolFree, object->previousNodes);
+   object->previousNodes = chckIterPoolNew(32, chckArrayCount(object->animation->nodes), sizeof(_glhckAnimatorState));
+
+   glhckAnimationNode *node;
+   for (chckArrayIndex iter = 0; (node = chckArrayIter(object->animation->nodes, &iter));) {
+      _glhckAnimatorState *pnode = chckIterPoolAdd(object->previousNodes, NULL, NULL);
+      pnode->bone = _glhckAnimatorLookupBone(object, node->boneName);
+   }
+
    object->lastTime = FLT_MAX;
 }
 
@@ -61,7 +72,7 @@ GLHCKAPI glhckAnimator* glhckAnimatorNew(void)
    object->refCounter++;
 
    /* insert to world */
-   _glhckWorldInsert(animator, object, glhckAnimator*);
+   _glhckWorldAdd(&GLHCKW()->animators, object);
 
    RET(0, "%p", object);
    return object;
@@ -100,7 +111,7 @@ GLHCKAPI unsigned int glhckAnimatorFree(glhckAnimator *object)
    glhckAnimatorInsertBones(object, NULL, 0);
 
    /* remove from world */
-   _glhckWorldRemove(animator, object, glhckAnimator*);
+   _glhckWorldRemove(&GLHCKW()->animators, object);
 
    /* free */
    NULLDO(_glhckFree, object);
@@ -117,13 +128,11 @@ GLHCKAPI void glhckAnimatorAnimation(glhckAnimator *object, glhckAnimation *anim
    assert(object);
 
    IFDO(glhckAnimationFree, object->animation);
-   object->animation = (animation?glhckAnimationRef(animation):NULL);
-   IFDO(_glhckFree, object->previousNodes);
+   object->animation = (animation ? glhckAnimationRef(animation) : NULL);
+   IFDO(chckIterPoolFree, object->previousNodes);
 
-   if (animation) {
-      object->previousNodes = _glhckCalloc(animation->numNodes, sizeof(_glhckAnimatorState));
+   if (animation)
       _glhckAnimatorSetupAnimation(object);
-   }
 }
 
 /* \brief return the current animation of animator */
@@ -138,29 +147,22 @@ GLHCKAPI glhckAnimation* glhckAnimatorGetAnimation(glhckAnimator *object)
 /* \brief set bones to animator */
 GLHCKAPI int glhckAnimatorInsertBones(glhckAnimator *object, glhckBone **bones, unsigned int memb)
 {
-   unsigned int i;
-   glhckBone **bonesCopy = NULL;
    CALL(0, "%p, %p, %u", object, bones, memb);
    assert(object);
 
-   /* copy bones, if they exist */
-   if (bones && !(bonesCopy = _glhckCopy(bones, memb * sizeof(glhckBone*))))
-      goto fail;
-
    /* free old bones */
    if (object->bones) {
-      for (i = 0; i != object->numBones; ++i)
-         glhckBoneFree(object->bones[i]);
-      _glhckFree(object->bones);
+      chckArrayIterCall(object->bones, glhckBoneFree);
+      chckArrayFree(object->bones);
+      object->bones = NULL;
    }
 
-   object->bones = bonesCopy;
-   object->numBones = (bonesCopy?memb:0);
-
-   /* reference new bones */
-   if (object->bones) {
-      for (i = 0; i != object->numBones; ++i)
-         glhckBoneRef(object->bones[i]);
+   if (bones && memb > 0) {
+      if ((object->bones = chckArrayNewFromCArray(bones, memb, 32))) {
+         chckArrayIterCall(object->bones, glhckBoneRef);
+      } else {
+         goto fail;
+      }
    }
 
    /* resetup animation */
@@ -178,9 +180,15 @@ fail:
 GLHCKAPI glhckBone** glhckAnimatorBones(glhckAnimator *object, unsigned int *memb)
 {
    CALL(2, "%p, %p", object, memb);
-   if (memb) *memb = object->numBones;
+
+   size_t nmemb;
+   glhckBone **bones = chckArrayToCArray(object->bones, &nmemb);
+
+   if (memb)
+      *memb = nmemb;
+
    RET(2, "%p", object->bones);
-   return object->bones;
+   return bones;
 }
 
 /* \brief transform object with the animation */
@@ -204,80 +212,77 @@ GLHCKAPI void glhckAnimatorTransform(glhckAnimator *object, glhckObject *gobject
 /* \brief update the skeletal animation to next tick */
 GLHCKAPI void glhckAnimatorUpdate(glhckAnimator *object, float playTime)
 {
-   _glhckAnimatorState *lastNode;
-   glhckBone *bone;
-   glhckAnimation *animation;
-   glhckAnimationNode *node;
-   kmVec3 currentTranslation, currentScaling;
-   kmQuaternion currentRotation;
-   kmMat4 matrix, tmp;
-   float duration, time;
-   unsigned int n, frame, nextFrame;
    CALL(2, "%p", object);
    assert(object);
 
    /* not enough memory(?) */
-   if (!object->previousNodes) return;
-   if (!object->animation) return;
-   if (!object->bones) return;
+   if (!object->previousNodes)
+      return;
 
-   animation = object->animation;
-   duration = animation->duration;
+   if (!object->animation)
+      return;
+
+   if (!object->bones)
+      return;
+
+   glhckAnimation *animation = object->animation;
+   float duration = animation->duration;
    if (duration <= 0.0)  return;
 
-   time = fmod(playTime, duration);
-   if (time == object->lastTime) return;
+   float time = fmod(playTime, duration);
+   if (time == object->lastTime)
+      return;
 
-   for (n = 0; n != animation->numNodes; ++n) {
-      node = animation->nodes[n];
-      lastNode = &object->previousNodes[n];
+   for (chckArrayIndex n = 0; n != chckArrayCount(animation->nodes); ++n) {
+      glhckAnimationNode *node = chckArrayGet(animation->nodes, n);
+      _glhckAnimatorState *lastNode = chckIterPoolGet(object->previousNodes, n);
 
-      /* we don't have bone for this */
+      glhckBone *bone;
       if (!(bone = lastNode->bone))
          continue;
 
-      /* reset */
+      kmQuaternion currentRotation;
+      kmVec3 currentTranslation, currentScaling;
       memset(&currentTranslation, 0, sizeof(kmVec3));
       kmVec3Fill(&currentScaling, 1.0f, 1.0f, 1.0f);
       kmQuaternionIdentity(&currentRotation);
 
       /* translate using translation keys */
       if (node->translations) {
-         frame = (time >= object->lastTime?lastNode->translationFrame:0);
-         for (; frame < node->numTranslations-1 && time > node->translations[frame].time; ++frame);
+         unsigned int frame = (time >= object->lastTime ? lastNode->translationFrame : 0);
+         glhckAnimationVectorKey *frameNode = chckIterPoolGet(node->translations, frame);
+         for (; frame < chckIterPoolCount(node->translations) - 1 && time > (frameNode = chckIterPoolGet(node->translations, frame))->time; ++frame);
 
-         nextFrame = (frame+1)%node->numTranslations;
-         _glhckAnimatorInterpolateVectorKeys(&currentTranslation, time, duration,
-               &node->translations[frame], &node->translations[nextFrame]);
+         unsigned int nextFrame = ((frame + 1) % chckIterPoolCount(node->translations));
+         _glhckAnimatorInterpolateVectorKeys(&currentTranslation, time, duration, frameNode, chckIterPoolGet(node->translations, nextFrame));
          lastNode->translationFrame = frame;
       }
 
       /* scale using scaling keys */
       if (node->scalings) {
-         frame = (time >= object->lastTime?lastNode->scalingFrame:0);
-         for (; frame < node->numScalings-1 && time > node->scalings[frame].time; ++frame);
+         unsigned int frame = (time >= object->lastTime ? lastNode->scalingFrame : 0);
+         glhckAnimationVectorKey *frameNode = chckIterPoolGet(node->scalings, frame);
+         for (; frame < chckIterPoolCount(node->scalings) - 1 && time > (frameNode = chckIterPoolGet(node->scalings, frame))->time; ++frame);
 
-         nextFrame = (frame+1)%node->numScalings;
-         _glhckAnimatorInterpolateVectorKeys(&currentScaling, time, duration,
-               &node->scalings[frame], &node->scalings[nextFrame]);
+         unsigned int nextFrame = ((frame + 1) % chckIterPoolCount(node->scalings));
+         _glhckAnimatorInterpolateVectorKeys(&currentScaling, time, duration, frameNode, chckIterPoolGet(node->scalings, nextFrame));
          lastNode->scalingFrame = frame;
       }
 
       /* rotate using rotation keys */
       if (node->rotations) {
-         frame = (time >= object->lastTime?lastNode->rotationFrame:0);
-         for (; frame < node->numRotations-1 && time > node->rotations[frame].time; ++frame);
+         unsigned int frame = (time >= object->lastTime ? lastNode->rotationFrame : 0);
+         glhckAnimationQuaternionKey *frameNode = chckIterPoolGet(node->rotations, frame);
+         for (; frame < chckIterPoolCount(node->rotations) - 1 && time > (frameNode = chckIterPoolGet(node->rotations, frame))->time; ++frame);
 
-         nextFrame = (frame+1)%node->numRotations;
-         _glhckAnimatorInterpolateQuaternionKeys(&currentRotation, time, duration,
-               &node->rotations[frame], &node->rotations[nextFrame]);
+         unsigned int nextFrame = ((frame + 1) % chckIterPoolCount(node->rotations));
+         _glhckAnimatorInterpolateQuaternionKeys(&currentRotation, time, duration, frameNode, chckIterPoolGet(node->rotations, nextFrame));
          lastNode->rotationFrame = frame;
       }
 
       /* build transformation matrix */
-      kmMat4Identity(&matrix);
-      kmMat4Scaling(&tmp, currentScaling.x, currentScaling.y, currentScaling.z);
-      kmMat4Multiply(&matrix, &tmp, &matrix);
+      kmMat4 matrix, tmp;
+      kmMat4Scaling(&matrix, currentScaling.x, currentScaling.y, currentScaling.z);
       kmMat4RotationQuaternion(&tmp, &currentRotation);
       kmMat4Multiply(&matrix, &tmp, &matrix);
       kmMat4Translation(&tmp, currentTranslation.x, currentTranslation.y, currentTranslation.z);

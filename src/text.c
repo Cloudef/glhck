@@ -16,8 +16,10 @@
 #include "helper/stb_truetype.h"
 
 #define GLHCK_TEXT_HASH_SIZE 256
-#define GLHCK_TEXT_ROWS 128
-#define GLHCK_TEXT_VERT_COUNT (6*GLHCK_TEXT_ROWS)
+#define GLHCK_TEXT_VERT_COUNT (6 * 128)
+
+#define GLHCK_INVALID_GLYPH (chckPoolIndex)-1
+#define GLHCK_INVALID_TEXTURE (chckPoolIndex)-1
 
 /* \brief font types */
 typedef enum _glhckTextFontType {
@@ -39,11 +41,11 @@ typedef struct __GLHCKtextQuad {
 /* \brief glyph object */
 typedef struct __GLHCKtextGlyph
 {
-   struct __GLHCKtextTexture *texture;
+   chckPoolIndex textureId;
+   chckPoolIndex next;
    float xadv, xoff, yoff;
    unsigned int code;
    int x1, y1, x2, y2;
-   int next;
    short size;
 } __GLHCKtextGlyph;
 
@@ -51,13 +53,11 @@ typedef struct __GLHCKtextGlyph
 typedef struct __GLHCKtextFont
 {
    struct stbtt_fontinfo font;
-   struct __GLHCKtextFont *next;
-   struct __GLHCKtextGlyph *glyphCache;
-   struct __GLHCKtextTexture *texture; /* only used on bitmap fonts */
+   chckPoolIndex textureId; /* only used on bitmap fonts */
+   chckPoolIndex lut[GLHCK_TEXT_HASH_SIZE];
+   chckPool *glyphs;
    void *data;
    float ascender, descender, lineHeight;
-   unsigned int id, glyphCount;
-   int lut[GLHCK_TEXT_HASH_SIZE];
    _glhckTextFontType type;
 } __GLHCKtextFont;
 
@@ -86,12 +86,10 @@ static const unsigned char utf8d[] = {
 };
 
 /* decode utf8 */
-static unsigned int decutf8(unsigned int* state, unsigned int* codep, unsigned int byte)
+static unsigned int decutf8(unsigned int *state, unsigned int *codep, unsigned int byte)
 {
    unsigned int type = utf8d[byte];
-   *codep = (*state != UTF8_ACCEPT) ?
-      (byte & 0x3fu) | (*codep << 6) :
-      (0xff >> type) & (byte);
+   *codep = (*state != UTF8_ACCEPT ? (byte & 0x3fu) | (*codep << 6) : (0xff >> type) & (byte));
    *state = utf8d[256 + *state*16 + type];
    return *state;
 }
@@ -106,15 +104,17 @@ static int encutf8len(unsigned int ch) {
 
 /* \brief encode code point to utf8 */
 static int encutf8(unsigned int ch, char *buffer, int bufferSize) {
-   int i, j;
    unsigned char *str = (unsigned char *)buffer;
 
+   int i, j;
    if ((i = j = encutf8len(ch)) == 1) {
       *str = ch;
       return 1;
    }
 
-   if (bufferSize < i) return 0;
+   if (bufferSize < i)
+      return 0;
+
    for (; j > 1; j--) str[j-1] = 0x80 | (0x3F & (ch >> ((i - j) * 6)));
    *str = (~0) << (8 - i);
    *str |= (ch >> (i * 6 - 6));
@@ -133,21 +133,16 @@ static unsigned int hashint(unsigned int a)
    return a;
 }
 
-/* \brief resize geometry data */
 static int _glhckTextGeometryAllocateMore(__GLHCKtextGeometry *geometry)
 {
-   int newCount;
+   int newCount = geometry->vertexCount + GLHCK_TEXT_VERT_COUNT;
+
 #if GLHCK_TEXT_FLOAT_PRECISION
    glhckVertexData2f *newData;
-#else
-   glhckVertexData2s *newData;
-#endif
-
-   newCount = geometry->vertexCount + GLHCK_TEXT_VERT_COUNT;
-#if GLHCK_TEXT_FLOAT_PRECISION
    if (!(newData = _glhckRealloc(geometry->vertexData, geometry->allocatedCount, newCount, sizeof(glhckVertexData2f))))
       goto fail;
 #else
+   glhckVertexData2s *newData;
    if (!(newData = _glhckRealloc(geometry->vertexData, geometry->allocatedCount, newCount, sizeof(glhckVertexData2s))))
       goto fail;
 #endif
@@ -160,263 +155,222 @@ fail:
    return RETURN_FAIL;
 }
 
-/* \brief resize row data */
-static int _glhckTextTextureRowsAllocateMore(__GLHCKtextTexture *texture)
-{
-   int newCount;
-   struct __GLHCKtextTextureRow *newRows;
-
-   newCount = texture->rowsCount + GLHCK_TEXT_ROWS;
-   if (!(newRows = _glhckRealloc(texture->rows, texture->allocatedCount, newCount, sizeof(__GLHCKtextTextureRow))))
-      goto fail;
-
-   texture->rows = newRows;
-   texture->allocatedCount = newCount;
-   return RETURN_OK;
-
-fail:
-   return RETURN_FAIL;
-}
-
 /* \brief creates new texture to the cache */
-static int _glhckTextTextureNew(glhckText *object, glhckTextureFormat format, glhckDataType type, const void *data)
+static __GLHCKtextTexture* _glhckTextTextureNew(glhckText *object, chckPoolIndex *id, glhckTextureFormat format, glhckDataType type, const void *data)
 {
-   __GLHCKtextTexture *texture = NULL, *t;
+   glhckTexture *texture;
+   chckIterPool *rowsPool = NULL;
    CALL(0, "%p, %u, %u, %p", object, format, type, data);
    assert(object);
 
-   if (!(texture = _glhckCalloc(1, sizeof(__GLHCKtextTexture))))
+   if (!(texture = glhckTextureNew()))
       goto fail;
 
-   if (!(texture->texture = glhckTextureNew()))
-      goto fail;
-
-   if (glhckTextureCreate(texture->texture, GLHCK_TEXTURE_2D, 0, object->cacheWidth, object->cacheHeight,
-            0, 0, format, type, 0, data) != RETURN_OK)
+   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, object->cacheWidth, object->cacheHeight, 0, 0, format, type, 0, data) != RETURN_OK)
       goto fail;
 
    /* set default params */
-   glhckTextureParameter(texture->texture, glhckTextureDefaultLinearParameters());
+   glhckTextureParameter(texture, glhckTextureDefaultLinearParameters());
+
+   if (!(rowsPool = chckIterPoolNew(32, 32, sizeof(__GLHCKtextTextureRow))))
+      goto fail;
+
+   __GLHCKtextTexture *textTexture;
+   if (!(textTexture = chckPoolAdd(object->textures, NULL, id)))
+      goto fail;
 
    /* set internal texture dimensions for mapping */
-   texture->internalWidth = (float)1.0f/object->cacheWidth;
-   texture->internalHeight = (float)1.0f/object->cacheHeight;
+   textTexture->internalWidth = (float)1.0f/object->cacheWidth;
+   textTexture->internalHeight = (float)1.0f/object->cacheHeight;
 
-   for (t = object->textureCache; t && t->next; t = t->next);
-   if (!t) object->textureCache = texture;
-   else t->next = texture;
+   textTexture->texture = texture;
+   textTexture->rows = rowsPool;
 
-   RET(0, "%d", RETURN_OK);
-   return RETURN_OK;
+   RET(0, "%p", textTexture);
+   return textTexture;
 
 fail:
-   if (texture) {
-      IFDO(glhckTextureFree, texture->texture);
-   }
-   IFDO(_glhckFree, texture);
+   IFDO(glhckTextureFree, texture);
+   IFDO(chckIterPoolFree, rowsPool);
    RET(0, "%d", RETURN_FAIL);
-   return RETURN_FAIL;
+   return NULL;
 }
 
 /* \brief free cache texture from text object
  * NOTE: all glyphs from fonts pointing to this cache texture are flushed after this! */
-static void _glhckTextTextureFree(glhckText *object, __GLHCKtextTexture *texture)
+static void _glhckTextTextureFree(glhckText *object, chckPoolIndex textTextureId)
 {
-   unsigned int i;
-   __GLHCKtextTexture *t, *tp;
-   __GLHCKtextFont *f;
-   CALL(1, "%p, %p", object, texture);
-   assert(object && texture);
+   __GLHCKtextTexture *t;
+   CALL(1, "%p, %zu", object, textTextureId);
+   assert(object);
 
-   /* search texture */
-   for (t = object->textureCache, tp = NULL; t && t != texture; tp = t, t = t->next);
-   if (!t) return;
+   if (!(t = chckPoolGet(object->textures, textTextureId)))
+      return;
 
    /* remove glyphs from fonts that contain this texture */
-   for (f = object->fontCache; f; f = f->next) {
-      for (i = 0; i != f->glyphCount; ++i) {
-         if (f->glyphCache[i].texture != t) continue;
-         IFDO(_glhckFree, f->glyphCache);
-         f->glyphCount = 0;
-         memset(f->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
+   __GLHCKtextFont *f;
+   chckPoolIndex iterFonts;
+   for (iterFonts = 0; (f = chckPoolIter(object->fonts, &iterFonts));) {
+      __GLHCKtextGlyph *g;
+      chckPoolIndex iterGlyphs;
+      for (iterGlyphs = 0; (g = chckPoolIter(f->glyphs, &iterGlyphs));) {
+         if (g->textureId != textTextureId)
+            continue;
+
+         IFDO(chckPoolFree, f->glyphs);
+         memset(f->lut, (int)GLHCK_INVALID_GLYPH, GLHCK_TEXT_HASH_SIZE * sizeof(chckPoolIndex));
          break;
       }
    }
 
-   if (!tp) object->textureCache = t->next;
-   else tp->next = t->next;
    IFDO(glhckTextureFree, t->texture);
+   IFDO(chckIterPoolFree, t->rows);
    IFDO(_glhckFree, t->geometry.vertexData);
-   IFDO(_glhckFree, t->rows);
-   _glhckFree(t);
+   chckPoolRemove(object->textures, textTextureId);
 }
 
 /* \brief get texture where to cache the glyph, will allocate new cache page if glyph doesn't fit any existing pages. */
-static __GLHCKtextTexture* _glhckTextGetTextureCache(glhckText *object, int gw, int gh, __GLHCKtextTextureRow **row)
+static chckPoolIndex _glhckTextGetCacheTexture(glhckText *object, int gw, int gh, __GLHCKtextTextureRow **row)
 {
-   short py;
-   int i, rh;
-   __GLHCKtextTexture *texture;
-   __GLHCKtextTextureRow *br;
+   chckPoolIndex iterCache = 0;
+   __GLHCKtextTextureRow *br = NULL;
+   int rh = (gh + 7) & ~7;
+
+   if (row)
+      *row = NULL;
 
    /* glyph should not be larger than texture */
    if (gw >= object->cacheWidth || gh >= object->cacheHeight)
-      return NULL;
-
-   br = NULL;
-   rh = (gh+7) & ~7;
-   if (!(texture = object->textureCache)) {
-      if (_glhckTextTextureNew(object, GLHCK_ALPHA, GLHCK_UNSIGNED_BYTE, NULL) != RETURN_OK)
-         return NULL;
-      texture = object->textureCache;
-   }
+      return GLHCK_INVALID_TEXTURE;
 
    while (!br) {
-      /* skip textures with INT_MAX rows (these are either really big text blobs or bitmap fonts) */
-      while (texture && texture->rowsCount == INT_MAX) {
-         if (!texture->next) {
-            if (_glhckTextTextureNew(object, GLHCK_ALPHA, GLHCK_UNSIGNED_BYTE, NULL) != RETURN_OK)
-               return NULL;
+      /* find next texture with space */
+      __GLHCKtextTexture *t;
+      while ((t = chckPoolIter(object->textures, &iterCache)) && t->bitmap);
+
+      if (!t) {
+         if (!(t = _glhckTextTextureNew(object, &iterCache, GLHCK_ALPHA, GLHCK_UNSIGNED_BYTE, NULL))) {
+            return GLHCK_INVALID_TEXTURE;
+         } else {
+            iterCache++;
          }
-         texture = texture->next;
       }
 
-      if (!texture)
-         goto fail;
-
-      for (i = 0; i < texture->rowsCount; ++i) {
-         if (texture->rows[i].h == rh &&
-             texture->rows[i].x+gw+1 <= object->cacheWidth)
-            br = &texture->rows[i];
+      /* search for fitting row */
+      for (chckPoolIndex iter = 0; (br = chckIterPoolIter(t->rows, &iter));) {
+         if (br->h == rh && br->x + gw + 1 <= object->cacheWidth)
+            break;
       }
 
       /* we got row, break */
-      if (br) break;
+      if (br)
+         break;
 
       /* if no row found:
        * - add new row
        * - try next texture
        * - create new texture */
 
-      /* reset py */
-      py = 0;
+      int py = 0;
 
       /* this texture is at least used */
-      if (texture->rowsCount) {
-         py = texture->rows[texture->rowsCount-1].y +
-              texture->rows[texture->rowsCount-1].h + 1;
+      __GLHCKtextTextureRow *lr;
+      if ((lr = chckIterPoolGetLast(t->rows))) {
+         py = lr->y + lr->h + 1;
 
          /* not enough space */
-         if (py+rh > object->cacheHeight) {
-            /* go to next texture, if this was used */
-            if (texture->next) {
-               texture = texture->next;
-               continue;
-            }
-
-            /* as last resort create new texture, if this was used */
-            if (_glhckTextTextureNew(object, GLHCK_ALPHA, GLHCK_UNSIGNED_BYTE, NULL) != RETURN_OK)
-               return NULL;
-
-            /* cycle and hope for best */
-            texture = texture->next;
+         if (py + rh > object->cacheHeight)
             continue;
-         }
       }
 
       /* add new row */
-      if (texture->rowsCount >= texture->allocatedCount) {
-         if (_glhckTextTextureRowsAllocateMore(texture) != RETURN_OK) {
-            DEBUG(GLHCK_DBG_WARNING, "TEXT :: [%p] out of memory!", object);
-            continue;
-         }
-      }
-      br = &texture->rows[texture->rowsCount];
-      br->x = 0; br->y = py; br->h = rh;
-      texture->rowsCount++;
+      br = chckIterPoolAdd(t->rows, NULL, NULL);
+      br->x = 0;
+      br->y = py;
+      br->h = rh;
    }
 
-   if (row) *row = br;
-   return texture;
+   if (row)
+      *row = br;
 
-fail:
-   if (row) *row = NULL;
-   return NULL;
+   return (br ? iterCache - 1 : GLHCK_INVALID_TEXTURE);
 }
 
 /* \brief get glyph from font */
-__GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font, unsigned int code, short isize)
+__GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font, unsigned int code, short size)
 {
-   int i, x1, y1, x2, y2, gw, gh, gid, advance, lsb;
-   unsigned int h;
-   unsigned char *data;
-   float scale;
-   float size = (float)isize/10.0f;
    __GLHCKtextGlyph *glyph;
-   __GLHCKtextTexture *texture;
-   __GLHCKtextTextureRow *row;
 
    /* find code and size */
-   h = hashint(code) & (GLHCK_TEXT_HASH_SIZE-1);
-   i = font->lut[h];
-   while (font->glyphCache && i != -1) {
-      if (font->glyphCache[i].code == code &&
-         (font->type == GLHCK_FONT_BMP ||
-          font->glyphCache[i].size == isize))
-         return &font->glyphCache[i];
-      i = font->glyphCache[i].next;
+   unsigned int hh = hashint(code) & (GLHCK_TEXT_HASH_SIZE - 1);
+   if (font->glyphs) {
+      chckPoolIndex iter = font->lut[hh];
+      while (iter != GLHCK_INVALID_GLYPH && (glyph = chckPoolGet(font->glyphs, iter))) {
+         if (glyph->code == code && (glyph->size == size || font->type == GLHCK_FONT_BMP))
+            return glyph;
+         iter = glyph->next;
+      }
    }
 
    /* user hasn't added the glyph */
    if (font->type == GLHCK_FONT_BMP)
       return NULL;
 
+   /* create glyph pool */
+   if (!font->glyphs && !(font->glyphs = chckPoolNew(32, 32, sizeof(__GLHCKtextGlyph))))
+      return NULL;
+
    /* create glyph if ttf font */
-   scale = stbtt_ScaleForPixelHeight(&font->font, size);
-   gid   = stbtt_FindGlyphIndex(&font->font, code);
+   int x1, y1, x2, y2, advance, lsb;
+   float scale = stbtt_ScaleForPixelHeight(&font->font, size);
+   int gid = stbtt_FindGlyphIndex(&font->font, code);
    stbtt_GetGlyphHMetrics(&font->font, gid, &advance, &lsb);
    stbtt_GetGlyphBitmapBox(&font->font, gid, scale, scale, &x1, &y1, &x2, &y2);
-   gw = x2-x1; gh = y2-y1;
+
+   int gw = x2 - x1;
+   int gh = y2 - y1;
 
    /* get cache texture where to store the glyph */
-   if (!(texture = _glhckTextGetTextureCache(object, gw, gh, &row)))
+   __GLHCKtextTextureRow *row;
+   chckPoolIndex textTextureId;
+   if ((textTextureId = _glhckTextGetCacheTexture(object, gw, gh, &row)) == GLHCK_INVALID_TEXTURE)
       return NULL;
 
    /* create new glyph */
-   glyph = _glhckRealloc(font->glyphCache, font->glyphCount, font->glyphCount+1, sizeof(__GLHCKtextGlyph));
-   if (!glyph) return NULL;
-   font->glyphCache = glyph;
+   chckPoolIndex glyphId;
+   if (!(glyph = chckPoolAdd(font->glyphs, NULL, &glyphId)))
+      return NULL;
 
    /* init glyph */
-   glyph = &font->glyphCache[font->glyphCount++];
-   memset(glyph, 0, sizeof(__GLHCKtextGlyph));
    glyph->code = code;
-   glyph->size = isize;
-   glyph->texture = texture;
+   glyph->size = size;
+   glyph->textureId = textTextureId;
    glyph->x1 = row->x;
    glyph->y1 = row->y;
-   glyph->x2 = glyph->x1+gw;
-   glyph->y2 = glyph->y1+gh;
+   glyph->x2 = glyph->x1 + gw;
+   glyph->y2 = glyph->y1 + gh;
    glyph->xadv = scale * advance;
    glyph->xoff = (float)x1;
    glyph->yoff = (float)y1;
 
    /* insert to hash lookup */
-   glyph->next  = font->lut[h];
-   font->lut[h] = font->glyphCount-1;
+   glyph->next = font->lut[hh];
+   font->lut[hh] = glyphId;
 
    /* this glyph is a space, don't render it */
    if (!gw || !gh)
       return glyph;
 
    /* advance in row */
-   row->x += gw+1;
+   row->x += gw + 1;
 
    /* rasterize */
-   if ((data = _glhckMalloc(gw*gh))) {
+   unsigned char *data;
+   __GLHCKtextTexture *t = chckPoolGet(object->textures, textTextureId);
+   assert(!t->bitmap);
+   if (t && (data = _glhckMalloc(gw * gh))) {
       stbtt_MakeGlyphBitmap(&font->font, data, gw, gh, gw, scale, scale, gid);
-      glhckTextureFill(texture->texture, 0, glyph->x1, glyph->y1, 0, gw, gh, 0,
-            GLHCK_ALPHA, GLHCK_UNSIGNED_BYTE, gw*gh, data);
+      glhckTextureFill(t->texture, 0, glyph->x1, glyph->y1, 0, gw, gh, 0, GLHCK_ALPHA, GLHCK_UNSIGNED_BYTE, gw * gh, data);
       _glhckFree(data);
    }
 
@@ -424,32 +378,31 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font, u
 }
 
 /* \brief get quad for text drawing */
-static int _getQuad(glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph *glyph, short isize,
-      float *x, float *y, __GLHCKtextQuad *q)
+static int _getQuad(glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph *glyph, short size, float *x, float *y, __GLHCKtextQuad *q)
 {
    glhckVector2f v1, v2, t1, t2;
-   int rx, ry;
-   float scale = 1.0f;
    assert(object && font && glyph);
    assert(x && y && q);
 #if GLHCK_TEXT_FLOAT_PRECISION
    (void)object;
 #endif
 
-   if (font->type == GLHCK_FONT_BMP) scale = (float)isize/(glyph->size*10.0f);
-
-   rx = floorf(*x + scale * glyph->xoff);
-   ry = floorf(*y + scale * glyph->yoff);
+   float scale = (font->type == GLHCK_FONT_BMP ? (float)size/glyph->size : 1.0f);
+   int rx = floorf(*x + scale * glyph->xoff);
+   int ry = floorf(*y + scale * glyph->yoff);
 
    v2.x = rx;
    v1.y = ry;
    v1.x = rx + scale * (glyph->x2 - glyph->x1);
    v2.y = ry + scale * (glyph->y2 - glyph->y1);
 
-   t2.x = glyph->x1 * glyph->texture->internalWidth;
-   t1.y = glyph->y1 * glyph->texture->internalHeight;
-   t1.x = glyph->x2 * glyph->texture->internalWidth;
-   t2.y = glyph->y2 * glyph->texture->internalHeight;
+   __GLHCKtextTexture *t;
+   if ((t = chckPoolGet(object->textures, glyph->textureId))) {
+      t2.x = glyph->x1 * t->internalWidth;
+      t1.y = glyph->y1 * t->internalHeight;
+      t1.x = glyph->x2 * t->internalWidth;
+      t2.y = glyph->y2 * t->internalHeight;
+   }
 
 #if GLHCK_TEXT_FLOAT_PRECISION /* floats ftw */
    memcpy(&q->v1, &v1, sizeof(glhckVector2f));
@@ -474,45 +427,49 @@ static int _getQuad(glhckText *object, __GLHCKtextFont *font, __GLHCKtextGlyph *
 }
 
 /* \brief create new internal font */
-static unsigned int glhckTextFontNewInternal(glhckText *object, const _glhckBitmapFontInfo *font, int *nativeSize)
+static glhckFont glhckTextFontNewInternal(glhckText *object, const _glhckBitmapFontInfo *font, int *nativeSize)
 {
-   unsigned int id, c, r;
    glhckTexture *texture;
-   char utf8buf[5];
    assert(object && font);
-   if (nativeSize) *nativeSize = 0;
-   memset(utf8buf, 0, sizeof(utf8buf));
+
+   if (nativeSize)
+      *nativeSize = 0;
 
    /* create texture for bitmap font */
    if (!(texture = glhckTextureNew()))
       goto fail;
 
-   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, font->width, font->height, 0, 0,
-            font->format, font->type, 0, font->data) != RETURN_OK)
+   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, font->width, font->height, 0, 0, font->format, font->type, 0, font->data) != RETURN_OK)
       goto fail;
 
    /* set default params */
    glhckTextureParameter(texture, glhckTextureDefaultSpriteParameters());
 
    /* create font from texture */
-   if (!(id = glhckTextFontNewFromTexture(object, texture, font->ascent, font->descent, font->lineGap)))
-      return 0;
+   glhckFont id;
+   if ((id = glhckTextFontNewFromTexture(object, texture, font->ascent, font->descent, font->lineGap)) == GLHCK_INVALID_FONT)
+      return GLHCK_INVALID_FONT;
 
    /* fill glyphs to the monospaced bitmap font */
-   for (r = 0; r != font->rows; ++r) {
-      for (c = 0; c != font->columns; ++c) {
-         encutf8(r*font->columns+c, utf8buf, sizeof(utf8buf));
-         glhckTextGlyphNew(object, id, utf8buf, font->fontSize, font->fontSize,
-               c*font->fontSize, r*font->fontSize, font->fontSize/2, font->fontSize, 0, 0, font->fontSize/2);
+   {
+      unsigned int r, c;
+      for (r = 0; r < font->rows; ++r) {
+         for (c = 0; c < font->columns; ++c) {
+            char utf8buf[5] = { 0, 0, 0, 0 };
+            encutf8(r * font->columns + c, utf8buf, sizeof(utf8buf));
+            glhckTextGlyphNew(object, id, utf8buf, font->fontSize, font->fontSize, c * font->fontSize, r * font->fontSize, font->fontSize / 2, font->fontSize, 0, 0, font->fontSize / 2);
+         }
       }
    }
 
-   if (nativeSize) *nativeSize = font->fontSize;
+   if (nativeSize)
+      *nativeSize = font->fontSize;
+
    return id;
 
 fail:
    IFDO(glhckTextureFree, texture);
-   return 0;
+   return GLHCK_INVALID_FONT;
 }
 
 /***
@@ -527,6 +484,12 @@ GLHCKAPI glhckText* glhckTextNew(int cacheWidth, int cacheHeight)
 
    /* allocate text stack */
    if (!(object = _glhckCalloc(1, sizeof(glhckText))))
+      goto fail;
+
+   if (!(object->fonts = chckPoolNew(32, 0, sizeof(__GLHCKtextFont))))
+      goto fail;
+
+   if (!(object->textures = chckPoolNew(32, 0, sizeof(__GLHCKtextTexture))))
       goto fail;
 
    /* increase reference */
@@ -545,13 +508,13 @@ GLHCKAPI glhckText* glhckTextNew(int cacheWidth, int cacheHeight)
    glhckTextColorb(object, 255, 255, 255, 255);
 
    /* insert to world */
-   _glhckWorldInsert(text, object, glhckText*);
+   _glhckWorldAdd(&GLHCKW()->texts, object);
 
    RET(0, "%p", object);
    return object;
 
 fail:
-   IFDO(_glhckFree, object);
+   IFDO(glhckTextFree, object);
    RET(0, "%p", NULL);
    return NULL;
 }
@@ -572,8 +535,6 @@ GLHCKAPI glhckText* glhckTextRef(glhckText *object)
 /* \brief free text stack */
 GLHCKAPI unsigned int glhckTextFree(glhckText *object)
 {
-   __GLHCKtextFont *f, *fn;
-   __GLHCKtextTexture *t, *tn;
    if (!glhckInitialized()) return 0;
    CALL(FREE_CALL_PRIO(object), "%p", object);
    assert(object);
@@ -582,141 +543,134 @@ GLHCKAPI unsigned int glhckTextFree(glhckText *object)
    if (--object->refCounter != 0) goto success;
 
    /* free texture cache */
-   for (t = object->textureCache; t; t = tn) {
-      tn = t->next;
+   __GLHCKtextTexture *t;
+   for (chckPoolIndex iter = 0; (t = chckPoolIter(object->textures, &iter));) {
       IFDO(glhckTextureFree, t->texture);
+      IFDO(chckIterPoolFree, t->rows);
       IFDO(_glhckFree, t->geometry.vertexData);
-      IFDO(_glhckFree, t->rows);
-      _glhckFree(t);
    }
 
    /* free font cache */
-   for (f = object->fontCache; f; f = fn) {
-      fn = f->next;
-      IFDO(_glhckFree, f->glyphCache);
+   __GLHCKtextFont *f;
+   for (chckPoolIndex iter = 0; (f = chckPoolIter(object->fonts, &iter));) {
+      IFDO(chckPoolFree, f->glyphs);
       IFDO(_glhckFree, f->data);
-      _glhckFree(f);
    }
+
+   IFDO(chckPoolFree, object->textures);
+   IFDO(chckPoolFree, object->fonts);
 
    /* free shader */
    glhckTextShader(object, NULL);
 
    /* remove text */
-   _glhckWorldRemove(text, object, glhckText*);
+   _glhckWorldRemove(&GLHCKW()->texts, object);
 
    /* free */
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief free font from text */
-GLHCKAPI void glhckTextFontFree(glhckText *object, unsigned int font_id)
+GLHCKAPI void glhckTextFontFree(glhckText *object, glhckFont fontId)
 {
-   __GLHCKtextFont *f, *fp;
-   __GLHCKtextGlyph *g;
-   CALL(1, "%p, %u", object, font_id);
+   __GLHCKtextFont *f;
+   CALL(1, "%p, %u", object, fontId);
    assert(object);
+   assert(fontId != GLHCK_INVALID_FONT);
 
-   /* search font */
-   for (f = object->fontCache, fp = NULL; f && f->id != font_id; fp = f, f = f->next);
-   if (!f) return;
+   if (!(f = chckPoolGet(object->fonts, fontId)))
+      return;
 
    /* free font */
-   for (g = f->glyphCache; g; g = (g->next!=-1?&f->glyphCache[g->next]:NULL))
-      _glhckTextTextureFree(object, g->texture);
-   IFDO(_glhckFree, f->glyphCache);
-   f->glyphCount = 0;
-   memset(f->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
-   if (!fp) object->fontCache = f->next;
-   else fp->next = f->next;
-   _glhckFree(f);
+   __GLHCKtextGlyph *g;
+   for (chckPoolIndex iter = 0; (g = chckPoolIter(f->glyphs, &iter));)
+      _glhckTextTextureFree(object, g->textureId);
+
+   IFDO(chckPoolFree, f->glyphs);
+   memset(f->lut, (int)GLHCK_INVALID_GLYPH, GLHCK_TEXT_HASH_SIZE * sizeof(chckPoolIndex));
+   chckPoolRemove(object->fonts, fontId);
 }
 
 /* \brief flush text glyph cache */
 GLHCKAPI void glhckTextFlushCache(glhckText *object)
 {
-   __GLHCKtextTexture *t, *tn, *tp;
-   __GLHCKtextFont *f;
    CALL(1, "%p", object);
    assert(object);
 
    /* free texture cache */
-   for (t = object->textureCache, tp = NULL; t; t = tn) {
-      tn = t->next;
-
+   __GLHCKtextTexture *t;
+   for (chckPoolIndex iter = 0; (t = chckPoolIter(object->textures, &iter));) {
       /* skip bitmap font textures */
-      for (f = object->fontCache; f && f->texture != t; f = f->next);
-      if (f) { tp = t; continue; }
-
-      if (!object->textureCache) object->textureCache = tp;
-      if (tp) tp->next = t->next;
-      if (t == object->textureCache)
+      if (t->bitmap)
          continue;
 
-      IFDO(_glhckFree, t->geometry.vertexData);
-      IFDO(_glhckFree, t->rows);
+      IFDO(chckIterPoolFree, t->rows);
       IFDO(glhckTextureFree, t->texture);
-      _glhckFree(t);
+      IFDO(_glhckFree, t->geometry.vertexData);
+      chckPoolRemove(object->textures, iter - 1);
    }
 
    /* free font cache */
-   for (f = object->fontCache; f; f = f->next) {
-      if (f->type == GLHCK_FONT_BMP) continue;
-      IFDO(_glhckFree, f->glyphCache);
-      f->glyphCount = 0;
-      memset(f->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
+   __GLHCKtextFont *f;
+   for (chckPoolIndex iter = 0; (f = chckPoolIter(object->fonts, &iter));) {
+      if (f->type == GLHCK_FONT_BMP)
+         continue;
+
+      IFDO(chckPoolFree, f->glyphs);
+      memset(f->lut, (int)GLHCK_INVALID_GLYPH, GLHCK_TEXT_HASH_SIZE * sizeof(chckPoolIndex));
    }
 }
 
 /* \brief get text metrics */
-GLHCKAPI void glhckTextGetMetrics(glhckText *object, unsigned int font_id,
-      float size, float *ascender, float *descender, float *lineHeight)
+GLHCKAPI void glhckTextGetMetrics(glhckText *object, glhckFont fontId, float size, float *ascender, float *descender, float *lineHeight)
 {
-   __GLHCKtextFont *font;
-   CALL(1, "%p, %d, %f, %p, %p, %p", object, font_id, size, ascender, descender, lineHeight);
+   CALL(1, "%p, %d, %f, %p, %p, %p", object, fontId, size, ascender, descender, lineHeight);
    assert(object);
+   assert(fontId != GLHCK_INVALID_FONT);
+
    if (ascender) *ascender = 0.0f;
    if (descender) *descender = 0.0f;
    if (lineHeight) *lineHeight = 0.0f;
 
-   /* search font */
-   for (font = object->fontCache; font && font->id != font_id; font = font->next);
-   if (!font) return;
+   __GLHCKtextFont *f;
+   if (!(f = chckPoolGet(object->fonts, fontId)))
+      return;
 
-   /* must not fail */
-   if (ascender)   *ascender   = font->ascender*size;
-   if (descender)  *descender  = font->descender*size;
-   if (lineHeight) *lineHeight = font->lineHeight*size;
+   if (ascender) *ascender = f->ascender * size;
+   if (descender) *descender = f->descender * size;
+   if (lineHeight) *lineHeight = f->lineHeight * size;
 }
 
 /* \brief get min max of text */
-GLHCKAPI void glhckTextGetMinMax(glhckText *object, unsigned int font_id, float size,
-      const char *s, kmVec2 *min, kmVec2 *max)
+GLHCKAPI void glhckTextGetMinMax(glhckText *object, glhckFont fontId, float size, const char *s, kmVec2 *min, kmVec2 *max)
 {
-   unsigned int codepoint, state = 0;
-   short isize = (short)size*10.0f;
-   __GLHCKtextFont *font;
-   __GLHCKtextGlyph *glyph;
-   __GLHCKtextQuad q;
-   float x, y;
-
-   CALL(1, "%p, %u, %f, %s, %p, %p", object, font_id, size, s, min, max);
+   CALL(1, "%p, %u, %f, %s, %p, %p", object, fontId, size, s, min, max);
    assert(object && s && min && max);
+   assert(fontId != GLHCK_INVALID_FONT);
+
    if (min) memset(min, 0, sizeof(kmVec2));
    if (max) memset(max, 0, sizeof(kmVec2));
 
-   /* search font */
-   for (font = object->fontCache; font && font->id != font_id; font = font->next);
-   if (!font) return;
+   __GLHCKtextFont *f;
+   if (!(f = chckPoolGet(object->fonts, fontId)))
+      return;
 
+   float x, y;
+   unsigned int codepoint = 0, state = 0;
    for (x = 0, y = 0; *s; ++s) {
-      if (decutf8(&state, &codepoint, *(unsigned char*)s)) continue;
-      if (!(glyph = _glhckTextGetGlyph(object, font, codepoint, isize)))
+      if (decutf8(&state, &codepoint, *(unsigned char*)s))
          continue;
-      if (_getQuad(object, font, glyph, isize, &x, &y, &q) != RETURN_OK)
+
+      __GLHCKtextGlyph *g;
+      if (!(g = _glhckTextGetGlyph(object, f, codepoint, size)))
+         continue;
+
+      __GLHCKtextQuad q;
+      if (_getQuad(object, f, g, size, &x, &y, &q) != RETURN_OK)
          continue;
 
       if (min) glhckMinV2(min, &q.v1);
@@ -737,7 +691,7 @@ GLHCKAPI void glhckTextColor(glhckText *object, const glhckColorb *color)
 /* \brief set text color (with unsigned char) */
 GLHCKAPI void glhckTextColorb(glhckText *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-   const glhckColorb color = {r, g, b, a};
+   const glhckColorb color = { r, g, b, a };
    glhckTextColor(object, &color);
 }
 
@@ -751,32 +705,29 @@ GLHCKAPI const glhckColorb* glhckTextGetColor(glhckText *object)
 }
 
 /* \brief new internal font */
-GLHCKAPI unsigned int glhckTextFontNewKakwafont(glhckText *object, int *nativeSize)
+GLHCKAPI glhckFont glhckTextFontNewKakwafont(glhckText *object, int *nativeSize)
 {
-   unsigned int id;
    CALL(0, "%p", object);
    assert(object);
-   id = glhckTextFontNewInternal(object, &kakwafont, nativeSize);
+   glhckFont id = glhckTextFontNewInternal(object, &kakwafont, nativeSize);
    RET(0, "%d", id);
    return id;
 }
 
 /* \brief new font from memory */
-GLHCKAPI unsigned int glhckTextFontNewFromMemory(glhckText *object, const void *data, size_t size)
+GLHCKAPI glhckFont glhckTextFontNewFromMemory(glhckText *object, const void *data, size_t size)
 {
-   unsigned int id;
-   int ascent, descent, fh, lineGap;
-   __GLHCKtextFont *font, *f;
+   __GLHCKtextFont *font;
    CALL(0, "%p, %p", object, data);
    assert(object && data);
 
    /* allocate font */
-   if (!(font = _glhckCalloc(1, sizeof(__GLHCKtextFont))))
+   chckPoolIndex id;
+   if (!(font = chckPoolAdd(object->fonts, NULL, &id)))
       goto fail;
 
    /* init */
-   memset(font->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
-   for (id = 1, f = object->fontCache; f; f = f->next, ++id);
+   memset(font->lut, (int)GLHCK_INVALID_GLYPH, GLHCK_TEXT_HASH_SIZE * sizeof(chckPoolIndex));
 
    /* copy the data */
    if (!(font->data = _glhckCopy(data, size)))
@@ -787,34 +738,35 @@ GLHCKAPI unsigned int glhckTextFontNewFromMemory(glhckText *object, const void *
       goto fail;
 
    /* store normalized line height */
+   int ascent, descent, lineGap;
    stbtt_GetFontVMetrics(&font->font, &ascent, &descent, &lineGap);
-   fh = ascent - descent;
-   font->ascender    = (float)ascent/fh;
-   font->descender   = (float)descent/fh;
-   font->lineHeight  = (float)(fh + lineGap)/fh;
-   font->id          = id;
-   font->type        = GLHCK_FONT_TTF;
-   font->next        = object->fontCache;
-   object->fontCache = font;
 
-   RET(0, "%d", id);
+   /* store normalized line height */
+   int fh = fabs(ascent - descent);
+   if (fh <= 0)
+      fh = 1;
+
+   font->ascender = (float)ascent/fh;
+   font->descender = (float)descent/fh;
+   font->lineHeight = (float)(fh + lineGap)/fh;
+   font->type = GLHCK_FONT_TTF;
+
+   RET(0, "%zu", id);
    return id;
 
 fail:
    if (font) {
       IFDO(_glhckFree, font->data);
+      chckPoolRemove(object->fonts, id);
    }
-   IFDO(_glhckFree, font);
    RET(0, "%d", 0);
-   return 0;
+   return GLHCK_INVALID_FONT;
 }
 
 /* \brief new truetype font */
-GLHCKAPI unsigned int glhckTextFontNew(glhckText *object, const char *file)
+GLHCKAPI glhckFont glhckTextFontNew(glhckText *object, const char *file)
 {
    FILE *f;
-   size_t size;
-   unsigned int id;
    unsigned char *data = NULL;
    CALL(0, "%p, %s", object, file);
    assert(object && file);
@@ -824,8 +776,9 @@ GLHCKAPI unsigned int glhckTextFontNew(glhckText *object, const char *file)
       goto read_fail;
 
    fseek(f, 0, SEEK_END);
-   size = ftell(f);
+   size_t size = ftell(f);
    fseek(f, 0, SEEK_SET);
+
    if (!(data = _glhckMalloc(size)))
       goto fail;
 
@@ -835,7 +788,8 @@ GLHCKAPI unsigned int glhckTextFontNew(glhckText *object, const char *file)
    NULLDO(fclose, f);
 
    /* read and add the new font to stash */
-   if (!(id = glhckTextFontNewFromMemory(object, data, size)))
+   glhckFont id;
+   if ((id = glhckTextFontNewFromMemory(object, data, size)) == GLHCK_INVALID_FONT)
       goto fail;
 
    /* data not needed anymore */
@@ -850,74 +804,69 @@ fail:
    IFDO(fclose, f);
    IFDO(_glhckFree, data);
    RET(0, "%d", 0);
-   return 0;
+   return GLHCK_INVALID_FONT;
 }
 
 /* \brief new bitmap font from texture */
-GLHCKAPI unsigned int glhckTextFontNewFromTexture(glhckText *object, glhckTexture *texture, int ascent, int descent, int lineGap)
+GLHCKAPI glhckFont glhckTextFontNewFromTexture(glhckText *object, glhckTexture *texture, int ascent, int descent, int lineGap)
 {
-   int fh;
-   unsigned int id;
-   __GLHCKtextFont *font, *f;
-   __GLHCKtextTexture *textTexture = NULL, *t;
+   __GLHCKtextFont *font;
+   __GLHCKtextTexture *textTexture = NULL;
    CALL(0, "%p, %p, %d, %d, %d", object, texture, ascent, descent, lineGap);
    assert(object && texture);
 
    /* allocate font */
-   if (!(font = _glhckCalloc(1, sizeof(__GLHCKtextFont))))
+   chckPoolIndex fId;
+   if (!(font = chckPoolAdd(object->fonts, NULL, &fId)))
       goto fail;
 
    /* init */
-   memset(font->lut, -1, GLHCK_TEXT_HASH_SIZE * sizeof(int));
-   for (id = 1, f = object->fontCache; f; f = f->next, ++id);
+   memset(font->lut, (int)GLHCK_INVALID_GLYPH, GLHCK_TEXT_HASH_SIZE * sizeof(chckPoolIndex));
 
    /* allocate text texture */
-   if (!(textTexture = _glhckCalloc(1, sizeof(__GLHCKtextTexture))))
+   chckPoolIndex tId;
+   if (!(textTexture = chckPoolAdd(object->textures, NULL, &tId)))
       goto fail;
 
    /* reference texture */
    textTexture->texture = glhckTextureRef(texture);
 
    /* make sure no glyphs are cached to this texture */
-   textTexture->rowsCount = INT_MAX;
+   textTexture->bitmap = 1;
 
    /* store internal dimensions for mapping */
-   textTexture->internalWidth = 1.0f/texture->width;
-   textTexture->internalHeight = 1.0f/texture->height;
-
-   for (t = object->textureCache; t && t->next; t = t->next);
-   if (!t) object->textureCache = textTexture;
-   else t->next = textTexture;
+   textTexture->internalWidth = (float)1.0f/texture->width;
+   textTexture->internalHeight = (float)1.0f/texture->height;
 
    /* store normalized line height */
-   fh = ascent - descent;
-   if (fh == 0) fh = 1;
-   font->ascender    = (float)ascent/fh;
-   font->descender   = (float)descent/fh;
-   font->lineHeight  = (float)(fh + lineGap)/fh;
-   font->texture     = textTexture;
-   font->id          = id;
-   font->type        = GLHCK_FONT_BMP;
-   font->next        = object->fontCache;
-   object->fontCache = font;
+   int fh = fabs(ascent - descent);
+   if (fh == 0)
+      fh = 1;
 
-   RET(0, "%d", id);
-   return id;
+   font->ascender = (float)ascent/fh;
+   font->descender = (float)descent/fh;
+   font->lineHeight = (float)(fh + lineGap)/fh;
+   font->textureId = tId;
+   font->type = GLHCK_FONT_BMP;
+
+   RET(0, "%zu", fId);
+   return fId;
 
 fail:
    if (textTexture) {
       IFDO(glhckTextureFree, textTexture->texture);
+      chckPoolRemove(object->textures, tId);
    }
-   IFDO(_glhckFree, texture);
-   IFDO(_glhckFree, font);
+   if (font) {
+      chckPoolRemove(object->fonts, fId);
+   }
    RET(0, "%d", 0);
-   return 0;
+   return GLHCK_INVALID_FONT;
 }
 
 /* \brief new bitmap font */
-GLHCKAPI unsigned int glhckTextFontNewFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap)
+GLHCKAPI glhckFont glhckTextFontNewFromBitmap(glhckText *object, const char *file, int ascent, int descent, int lineGap)
 {
-   unsigned int id;
    glhckTexture *texture;
    CALL(0, "%p, %s, %d, %d, %d", object, file, ascent, descent, lineGap);
    assert(object && file);
@@ -929,7 +878,8 @@ GLHCKAPI unsigned int glhckTextFontNewFromBitmap(glhckText *object, const char *
    /* set default parameters */
    glhckTextureParameter(texture, glhckTextureDefaultSpriteParameters());
 
-   if (!(id = glhckTextFontNewFromTexture(object, texture, ascent, descent, lineGap)))
+   glhckFont id;
+   if ((id = glhckTextFontNewFromTexture(object, texture, ascent, descent, lineGap)) == GLHCK_INVALID_FONT)
       goto fail;
 
    glhckTextureFree(texture);
@@ -939,126 +889,134 @@ GLHCKAPI unsigned int glhckTextFontNewFromBitmap(glhckText *object, const char *
 fail:
    IFDO(glhckTextureFree, texture);
    RET(0, "%d", 0);
-   return 0;
+   return GLHCK_INVALID_FONT;
 }
 
 /* \brief add new glyph to bitmap font */
 GLHCKAPI void glhckTextGlyphNew(glhckText *object,
-      unsigned int font_id, const char *s,
+      glhckFont fontId, const char *s,
       short size, short base, int x, int y, int w, int h,
       float xoff, float yoff, float xadvance)
 {
-   unsigned int codepoint = 0, state = 0, hh;
-   __GLHCKtextFont *font;
-   __GLHCKtextGlyph *glyph;
    CALL(0, "%p, \"%s\", %d, %d, %d, %d, %d, %d, %f, %f, %f",
          object, s, size, base, w, y, w, h, xoff, yoff, xadvance);
    assert(object && s);
+   assert(fontId != GLHCK_INVALID_FONT);
 
-   /* search font */
-   for (font = object->fontCache; font && font->id != font_id; font = font->next);
-   if (!font || font->type != GLHCK_FONT_BMP)
+   __GLHCKtextFont *f;
+   if (!(f = chckPoolGet(object->fonts, fontId)))
       return;
 
+   assert(f->type == GLHCK_FONT_BMP);
+
    /* decode utf8 character */
-   for (; *s; ++s)
-      if (!decutf8(&state, &codepoint, *(unsigned char*)s)) break;
-   if (state != UTF8_ACCEPT) return;
+   unsigned int codepoint = 0, state = 0;
+   const char *ss = s;
+   for (; *s; ++s) {
+      if (!decutf8(&state, &codepoint, *(unsigned char*)s))
+         break;
+   }
+
+   if (state != UTF8_ACCEPT)
+      return;
+
+   if (!f->glyphs && !(f->glyphs = chckPoolNew(32, 32, sizeof(__GLHCKtextGlyph))))
+      return;
 
    /* allocate space for new glyph */
-   glyph = _glhckRealloc(font->glyphCache, font->glyphCount, font->glyphCount+1, sizeof(__GLHCKtextGlyph));
-   if (!glyph) return;
-   font->glyphCache = glyph;
+   chckPoolIndex id;
+   __GLHCKtextGlyph *g;
+   if (!(g = chckPoolAdd(f->glyphs, NULL, &id)))
+      return;
 
    /* init glyph */
-   glyph = &font->glyphCache[font->glyphCount++];
-   memset(glyph, 0, sizeof(__GLHCKtextGlyph));
-   glyph->code = codepoint;
-   glyph->texture = font->texture;
-   glyph->size = size;
-   glyph->x1 = x;   glyph->y1 = y;
-   glyph->x2 = x+w; glyph->y2 = y+h;
-   glyph->xoff = xoff;
-   glyph->yoff = yoff - base;
-   glyph->xadv = xadvance;
+   g->code = codepoint;
+   g->textureId = f->textureId;
+   g->size = size;
+   g->x1 = x;
+   g->y1 = y;
+   g->x2 = x + w;
+   g->y2 = y + h;
+   g->xoff = xoff;
+   g->yoff = yoff - base;
+   g->xadv = xadvance;
 
    /* insert to hash lookup */
-   hh = hashint(codepoint) & (GLHCK_TEXT_HASH_SIZE-1);
-   glyph->next   = font->lut[hh];
-   font->lut[hh] = font->glyphCount-1;
+   unsigned int hh = hashint(codepoint) & (GLHCK_TEXT_HASH_SIZE - 1);
+   g->next = f->lut[hh];
+   f->lut[hh] = id;
 }
 
 /* \brief render all drawn text */
 GLHCKAPI void glhckTextRender(glhckText *object)
 {
-   CALL(2, "%p", object); assert(object);
+   CALL(2, "%p", object);
+   assert(object);
    GLHCKRA()->textRender(object);
 }
 
 /* \brief clear text from stash */
 GLHCKAPI void glhckTextClear(glhckText *object)
 {
-   __GLHCKtextTexture *texture;
-   for (texture = object->textureCache; texture; texture = texture->next) {
-      texture->geometry.vertexCount = 0;
-   }
+   CALL(2, "%p", object);
+   assert(object);
+
+   __GLHCKtextTexture *t;
+   for (chckPoolIndex iter = 0; (t = chckPoolIter(object->textures, &iter));)
+      t->geometry.vertexCount = 0;
 }
 
 /* \brief draw text using font */
-GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size, float x, float y, const char *s, float *width)
+GLHCKAPI void glhckTextStash(glhckText *object, glhckFont fontId, float size, float x, float y, const char *s, float *width)
 {
-   unsigned int i, codepoint, state = 0;
-   short isize = (short)size*10.0f;
-   int vcount, newVcount;
-#if GLHCK_TEXT_FLOAT_PRECISION
-   glhckVertexData2f *v;
-#if GLHCK_TRISTRIP
-   glhckVertexData2f *d;
-#endif
-#else
-   glhckVertexData2s *v;
-#if GLHCK_TRISTRIP
-   glhckVertexData2s *d;
-#endif
-#endif
-   __GLHCKtextTexture *texture;
-   __GLHCKtextGlyph *glyph;
-   __GLHCKtextFont *font;
-   __GLHCKtextQuad q;
-   CALL(2, "%p, %u, %f, %f, %f, %s, %p", object, font_id, size, x, y, s, width);
+   CALL(2, "%p, %u, %f, %f, %f, %s, %p", object, fontId, size, x, y, s, width);
    assert(object && s);
-   if (width) *width = 0;
+   assert(fontId != GLHCK_INVALID_FONT);
 
-   /* search font */
-   for (font = object->fontCache; font && font->id != font_id; font = font->next);
-   if (!font) return;
+   if (width)
+      *width = 0;
 
+   __GLHCKtextFont *f;
+   if (!(f = chckPoolGet(object->fonts, fontId)))
+      return;
+
+   unsigned int codepoint = 0, state = 0;
    for (; *s; ++s) {
-      if (decutf8(&state, &codepoint, *(unsigned char*)s)) continue;
-      if (!(glyph = _glhckTextGetGlyph(object, font, codepoint, isize)))
-         continue;
-      if (!(texture = glyph->texture))
+      if (decutf8(&state, &codepoint, *(unsigned char*)s))
          continue;
 
-      vcount = texture->geometry.vertexCount;
+      __GLHCKtextGlyph *g;
+      if (!(g = _glhckTextGetGlyph(object, f, codepoint, size)))
+         continue;
+
+      __GLHCKtextTexture *t;
+      if (!(t = chckPoolGet(object->textures, g->textureId)))
+         continue;
+
+      int vcount = t->geometry.vertexCount;
 #if GLHCK_TRISTRIP
-      newVcount = (vcount?vcount+6:4);
+      int newVcount = (vcount ? vcount + 6 : 4);
 #else
-      newVcount = vcount+6;
+      int newVcount = vcount + 6;
 #endif
-      if (newVcount >= texture->geometry.allocatedCount) {
-         if (_glhckTextGeometryAllocateMore(&texture->geometry) != RETURN_OK) {
+      if (newVcount >= t->geometry.allocatedCount) {
+         if (_glhckTextGeometryAllocateMore(&t->geometry) != RETURN_OK) {
             DEBUG(GLHCK_DBG_WARNING, "TEXT :: [%p] out of memory!", object);
             continue;
          }
       }
 
       /* should not ever fail */
-      if (_getQuad(object, font, glyph, isize, &x, &y, &q) != RETURN_OK)
+      __GLHCKtextQuad q;
+      if (_getQuad(object, f, g, size, &x, &y, &q) != RETURN_OK)
          continue;
 
       /* insert geometry data */
-      v = &texture->geometry.vertexData[vcount];
+#if GLHCK_TEXT_FLOAT_PRECISION
+      glhckVertexData2f *v = &t->geometry.vertexData[vcount];
+#else
+      glhckVertexData2s *v = &t->geometry.vertexData[vcount];
+#endif
 
       /* NOTE: Text geometry has inverse winding to glhck's planes.
        * This is so we don't need to toggle winding order in GL when drawing.
@@ -1066,11 +1024,15 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size
        * The end effect is basically same as using glhckRenderFlip,
        * only these vertices are pre-multiplied. */
 
-      i = 0;
+      unsigned int i = 0;
 #if GLHCK_TRISTRIP
       /* degenerate */
       if (vcount) {
-         d = &texture->geometry.vertexData[vcount-1];
+#if GLHCK_TEXT_FLOAT_PRECISION
+         glhckVertexData2f *d = &t->geometry.vertexData[vcount-1];
+#else
+         glhckVertexData2s *d = &t->geometry.vertexData[vcount-1];
+#endif
          v[i].vertex.x = d->vertex.x; v[i+0].vertex.y = d->vertex.y;
          v[i].coord.x  = d->coord.x;  v[i++].coord.y  = d->coord.y;
          v[i].vertex.x = q.v2.x; v[i+0].vertex.y = q.v2.y;
@@ -1103,10 +1065,11 @@ GLHCKAPI void glhckTextStash(glhckText *object, unsigned int font_id, float size
       v[i].coord.x  = q.t1.x; v[i++].coord.y  = q.t2.y;
 #endif
 
-      texture->geometry.vertexCount += i;
+      t->geometry.vertexCount += i;
    }
 
-   if (width) *width = x;
+   if (width)
+      *width = x;
 }
 
 /* \brief set shader to text */
@@ -1114,9 +1077,14 @@ GLHCKAPI void glhckTextShader(glhckText *object, glhckShader *shader)
 {
    CALL(1, "%p, %p", object, shader);
    assert(object);
-   if (object->shader == shader) return;
-   if (object->shader) glhckShaderFree(object->shader);
-   object->shader = (shader?glhckShaderRef(shader):NULL);
+
+   if (object->shader == shader)
+      return;
+
+   if (object->shader)
+      glhckShaderFree(object->shader);
+
+   object->shader = (shader ? glhckShaderRef(shader) : NULL);
 }
 
 /* \brief get text's shader */
@@ -1129,30 +1097,30 @@ GLHCKAPI glhckShader* glhckTextGetShader(const glhckText *object)
 }
 
 /* \brief create texture from text */
-GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, unsigned int font_id, float size,
-      const char *s, const glhckTextureParameters *params)
+GLHCKAPI glhckTexture* glhckTextRTT(glhckText *object, glhckFont fontId, float size, const char *s, const glhckTextureParameters *params)
 {
    glhckTexture *texture = NULL;
    glhckFramebuffer *fbo = NULL;
-   glhckTextureParameters nparams;
-   float linew;
-   CALL(1, "%p, %u, %f, %s", object, font_id, size, s);
+   CALL(1, "%p, %u, %f, %s", object, fontId, size, s);
+   assert(object);
+   assert(fontId != GLHCK_INVALID_FONT);
 
    if (!(texture = glhckTextureNew()))
       goto fail;
 
-
-   float ascender, descender;
+   float linew, ascender, descender;
    glhckTextClear(object);
-   glhckTextGetMetrics(object, font_id, 1.0f, &ascender, &descender, NULL);
-   // printf("A: %f, D: %f\n", ascender, descender);
-   glhckTextStash(object, font_id, size, 0, size+descender*size, s, &linew);
+   glhckTextGetMetrics(object, fontId, 1.0f, &ascender, &descender, NULL);
+   glhckTextStash(object, fontId, size, 0, size + descender * size, s, &linew);
 
-   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, linew, size, 0, 0,
-            GLHCK_RGBA, GLHCK_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
+   if (linew <= 0.0f)
       goto fail;
 
-   memcpy(&nparams, (params?params:glhckTextureDefaultLinearParameters()), sizeof(glhckTextureParameters));
+   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, linew, size, 0, 0, GLHCK_RGBA, GLHCK_UNSIGNED_BYTE, 0, NULL) != RETURN_OK)
+      goto fail;
+
+   glhckTextureParameters nparams;
+   memcpy(&nparams, (params ? params : glhckTextureDefaultLinearParameters()), sizeof(glhckTextureParameters));
    glhckTextureParameter(texture, &nparams);
 
    if (!(fbo = glhckFramebufferNew(GLHCK_FRAMEBUFFER)))
@@ -1185,13 +1153,14 @@ fail:
 }
 
 /* \brief create plane object from text */
-GLHCKAPI glhckObject* glhckTextPlane(glhckText *object, unsigned int font_id, float size,
-      const char *s, const glhckTextureParameters *params)
+GLHCKAPI glhckObject* glhckTextPlane(glhckText *object, glhckFont fontId, float size, const char *s, const glhckTextureParameters *params)
 {
    glhckTexture *texture;
    glhckObject *sprite = NULL;
+   assert(object);
+   assert(fontId != GLHCK_INVALID_FONT);
 
-   if (!(texture = glhckTextRTT(object, font_id, size, s, params)))
+   if (!(texture = glhckTextRTT(object, fontId, size, s, params)))
       goto fail;
 
    if (!(sprite = glhckSpriteNew(texture, 0, 0)))

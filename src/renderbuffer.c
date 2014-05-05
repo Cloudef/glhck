@@ -30,7 +30,7 @@ GLHCKAPI glhckRenderbuffer* glhckRenderbufferNew(int width, int height, glhckTex
    glhckRenderbufferBind(NULL);
 
    /* insert to world */
-   _glhckWorldInsert(renderbuffer, object, glhckRenderbuffer*);
+   _glhckWorldAdd(&GLHCKW()->renderbuffers, object);
 
    RET(0, "%p", object);
    return object;
@@ -68,7 +68,7 @@ GLHCKAPI unsigned int glhckRenderbufferFree(glhckRenderbuffer *object)
    GLHCKRA()->framebufferDelete(1, &object->object);
 
    /* remove from world */
-   _glhckWorldRemove(renderbuffer, object, glhckRenderbuffer*);
+   _glhckWorldRemove(&GLHCKW()->renderbuffers, object);
 
    /* free */
    NULLDO(_glhckFree, object);
