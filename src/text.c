@@ -1,4 +1,5 @@
 #include "internal.h"
+#include "lut/lut.h"
 #include <limits.h> /* for SHRT_MAX */
 #include <stdio.h>
 
@@ -15,7 +16,7 @@
 #define STBTT_free(x,u)    _glhckFree(x)
 #include "helper/stb_truetype.h"
 
-#define GLHCK_TEXT_HASH_SIZE 256
+#define GLHCK_FONT_LUT_SIZE 256
 #define GLHCK_TEXT_VERT_COUNT (6 * 128)
 
 #define GLHCK_INVALID_GLYPH (chckPoolIndex)-1
@@ -54,7 +55,7 @@ typedef struct __GLHCKtextFont
 {
    struct stbtt_fontinfo font;
    chckPoolIndex textureId; /* only used on bitmap fonts */
-   chckPoolIndex lut[GLHCK_TEXT_HASH_SIZE];
+   chckLut *lut;
    chckPool *glyphs;
    void *data;
    float ascender, descender, lineHeight;
@@ -119,18 +120,6 @@ static int encutf8(unsigned int ch, char *buffer, int bufferSize) {
    *str = (~0) << (8 - i);
    *str |= (ch >> (i * 6 - 6));
    return i;
-}
-
-/* hasher */
-static unsigned int hashint(unsigned int a)
-{
-   a += ~(a<<15);
-   a ^=  (a>>10);
-   a +=  (a<<3);
-   a ^=  (a>>6);
-   a += ~(a<<11);
-   a ^=  (a>>16);
-   return a;
 }
 
 static int _glhckTextGeometryAllocateMore(__GLHCKtextGeometry *geometry)
@@ -218,7 +207,7 @@ static void _glhckTextTextureFree(glhckText *object, chckPoolIndex textTextureId
             continue;
 
          IFDO(chckPoolFree, f->glyphs);
-         memset(f->lut, (int)GLHCK_INVALID_GLYPH, GLHCK_TEXT_HASH_SIZE * sizeof(chckPoolIndex));
+         chckLutFlush(f->lut);
          break;
       }
    }
@@ -302,9 +291,8 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font, u
    __GLHCKtextGlyph *glyph;
 
    /* find code and size */
-   unsigned int hh = hashint(code) & (GLHCK_TEXT_HASH_SIZE - 1);
    if (font->glyphs) {
-      chckPoolIndex iter = font->lut[hh];
+      chckPoolIndex iter = *(chckPoolIndex*)chckLutGet(font->lut, code);
       while (iter != GLHCK_INVALID_GLYPH && (glyph = chckPoolGet(font->glyphs, iter))) {
          if (glyph->code == code && (glyph->size == size || font->type == GLHCK_FONT_BMP))
             return glyph;
@@ -354,8 +342,8 @@ __GLHCKtextGlyph* _glhckTextGetGlyph(glhckText *object, __GLHCKtextFont *font, u
    glyph->yoff = (float)y1;
 
    /* insert to hash lookup */
-   glyph->next = font->lut[hh];
-   font->lut[hh] = glyphId;
+   glyph->next = *(chckPoolIndex*)chckLutGet(font->lut, code);
+   chckLutSet(font->lut, code, &glyphId);
 
    /* this glyph is a space, don't render it */
    if (!gw || !gh)
@@ -554,6 +542,7 @@ GLHCKAPI unsigned int glhckTextFree(glhckText *object)
    __GLHCKtextFont *f;
    for (chckPoolIndex iter = 0; (f = chckPoolIter(object->fonts, &iter));) {
       IFDO(chckPoolFree, f->glyphs);
+      IFDO(chckLutFree, f->lut);
       IFDO(_glhckFree, f->data);
    }
 
@@ -591,7 +580,7 @@ GLHCKAPI void glhckTextFontFree(glhckText *object, glhckFont fontId)
       _glhckTextTextureFree(object, g->textureId);
 
    IFDO(chckPoolFree, f->glyphs);
-   memset(f->lut, (int)GLHCK_INVALID_GLYPH, GLHCK_TEXT_HASH_SIZE * sizeof(chckPoolIndex));
+   IFDO(chckLutFree, f->lut);
    chckPoolRemove(object->fonts, fontId);
 }
 
@@ -621,7 +610,7 @@ GLHCKAPI void glhckTextFlushCache(glhckText *object)
          continue;
 
       IFDO(chckPoolFree, f->glyphs);
-      memset(f->lut, (int)GLHCK_INVALID_GLYPH, GLHCK_TEXT_HASH_SIZE * sizeof(chckPoolIndex));
+      chckLutFlush(f->lut);
    }
 }
 
@@ -726,8 +715,8 @@ GLHCKAPI glhckFont glhckTextFontNewFromMemory(glhckText *object, const void *dat
    if (!(font = chckPoolAdd(object->fonts, NULL, &id)))
       goto fail;
 
-   /* init */
-   memset(font->lut, (int)GLHCK_INVALID_GLYPH, GLHCK_TEXT_HASH_SIZE * sizeof(chckPoolIndex));
+   if (!(font->lut = chckLutNew(GLHCK_FONT_LUT_SIZE, (int)GLHCK_INVALID_GLYPH, sizeof(chckPoolIndex))))
+      goto fail;
 
    /* copy the data */
    if (!(font->data = _glhckCopy(data, size)))
@@ -820,8 +809,8 @@ GLHCKAPI glhckFont glhckTextFontNewFromTexture(glhckText *object, glhckTexture *
    if (!(font = chckPoolAdd(object->fonts, NULL, &fId)))
       goto fail;
 
-   /* init */
-   memset(font->lut, (int)GLHCK_INVALID_GLYPH, GLHCK_TEXT_HASH_SIZE * sizeof(chckPoolIndex));
+   if (!(font->lut = chckLutNew(GLHCK_FONT_LUT_SIZE, (int)GLHCK_INVALID_GLYPH, sizeof(chckPoolIndex))))
+      goto fail;
 
    /* allocate text texture */
    chckPoolIndex tId;
@@ -911,7 +900,6 @@ GLHCKAPI void glhckTextGlyphNew(glhckText *object,
 
    /* decode utf8 character */
    unsigned int codepoint = 0, state = 0;
-   const char *ss = s;
    for (; *s; ++s) {
       if (!decutf8(&state, &codepoint, *(unsigned char*)s))
          break;
@@ -942,9 +930,8 @@ GLHCKAPI void glhckTextGlyphNew(glhckText *object,
    g->xadv = xadvance;
 
    /* insert to hash lookup */
-   unsigned int hh = hashint(codepoint) & (GLHCK_TEXT_HASH_SIZE - 1);
-   g->next = f->lut[hh];
-   f->lut[hh] = id;
+   g->next = *(chckPoolIndex*)chckLutGet(f->lut, codepoint);
+   chckLutSet(f->lut, codepoint, &id);
 }
 
 /* \brief render all drawn text */
