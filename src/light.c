@@ -69,15 +69,18 @@ GLHCKAPI unsigned int glhckLightFree(glhckLight *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief bind/unbind glhck light */
 GLHCKAPI void glhckLightBind(glhckLight *object)
 {
    CALL(2, "%p", object);
-   if (GLHCKRD()->light == object) return;
+
+   if (GLHCKRD()->light == object)
+      return;
+
    GLHCKRA()->lightBind(object);
    GLHCKRD()->light = object;
 }
@@ -85,10 +88,9 @@ GLHCKAPI void glhckLightBind(glhckLight *object)
 /* \brief begin projection from light with camera */
 GLHCKAPI void glhckLightBeginProjectionWithCamera(glhckLight *object, glhckCamera *camera)
 {
-   glhckObject *cobj, *lobj;
    assert(object && camera);
-   lobj = glhckLightGetObject(object);
-   cobj = glhckCameraGetObject(camera);
+   glhckObject *lobj = glhckLightGetObject(object);
+   glhckObject *cobj = glhckCameraGetObject(camera);
 
    /* this is pointless */
    memcpy(&object->current.objectView, &lobj->view, sizeof(__GLHCKobjectView));
@@ -106,9 +108,8 @@ GLHCKAPI void glhckLightBeginProjectionWithCamera(glhckLight *object, glhckCamer
 /* \brief end projection from light with camera */
 GLHCKAPI void glhckLightEndProjectionWithCamera(glhckLight *object, glhckCamera *camera)
 {
-   glhckObject *cobj;
    assert(object && camera);
-   cobj = glhckCameraGetObject(camera);
+   glhckObject *cobj = glhckCameraGetObject(camera);
 
    /* restore old camera view state */
    memcpy(&cobj->view, &object->old.objectView, sizeof(__GLHCKobjectView));
@@ -137,7 +138,7 @@ GLHCKAPI void glhckLightColor(glhckLight *object, const glhckColorb *color)
 /* \brief color light (char) */
 GLHCKAPI void glhckLightColorb(glhckLight *object, char r, char g, char b, char a)
 {
-   glhckColorb color = {r, g, b, a};
+   const glhckColorb color = { r, g, b, a };
    glhckLightColor(object, &color);
 }
 
@@ -169,7 +170,7 @@ GLHCKAPI void glhckLightAtten(glhckLight *object, const kmVec3 *atten)
 /* \brief set light's atten factor (kmScalar) */
 GLHCKAPI void glhckLightAttenf(glhckLight *object, kmScalar constant, kmScalar linear, kmScalar quadratic)
 {
-   kmVec3 atten = {constant, linear, quadratic};
+   const kmVec3 atten = { constant, linear, quadratic };
    glhckLightAtten(object, &atten);
 }
 
@@ -184,7 +185,7 @@ GLHCKAPI const kmVec3* glhckLightGetAtten(glhckLight *object)
 /* \brief set light's cutout (kmScalar) */
 GLHCKAPI void glhckLightCutoutf(glhckLight *object, kmScalar outer, kmScalar inner)
 {
-   kmVec2 cutout = {outer, inner};
+   const kmVec2 cutout = { outer, inner };
    glhckLightCutout(object, &cutout);
 }
 

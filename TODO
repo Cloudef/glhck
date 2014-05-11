@@ -2,6 +2,9 @@ TODO
 ====
 
 ---
+Make loaders load from memory.
+(implement transparent FILE* support to chckBuffer so we have both)
+---
 Remove all linked lists and provide standard datatypes (array, etc) in chck
 ---
 Replace add_subdirectory in cmakelists with b-zar's macro

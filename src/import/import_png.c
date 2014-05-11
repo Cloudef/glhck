@@ -14,8 +14,7 @@
 /* \brief check if file is PNG */
 int _glhckFormatPNG(const char *file)
 {
-   FILE *f;
-   unsigned char buf[PNG_BYTES_TO_CHECK], isPNG = 0;
+   FILE *f = NULL;
    CALL(0, "%s", file);
 
    /* open PNG */
@@ -23,19 +22,19 @@ int _glhckFormatPNG(const char *file)
       goto read_fail;
 
    /* read header */
-   memset(buf, 0, sizeof(buf));
+   unsigned char buf[PNG_BYTES_TO_CHECK];
    if (fread(buf, 1, PNG_BYTES_TO_CHECK, f) != PNG_BYTES_TO_CHECK)
       goto fail;
 
    /* check magic header */
-   if (png_sig_cmp(buf, 0, PNG_BYTES_TO_CHECK) == 0)
-      isPNG = 1;
+   if (png_sig_cmp(buf, 0, PNG_BYTES_TO_CHECK) != 0)
+      goto fail;
 
    /* close file */
    NULLDO(fclose, f);
 
-   RET(0, "%d", isPNG?RETURN_OK:RETURN_FAIL);
-   return isPNG?RETURN_OK:RETURN_FAIL;
+   RET(0, "%d", RETURN_OK);
+   return RETURN_OK;
 
 read_fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s", file);
@@ -48,13 +47,10 @@ fail:
 /* \brief import PNG images */
 int _glhckImportPNG(const char *file, _glhckImportImageStruct *import)
 {
-   FILE *f;
-   char hasa = 0;
-   int i, w, h, bit_depth, color_type, interlace_type;
-   png_uint_32 w32, h32;
+   FILE *f = NULL;
    png_structp png = NULL;
    png_infop info = NULL;
-   unsigned char buf[PNG_BYTES_TO_CHECK], **lines = NULL, *importData = NULL;
+   unsigned char **lines = NULL, *importData = NULL;
    CALL(0, "%s, %p", file, import);
 
    /* open PNG */
@@ -62,7 +58,7 @@ int _glhckImportPNG(const char *file, _glhckImportImageStruct *import)
       goto read_fail;
 
    /* read header */
-   memset(buf, 0, sizeof(buf));
+   unsigned char buf[PNG_BYTES_TO_CHECK];
    if (fread(buf, 1, PNG_BYTES_TO_CHECK, f) != PNG_BYTES_TO_CHECK)
       goto fail;
 
@@ -87,39 +83,39 @@ int _glhckImportPNG(const char *file, _glhckImportImageStruct *import)
 
    png_init_io(png, f);
    png_read_info(png, info);
-   png_get_IHDR(png, info, (png_uint_32*)(&w32),
-         (png_uint_32*)(&h32), &bit_depth, &color_type,
-         &interlace_type, NULL, NULL);
-   w = (int)w32; h = (int)h32;
+
+   png_uint_32 w32, h32;
+   int bitDepth, colorType, interlaceType;
+   png_get_IHDR(png, info, (png_uint_32*)(&w32), (png_uint_32*)(&h32), &bitDepth, &colorType, &interlaceType, NULL, NULL);
 
    if (!IMAGE_DIMENSIONS_OK(w32, h32))
       goto bad_dimensions;
 
    /* has alpha? */
-   if (png_get_valid(png, info, PNG_INFO_tRNS))
-      hasa = 1;
-   if (color_type == PNG_COLOR_TYPE_RGB_ALPHA)
-      hasa = 1;
-   if (color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+   int hasa = 0;
+   if (png_get_valid(png, info, PNG_INFO_tRNS) || colorType == PNG_COLOR_TYPE_RGB_ALPHA || colorType == PNG_COLOR_TYPE_GRAY_ALPHA)
       hasa = 1;
 
    /* Prep for transformations...  ultimately we want ARGB */
    /* expand palette -> RGB if necessary */
-   if (color_type == PNG_COLOR_TYPE_PALETTE)
+   if (colorType == PNG_COLOR_TYPE_PALETTE)
       png_set_palette_to_rgb(png);
+
    /* expand gray (w/reduced bits) -> 8-bit RGB if necessary */
-   if ((color_type == PNG_COLOR_TYPE_GRAY) ||
-         (color_type == PNG_COLOR_TYPE_GRAY_ALPHA)) {
+   if (colorType == PNG_COLOR_TYPE_GRAY || colorType == PNG_COLOR_TYPE_GRAY_ALPHA) {
       png_set_gray_to_rgb(png);
-      if (bit_depth < 8)
+      if (bitDepth < 8)
          png_set_expand_gray_1_2_4_to_8(png);
    }
+
    /* expand transparency entry -> alpha channel if present */
    if (png_get_valid(png, info, PNG_INFO_tRNS))
       png_set_tRNS_to_alpha(png);
+
    /* reduce 16bit color -> 8bit color if necessary */
-   if (bit_depth > 8)
+   if (bitDepth > 8)
       png_set_strip_16(png);
+
    /* pack all pixels to byte boundaries */
    png_set_packing(png);
 
@@ -134,14 +130,14 @@ int _glhckImportPNG(const char *file, _glhckImportImageStruct *import)
    if (!hasa) png_set_filler(png, 0xff, PNG_FILLER_AFTER);
 #endif
 
-   if (!(importData = _glhckMalloc(w*h*4)))
+   if (!(importData = _glhckMalloc(w32 * h32 * 4)))
       goto out_of_memory;
 
-   if (!(lines = _glhckMalloc(h*sizeof(unsigned char*))))
+   if (!(lines = _glhckMalloc(h32 * sizeof(unsigned char*))))
       goto out_of_memory;
 
-   for (i = 0; i < h; ++i)
-      lines[h-i-1] = (unsigned char*)importData+i*w*4;
+   for (unsigned int i = 0; i < h32; ++i)
+      lines[h32 - i - 1] = (unsigned char*)importData + i * w32 * 4;
 
    png_read_image(png, lines);
 
@@ -153,12 +149,12 @@ int _glhckImportPNG(const char *file, _glhckImportImageStruct *import)
    NULLDO(fclose, f);
 
    /* fill import struct */
-   import->width  = w;
-   import->height = h;
-   import->data   = importData;
+   import->width = w32;
+   import->height = h32;
+   import->data = importData;
    import->format = GLHCK_RGBA;
-   import->type   = GLHCK_UNSIGNED_BYTE;
-   import->flags |= (hasa==1?GLHCK_TEXTURE_IMPORT_ALPHA:0);
+   import->type = GLHCK_UNSIGNED_BYTE;
+   import->flags |= (hasa ? GLHCK_TEXTURE_IMPORT_ALPHA : 0);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
@@ -172,10 +168,14 @@ out_of_memory:
    DEBUG(GLHCK_DBG_ERROR, "Out of memory, won't load file: %s", file);
    goto fail;
 bad_dimensions:
-   DEBUG(GLHCK_DBG_ERROR, "PNG image has invalid dimension %dx%d", w, h);
+   DEBUG(GLHCK_DBG_ERROR, "PNG image has invalid dimension %dx%d", w32, h32);
 fail:
-   if (png && info) png_read_end(png, info);
-   if (png)         png_destroy_read_struct(&png, &info, (png_infopp)NULL);
+   if (png && info)
+      png_read_end(png, info);
+
+   if (png)
+      png_destroy_read_struct(&png, &info, (png_infopp)NULL);
+
    IFDO(_glhckFree, lines);
    IFDO(_glhckFree, importData);
    IFDO(fclose, f);

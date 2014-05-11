@@ -636,9 +636,9 @@ typedef struct glhckVertexWeight {
 /* collision callbacks */
 struct glhckCollisionInData;
 struct glhckCollisionOutData;
-struct _glhckCollisionPrimitive;
+struct _glhckCollisionHandle;
 typedef void (*glhckCollisionResponseFunction)(const struct glhckCollisionOutData *collision);
-typedef int (*glhckCollisionTestFunction)(const struct glhckCollisionInData *data, const struct _glhckCollisionPrimitive *collider);
+typedef int (*glhckCollisionTestFunction)(const struct glhckCollisionInData *data, const struct _glhckCollisionHandle *collider);
 
 /* collision input data */
 typedef struct glhckCollisionInData {
@@ -651,7 +651,7 @@ typedef struct glhckCollisionInData {
 /* collision output data */
 typedef struct glhckCollisionOutData {
    struct _glhckCollisionWorld *world;
-   const struct _glhckCollisionPrimitive *collider;
+   const struct _glhckCollisionHandle *collider;
    const kmVec3 *contactPoint;
    const kmVec3 *pushVector;
    const kmVec3 *velocity;
@@ -662,25 +662,25 @@ typedef unsigned int glhckFont;
 #define GLHCK_INVALID_FONT (unsigned int)-1
 
 /* typedefs for better typing */
-typedef struct _glhckMaterial           glhckMaterial;
-typedef struct _glhckTexture            glhckTexture;
-typedef struct _glhckAtlas              glhckAtlas;
-typedef struct _glhckRenderbuffer       glhckRenderbuffer;
-typedef struct _glhckFramebuffer        glhckFramebuffer;
-typedef struct _glhckObject             glhckObject;
-typedef struct _glhckBone               glhckBone;
-typedef struct _glhckSkinBone           glhckSkinBone;
-typedef struct _glhckAnimation          glhckAnimation;
-typedef struct _glhckAnimationNode      glhckAnimationNode;
-typedef struct _glhckAnimator           glhckAnimator;
-typedef struct _glhckText               glhckText;
-typedef struct _glhckCamera             glhckCamera;
-typedef struct _glhckLight              glhckLight;
-typedef struct _glhckHwBuffer           glhckHwBuffer;
-typedef struct _glhckShader             glhckShader;
-typedef struct _glhckCollisionWorld     glhckCollisionWorld;
-typedef struct _glhckCollisionPrimitive glhckCollisionPrimitive;
-typedef struct __GLHCKcontext           glhckContext;
+typedef struct _glhckMaterial             glhckMaterial;
+typedef struct _glhckTexture              glhckTexture;
+typedef struct _glhckAtlas                glhckAtlas;
+typedef struct _glhckRenderbuffer         glhckRenderbuffer;
+typedef struct _glhckFramebuffer          glhckFramebuffer;
+typedef struct _glhckObject               glhckObject;
+typedef struct _glhckBone                 glhckBone;
+typedef struct _glhckSkinBone             glhckSkinBone;
+typedef struct _glhckAnimation            glhckAnimation;
+typedef struct _glhckAnimationNode        glhckAnimationNode;
+typedef struct _glhckAnimator             glhckAnimator;
+typedef struct _glhckText                 glhckText;
+typedef struct _glhckCamera               glhckCamera;
+typedef struct _glhckLight                glhckLight;
+typedef struct _glhckHwBuffer             glhckHwBuffer;
+typedef struct _glhckShader               glhckShader;
+typedef struct _glhckCollisionWorld       glhckCollisionWorld;
+typedef struct _glhckCollisionHandle      glhckCollisionHandle;
+typedef struct __GLHCKcontext             glhckContext;
 
 typedef void (*glhckDebugHookFunc)(const char *file, int line, const char *function, glhckDebugLevel level, const char *str);
 
@@ -1053,7 +1053,7 @@ GLHCKAPI void glhckFramebufferBind(glhckFramebuffer *object);
 GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferTarget target);
 GLHCKAPI void glhckFramebufferBegin(glhckFramebuffer *object);
 GLHCKAPI void glhckFramebufferEnd(glhckFramebuffer *object);
-GLHCKAPI void glhckFramebufferRect(glhckFramebuffer *object, glhckRect *rect);
+GLHCKAPI void glhckFramebufferRect(glhckFramebuffer *object, const glhckRect *rect);
 GLHCKAPI void glhckFramebufferRecti(glhckFramebuffer *object, int x, int y, int w, int h);
 GLHCKAPI int glhckFramebufferAttachTexture(glhckFramebuffer *object, glhckTexture *texture, glhckFramebufferAttachmentType attachment);
 GLHCKAPI int glhckFramebufferAttachRenderbuffer(glhckFramebuffer *object, glhckRenderbuffer *buffer, glhckFramebufferAttachmentType attachment);
@@ -1105,9 +1105,10 @@ GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *geometry, unsigned char t
  * XXX: incomplete */
 GLHCKAPI glhckCollisionWorld* glhckCollisionWorldNew(void *userData);
 GLHCKAPI void glhckCollisionWorldFree(glhckCollisionWorld *object);
-GLHCKAPI void* glhckCollisionPrimitiveGetUserData(const glhckCollisionPrimitive *object);
-GLHCKAPI glhckCollisionPrimitive* glhckCollisionWorldAddAABBRef(glhckCollisionWorld *object, const kmAABB *aabb, void *userData);
-GLHCKAPI glhckCollisionPrimitive* glhckCollisionWorldAddAABB(glhckCollisionWorld *object, const kmAABB *aabb, void *userData);
+GLHCKAPI void* glhckCollisionHandleGetUserData(const glhckCollisionHandle *object);
+GLHCKAPI glhckCollisionHandle* glhckCollisionWorldAddAABBRef(glhckCollisionWorld *object, const kmAABB *aabb, void *userData);
+GLHCKAPI glhckCollisionHandle* glhckCollisionWorldAddAABB(glhckCollisionWorld *object, const kmAABB *aabb, void *userData);
+GLHCKAPI void glhckCollisionWorldRemovePrimitive(glhckCollisionWorld *object, const glhckCollisionHandle *id);
 GLHCKAPI unsigned int glhckCollisionWorldCollideAABB(glhckCollisionWorld *object, const kmAABB *aabb, const glhckCollisionInData *data);
 
 /* define cleanup */

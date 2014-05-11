@@ -56,19 +56,17 @@ GLHCKAPI void glhckDeleteShaderObject(unsigned int shaderObject)
  * contentsFromMemory may be null */
 GLHCKAPI glhckShader* glhckShaderNew(const char *vertexEffect, const char *fragmentEffect, const char *contentsFromMemory)
 {
-   glhckShader *object = NULL;
-   unsigned int vsobj, fsobj;
    CALL(0, "%s, %s, %s", vertexEffect, fragmentEffect, contentsFromMemory);
 
    /* compile base shaders */
-   vsobj = glhckCompileShaderObject(GLHCK_VERTEX_SHADER, vertexEffect, contentsFromMemory);
-   fsobj = glhckCompileShaderObject(GLHCK_FRAGMENT_SHADER, fragmentEffect, contentsFromMemory);
+   unsigned int vsobj = glhckCompileShaderObject(GLHCK_VERTEX_SHADER, vertexEffect, contentsFromMemory);
+   unsigned int fsobj = glhckCompileShaderObject(GLHCK_FRAGMENT_SHADER, fragmentEffect, contentsFromMemory);
 
    /* fail compiling shaders */
    if (!vsobj || !fsobj)
       goto fail;
 
-   object = glhckShaderNewWithShaderObjects(vsobj, fsobj);
+   glhckShader *object = glhckShaderNewWithShaderObjects(vsobj, fsobj);
    RET(0, "%p", object);
    return object;
 

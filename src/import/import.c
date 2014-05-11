@@ -128,7 +128,6 @@ static int _glhckUnloadImporters(void)
 /* \brief check against known model format headers */
 static _glhckModelImporter* _glhckGetModelImporter(const char *file)
 {
-   unsigned int i;
    CALL(0, "%s", file);
 
    if (access(file, F_OK) == -1) {
@@ -139,11 +138,12 @@ static _glhckModelImporter* _glhckGetModelImporter(const char *file)
 
    /* --------- FORMAT HEADER CHECKING ------------ */
 
-   for (i = 0; modelImporters[i].formatFunc; ++i)
+   for (unsigned int i = 0; modelImporters[i].formatFunc; ++i) {
       if (modelImporters[i].formatFunc(file)) {
          RET(0, "%s", modelImporters[i].str);
          return &modelImporters[i];
       }
+   }
 
    /* ------- ^^ FORMAT HEADER CHECKING ^^ -------- */
 
@@ -174,20 +174,21 @@ GLHCKAPI const glhckImportModelParameters* glhckImportDefaultModelParameters(voi
 /* \brief import model file */
 int _glhckImportModel(glhckObject *object, const char *file, const glhckImportModelParameters *params, unsigned char itype, unsigned char vtype)
 {
-   _glhckModelImporter *importer;
-   int importReturn;
    CALL(0, "%p, %s, %p", object, file, params);
    DEBUG(GLHCK_DBG_CRAP, "Model: %s", file);
 
    /* figure out the model format */
+   _glhckModelImporter *importer;
    if (!(importer = _glhckGetModelImporter(file))) {
       RET(0, "%d", RETURN_FAIL);
       return RETURN_FAIL;
    }
 
+   if (!params)
+      params = glhckImportDefaultModelParameters();
+
    /* import */
-   if (!params) params = glhckImportDefaultModelParameters();
-   importReturn = importer->importFunc(object, file, params, itype, vtype);
+   int importReturn = importer->importFunc(object, file, params, itype, vtype);
    RET(0, "%d", importReturn);
    return importReturn;
 }
@@ -195,7 +196,6 @@ int _glhckImportModel(glhckObject *object, const char *file, const glhckImportMo
 /* \brief check against known image format headers */
 static _glhckImageImporter* _glhckGetImageImporter(const char *file)
 {
-   unsigned int i;
    CALL(0, "%s", file);
 
    if (access(file, F_OK) == -1) {
@@ -206,7 +206,7 @@ static _glhckImageImporter* _glhckGetImageImporter(const char *file)
 
    /* --------- FORMAT HEADER CHECKING ------------ */
 
-   for (i = 0; imageImporters[i].formatFunc; ++i)
+   for (unsigned int i = 0; imageImporters[i].formatFunc; ++i)
       if (imageImporters[i].formatFunc(file)) {
          RET(0, "%s", imageImporters[i].str);
          return &imageImporters[i];
@@ -234,18 +234,19 @@ GLHCKAPI const glhckImportImageParameters* glhckImportDefaultImageParameters(voi
 /* post-processing of image data */
 int _glhckImagePostProcess(glhckTexture *texture, const glhckImportImageParameters *params, const _glhckImportImageStruct *import)
 {
-   int size = 0;
    void *data = NULL, *compressed = NULL;
-   glhckTextureFormat format;
-   glhckDataType type;
    CALL(0, "%p, %p, %p", texture, params, import);
    assert(texture);
    assert(import);
 
    /* use default parameters */
-   if (!params) params = glhckImportDefaultImageParameters();
+   if (!params)
+      params = glhckImportDefaultImageParameters();
 
    /* try to compress the data if requested */
+   int size = 0;
+   glhckDataType type;
+   glhckTextureFormat format;
    if (params->compression != GLHCK_COMPRESSION_NONE) {
       compressed = glhckTextureCompress(params->compression, import->width, import->height,
             import->format, import->type, import->data, &size, &format, &type);
@@ -259,11 +260,10 @@ int _glhckImagePostProcess(glhckTexture *texture, const glhckImportImageParamete
    }
 
    /* pass the import flags */
-   texture->importFlags =  import->flags;
+   texture->importFlags = import->flags;
 
    /* upload texture */
-   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, import->width, import->height,
-            0, 0, format, type, size, data) != RETURN_OK)
+   if (glhckTextureCreate(texture, GLHCK_TEXTURE_2D, 0, import->width, import->height, 0, 0, format, type, size, data) != RETURN_OK)
       goto fail;
 
    IFDO(_glhckFree, compressed);
@@ -285,19 +285,19 @@ fail:
 /* \brief import image file */
 int _glhckImportImage(glhckTexture *texture, const char *file, const glhckImportImageParameters *params)
 {
-   _glhckImageImporter *importer;
-   _glhckImportImageStruct import;
    CALL(0, "%p, %s, %p", texture, file, params);
    DEBUG(GLHCK_DBG_CRAP, "Image: %s", file);
-   memset(&import, 0, sizeof(_glhckImportImageStruct));
 
    /* figure out the image format */
+   _glhckImageImporter *importer;
    if (!(importer = _glhckGetImageImporter(file))) {
       RET(0, "%d", RETURN_FAIL);
       return RETURN_FAIL;
    }
 
    /* import */
+   _glhckImportImageStruct import;
+   memset(&import, 0, sizeof(_glhckImportImageStruct));
    if (importer->importFunc(file, &import) != RETURN_OK)
       goto fail;
 
@@ -318,13 +318,12 @@ fail:
 /* ------------------ PORTABILTY ------------------ */
 
 /* \brief portable basename */
-char *gnu_basename(char *path)
+const char* gnu_basename(const char *path)
 {
-    char *base;
     CALL(1, "%s", path);
-    base = strrchr(path, '/');
-    RET(1, "%s", base ? base+1 : path);
-    return base ? base+1 : path;
+    const char *base = strrchr(path, '/');
+    RET(1, "%s", (base ? base + 1 : path));
+    return (base ? base + 1 : path);
 }
 
 /* ------------ EMSCRIPTEN HELPERS -------------- */
@@ -334,15 +333,15 @@ char *gnu_basename(char *path)
 /* \brief use browser to load images, may support more formats than glhck */
 int _glhckImportEmscripten(const char *file, _glhckImportImageStruct *import)
 {
-   unsigned int i, i2;
-   unsigned char *importData = NULL, hasa = 0;
-   SDL_Surface* surface = NULL;
-   glhckTextureFormat format;
+   SDL_Surface *surface = NULL;
+   unsigned char *importData = NULL;
    CALL(0, "%s, %p", file, import);
 
    if (!(surface = IMG_Load(file)))
       goto fail;
 
+   unsigned char hasa = 0;
+   glhckTextureFormat format;
    if (surface->format->BytesPerPixel == 4) {
       hasa = 1;
       if (surface->format->Rmask == 0x000000ff) format = GLHCK_RGBA;
@@ -379,7 +378,7 @@ fail:
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
-int _glhckFormatEmscripten(const char *file) { return 1; }
+int _glhckFormatEmscripten(const char *file) { (void)file; return 1; }
 #endif /* EMSCRIPTEN */
 
 /* ------------ SHARED FUNCTIONS ---------------- */
@@ -387,23 +386,21 @@ int _glhckFormatEmscripten(const char *file) { return 1; }
 /* \brief helper function for importers.
  * helps finding texture files.
  * maybe we could have a _default_ texture for missing files? */
-char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_path)
+char* _glhckImportTexturePath(const char* oddTexturePath, const char* modelPath)
 {
-   char *textureFile, *modelFolder, *modelPath;
-   char textureInModelFolder[2048];
-   CALL(0, "%s, %s", odd_texture_path, model_path);
+   char *textureInModelFolder = NULL, *modelPathCpy = NULL;
+   CALL(0, "%s, %s", oddTexturePath, modelPath);
 
    /* these are must to check */
-   if (!odd_texture_path || !odd_texture_path[0])
+   if (!oddTexturePath || !oddTexturePath[0])
       goto fail;
 
-   /* lets try first if it contains real path to the texture */
-   textureFile = (char*)odd_texture_path;
+   const char *textureFile = oddTexturePath;
 
    /* guess not, lets try basename it */
-   if (access(textureFile, F_OK) != 0)
-      textureFile = gnu_basename((char*)odd_texture_path);
-   else {
+   if (access(textureFile, F_OK) != 0) {
+      textureFile = gnu_basename(textureFile);
+   } else {
       RET(0, "%s", textureFile);
       return _glhckStrdup(textureFile);
    }
@@ -414,21 +411,26 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
       goto fail; /* Sherlock, you are a genius */
 
    /* these are must to check */
-   if (!model_path || !model_path[0])
+   if (!modelPath || !modelPath[0])
       goto fail;
 
    /* copy original path */
-   if (!(modelPath = _glhckStrdup(model_path)))
+   if (!(modelPathCpy = _glhckStrdup(modelPath)))
       goto fail;
 
    /* grab the folder where model resides */
-   modelFolder = dirname(modelPath);
+   char *modelFolder = dirname(modelPathCpy);
 
    /* ok, maybe the texture is in same folder as the model? */
-   snprintf(textureInModelFolder, sizeof(textureInModelFolder)-1, "%s/%s", modelFolder, textureFile);
+   size_t len = snprintf(NULL, 0, "%s/%s", modelFolder, textureFile) + 1;
+
+   if (!(textureInModelFolder = _glhckCalloc(1, len + 1)))
+      goto fail;
+
+   snprintf(textureInModelFolder, len, "%s/%s", modelFolder, textureFile);
 
    /* free this */
-   _glhckFree(modelPath);
+   _glhckFree(modelPathCpy);
 
    /* gah, don't give me missing textures damnit!! */
    if (access(textureInModelFolder, F_OK) != 0)
@@ -436,9 +438,11 @@ char* _glhckImportTexturePath(const char* odd_texture_path, const char* model_pa
 
    /* return, remember to free */
    RET(0, "%s", textureInModelFolder);
-   return _glhckStrdup(textureInModelFolder);
+   return textureInModelFolder;
 
 fail:
+   IFDO(_glhckFree, modelPathCpy);
+   IFDO(_glhckFree, textureInModelFolder);
    RET(0, "%p", NULL);
    return NULL;
 }
@@ -446,11 +450,10 @@ fail:
 /* \brief invert pixel data */
 void _glhckInvertPixels(unsigned char *pixels, unsigned int w, unsigned int h, unsigned int components)
 {
-   unsigned int i, i2;
-   for (i = 0; i*2 < h; ++i) {
+   for (unsigned int i = 0; i * 2 < h; ++i) {
       unsigned int index1 = i * w * components;
       unsigned int index2 = (h - 1 - i) * w * components;
-      for (i2 = w * components; i2 > 0; --i2) {
+      for (unsigned int i2 = w * components; i2 > 0; --i2) {
          unsigned char temp = pixels[index1];
          pixels[index1] = pixels[index2];
          pixels[index2] = temp;
@@ -459,40 +462,34 @@ void _glhckInvertPixels(unsigned char *pixels, unsigned int w, unsigned int h, u
    }
 }
 
-#define ACTC_CHECK_SYNTAX  "%d: "__STRING(func)" returned unexpected "__STRING(c)"\n"
-#define ACTC_CALL_SYNTAX   "%d: "__STRING(func)" failed with %04X\n"
+#define ACTC_CHECK_SYNTAX __STRING(func)" returned unexpected "__STRING(c)"\n"
+#define ACTC_CALL_SYNTAX  __STRING(func)" failed with %04X\n"
 
-#define ACTC_CHECK(func, c)               \
-{ int r;                                  \
-   r = (func);                            \
-   if (r != c) {                          \
-      fprintf(stderr, ACTC_CHECK_SYNTAX,  \
-            __LINE__);                    \
-      goto fail;                          \
-   }                                      \
+#define ACTC_CHECK(func, c)                      \
+{                                                \
+   if ((func) != c) {                            \
+      DEBUG(GLHCK_DBG_ERROR, ACTC_CHECK_SYNTAX); \
+      goto fail;                                 \
+   }                                             \
 }
 
-#define ACTC_CALL(func)                   \
-{ int r;                                  \
-   r = (func);                            \
-   if (r < 0) {                           \
-      fprintf(stderr, ACTC_CALL_SYNTAX,   \
-            __LINE__, -r);                \
-      goto fail;                          \
-   }                                      \
+#define ACTC_CALL(func)                             \
+{                                                   \
+   if ((func) < 0) {                                \
+      DEBUG(GLHCK_DBG_ERROR, ACTC_CALL_SYNTAX, -r); \
+      goto fail;                                    \
+   }                                                \
 }
 
 #if GLHCK_TRISTRIP
 static void _glhckTriStripReverse(glhckImportIndexData *indices, unsigned int memb)
 {
-   unsigned int i;
    glhckImportIndexData *original;
-
    if (!(original = _glhckCopy(indices, memb * sizeof(glhckImportIndexData))))
       return;
 
-   for (i = 0; i != memb; ++i)
-      indices[i] = original[memb-1-i];
+   for (unsigned int i = 0; i != memb; ++i)
+      indices[i] = original[memb - 1 - i];
 
    _glhckFree(original);
 }
@@ -502,19 +499,14 @@ static void _glhckTriStripReverse(glhckImportIndexData *indices, unsigned int me
 glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsigned int memb, unsigned int *outMemb)
 {
 #if !GLHCK_TRISTRIP
-   (void)indices;
-   (void)memb;
-   (void)outMemb;
+   (void)indices, (void)memb, (void)outMemb;
 
    /* stripping is disabled.
     * importers should fallback to GLHCK_TRIANGLES */
    return NULL;
 #else
-   int prim;
-   glhckImportIndexData v1, v2, v3;
-   glhckImportIndexData *outIndices = NULL, *newIndices = NULL;
-   unsigned int i, primCount, tmp;
    ACTCData *tc = NULL;
+   glhckImportIndexData *outIndices = NULL, *newIndices = NULL;
    CALL(0, "%p, %u, %p", indices, memb, outMemb);
 
    /* check if the triangles we got are valid */
@@ -533,30 +525,30 @@ glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsign
 
    /* input data */
    ACTC_CALL(actcBeginInput(tc));
-   for (i = 0; i != memb; i+=3) {
-      ACTC_CALL(actcAddTriangle(tc,
-               indices[i+0],
-               indices[i+1],
-               indices[i+2]));
-   }
+   for (unsigned int i = 0; i != memb; i += 3)
+      ACTC_CALL(actcAddTriangle(tc, indices[i+0], indices[i+1], indices[i+2]));
    ACTC_CALL(actcEndInput(tc));
 
    /* FIXME: fix the winding of generated stiched strips */
 
    /* output data */
-   tmp = memb, i = 0, primCount = 0;
-   unsigned int flipStart = 0, length = 0;
    ACTC_CALL(actcBeginOutput(tc));
+
+   int prim;
+   unsigned int i = 0, primCount = 0, length = 0, flipStart = 0;
+   glhckImportIndexData v1, v2, v3;
    while ((prim = actcStartNextPrim(tc, &v1, &v2)) != ACTC_DATABASE_EMPTY) {
       assert(prim == ACTC_PRIM_STRIP);
-      if (i + (primCount?5:3) > memb)
+      if (i + (primCount ? 5 : 3) > memb)
          goto no_profit;
 
       /* degenerate to next strip */
       if (primCount && v1 != v3) {
          if (length & 1) {
-            _glhckTriStripReverse(&outIndices[flipStart], i-flipStart);
-            if (flipStart) outIndices[flipStart-1] = outIndices[flipStart];
+            _glhckTriStripReverse(&outIndices[flipStart], i - flipStart);
+
+            if (flipStart)
+               outIndices[flipStart - 1] = outIndices[flipStart];
          }
 
          v3 = outIndices[i-1];
@@ -573,30 +565,22 @@ glhckImportIndexData* _glhckTriStrip(const glhckImportIndexData *indices, unsign
       while (actcGetNextVert(tc, &v3) != ACTC_PRIM_COMPLETE) {
          if (i + 1 > memb)
             goto no_profit;
+
          outIndices[i++] = v3;
          ++length;
       }
 
       primCount++;
    }
+
    ACTC_CALL(actcEndOutput(tc));
-   puts("");
-   printf("%u alloc\n", memb);
-   if (outMemb) *outMemb = i;
-   memb = tmp;
 
-   // for (i = *outMemb-12; i != *outMemb; ++i)
-      // outIndices[i] = 0;
-
-#if 0
-   puts("- INDICES:");
-   for (i = 0; i != *outMemb; ++i)
-      printf("%u%s", outIndices[i], (!((i+1) % 3)?"\n":", "));
-   puts("");
-#endif
+   if (outMemb)
+      *outMemb = i;
 
    if (!(newIndices = _glhckRealloc(outIndices, memb, i, sizeof(glhckImportIndexData))))
       goto out_of_memory;
+
    outIndices = newIndices;
 
    printf("%u indices\n", memb);

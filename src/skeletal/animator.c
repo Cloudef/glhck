@@ -36,7 +36,6 @@ static glhckBone* _glhckAnimatorLookupBone(glhckAnimator *object, const char *na
       if (bone && !strcmp(bname, name))
          return bone;
    }
-
    return NULL;
 }
 
@@ -117,8 +116,8 @@ GLHCKAPI unsigned int glhckAnimatorFree(glhckAnimator *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief set animation to animator */

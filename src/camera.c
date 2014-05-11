@@ -13,8 +13,6 @@
 /* \brief calculate projection matrix */
 static void _glhckCameraProjectionMatrix(glhckCamera *object)
 {
-   kmScalar w, h, distanceFromTarget;
-   kmVec3 toTarget;
 
    CALL(2, "%p", object);
    assert(object);
@@ -22,19 +20,19 @@ static void _glhckCameraProjectionMatrix(glhckCamera *object)
 
    switch(object->view.projectionType) {
       case GLHCK_PROJECTION_ORTHOGRAPHIC:
-	 w = object->view.viewport.w > object->view.viewport.h ? 1 :
-	    object->view.viewport.w / object->view.viewport.h;
-	 h = object->view.viewport.w < object->view.viewport.h ? 1 :
-	    object->view.viewport.h / object->view.viewport.w;
+	 {
+	    kmScalar w = (object->view.viewport.w > object->view.viewport.h ? 1 : object->view.viewport.w / object->view.viewport.h);
+	    kmScalar h = (object->view.viewport.w < object->view.viewport.h ? 1 : object->view.viewport.h / object->view.viewport.w);
 
-	 kmVec3Subtract(&toTarget, &object->object->view.translation, &object->object->view.target);
-	 distanceFromTarget = kmVec3Length(&toTarget);
+	    kmVec3 toTarget;
+	    kmVec3Subtract(&toTarget, &object->object->view.translation, &object->object->view.target);
 
-	 w *= (distanceFromTarget+object->view.near)/2;
-	 h *= (distanceFromTarget+object->view.near)/2;
+	    kmScalar distanceFromTarget = kmVec3Length(&toTarget);
+	    w *= (distanceFromTarget + object->view.near)/2;
+	    h *= (distanceFromTarget + object->view.near)/2;
 
-	 kmMat4OrthographicProjection(&object->view.projection,
-	       -w, w, -h, h, object->view.near, object->view.far);
+	    kmMat4OrthographicProjection(&object->view.projection, -w, w, -h, h, object->view.near, object->view.far);
+	 }
 	 break;
 
       case GLHCK_PROJECTION_PERSPECTIVE:
@@ -51,12 +49,11 @@ static void _glhckCameraProjectionMatrix(glhckCamera *object)
 /* \brief calcualate view matrix */
 static void _glhckCameraViewMatrix(glhckCamera *object)
 {
-   kmMat4 rotation, tmp;
-   kmVec3 upvector;
    CALL(2, "%p", object);
    assert(object);
 
    /* build rotation for upvector */
+   kmMat4 rotation, tmp;
    kmMat4RotationAxisAngle(&rotation, &(kmVec3){0,0,1},
 	 kmDegreesToRadians(object->object->view.rotation.z));
    kmMat4RotationAxisAngle(&tmp, &(kmVec3){0,1,0},
@@ -67,6 +64,7 @@ static void _glhckCameraViewMatrix(glhckCamera *object)
    kmMat4Multiply(&rotation, &rotation, &tmp);
 
    /* assuming upvector is normalized */
+   kmVec3 upvector;
    kmVec3Transform(&upvector, &object->view.upVector, &rotation);
 
    /* build view matrix */
@@ -130,8 +128,8 @@ GLHCKAPI glhckCamera* glhckCameraNew(void)
    /* defaults */
    object->view.projectionType = GLHCK_PROJECTION_PERSPECTIVE;
    object->view.near = 1.0f;
-   object->view.far  = 100.0f;
-   object->view.fov  = 35.0f;
+   object->view.far = 100.0f;
+   object->view.fov = 35.0f;
 
    /* reset */
    glhckCameraReset(object);
@@ -185,8 +183,8 @@ GLHCKAPI unsigned int glhckCameraFree(glhckCamera *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief update the camera */
@@ -304,12 +302,11 @@ GLHCKAPI void glhckCameraRange(glhckCamera *object,
    CALL(1, "%p, %f, %f", object, near, far);
    assert(object);
 
-   if (object->view.near == near &&
-	 object->view.far  == far)
+   if (object->view.near == near && object->view.far == far)
       return;
 
    object->view.near = near;
-   object->view.far  = far;
+   object->view.far = far;
    _glhckCameraProjectionMatrix(object);
 }
 
@@ -320,9 +317,9 @@ GLHCKAPI void glhckCameraViewport(glhckCamera *object, const glhckRect *viewport
    assert(object);
 
    if (object->view.viewport.x == viewport->x &&
-	 object->view.viewport.y == viewport->y &&
-	 object->view.viewport.w == viewport->w &&
-	 object->view.viewport.h == viewport->h)
+       object->view.viewport.y == viewport->y &&
+       object->view.viewport.w == viewport->w &&
+       object->view.viewport.h == viewport->h)
       return;
 
    memcpy(&object->view.viewport, viewport, sizeof(glhckRect));

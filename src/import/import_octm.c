@@ -13,8 +13,7 @@ static void CTM_ERROR(CTMcontext context, unsigned int line, const char *func, c
 {
    CTMenum error;
    if ((error = ctmGetError(context)) != CTM_NONE)
-      DEBUG(GLHCK_DBG_ERROR, "OCTM @%d:%-20s %-20s >> %s",
-            line, func, ctmfunc, ctmErrorString(error));
+      DEBUG(GLHCK_DBG_ERROR, "OCTM @%d:%-20s %-20s >> %s", line, func, ctmfunc, ctmErrorString(error));
 }
 #endif
 
@@ -27,7 +26,7 @@ static CTMuint readOCTMFile(void *buf, CTMuint toRead, void *f)
 /* \brief check if file is a OpenCTM file */
 int _glhckFormatOpenCTM(const char *file)
 {
-   FILE *f;
+   FILE *f = NULL;
    CTMcontext context = NULL;
    CALL(0, "%s", file);
 
@@ -62,18 +61,10 @@ fail:
 int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImportModelParameters *params,
       unsigned char itype, unsigned char vtype)
 {
-   FILE *f;
-   unsigned int i, ix, *stripIndices = NULL, numIndices = 0;
+   FILE *f = NULL;
    CTMcontext context = NULL;
-   CTMuint num_vertices, numTriangles, numUvs, numAttribs;
-   const CTMuint *indices;
-   const CTMfloat *vertices = NULL, *normals = NULL, *coords = NULL, *colors = NULL;
-   const char *attribName, *comment, *textureFilename;
-   char *texturePath;
+   unsigned int *stripIndices = NULL;
    glhckImportVertexData *vertexData = NULL;
-   glhckMaterial *material;
-   glhckTexture *texture;
-   unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
    CALL(0, "%p, %s, %p", object, file, params);
 
    if (!(f = fopen(file, "rb")))
@@ -90,29 +81,34 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImport
    NULLDO(fclose, f);
 
    /* read geometry data */
-   vertices      = CTM_CALL(context, ctmGetFloatArray(context, CTM_VERTICES));
-   indices       = CTM_CALL(context, ctmGetIntegerArray(context, CTM_INDICES));
-   num_vertices  = CTM_CALL(context, ctmGetInteger(context, CTM_VERTEX_COUNT));
-   numTriangles = CTM_CALL(context, ctmGetInteger(context, CTM_TRIANGLE_COUNT));
-   numUvs       = CTM_CALL(context, ctmGetInteger(context, CTM_UV_MAP_COUNT));
-   numAttribs   = CTM_CALL(context, ctmGetInteger(context, CTM_ATTRIB_MAP_COUNT));
+   const CTMfloat *vertices = CTM_CALL(context, ctmGetFloatArray(context, CTM_VERTICES));
+   const CTMuint *indices = CTM_CALL(context, ctmGetIntegerArray(context, CTM_INDICES));
+   CTMuint numVertices = CTM_CALL(context, ctmGetInteger(context, CTM_VERTEX_COUNT));
+   CTMuint numTriangles = CTM_CALL(context, ctmGetInteger(context, CTM_TRIANGLE_COUNT));
+   CTMuint numUvs = CTM_CALL(context, ctmGetInteger(context, CTM_UV_MAP_COUNT));
+   CTMuint numAttribs = CTM_CALL(context, ctmGetInteger(context, CTM_ATTRIB_MAP_COUNT));
 
    /* indices count now */
    numTriangles *= 3;
 
+   const CTMfloat *normals = NULL;
    if (ctmGetInteger(context, CTM_HAS_NORMALS) == CTM_TRUE) {
       normals = CTM_CALL(context, ctmGetFloatArray(context, CTM_NORMALS));
    }
 
+   const CTMfloat *coords = NULL;
    if (numUvs) {
-      textureFilename = CTM_CALL(context, ctmGetUVMapString(context, CTM_UV_MAP_1, CTM_FILE_NAME));
-      if (!textureFilename) {
-         textureFilename = CTM_CALL(context, ctmGetUVMapString(context, CTM_UV_MAP_1, CTM_NAME));
-      }
+      const char *textureFilename = CTM_CALL(context, ctmGetUVMapString(context, CTM_UV_MAP_1, CTM_FILE_NAME));
 
-      if ((texturePath = _glhckImportTexturePath(textureFilename, file))) {
+      if (!textureFilename)
+         textureFilename = CTM_CALL(context, ctmGetUVMapString(context, CTM_UV_MAP_1, CTM_NAME));
+
+      char *texturePath;
+      if (textureFilename && (texturePath = _glhckImportTexturePath(textureFilename, file))) {
+         glhckTexture *texture;
          if ((texture = glhckTextureNewFromFile(texturePath, NULL, NULL))) {
             coords = CTM_CALL(context, ctmGetFloatArray(context, CTM_UV_MAP_1));
+            glhckMaterial *material;
             if ((material = glhckMaterialNew(texture)))
                glhckObjectMaterial(object, material);
             glhckTextureFree(texture);
@@ -121,23 +117,25 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImport
       }
    }
 
-   for (i = 0; i < numAttribs; ++i) {
-      attribName = ctmGetAttribMapString(context, CTM_ATTRIB_MAP_1 + i, CTM_NAME);
-      if (!strcmp(attribName, "Color")) {
+   const CTMfloat *colors = NULL;
+   for (unsigned int i = 0; i < numAttribs; ++i) {
+      const char *attribName = ctmGetAttribMapString(context, CTM_ATTRIB_MAP_1 + i, CTM_NAME);
+      if (attribName && !strcmp(attribName, "Color"))
          colors = CTM_CALL(context, ctmGetFloatArray(context, CTM_ATTRIB_MAP_1 + i));
-      }
    }
 
    /* output comment to stdout */
-   comment = CTM_CALL(context, ctmGetString(context, CTM_FILE_COMMENT));
-   if (comment) DEBUG(GLHCK_DBG_CRAP, "%s", comment);
+   const char *comment = CTM_CALL(context, ctmGetString(context, CTM_FILE_COMMENT));
+
+   if (comment)
+      DEBUG(GLHCK_DBG_CRAP, "%s", comment);
 
    /* process vertex data to import format */
-   if (!(vertexData = _glhckCalloc(num_vertices, sizeof(glhckImportVertexData))))
+   if (!(vertexData = _glhckCalloc(numVertices, sizeof(glhckImportVertexData))))
       goto fail;
 
-   for (i = 0; i < numTriangles; ++i) {
-      ix = indices[i];
+   for (unsigned int i = 0; i < numTriangles; ++i) {
+      unsigned int ix = indices[i];
 
       vertexData[ix].vertex.x = vertices[ix*3+0];
       vertexData[ix].vertex.z = vertices[ix*3+1] * -1;
@@ -163,18 +161,20 @@ int _glhckImportOpenCTM(glhckObject *object, const char *file, const glhckImport
    }
 
    /* triangle strip geometry */
+   unsigned int geometryType = GLHCK_TRIANGLE_STRIP, numIndices;
    if (!(stripIndices = _glhckTriStrip(indices, numTriangles, &numIndices))) {
       /* failed, use non stripped geometry */
       geometryType = GLHCK_TRIANGLES;
-      numIndices  = numTriangles;
+      numIndices = numTriangles;
    }
 
    /* this object has colors */
-   if (colors) object->flags |= GLHCK_OBJECT_VERTEX_COLOR;
+   if (colors)
+      object->flags |= GLHCK_OBJECT_VERTEX_COLOR;
 
    /* set geometry */
    glhckObjectInsertIndices(object, itype, stripIndices?stripIndices:indices, numIndices);
-   glhckObjectInsertVertices(object, vtype, vertexData, num_vertices);
+   glhckObjectInsertVertices(object, vtype, vertexData, numVertices);
    object->geometry->type = geometryType;
 
    /* finish */

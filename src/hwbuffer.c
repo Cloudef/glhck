@@ -6,11 +6,10 @@
 /* \brief free current list of uniform buffer's uniforms */
 static void _glhckHwBufferFreeUniforms(glhckHwBuffer *object)
 {
-   chckPoolIndex iter;
-   _glhckHwBufferShaderUniform *u;
    assert(object);
 
-   for (iter = 0; (u = chckPoolIter(object->uniforms, &iter));)
+   _glhckHwBufferShaderUniform *u;
+   for (chckPoolIndex iter = 0; (u = chckPoolIter(object->uniforms, &iter));)
       _glhckFree(u->name);
 
    IFDO(chckPoolFree, object->uniforms);
@@ -110,7 +109,10 @@ GLHCKAPI void glhckHwBufferBind(glhckHwBuffer *object)
 {
    CALL(2, "%p", object);
    assert(object);
-   if (GLHCKRD()->hwBuffer[object->target] == object) return;
+
+   if (GLHCKRD()->hwBuffer[object->target] == object)
+      return;
+
    GLHCKRA()->hwBufferBind(object->target, object->object);
    GLHCKRD()->hwBuffer[object->target] = object;
 }
@@ -119,7 +121,10 @@ GLHCKAPI void glhckHwBufferBind(glhckHwBuffer *object)
 GLHCKAPI void glhckHwBufferUnbind(glhckHwBufferTarget target)
 {
    CALL(2, "%d", target);
-   if (!GLHCKRD()->hwBuffer[target]) return;
+
+   if (!GLHCKRD()->hwBuffer[target])
+      return;
+
    GLHCKRA()->hwBufferBind(target, 0);
    GLHCKRD()->hwBuffer[target] = NULL;
 }
@@ -249,9 +254,9 @@ GLHCKAPI void glhckHwBufferUnmap(glhckHwBuffer *object)
 /* \brief create and intialize uniform buffer from shader */
 GLHCKAPI int glhckHwBufferCreateUniformBufferFromShader(glhckHwBuffer *object, glhckShader *shader, const char *uboName, glhckHwBufferStoreType usage)
 {
-   chckPool *pool;
-   char *bufferName;
-   _glhckHwBufferShaderUniform *u;
+   chckPool *pool = NULL;
+   char *bufferName = NULL;
+   CALL(2, "%p, %p, %s, %u", object, shader, uboName, usage);
    assert(object && shader);
 
    /* copy buffer name */
@@ -273,21 +278,25 @@ GLHCKAPI int glhckHwBufferCreateUniformBufferFromShader(glhckHwBuffer *object, g
    object->name = bufferName;
    object->uniforms = pool;
 
-   chckPoolIndex iter;
-   for (iter = 0; (u = chckPoolIter(pool, &iter));)
+   _glhckHwBufferShaderUniform *u;
+   for (chckPoolIndex iter = 0; (u = chckPoolIter(pool, &iter));)
       printf("UBO: (%s:%u) %d : %d [%s]\n", u->name, u->offset, u->type, u->size, u->typeName);
 
+   RET(2, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
    IFDO(_glhckFree, bufferName);
+   IFDO(chckPoolFree, pool);
+   RET(2, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
 /* \brief append information about UBO from shader */
 GLHCKAPI int glhckHwBufferAppendInformationFromShader(glhckHwBuffer *object, glhckShader *shader)
 {
-   chckPool *pool;
+   chckPool *pool = NULL;
+   CALL(2, "%p, %p", object, shader);
    assert(object && shader);
    assert(object->created);
 
@@ -298,9 +307,8 @@ GLHCKAPI int glhckHwBufferAppendInformationFromShader(glhckHwBuffer *object, glh
 
    /* filter out stuff from list that we already have */
    int dirty = 0;
-   chckPoolIndex iter;
    _glhckHwBufferShaderUniform *u;
-   for (iter = 0; (u = chckPoolIter(pool, &iter));) {
+   for (chckPoolIndex iter = 0; (u = chckPoolIter(pool, &iter));) {
       chckPoolIndex iter2;
       _glhckHwBufferShaderUniform *uo;
       for (iter2 = 0; (uo = chckPoolIter(object->uniforms, &iter2));) {
@@ -323,22 +331,26 @@ GLHCKAPI int glhckHwBufferAppendInformationFromShader(glhckHwBuffer *object, glh
 
    /* initialize uniform buffer with the size */
    glhckHwBufferCreate(object, GLHCK_UNIFORM_BUFFER, size, NULL, object->storeType);
+   RET(2, "%d", RETURN_OK);
    return RETURN_OK;
 
 fail:
+   IFDO(chckPoolFree, pool);
+   RET(2, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
 
 /* \brief fill single uniform in uniform buffer */
 GLHCKAPI void glhckHwBufferFillUniform(glhckHwBuffer *object, const char *uniform, int size, const void *data)
 {
-   _glhckHwBufferShaderUniform *u;
+   CALL(2, "%p, %s, %d, %p", object, uniform, size, data);
    assert(object);
    assert(object->target == GLHCK_UNIFORM_BUFFER);
 
-   /* search uniform */
-   chckPoolIndex iter;
-   for (iter = 0; (u = chckPoolIter(object->uniforms, &iter));) {
+   /* search uniform
+    * TODO: use chckHashTable */
+   _glhckHwBufferShaderUniform *u;
+   for (chckPoolIndex iter = 0; (u = chckPoolIter(object->uniforms, &iter));) {
       if (!strcmp(uniform, u->name))
          break;
    }

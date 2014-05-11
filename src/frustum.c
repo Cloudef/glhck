@@ -10,14 +10,11 @@
 /* \brief build frustum from modelview projection matrix */
 GLHCKAPI void glhckFrustumBuild(glhckFrustum *object, const kmMat4 *mvp)
 {
-   kmPlane *planes;
-   kmVec3 *corners;
-
    CALL(0, "%p, %p", object, mvp);
    assert(object && mvp);
 
-   planes  = object->planes;
-   corners = object->corners;
+   kmPlane *planes = object->planes;
+   kmVec3 *corners = object->corners;
 
    kmPlaneExtractFromMat4(&planes[GLHCK_FRUSTUM_PLANE_LEFT],   mvp,  1);
    kmPlaneExtractFromMat4(&planes[GLHCK_FRUSTUM_PLANE_RIGHT],  mvp, -1);
@@ -94,54 +91,61 @@ GLHCKAPI void glhckFrustumRender(glhckFrustum *object)
 /* \brief point inside frustum? */
 GLHCKAPI int glhckFrustumContainsPoint(const glhckFrustum *object, const kmVec3 *point)
 {
-   unsigned int i;
-   for (i = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
+   for (unsigned int i = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
       if (object->planes[i].a * point->x +
           object->planes[i].b * point->y +
           object->planes[i].c * point->z +
-          object->planes[i].d < 0) return 0;
+          object->planes[i].d < 0)
+         return 0;
       /* <= treat points that are right on the plane as outside.
        * <  for inverse behaviour */
    }
+
    return 1;
 }
 
 /* \brief sphere inside frustum? */
 GLHCKAPI kmScalar glhckFrustumContainsSphere(const glhckFrustum *object, const kmVec3 *point, kmScalar radius)
 {
-   unsigned int i;
-   kmScalar d;
-   for (i = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
+   kmScalar d = 0.0f;
+
+   for (unsigned int i = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
       d = object->planes[i].a * point->x +
           object->planes[i].b * point->y +
           object->planes[i].c * point->z +
           object->planes[i].d;
-      if (d < -radius) return 0;
+
+      if (d < -radius)
+         return 0.0f;
    }
+
    return d + radius;
 }
 
 /* \brief sphere inside frustum? (with extra checks, OUTSIDE, INSIDE, PARTIAL) */
 GLHCKAPI glhckFrustumTestResult glhckFrustumContainsSphereEx(const glhckFrustum *object, const kmVec3 *point, kmScalar radius)
 {
-   unsigned int i, c;
-   kmScalar d;
-   for (i = 0, c = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
-      d = object->planes[i].a * point->x +
-          object->planes[i].b * point->y +
-          object->planes[i].c * point->z +
-          object->planes[i].d;
-      if (d < -radius) return GLHCK_FRUSTUM_OUTSIDE;
-      if (d >= radius) ++c;
+   unsigned int c = 0;
+
+   for (unsigned int i = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
+      kmScalar d = object->planes[i].a * point->x +
+                   object->planes[i].b * point->y +
+                   object->planes[i].c * point->z +
+                   object->planes[i].d;
+
+      if (d < -radius)
+         return GLHCK_FRUSTUM_OUTSIDE;
+
+      if (d >= radius)
+         ++c;
    }
+
    return (c == 6 ? GLHCK_FRUSTUM_INSIDE : GLHCK_FRUSTUM_PARTIAL);
 }
 
 /* \brief aabb inside frustum? */
 GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *object, const kmAABB *aabb)
 {
-   unsigned int i;
-
    const kmVec3 bounds[] = {
       { aabb->max.x, aabb->min.y, aabb->min.z },
       { aabb->min.x, aabb->max.y, aabb->min.z },
@@ -151,6 +155,7 @@ GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *object, const kmAABB *
       { aabb->min.x, aabb->max.y, aabb->max.z },
    };
 
+   unsigned int i;
    for (i = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
       if (kmPlaneDotCoord(&object->planes[i], &aabb->min) > 0)
          continue;
@@ -168,6 +173,7 @@ GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *object, const kmAABB *
          continue;
       if (kmPlaneDotCoord(&object->planes[i], &aabb->max) > 0)
          continue;
+
       return 0;
    }
 
@@ -188,8 +194,6 @@ GLHCKAPI int glhckFrustumContainsAABB(const glhckFrustum *object, const kmAABB *
 /* \brief aabb inside frustum? (with extra checks, OUTSIDE, INSIDE, PARTIAL) */
 GLHCKAPI glhckFrustumTestResult glhckFrustumContainsAABBEx(const glhckFrustum *object, const kmAABB *aabb)
 {
-   unsigned int i, c, c2;
-
    const kmVec3 bounds[] = {
       { aabb->max.x, aabb->min.y, aabb->min.z },
       { aabb->min.x, aabb->max.y, aabb->min.z },
@@ -199,7 +203,8 @@ GLHCKAPI glhckFrustumTestResult glhckFrustumContainsAABBEx(const glhckFrustum *o
       { aabb->min.x, aabb->max.y, aabb->max.z },
    };
 
-   for (i = 0, c = 0, c2 = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
+   unsigned int c2 = 0;
+   for (unsigned int i = 0, c = 0; i < GLHCK_FRUSTUM_PLANE_LAST; ++i) {
       if (kmPlaneDotCoord(&object->planes[i], &aabb->min) > 0)
          ++c;
       if (kmPlaneDotCoord(&object->planes[i], &bounds[0]) > 0)
@@ -217,9 +222,13 @@ GLHCKAPI glhckFrustumTestResult glhckFrustumContainsAABBEx(const glhckFrustum *o
       if (kmPlaneDotCoord(&object->planes[i], &aabb->max) > 0)
          ++c;
 
-      if (c == 0) return GLHCK_FRUSTUM_OUTSIDE;
-      if (c == 8) ++c2;
+      if (c == 0)
+         return GLHCK_FRUSTUM_OUTSIDE;
+
+      if (c == 8)
+         ++c2;
    }
+
    return (c2 == 6 ? GLHCK_FRUSTUM_INSIDE : GLHCK_FRUSTUM_PARTIAL);
 }
 

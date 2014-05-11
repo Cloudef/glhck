@@ -53,28 +53,25 @@ static int _glhckTraceIsActive(const char *name)
 /* \brief set channel active or not */
 static void _glhckTraceSet(const char *name, int active)
 {
-   int i;
-   for(i = 0; GLHCKT()->channel[i].name ; ++i)
+   for(int i = 0; GLHCKT()->channel[i].name; ++i) {
       if (!_glhckStrupcmp(name, GLHCKT()->channel[i].name) ||
          (!_glhckStrupcmp(name, GLHCK_CHANNEL_ALL) &&
           _glhckStrupcmp(GLHCKT()->channel[i].name, GLHCK_CHANNEL_TRACE)))
-      GLHCKT()->channel[i].active = active;
+         GLHCKT()->channel[i].active = active;
+   }
 }
 
 #if EMSCRIPTEN
 static const char *EMSCRIPTEN_URL = NULL;
 __attribute__((used, noinline)) extern void _glhckTraceEmscriptenURL(const char *url) {
    if (EMSCRIPTEN_URL) free((char*)EMSCRIPTEN_URL);
-   EMSCRIPTEN_URL = (url?_glhckStrdupNoTrack(url):NULL);
+   EMSCRIPTEN_URL = (url ? _glhckStrdupNoTrack(url) : NULL);
 }
 #endif
 
 /* \brief init debug system */
 void _glhckTraceInit(int argc, const char **argv)
 {
-   int i, count;
-   const char *match;
-   char **split;
    __GLHCKtraceChannel *channels;
 
    /* init */
@@ -85,7 +82,8 @@ void _glhckTraceInit(int argc, const char **argv)
    memcpy(channels, _traceChannels, sizeof(_traceChannels));
    GLHCKT()->channel = channels;
 
-   for(i = 0, match = NULL; i != argc; ++i) {
+   const char *match = NULL;
+   for(int i = 0; i < argc; ++i) {
       if (!_glhckStrnupcmp(argv[i], GLHCK_CHANNEL_SWITCH"=", strlen(GLHCK_CHANNEL_SWITCH"="))) {
          match = argv[i] + strlen(GLHCK_CHANNEL_SWITCH"=");
          break;
@@ -101,11 +99,16 @@ void _glhckTraceInit(int argc, const char **argv)
    }
 #endif
 
-   if (!match) return;
-   count = _glhckStrsplit(&split, match, ",");
-   if (!split) return;
+   if (!match)
+      return;
 
-   for (i = 0; i != count; ++i) {
+   char **split;
+   int count = _glhckStrsplit(&split, match, ",");
+
+   if (!split)
+      return;
+
+   for (int i = 0; i < count; ++i) {
       if (!strncmp(split[i], "-color", 6))
          GLHCKM()->coloredLog = 0;
       else if (!strncmp(split[i], "2", 1))
@@ -130,11 +133,10 @@ void _glhckTraceTerminate(void)
 /* \brief output trace info */
 void _glhckTrace(int level, const char *channel, const char *function, const char *fmt, ...)
 {
-   va_list args;
-   char buffer[2048];
    (void)function;
 
-   if (!GLHCKT()->channel) return;
+   if (!GLHCKT()->channel)
+      return;
 
    if (level > GLHCKT()->level)
       return;
@@ -145,7 +147,10 @@ void _glhckTrace(int level, const char *channel, const char *function, const cha
    if (!_glhckTraceIsActive(channel))
       return;
 
+   char buffer[2048];
    memset(buffer, 0, sizeof(buffer));
+
+   va_list args;
    va_start(args, fmt);
    vsnprintf(buffer, sizeof(buffer)-1, fmt, args);
    va_end(args);
@@ -157,10 +162,10 @@ void _glhckTrace(int level, const char *channel, const char *function, const cha
 void _glhckPassDebug(const char *file, int line, const char *func,
       glhckDebugLevel level, const char *channel, const char *fmt, ...)
 {
-   va_list args;
    char buffer[2048];
-
    memset(buffer, 0, sizeof(buffer));
+
+   va_list args;
    va_start(args, fmt);
    vsnprintf(buffer, sizeof(buffer)-1, fmt, args);
    va_end(args);

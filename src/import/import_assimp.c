@@ -13,17 +13,16 @@
 static const char* getExt(const char *file)
 {
    const char *ext = strrchr(file, '.');
-   if (!ext) return NULL;
-   return ext + 1;
+   return (ext ? ext + 1 : NULL);
 }
 
 const struct aiNode* findNode(const struct aiNode *nd, const char *name)
 {
-   unsigned int i;
-   const struct aiNode *child;
-   for (i = 0; i != nd->mNumChildren; ++i) {
+   for (unsigned int i = 0; i != nd->mNumChildren; ++i) {
       if (!strcmp(nd->mChildren[i]->mName.data, name))
          return nd->mChildren[i];
+
+      const struct aiNode *child;
       if ((child = findNode(nd->mChildren[i], name)))
          return child;
    }
@@ -32,31 +31,34 @@ const struct aiNode* findNode(const struct aiNode *nd, const char *name)
 
 const struct aiBone* findBone(const struct aiMesh *mesh, const char *name)
 {
-   unsigned int i;
-   for (i = 0; i != mesh->mNumBones; ++i)
-      if (!strcmp(mesh->mBones[i]->mName.data, name)) return mesh->mBones[i];
+   for (unsigned int i = 0; i != mesh->mNumBones; ++i) {
+      if (!strcmp(mesh->mBones[i]->mName.data, name))
+         return mesh->mBones[i];
+   }
    return NULL;
 }
 
 glhckObject* findObject(glhckObject *object, const char *name)
 {
-   unsigned int i;
-   glhckObject *result;
-   if (!object || !name) return NULL;
-   if (object->file && !strcmp(object->file, name)) return object;
-   for (i = 0; i != object->numChilds; ++i)
-      if ((result = findObject(object->childs[i], name))) return result;
+   if (!object || !name)
+      return NULL;
+
+   if (object->file && !strcmp(object->file, name))
+      return object;
+
+   glhckObject *child;
+   for (chckArrayIndex iter = 0; (child = chckArrayIter(object->childs, &iter));) {
+      glhckObject *result;
+      if ((result = findObject(child, name)))
+         return result;
+   }
    return NULL;
 }
 
-static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode *nd, const struct aiMesh *mesh,
-      glhckBone **bones, glhckSkinBone **skinBones, unsigned int *numBones)
+static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode *nd, const struct aiMesh *mesh, glhckBone **bones, glhckSkinBone **skinBones, unsigned int *numBones)
 {
-   kmMat4 matrix, transposed;
-   glhckBone *bone = NULL, *child;
+   glhckBone *bone = NULL;
    glhckSkinBone *skinBone = NULL;
-   const struct aiBone *assimpBone;
-   unsigned int i;
    assert(boneNd && nd);
    assert(mesh);
    assert(numBones);
@@ -66,9 +68,10 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
       goto fail;
 
    /* don't allow duplicates */
-   for (i = 0; i != *numBones; ++i)
+   for (unsigned int i = 0; i != *numBones; ++i) {
       if (!strcmp(glhckBoneGetName(bones[i]), boneNd->mName.data))
          goto fail;
+   }
 
    /* create new bone */
    if (!(bone = glhckBoneNew()) || !(skinBone = glhckSkinBoneNew()))
@@ -84,6 +87,8 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
    glhckSkinBoneBone(skinBone, bone);
 
    /* skip this part by creating dummy bone, if this information is not found */
+   kmMat4 matrix, transposed;
+   const struct aiBone *assimpBone;
    if ((assimpBone = findBone(mesh, bone->name))) {
       /* get offset matrix */
       matrix.mat[0]  = assimpBone->mOffsetMatrix.a1;
@@ -109,7 +114,7 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
       /* get weights */
       glhckVertexWeight weights[assimpBone->mNumWeights];
       memset(weights, 0, sizeof(weights));
-      for (i = 0; i != assimpBone->mNumWeights; ++i) {
+      for (unsigned int i = 0; i != assimpBone->mNumWeights; ++i) {
          weights[i].vertexIndex = assimpBone->mWeights[i].mVertexId;
          weights[i].weight = assimpBone->mWeights[i].mWeight;
       }
@@ -146,8 +151,8 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
    glhckBoneTransformationMatrix(bone, &transposed);
 
    /* process children bones */
-   for (i = 0; i != boneNd->mNumChildren; ++i) {
-      child = processBones(findNode(nd, boneNd->mChildren[i]->mName.data), nd, mesh, bones, skinBones, numBones);
+   for (unsigned int i = 0; i != boneNd->mNumChildren; ++i) {
+      glhckBone *child = processBones(findNode(nd, boneNd->mChildren[i]->mName.data), nd, mesh, bones, skinBones, numBones);
       if (child) glhckBoneParentBone(child, bone);
    }
    return bone;
@@ -155,24 +160,18 @@ static glhckBone* processBones(const struct aiNode *boneNd, const struct aiNode 
 fail:
    IFDO(glhckBoneFree, bone);
    IFDO(glhckSkinBoneFree, skinBone);
-   return RETURN_FAIL;
+   return NULL;
 }
 
 static int processAnimations(glhckObject *object, const struct aiScene *sc)
 {
-   glhckAnimationVectorKey *vectorKeys;
-   glhckAnimationQuaternionKey *quaternionKeys;
-   unsigned int i, n, k, numAnimations, numNodes;
-   glhckAnimation *animation;
-   glhckAnimationNode *node;
-   const struct aiNodeAnim *assimpNode;
-   const struct aiAnimation *assimpAnimation;
-
+   unsigned int numAnimations = 0;
    glhckAnimation *animations[sc->mNumAnimations];
-   for (i = 0, numAnimations = 0; i != sc->mNumAnimations; ++i) {
-      assimpAnimation = sc->mAnimations[i];
+   for (unsigned int i = 0; i < sc->mNumAnimations; ++i) {
+      const struct aiAnimation *assimpAnimation = sc->mAnimations[i];
 
       /* allocate new animation */
+      glhckAnimation *animation;
       if (!(animation = glhckAnimationNew()))
          continue;
 
@@ -181,11 +180,13 @@ static int processAnimations(glhckObject *object, const struct aiScene *sc)
       glhckAnimationDuration(animation, assimpAnimation->mDuration);
       glhckAnimationName(animation, assimpAnimation->mName.data);
 
+      unsigned int numNodes = 0;
       glhckAnimationNode *nodes[assimpAnimation->mNumChannels];
-      for (n = 0, numNodes = 0; n != assimpAnimation->mNumChannels; ++n) {
-         assimpNode = assimpAnimation->mChannels[n];
+      for (unsigned int n = 0; n != assimpAnimation->mNumChannels; ++n) {
+         const struct aiNodeAnim *assimpNode = assimpAnimation->mChannels[n];
 
          /* allocate new animation node */
+         glhckAnimationNode *node;
          if (!(node = glhckAnimationNodeNew()))
             continue;
 
@@ -193,10 +194,10 @@ static int processAnimations(glhckObject *object, const struct aiScene *sc)
          glhckAnimationNodeBoneName(node, assimpNode->mNodeName.data);
 
          /* translation keys */
-         vectorKeys = _glhckCalloc(assimpNode->mNumPositionKeys, sizeof(glhckAnimationVectorKey));
+         glhckAnimationVectorKey *vectorKeys = _glhckCalloc(assimpNode->mNumPositionKeys, sizeof(glhckAnimationVectorKey));
          if (!vectorKeys) continue;
 
-         for (k = 0; k != assimpNode->mNumPositionKeys; ++k) {
+         for (unsigned int k = 0; k < assimpNode->mNumPositionKeys; ++k) {
             vectorKeys[k].vector.x = assimpNode->mPositionKeys[k].mValue.x;
             vectorKeys[k].vector.y = assimpNode->mPositionKeys[k].mValue.y;
             vectorKeys[k].vector.z = assimpNode->mPositionKeys[k].mValue.z;
@@ -209,7 +210,7 @@ static int processAnimations(glhckObject *object, const struct aiScene *sc)
          vectorKeys = _glhckCalloc(assimpNode->mNumScalingKeys, sizeof(glhckAnimationVectorKey));
          if (!vectorKeys) continue;
 
-         for (k = 0; k != assimpNode->mNumScalingKeys; ++k) {
+         for (unsigned int k = 0; k < assimpNode->mNumScalingKeys; ++k) {
             vectorKeys[k].vector.x = assimpNode->mScalingKeys[k].mValue.x;
             vectorKeys[k].vector.y = assimpNode->mScalingKeys[k].mValue.y;
             vectorKeys[k].vector.z = assimpNode->mScalingKeys[k].mValue.z;
@@ -219,10 +220,10 @@ static int processAnimations(glhckObject *object, const struct aiScene *sc)
          _glhckFree(vectorKeys);
 
          /* rotation keys */
-         quaternionKeys = _glhckCalloc(assimpNode->mNumRotationKeys, sizeof(glhckAnimationQuaternionKey));
+         glhckAnimationQuaternionKey *quaternionKeys = _glhckCalloc(assimpNode->mNumRotationKeys, sizeof(glhckAnimationQuaternionKey));
          if (!quaternionKeys) continue;
 
-         for (k = 0; k != assimpNode->mNumRotationKeys; ++k) {
+         for (unsigned int k = 0; k < assimpNode->mNumRotationKeys; ++k) {
             quaternionKeys[k].quaternion.x = assimpNode->mRotationKeys[k].mValue.x;
             quaternionKeys[k].quaternion.y = assimpNode->mRotationKeys[k].mValue.y;
             quaternionKeys[k].quaternion.z = assimpNode->mRotationKeys[k].mValue.z;
@@ -239,7 +240,8 @@ static int processAnimations(glhckObject *object, const struct aiScene *sc)
       /* set nodes to animation */
       if (numNodes) {
          glhckAnimationInsertNodes(animation, nodes, numNodes);
-         for (n = 0; n != numNodes; ++n) glhckAnimationNodeFree(nodes[n]);
+         for (unsigned int n = 0; n != numNodes; ++n)
+            glhckAnimationNodeFree(nodes[n]);
       }
 
       /* increase imported animations count */
@@ -249,44 +251,46 @@ static int processAnimations(glhckObject *object, const struct aiScene *sc)
    /* insert animations to object */
    if (numAnimations) {
       glhckObjectInsertAnimations(object, animations, numAnimations);
-#if 0
-      unsigned int numChildren;
-      glhckObject **children;
-      children = glhckObjectChildren(object, &numChildren);
-      for (i = 0; i != numChildren; ++i) glhckObjectInsertAnimations(children[i], animations, numAnimations);
-#endif
-      for (i = 0; i != numAnimations; ++i) glhckAnimationFree(animations[i]);
+      for (unsigned int i = 0; i != numAnimations; ++i)
+         glhckAnimationFree(animations[i]);
    }
    return RETURN_OK;
 }
 
 static int processBonesAndAnimations(glhckObject *object, const struct aiScene *sc)
 {
-   unsigned int i, b,  numBones = 0, oldNumBones;
    const struct aiMesh *mesh;
-   glhckObject *child;
    glhckBone **bones = NULL;
    glhckSkinBone **skinBones = NULL;
 
    /* import bones */
    if (!(bones = _glhckCalloc(ASSIMP_BONES_MAX, sizeof(glhckBone*))))
       goto fail;
+
    if (!(skinBones = _glhckCalloc(ASSIMP_BONES_MAX, sizeof(glhckSkinBone*))))
       goto fail;
 
-   for (i = 0; i != sc->mNumMeshes; ++i) {
+   unsigned int numBones = 0;
+   for (unsigned int i = 0; i != sc->mNumMeshes; ++i) {
       mesh = sc->mMeshes[i];
 
       /* FIXME: UGLY */
       char pointer[16];
       snprintf(pointer, sizeof(pointer), "%p", mesh);
-      if (!(child = findObject(object, pointer))) continue;
+
+      glhckObject *child;
+      if (!(child = findObject(object, pointer)))
+         continue;
 
       if (mesh->mNumBones)  {
-         oldNumBones = numBones;
+         unsigned int oldNumBones = numBones;
          processBones(sc->mRootNode, sc->mRootNode, mesh, bones, skinBones, &numBones);
-         if (numBones) glhckObjectInsertSkinBones(child, skinBones+oldNumBones, numBones-oldNumBones);
-         for (b = oldNumBones; b < numBones; ++b) glhckSkinBoneFree(skinBones[b]);
+
+         if (numBones)
+            glhckObjectInsertSkinBones(child, skinBones + oldNumBones, numBones - oldNumBones);
+
+         for (unsigned int b = oldNumBones; b < numBones; ++b)
+            glhckSkinBoneFree(skinBones[b]);
       }
    }
 
@@ -294,8 +298,12 @@ static int processBonesAndAnimations(glhckObject *object, const struct aiScene *
    NULLDO(_glhckFree, skinBones);
 
    /* store all bones in root object */
-   if (numBones) glhckObjectInsertBones(object, bones, numBones);
-   for (b = 0; b < numBones; ++b) glhckBoneFree(bones[b]);
+   if (numBones)
+      glhckObjectInsertBones(object, bones, numBones);
+
+   for (unsigned int b = 0; b < numBones; ++b)
+      glhckBoneFree(bones[b]);
+
    NULLDO(_glhckFree, bones);
 
    /* import animations */
@@ -306,12 +314,12 @@ static int processBonesAndAnimations(glhckObject *object, const struct aiScene *
 
 fail:
    if (bones) {
-      for (i = 0; i < ASSIMP_BONES_MAX; ++i)
+      for (unsigned int i = 0; i < ASSIMP_BONES_MAX; ++i)
          if (bones[i]) glhckBoneFree(bones[i]);
       _glhckFree(bones);
    }
    if (skinBones) {
-      for (i = 0; i < ASSIMP_BONES_MAX; ++i)
+      for (unsigned int i = 0; i < ASSIMP_BONES_MAX; ++i)
          if (skinBones[i]) glhckSkinBoneFree(skinBones[i]);
       _glhckFree(skinBones);
    }
@@ -320,19 +328,18 @@ fail:
 
 static int buildModel(glhckObject *object, unsigned int numIndices, unsigned int numVertices,
       const glhckImportIndexData *indices, const glhckImportVertexData *vertexData,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+      unsigned char itype, unsigned char vtype)
 {
-   unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
-   unsigned int numStrippedIndices = 0;
-   glhckImportIndexData *stripIndices = NULL;
-
    if (!numVertices)
       return RETURN_OK;
 
    /* triangle strip geometry */
+   unsigned int numStrippedIndices = 0;
+   unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
+   glhckImportIndexData *stripIndices = NULL;
    if (!(stripIndices = _glhckTriStrip(indices, numIndices, &numStrippedIndices))) {
       /* failed, use non stripped geometry */
-      geometryType       = GLHCK_TRIANGLES;
+      geometryType = GLHCK_TRIANGLES;
       numStrippedIndices = numIndices;
    }
 
@@ -348,17 +355,14 @@ static void joinMesh(const struct aiMesh *mesh, unsigned int indexOffset,
       glhckImportIndexData *indices, glhckImportVertexData *vertexData,
       glhckAtlas *atlas, glhckTexture *texture)
 {
-   unsigned int f, i, skip;
-   glhckImportIndexData index;
-   const struct aiFace *face;
    assert(mesh);
 
-   for (f = 0, skip = 0; f != mesh->mNumFaces; ++f) {
-      face = &mesh->mFaces[f];
+   for (unsigned int f = 0, skip = 0; f != mesh->mNumFaces; ++f) {
+      const struct aiFace *face = &mesh->mFaces[f];
       if (!face) continue;
 
-      for (i = 0; i != face->mNumIndices; ++i) {
-         index = face->mIndices[i];
+      for (unsigned int i = 0; i != face->mNumIndices; ++i) {
+         glhckImportIndexData index = face->mIndices[i];
 
          if (mesh->mVertices) {
             vertexData[index].vertex.x = mesh->mVertices[index].x;
@@ -394,70 +398,67 @@ static void joinMesh(const struct aiMesh *mesh, unsigned int indexOffset,
          }
 
          indices[skip+i] = indexOffset + index;
-      } skip += face->mNumIndices;
+      }
+
+      skip += face->mNumIndices;
    }
 }
 
 glhckTexture* textureFromMaterial(const char *file, const struct aiMaterial *mtl)
 {
-   glhckTexture *texture;
-   struct aiString textureName;
-   enum aiTextureMapping textureMapping;
-   enum aiTextureOp op;
-   enum aiTextureMapMode textureMapMode[3] = {0,0,0};
-   unsigned int uvwIndex, flags;
-   float blend;
-   char *texturePath;
-   glhckTextureParameters params;
    assert(file && mtl);
 
    if (!aiGetMaterialTextureCount(mtl, aiTextureType_DIFFUSE))
       return NULL;
 
+   float blend;
+   unsigned int uvwIndex, flags;
+   struct aiString textureName;
+   enum aiTextureOp op;
+   enum aiTextureMapping textureMapping;
+   enum aiTextureMapMode textureMapMode[3] = {0,0,0};
    if (aiGetMaterialTexture(mtl, aiTextureType_DIFFUSE, 0,
             &textureName, &textureMapping, &uvwIndex, &blend, &op,
             textureMapMode, &flags) != AI_SUCCESS)
       return NULL;
 
+   glhckTextureParameters params;
    memcpy(&params, glhckTextureDefaultParameters(), sizeof(glhckTextureParameters));
    switch (textureMapMode[0]) {
       case aiTextureMapMode_Clamp:
       case aiTextureMapMode_Decal:
-         params.wrapR = GLHCK_WRAP_CLAMP_TO_EDGE;
-         params.wrapS = GLHCK_WRAP_CLAMP_TO_EDGE;
-         params.wrapT = GLHCK_WRAP_CLAMP_TO_EDGE;
+         params.wrapR = GLHCK_CLAMP_TO_EDGE;
+         params.wrapS = GLHCK_CLAMP_TO_EDGE;
+         params.wrapT = GLHCK_CLAMP_TO_EDGE;
          break;
       case aiTextureMapMode_Mirror:
-         params.wrapR = GLHCK_WRAP_MIRRORED_REPEAT;
-         params.wrapS = GLHCK_WRAP_MIRRORED_REPEAT;
-         params.wrapT = GLHCK_WRAP_MIRRORED_REPEAT;
+         params.wrapR = GLHCK_MIRRORED_REPEAT;
+         params.wrapS = GLHCK_MIRRORED_REPEAT;
+         params.wrapT = GLHCK_MIRRORED_REPEAT;
       break;
       default:break;
    }
 
+   char *texturePath;
    if (!(texturePath = _glhckImportTexturePath(textureName.data, file)))
       return NULL;
 
    DEBUG(0, "%s", texturePath);
-   texture = glhckTextureNewFromFile(texturePath, NULL, &params);
+   glhckTexture *texture = glhckTextureNewFromFile(texturePath, NULL, &params);
    _glhckFree(texturePath);
    return texture;
 }
 
 static int processModel(const char *file, glhckObject *object,
       glhckObject *current, const struct aiScene *sc, const struct aiNode *nd,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype, const glhckImportModelParameters *params)
+      unsigned char itype, unsigned char vtype, const glhckImportModelParameters *params)
 {
-   unsigned int m, f;
    unsigned int numVertices = 0, numIndices = 0;
-   unsigned int ioffset, voffset;
    glhckImportIndexData *indices = NULL;
    glhckImportVertexData *vertexData = NULL;
    glhckMaterial *material = NULL;
    glhckTexture **textureList = NULL, *texture = NULL;
    glhckAtlas *atlas = NULL;
-   const struct aiMesh *mesh;
-   const struct aiFace *face;
    int canFreeCurrent = 0;
    int hasTexture = 0;
    assert(file);
@@ -475,12 +476,12 @@ static int processModel(const char *file, glhckObject *object,
          goto assimp_no_memory;
 
       /* gather statistics */
-      for (m = 0; m != nd->mNumMeshes; ++m) {
-         mesh = sc->mMeshes[nd->mMeshes[m]];
+      for (unsigned int m = 0; m != nd->mNumMeshes; ++m) {
+         const struct aiMesh *mesh = sc->mMeshes[nd->mMeshes[m]];
          if (!mesh->mVertices) continue;
 
-         for (f = 0; f != mesh->mNumFaces; ++f) {
-            face = &mesh->mFaces[f];
+         for (unsigned int f = 0; f != mesh->mNumFaces; ++f) {
+            const struct aiFace *face = &mesh->mFaces[f];
             if (!face) goto fail;
             numIndices += face->mNumIndices;
          }
@@ -512,19 +513,28 @@ static int processModel(const char *file, glhckObject *object,
       }
 
       /* join vertex data */
-      for (m = 0, ioffset = 0, voffset = 0; m != nd->mNumMeshes; ++m) {
-         mesh = sc->mMeshes[nd->mMeshes[m]];
-         if (!mesh->mVertices) continue;
-         if (textureList) texture = textureList[m];
-         else texture = NULL;
+      for (unsigned int m = 0, ioffset = 0, voffset = 0; m != nd->mNumMeshes; ++m) {
+         const struct aiMesh *mesh = sc->mMeshes[nd->mMeshes[m]];
 
-         joinMesh(mesh, voffset, indices+ioffset, vertexData+voffset, atlas, texture);
+         if (!mesh->mVertices)
+            continue;
 
-         for (f = 0; f != mesh->mNumFaces; ++f) {
-            face = &mesh->mFaces[f];
-            if (!face) goto fail;
+         if (textureList) {
+            texture = textureList[m];
+         } else {
+            texture = NULL;
+         }
+
+         joinMesh(mesh, voffset, indices + ioffset, vertexData + voffset, atlas, texture);
+
+         for (unsigned int f = 0; f != mesh->mNumFaces; ++f) {
+            const struct aiFace *face = &mesh->mFaces[f];
+            if (!face)
+               goto fail;
+
             ioffset += face->mNumIndices;
          }
+
          voffset += mesh->mNumVertices;
       }
 
@@ -536,8 +546,13 @@ static int processModel(const char *file, glhckObject *object,
       if (buildModel(current, numIndices,  numVertices,
                indices, vertexData, itype, vtype)  == RETURN_OK) {
          _glhckObjectFile(current, nd->mName.data);
-         if (material) glhckObjectMaterial(current, material);
-         if (!(current = glhckObjectNew())) goto fail;
+
+         if (material)
+            glhckObjectMaterial(current, material);
+
+         if (!(current = glhckObjectNew()))
+            goto fail;
+
          glhckObjectAddChild(object, current);
          glhckObjectFree(current);
          canFreeCurrent = 1;
@@ -551,15 +566,18 @@ static int processModel(const char *file, glhckObject *object,
       NULLDO(_glhckFree, indices);
    } else {
       /* default loading path */
-      for (m = 0, ioffset = 0, voffset = 0; m != nd->mNumMeshes; ++m) {
-         mesh = sc->mMeshes[nd->mMeshes[m]];
-         if (!mesh->mVertices) continue;
+      for (unsigned int m = 0; m != nd->mNumMeshes; ++m) {
+         const struct aiMesh *mesh = sc->mMeshes[nd->mMeshes[m]];
+         if (!mesh->mVertices)
+            continue;
 
          /* gather statistics */
          numIndices = 0;
-         for (f = 0; f != mesh->mNumFaces; ++f) {
-            face = &mesh->mFaces[f];
-            if (!face) goto fail;
+         for (unsigned int f = 0; f != mesh->mNumFaces; ++f) {
+            const struct aiFace *face = &mesh->mFaces[f];
+            if (!face)
+               goto fail;
+
             numIndices += face->mNumIndices;
          }
          numVertices = mesh->mNumVertices;
@@ -596,8 +614,12 @@ static int processModel(const char *file, glhckObject *object,
             snprintf(pointer, sizeof(pointer), "%p", mesh);
             _glhckObjectFile(current, pointer);
 
-            if (material) glhckObjectMaterial(current, material);
-            if (!(current = glhckObjectNew())) goto fail;
+            if (material)
+               glhckObjectMaterial(current, material);
+
+            if (!(current = glhckObjectNew()))
+               goto fail;
+
             glhckObjectAddChild(object, current);
             glhckObjectFree(current);
             canFreeCurrent = 1;
@@ -612,10 +634,11 @@ static int processModel(const char *file, glhckObject *object,
    }
 
    /* process childrens */
-   for (m = 0; m != nd->mNumChildren; ++m) {
-      if (processModel(file, object, current, sc, nd->mChildren[m],
-               itype, vtype, params) == RETURN_OK) {
-         if (!(current = glhckObjectNew())) goto fail;
+   for (unsigned int m = 0; m != nd->mNumChildren; ++m) {
+      if (processModel(file, object, current, sc, nd->mChildren[m], itype, vtype, params) == RETURN_OK) {
+         if (!(current = glhckObjectNew()))
+            goto fail;
+
          glhckObjectAddChild(object, current);
          glhckObjectFree(current);
          canFreeCurrent = 1;
@@ -624,7 +647,9 @@ static int processModel(const char *file, glhckObject *object,
 
    /* we din't do anything to the next
     * allocated object, so free it */
-   if (canFreeCurrent) glhckObjectRemoveFromParent(current);
+   if (canFreeCurrent)
+      glhckObjectRemoveFromParent(current);
+
    return RETURN_OK;
 
 assimp_no_memory:
@@ -636,36 +661,38 @@ fail:
    IFDO(glhckTextureFree, texture);
    IFDO(glhckMaterialFree, material);
    IFDO(glhckAtlasFree, atlas);
-   if (canFreeCurrent) glhckObjectRemoveFromParent(current);
+
+   if (canFreeCurrent)
+      glhckObjectRemoveFromParent(current);
+
    return RETURN_FAIL;
 }
 
 /* \brief check if file is a Assimp supported file */
 int _glhckFormatAssimp(const char *file)
 {
-   int ret;
    CALL(0, "%s", file);
-   ret = (aiIsExtensionSupported(getExt(file))?RETURN_OK:RETURN_FAIL);
+   int ret = (aiIsExtensionSupported(getExt(file))?RETURN_OK:RETURN_FAIL);
    RET(0, "%d", ret);
    return ret;
 }
 
 /* \brief import Assimp file */
-int _glhckImportAssimp(glhckObject *object, const char *file, const glhckImportModelParameters *params,
-      glhckGeometryIndexType itype, glhckGeometryVertexType vtype)
+int _glhckImportAssimp(glhckObject *object, const char *file, const glhckImportModelParameters *params, unsigned char itype, unsigned char vtype)
 {
-   const struct aiScene *scene;
+   const struct aiScene *scene = NULL;
    glhckObject *first = NULL;
-   unsigned int aflags;
    CALL(0, "%p, %s, %p", object, file, params);
 
    /* import the model using assimp
     * TODO: make import hints tunable?
     * Needs changes to import protocol! */
-   aflags = aiProcessPreset_TargetRealtime_Fast | aiProcess_OptimizeGraph;
-   if (!params->animated && params->flatten) aflags |= aiProcess_PreTransformVertices;
-   scene = aiImportFile(file, aflags);
-   if (!scene) goto assimp_fail;
+   unsigned int aflags = aiProcessPreset_TargetRealtime_Fast | aiProcess_OptimizeGraph;
+   if (!params->animated && params->flatten)
+      aflags |= aiProcess_PreTransformVertices;
+
+   if (!(scene = aiImportFile(file, aflags)))
+      goto assimp_fail;
 
    /* mark ourself as special root object.
     * this makes most functions called on root object echo to children */
@@ -673,7 +700,9 @@ int _glhckImportAssimp(glhckObject *object, const char *file, const glhckImportM
 
    /* this is going to be the first object in mesh,
     * the object returned by this importer is just invisible root object. */
-   if (!(first = glhckObjectNew())) goto fail;
+   if (!(first = glhckObjectNew()))
+      goto fail;
+
    glhckObjectAddChild(object, first);
    glhckObjectFree(first);
 
@@ -692,7 +721,7 @@ int _glhckImportAssimp(glhckObject *object, const char *file, const glhckImportM
    return RETURN_OK;
 
 assimp_fail:
-   DEBUG(GLHCK_DBG_ERROR, aiGetErrorString());
+   DEBUG(GLHCK_DBG_ERROR, "%s", aiGetErrorString());
 fail:
    IFDO(aiReleaseImport, scene);
    IFDO(glhckObjectFree, first);

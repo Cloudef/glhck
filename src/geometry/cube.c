@@ -11,14 +11,17 @@ GLHCKAPI glhckObject* glhckCubeNew(kmScalar size)
 {
    unsigned char vtype;
    glhckGetGlobalPrecision(NULL, &vtype);
-   if (vtype == GLHCK_VTX_AUTO) vtype = GLHCK_VTX_V3B;
+
+   if (vtype == GLHCK_VTX_AUTO)
+      vtype = GLHCK_VTX_V3B;
+
    return glhckCubeNewEx(size, GLHCK_IDX_AUTO, vtype);
 }
 
 /* \brief create new cube object (specify precision) */
 GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, unsigned char itype, unsigned char vtype)
 {
-   glhckObject *object;
+   glhckObject *object = NULL;
    CALL(0, "%f, %u, %u", size, itype, vtype);
 
    const glhckImportVertexData vertices[] = {

@@ -74,8 +74,8 @@ GLHCKAPI unsigned int glhckMaterialFree(glhckMaterial *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief set options assigned to material */
@@ -101,7 +101,7 @@ GLHCKAPI void glhckMaterialShader(glhckMaterial *object, glhckShader *shader)
    CALL(1, "%p, %p", object, shader);
    assert(object);
    IFDO(glhckShaderFree, object->shader);
-   object->shader = (shader?glhckShaderRef(shader):NULL);
+   object->shader = (shader ? glhckShaderRef(shader) : NULL);
 }
 
 /* \brief get assigned shader from material */
@@ -159,7 +159,7 @@ GLHCKAPI void glhckMaterialTextureScale(glhckMaterial *object, const kmVec2 *sca
 /* \brief set texture scale to material (with kmScalar) */
 GLHCKAPI void glhckMaterialTextureScalef(glhckMaterial *object, kmScalar x, kmScalar y)
 {
-   const kmVec2 scale = {x, y};
+   const kmVec2 scale = { x, y };
    glhckMaterialTextureScale(object, &scale);
 }
 
@@ -183,7 +183,7 @@ GLHCKAPI void glhckMaterialTextureOffset(glhckMaterial *object, const kmVec2 *of
 /* \brief set texture offset to material (with kmScalar) */
 GLHCKAPI void glhckMaterialTextureOffsetf(glhckMaterial *object, kmScalar x, kmScalar y)
 {
-   const kmVec2 offset = {x, y};
+   const kmVec2 offset = { x, y };
    glhckMaterialTextureOffset(object, &offset);
 }
 
@@ -270,7 +270,7 @@ GLHCKAPI void glhckMaterialAmbient(glhckMaterial *object, const glhckColorb *amb
 /* \brief set material's ambient color (with chars) */
 GLHCKAPI void glhckMaterialAmibentb(glhckMaterial *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-   const glhckColorb ambient = {r, g, b, a};
+   const glhckColorb ambient = { r, g, b, a };
    glhckMaterialAmbient(object, &ambient);
 }
 
@@ -292,7 +292,7 @@ GLHCKAPI void glhckMaterialDiffuse(glhckMaterial *object, const glhckColorb *dif
 
 GLHCKAPI void glhckMaterialDiffuseb(glhckMaterial *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-   const glhckColorb diffuse = {r, g, b, a};
+   const glhckColorb diffuse = { r, g, b, a };
    glhckMaterialDiffuse(object, &diffuse);
 }
 
@@ -313,7 +313,7 @@ GLHCKAPI void glhckMaterialEmissive(glhckMaterial *object, const glhckColorb *em
 
 GLHCKAPI void glhckMaterialEmissiveb(glhckMaterial *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-   const glhckColorb emissive = {r, g, b, a};
+   const glhckColorb emissive = { r, g, b, a };
    glhckMaterialEmissive(object, &emissive);
 }
 
@@ -334,7 +334,7 @@ GLHCKAPI void glhckMaterialSpecular(glhckMaterial *object, const glhckColorb *sp
 
 GLHCKAPI void glhckMaterialSpecularb(glhckMaterial *object, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
-   const glhckColorb specular = {r, g, b, a};
+   const glhckColorb specular = { r, g, b, a };
    glhckMaterialSpecular(object, &specular);
 }
 

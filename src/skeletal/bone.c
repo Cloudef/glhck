@@ -76,16 +76,16 @@ GLHCKAPI unsigned int glhckBoneFree(glhckBone *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief set bone name */
 GLHCKAPI void glhckBoneName(glhckBone *object, const char *name)
 {
-   char *nameCopy = NULL;
    CALL(2, "%p, %s", object, name);
 
+   char *nameCopy = NULL;
    if (name && !(nameCopy = _glhckStrdup(name)))
       return;
 
@@ -155,9 +155,10 @@ GLHCKAPI void glhckBoneGetPositionRelativeOnObject(glhckBone *object, glhckObjec
 /* \brief get absolute position of transformed bone in object */
 GLHCKAPI void glhckBoneGetPositionAbsoluteOnObject(glhckBone *object, glhckObject *gobject, kmVec3 *outPosition)
 {
-   kmMat4 matrix;
    CALL(2, "%p, %p, %p", object, gobject, outPosition);
    assert(object && gobject && outPosition);
+
+   kmMat4 matrix;
    kmMat4Multiply(&matrix, &gobject->view.matrix, &object->transformedMatrix);
    outPosition->x = matrix.mat[12];
    outPosition->y = matrix.mat[13];

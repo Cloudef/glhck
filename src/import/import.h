@@ -106,7 +106,7 @@ int _glhckFormatBMP(const char *file);
  *
  * free the returned string
  */
-char* _glhckImportTexturePath(const char *texture_path, const char *asset_path);
+char* _glhckImportTexturePath(const char *texturePath, const char *assetPath);
 
 /* \brief invert pixel data */
 void _glhckInvertPixels(unsigned char *pixels, unsigned int w, unsigned int h, unsigned int components);

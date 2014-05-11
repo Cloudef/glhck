@@ -23,9 +23,8 @@ typedef struct jpegErrorStruct {
 /* fatal failure handler */
 static void _JPEGFatalErrorHandler(j_common_ptr cinfo)
 {
-   jpegErrorStruct *errmgr;
    (void)cinfo;
-   errmgr = (jpegErrorStruct*)cinfo->err;
+   jpegErrorStruct *errmgr = (jpegErrorStruct*)cinfo->err;
    cinfo->err->output_message(cinfo);
    siglongjmp(errmgr->setjmp_buffer, 1);
 }
@@ -39,18 +38,18 @@ static void _JPEGErrorHandler(j_common_ptr cinfo)
 /* failure handler */
 static void _JPEGErrorHandler2(j_common_ptr cinfo, int msg_level)
 {
-   (void)cinfo; (void)msg_level;
+   (void)cinfo, (void)msg_level;
 }
 
 /* \brief check if file is JPEG */
 int _glhckFormatJPEG(const char *file)
 {
    FILE *f = NULL;
-   jpegErrorStruct jerr;
-   struct jpeg_decompress_struct cinfo;
    CALL(0, "%s", file);
 
    /* JPEG error handlers, uh... */
+   jpegErrorStruct jerr;
+   struct jpeg_decompress_struct cinfo;
    cinfo.err = jpeg_std_error(&(jerr.pub));
    jerr.pub.error_exit     = _JPEGFatalErrorHandler;
    jerr.pub.emit_message   = _JPEGErrorHandler2;
@@ -101,15 +100,13 @@ fail:
 int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
 {
    FILE *f = NULL;
-   char decompress = 0;
-   unsigned int w = 0, h = 0, loc = 0, i;
    unsigned char *importData = NULL;
    JSAMPROW row_pointer = NULL;
-   jpegErrorStruct jerr;
-   struct jpeg_decompress_struct cinfo;
    CALL(0, "%s, %p", file, import);
 
    /* JPEG error handlers, uh... */
+   jpegErrorStruct jerr;
+   struct jpeg_decompress_struct cinfo;
    cinfo.err = jpeg_std_error(&(jerr.pub));
    jerr.pub.error_exit     = _JPEGFatalErrorHandler;
    jerr.pub.emit_message   = _JPEGErrorHandler2;
@@ -131,14 +128,14 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
    jpeg_read_header(&cinfo, TRUE);
 
    /* start decompression */
-   decompress = 1;
+   char decompress = 1;
    cinfo.do_fancy_upsampling = FALSE;
    cinfo.do_block_smoothing  = FALSE;
    jpeg_start_decompress(&cinfo);
 
    /* check dimensions */
-   w = cinfo.output_width;
-   h = cinfo.output_height;
+   unsigned int w = cinfo.output_width;
+   unsigned int h = cinfo.output_height;
    if (!IMAGE_DIMENSIONS_OK(w, h))
       goto bad_dimensions;
 
@@ -155,9 +152,10 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
       goto out_of_memory;
 
    /* read scanlines */
+   unsigned int loc = 0;
    while (cinfo.output_scanline < cinfo.output_height)  {
       jpeg_read_scanlines(&cinfo, &row_pointer, 1);
-      for (i = 0; i < (w * cinfo.output_components); ++i) {
+      for (unsigned int i = 0; i < (w * cinfo.output_components); ++i) {
          importData[loc++] = row_pointer[i];
       }
    }
@@ -176,11 +174,11 @@ int _glhckImportJPEG(const char *file, _glhckImportImageStruct *import)
    NULLDO(_glhckFree, row_pointer);
 
    /* fill import struct */
-   import->width  = w;
+   import->width = w;
    import->height = h;
-   import->data   = importData;
+   import->data = importData;
    import->format = GLHCK_RGB;
-   import->type   = GLHCK_UNSIGNED_BYTE;
+   import->type = GLHCK_UNSIGNED_BYTE;
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 
@@ -196,7 +194,8 @@ bad_jpeg:
    DEBUG(GLHCK_DBG_ERROR, "Bad JPEG file, won't handle it: %s", file);
 fail:
    if (f) {
-      if (decompress) jpeg_finish_decompress(&cinfo);
+      if (decompress)
+         jpeg_finish_decompress(&cinfo);
       jpeg_destroy_decompress(&cinfo);
    }
    IFDO(_glhckFree, row_pointer);

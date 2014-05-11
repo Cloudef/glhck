@@ -64,8 +64,8 @@ GLHCKAPI unsigned int glhckAnimationNodeFree(glhckAnimationNode *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief set bone index to animation node */
@@ -255,17 +255,17 @@ GLHCKAPI unsigned int glhckAnimationFree(glhckAnimation *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief set name to key animation */
 GLHCKAPI void glhckAnimationName(glhckAnimation *object, const char *name)
 {
-   char *nameCopy = NULL;
    CALL(0, "%p, %s", object, name);
    assert(object);
 
+   char *nameCopy = NULL;
    if (name && !(nameCopy = _glhckStrdup(name)))
       return;
 

@@ -9,11 +9,12 @@
 GLHCKAPI glhckFramebuffer* glhckFramebufferNew(glhckFramebufferTarget target)
 {
    glhckFramebuffer *object = NULL;
-   unsigned int obj;
    TRACE(0);
 
    /* generate framebuffer */
+   unsigned int obj;
    GLHCKRA()->framebufferGenerate(1, &obj);
+
    if (!obj)
       goto fail;
 
@@ -81,8 +82,8 @@ GLHCKAPI unsigned int glhckFramebufferFree(glhckFramebuffer *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief get current bound framebuffer for target */
@@ -98,7 +99,10 @@ GLHCKAPI void glhckFramebufferBind(glhckFramebuffer *object)
 {
    CALL(2, "%p", object);
    assert(object);
-   if (GLHCKRD()->framebuffer[object->target] == object) return;
+
+   if (GLHCKRD()->framebuffer[object->target] == object)
+      return;
+
    GLHCKRA()->framebufferBind(object->target, object->object);
    GLHCKRD()->framebuffer[object->target] = object;
 }
@@ -107,7 +111,10 @@ GLHCKAPI void glhckFramebufferBind(glhckFramebuffer *object)
 GLHCKAPI void glhckFramebufferUnbind(glhckFramebufferTarget target)
 {
    CALL(2, "%d", target);
-   if (!GLHCKRD()->framebuffer[target]) return;
+
+   if (!GLHCKRD()->framebuffer[target])
+      return;
+
    GLHCKRA()->framebufferBind(target, 0);
    GLHCKRD()->framebuffer[target] = NULL;
 }
@@ -133,7 +140,7 @@ GLHCKAPI void glhckFramebufferEnd(glhckFramebuffer *object)
 }
 
 /* \brief set framebuffer's visible area */
-GLHCKAPI void glhckFramebufferRect(glhckFramebuffer *object, glhckRect *rect)
+GLHCKAPI void glhckFramebufferRect(glhckFramebuffer *object, const glhckRect *rect)
 {
    CALL(1, "%p, %p", object, rect);
    assert(object && rect);
@@ -143,23 +150,25 @@ GLHCKAPI void glhckFramebufferRect(glhckFramebuffer *object, glhckRect *rect)
 /* \brief set framebuffer's visible area (int) */
 GLHCKAPI void glhckFramebufferRecti(glhckFramebuffer *object, int x, int y, int w, int h)
 {
-   glhckRect rect = {x,y,w,h};
+   const glhckRect rect = { x, y, w, h};
    glhckFramebufferRect(object, &rect);
 }
 
 /* \brief attach texture to framebuffer */
 GLHCKAPI int glhckFramebufferAttachTexture(glhckFramebuffer *object, glhckTexture *texture, glhckFramebufferAttachmentType attachment)
 {
-   int ret;
-   glhckFramebuffer *old;
    CALL(1, "%p", object);
    assert(object);
 
-   old = glhckFramebufferCurrentForTarget(object->target);
+   glhckFramebuffer *old = glhckFramebufferCurrentForTarget(object->target);
    glhckFramebufferBind(object);
-   ret = GLHCKRA()->framebufferTexture(object->target, texture->target, texture->object, attachment);
-   if (old) glhckFramebufferBind(old);
-   else glhckFramebufferUnbind(object->target);
+   int ret = GLHCKRA()->framebufferTexture(object->target, texture->target, texture->object, attachment);
+
+   if (old) {
+      glhckFramebufferBind(old);
+   } else {
+      glhckFramebufferUnbind(object->target);
+   }
 
    RET(1, "%d", ret);
    return ret;
@@ -169,18 +178,20 @@ GLHCKAPI int glhckFramebufferAttachTexture(glhckFramebuffer *object, glhckTextur
 GLHCKAPI int glhckFramebufferAttachRenderbuffer(glhckFramebuffer *object, glhckRenderbuffer *buffer,
       glhckFramebufferAttachmentType attachment)
 {
-   int ret;
-   glhckFramebuffer *old;
    CALL(1, "%p, %p", object, buffer);
    assert(object);
 
-   old = glhckFramebufferCurrentForTarget(object->target);
+   glhckFramebuffer *old = glhckFramebufferCurrentForTarget(object->target);
    glhckFramebufferBind(object);
    glhckRenderbufferBind(buffer);
-   ret = GLHCKRA()->framebufferRenderbuffer(object->target, attachment,  buffer->object);
+   int ret = GLHCKRA()->framebufferRenderbuffer(object->target, attachment,  buffer->object);
    glhckRenderbufferBind(NULL);
-   if (old) glhckFramebufferBind(old);
-   else glhckFramebufferUnbind(object->target);
+
+   if (old) {
+      glhckFramebufferBind(old);
+   } else {
+      glhckFramebufferUnbind(object->target);
+   }
 
    RET(1, "%d", ret);
    return ret;

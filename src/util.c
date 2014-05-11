@@ -19,8 +19,7 @@ inline void _glhckRed(void)
 
 #ifdef _WIN32
    HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_RED
-   |FOREGROUND_INTENSITY);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_RED|FOREGROUND_INTENSITY);
 #endif
 }
 
@@ -35,8 +34,7 @@ inline void _glhckGreen(void)
 
 #ifdef _WIN32
    HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN
-   |FOREGROUND_INTENSITY);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN|FOREGROUND_INTENSITY);
 #endif
 }
 
@@ -51,8 +49,7 @@ inline void _glhckBlue(void)
 
 #ifdef _WIN32
    HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_BLUE
-   |FOREGROUND_GREEN|FOREGROUND_INTENSITY);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_BLUE|FOREGROUND_GREEN|FOREGROUND_INTENSITY);
 #endif
 }
 
@@ -67,8 +64,7 @@ inline void _glhckYellow(void)
 
 #ifdef _WIN32
    HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN
-   |FOREGROUND_RED|FOREGROUND_INTENSITY);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_GREEN|FOREGROUND_RED|FOREGROUND_INTENSITY);
 #endif
 }
 
@@ -83,8 +79,7 @@ inline void _glhckWhite(void)
 
 #ifdef _WIN32
    HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_RED
-   |FOREGROUND_GREEN|FOREGROUND_BLUE);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE);
 #endif
 }
 
@@ -99,18 +94,15 @@ inline void _glhckNormal(void)
 
 #ifdef _WIN32
    HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
-   SetConsoleTextAttribute(hStdout, FOREGROUND_RED
-   |FOREGROUND_GREEN|FOREGROUND_BLUE);
+   SetConsoleTextAttribute(hStdout, FOREGROUND_RED|FOREGROUND_GREEN|FOREGROUND_BLUE);
 #endif
 }
 
 /* \brief colored puts */
 void _glhckPuts(const char *buffer)
 {
-   int i, len;
-
-   len = strlen(buffer);
-   for (i = 0; i != len; ++i) {
+   size_t len = strlen(buffer);
+   for (size_t i = 0; i != len; ++i) {
            if (buffer[i] == '\1') _glhckRed();
       else if (buffer[i] == '\2') _glhckGreen();
       else if (buffer[i] == '\3') _glhckBlue();
@@ -118,6 +110,7 @@ void _glhckPuts(const char *buffer)
       else if (buffer[i] == '\5') _glhckWhite();
       else printf("%c", buffer[i]);
    }
+
    _glhckNormal();
    printf("\n");
    fflush(stdout);
@@ -126,10 +119,10 @@ void _glhckPuts(const char *buffer)
 /* \brief colored printf */
 void _glhckPrintf(const char *fmt, ...)
 {
-   va_list args;
    char buffer[2048];
-
    memset(buffer, 0, sizeof(buffer));
+
+   va_list args;
    va_start(args, fmt);
    vsnprintf(buffer, sizeof(buffer)-1, fmt, args);
    va_end(args);
@@ -140,12 +133,11 @@ void _glhckPrintf(const char *fmt, ...)
 /* \brief strdup without the tracking */
 char* _glhckStrdupNoTrack(const char *s)
 {
-   char *s2;
    size_t size;
-
    if (!s || !(size = strlen(s) + 1))
       return NULL;
 
+   char *s2;
    if (!(s2 = calloc(1, size)))
       return NULL;
 
@@ -156,14 +148,13 @@ char* _glhckStrdupNoTrack(const char *s)
 /* \brief split string */
 size_t _glhckStrsplit(char ***dst, const char *str, const char *token)
 {
-   char *saveptr, *ptr, *start;
-   size_t t_len, i;
-
+   char *saveptr;
    if (!(saveptr = _glhckStrdupNoTrack(str)))
       return 0;
 
-   t_len = strlen(token);
-   for (i = 0, *dst = NULL, start = saveptr, ptr = saveptr ;; ++ptr) {
+   size_t i, t_len = strlen(token);
+   char *start = saveptr, *ptr = saveptr;
+   for (i = 0, *dst = NULL ;; ++ptr) {
       if (*ptr && strncmp(ptr, token, t_len)) continue;
 
       while (!strncmp(ptr, token, t_len)) {
@@ -177,7 +168,7 @@ size_t _glhckStrsplit(char ***dst, const char *str, const char *token)
       }
 
       (*dst)[i++] = start;
-      (*dst)[i]   = NULL;
+      (*dst)[i] = NULL;
       if (!*ptr) break;
       start = ptr;
    }
@@ -191,40 +182,55 @@ void _glhckStrsplitClear(char ***dst) {
    free((*dst));
 }
 
-/* \brief strcmp strings in uppercase, NOTE: returns 0 on found else 1 (so you don't mess up with strcmp) */
 int _glhckStrupcmp(const char *hay, const char *needle)
 {
-   size_t i, len;
-   if ((len = strlen(hay)) != strlen(needle)) return 1;
-   for (i = 0; i != len; ++i)
-      if (toupper(hay[i]) != toupper(needle[i])) return 1;
-   return 0;
+   size_t len, len2;
+   if ((len = strlen(hay)) != (len2 = strlen(needle)))
+      return hay[len] - needle[len2];
+
+   return _glhckStrnupcmp(hay, needle, len);
 }
 
-/* \brief strncmp strings in uppercase, NOTE: returns 0 on found else 1 (so you don't mess up with strcmp) */
 int _glhckStrnupcmp(const char *hay, const char *needle, size_t len)
 {
-   size_t i;
-   for (i = 0; i != len; ++i)
-      if (toupper(hay[i]) != toupper(needle[i])) return 1;
-   return 0;
+   const unsigned char *p1 = (const unsigned char*)hay;
+   const unsigned char *p2 = (const unsigned char*)needle;
+
+   unsigned char a = 0, b = 0;
+   for (size_t i = 0; len > 0; --len, ++i) {
+      if ((a = toupper(*p1++)) != (b = toupper(*p2++)))
+         return a - b;
+   }
+
+   return a - b;
 }
 
-/* \brief strstr strings in uppercase */
 char* _glhckStrupstr(const char *hay, const char *needle)
 {
-   size_t i, r, p, len, len2;
-   p = 0; r = 0;
-   if (!_glhckStrupcmp(hay, needle)) return (char*)hay;
-   if ((len = strlen(hay)) < (len2 = strlen(needle))) return NULL;
-   for (i = 0; i != len; ++i) {
-      if (p == len2) return (char*)hay+r; /* THIS IS IT! */
+
+   size_t len, len2;
+   if ((len = strlen(hay)) < (len2 = strlen(needle)))
+      return NULL;
+
+   if (!_glhckStrnupcmp(hay, needle, len2))
+      return (char*)hay;
+
+   size_t r = 0, p = 0;
+   for (size_t i = 0; i < len; ++i) {
+      if (p == len2)
+         return (char*)hay + r;
+
       if (toupper(hay[i]) == toupper(needle[p++])) {
-         if (!r) r = i; /* could this be.. */
-      } else { if (r) i = r; r = 0; p = 0; } /* ..nope, damn it! */
+         if (!r)
+            r = i;
+      } else {
+         if (r)
+            i = r;
+         r = p = 0;
+      }
    }
-   if (p == len2) return (char*)hay+r; /* THIS IS IT! */
-   return NULL;
+
+   return (p == len2 ? (char*)hay + r : NULL);
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

@@ -212,17 +212,17 @@ static void gameActorUpdateAABB(GameActor *actor)
    actor->aabb.max.z = actor->position.z + 3;
 }
 
-static int gameActorTest(const glhckCollisionInData *data, const glhckCollisionPrimitive *collider)
+static int gameActorTest(const glhckCollisionInData *data, const glhckCollisionHandle *collider)
 {
    GameActor *actor = data->userData;
-   return (actor != glhckCollisionPrimitiveGetUserData(collider));
+   return (actor != glhckCollisionHandleGetUserData(collider));
 }
 
 static void gameActorCollide(GameActor *actor, glhckCollisionWorld *world, const kmVec3 *velocity);
 static void gameActorResponse(const glhckCollisionOutData *collision)
 {
    GameActor *actor = collision->userData;
-   GameActor *other = glhckCollisionPrimitiveGetUserData(collision->collider);
+   GameActor *other = glhckCollisionHandleGetUserData(collision->collider);
    kmVec3Add(&actor->position, &actor->position, collision->pushVector);
    gameActorUpdateAABB(actor);
    if (other) {

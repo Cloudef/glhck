@@ -10,9 +10,8 @@
  */
 
 void stubGenerate(int n, unsigned int *names) {
-   int i;
    if (!names) return;
-   for (i = 0; i != n; ++i) names[i] = 1;
+   for (int i = 0; i != n; ++i) names[i] = 1;
 }
 void stubDelete(int n, const unsigned int *names) {
    (void)n; (void)names;

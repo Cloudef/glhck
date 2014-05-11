@@ -22,43 +22,41 @@
 #define TGA_DESC_VERTICAL   0x20
 
 typedef struct {
-   unsigned char       idLength;
-   unsigned char       colorMapType;
-   unsigned char       imageType;
-   unsigned char       colorMapIndexLo, colorMapIndexHi;
-   unsigned char       colorMapLengthLo, colorMapLengthHi;
-   unsigned char       colorMapSize;
-   unsigned char       xOriginLo, xOriginHi;
-   unsigned char       yOriginLo, yOriginHi;
-   unsigned char       widthLo, widthHi;
-   unsigned char       heightLo, heightHi;
-   unsigned char       bpp;
-   unsigned char       descriptor;
+   unsigned char idLength;
+   unsigned char colorMapType;
+   unsigned char imageType;
+   unsigned char colorMapIndexLo, colorMapIndexHi;
+   unsigned char colorMapLengthLo, colorMapLengthHi;
+   unsigned char colorMapSize;
+   unsigned char xOriginLo, xOriginHi;
+   unsigned char yOriginLo, yOriginHi;
+   unsigned char widthLo, widthHi;
+   unsigned char heightLo, heightHi;
+   unsigned char bpp;
+   unsigned char descriptor;
 } tga_header;
 
 typedef struct {
-   unsigned int        extensionAreaOffset;
-   unsigned int        developerDirectoryOffset;
-   char                signature[16];
-   char                dot;
-   char                null;
+   unsigned int extensionAreaOffset;
+   unsigned int developerDirectoryOffset;
+   char signature[16];
+   char dot;
+   char null;
 } tga_footer;
 
 /* \brief check if file is TGA */
 int _glhckFormatTGA(const char *file)
 {
-   FILE *f;
+   FILE *f = NULL;
    void *data = NULL;
-   char isTga = 0;
-   size_t size;
-   tga_header *header;
-   tga_footer *footer;
    CALL(0, "%s", file);
 
    if (!(f = fopen(file, "rb")))
       goto read_fail;
 
    fseek(f, 0L, SEEK_END);
+
+   size_t size;
    if ((size = ftell(f)) < sizeof(tga_header) + sizeof(tga_footer))
       goto fail;
 
@@ -71,19 +69,20 @@ int _glhckFormatTGA(const char *file)
 
    /* we don't need the file anymore */
    NULLDO(fclose, f);
-   header = (tga_header*)data;
-   footer = (tga_footer*)((char*)data+size-sizeof(tga_footer));
+   tga_header *header = (tga_header*)data;
+   tga_footer *footer = (tga_footer*)((char*)data+size-sizeof(tga_footer));
 
    /* is TGA v2.0? (stop storing the headers at EOF please) */
-   if (!memcmp(footer->signature, TGA_SIGNATURE, sizeof(footer->signature)))
+   int isTga = 0;
+   if (memcmp(footer->signature, TGA_SIGNATURE, sizeof(footer->signature)))
       isTga = 1;
    else if ((header->bpp == 32) || (header->bpp == 24) || (header->bpp == 8))
       isTga = 1;
 
    NULLDO(_glhckFree, data);
 
-   RET(0, "%d", isTga?RETURN_OK:RETURN_FAIL);
-   return isTga?RETURN_OK:RETURN_FAIL;
+   RET(0, "%d", (isTga ? RETURN_OK : RETURN_FAIL));
+   return (isTga ? RETURN_OK : RETURN_FAIL);
 
 read_fail:
    DEBUG(GLHCK_DBG_ERROR, "Failed to open: %s", file);
@@ -99,21 +98,17 @@ fail:
 /* \brief import TGA images */
 int _glhckImportTGA(const char *file, _glhckImportImageStruct *import)
 {
-   FILE *f;
-   void *seg = NULL, *data;
-   int bpp, vinverted = 0;
-   int rle = 0, footer_present = 0;
-   size_t datasize, size;
-   unsigned short i, w, h;
-   tga_header *header;
-   tga_footer *footer;
-   unsigned char *bufptr, *bufend, *importData = NULL;
+   FILE *f = NULL;
+   void *seg = NULL;
+   unsigned char *importData = NULL;
    CALL(0, "%s, %p", file, import);
 
    if (!(f = fopen(file, "rb")))
       goto read_fail;
 
    fseek(f, 0L, SEEK_END);
+
+   size_t size;
    if ((size = ftell(f)) < sizeof(tga_header) + sizeof(tga_footer))
       goto not_possible;
 
@@ -127,24 +122,26 @@ int _glhckImportTGA(const char *file, _glhckImportImageStruct *import)
    /* we don't need the file anymore */
    NULLDO(fclose, f);
 
-   data = seg;
-   header = (tga_header*)data;
-   footer = (tga_footer*)((char*)data+size-sizeof(tga_footer));
+   void *data = seg;
+   tga_header *header = (tga_header*)data;
+   tga_footer *footer = (tga_footer*)((char*)data + size - sizeof(tga_footer));
 
    /* is TGA v2.0? (stop storing the headers at EOF please) */
+   int footerPresent = 0;
    if (!memcmp(footer->signature, TGA_SIGNATURE, sizeof(footer->signature)))
-      footer_present = 1;
+      footerPresent = 1;
 
    /* skip over header */
-   data = (char*)data+sizeof(tga_header);
+   data = (char*)data + sizeof(tga_header);
 
    /* skip over ID filed */
    if (header->idLength)
-      data = (char*)data+header->idLength;
+      data = (char*)data + header->idLength;
 
    /* inverted TGA? */
-   vinverted = !(header->descriptor & TGA_DESC_VERTICAL);
+   int vinverted = !(header->descriptor & TGA_DESC_VERTICAL);
 
+   int rle = 0;
    switch (header->imageType) {
       case TGA_TYPE_COLOR_RLE:
       case TGA_TYPE_GRAY_RLE:
@@ -160,33 +157,32 @@ int _glhckImportTGA(const char *file, _glhckImportImageStruct *import)
          goto unknown_type;
    }
 
-   bpp = header->bpp;
+   unsigned int bpp = header->bpp;
    if (!((bpp == 32) || (bpp == 24) || (bpp == 8)))
       goto invalid_bpp;
 
    /* endian safe for 16-bit dimensions */
-   w = (header->widthHi  << 8) | header->widthLo;
-   h = (header->heightHi << 8) | header->heightLo;
+   unsigned short w = (header->widthHi  << 8) | header->widthLo;
+   unsigned short h = (header->heightHi << 8) | header->heightLo;
 
    if (!IMAGE_DIMENSIONS_OK(w, h))
       goto bad_dimensions;
 
    /* allocate destination buffer */
-   if (!(importData = _glhckMalloc(w*h*4)))
+   if (!(importData = _glhckMalloc(w * h * 4)))
       goto out_of_memory;
 
    /* find out how much data to be read from file
-    * (this is NOT simply width*height*4, due to compression) */
-   datasize = size - sizeof(tga_header) - header->idLength -
-      (footer_present ? sizeof(tga_footer) : 0);
+    * (this is NOT simply width * height * 4, due to compression) */
+   size_t datasize = size - sizeof(tga_header) - header->idLength - (footerPresent ? sizeof(tga_footer) : 0);
 
    /* bufptr is the next byte to be read from the buffer */
-   bufptr = data;
-   bufend = data + datasize;
+   unsigned char *bufptr = data;
+   unsigned char *bufend = data + datasize;
 
    /* non RLE compressed data */
    if (!rle) {
-      for (i = 0; i < h*w && bufptr+bpp/8 <= bufend; ++i) {
+      for (int i = 0; i < h * w && bufptr + bpp / 8 <= bufend; ++i) {
          switch (bpp) {
             /* 32-bit BGRA */
             case 32:
@@ -225,18 +221,19 @@ int _glhckImportTGA(const char *file, _glhckImportImageStruct *import)
    }
 
    /* some TGA's are upside-down */
-   if (vinverted) _glhckInvertPixels(importData, w, h, 4);
+   if (vinverted)
+      _glhckInvertPixels(importData, w, h, 4);
 
    /* free */
    NULLDO(_glhckFree, seg);
 
    /* fill import struct */
-   import->width  = w;
+   import->width = w;
    import->height = h;
-   import->data   = importData;
+   import->data = importData;
    import->format = GLHCK_RGBA;
-   import->type   = GLHCK_UNSIGNED_BYTE;
-   import->flags |= (bpp==32?GLHCK_TEXTURE_IMPORT_ALPHA:0);
+   import->type = GLHCK_UNSIGNED_BYTE;
+   import->flags |= (bpp == 32 ? GLHCK_TEXTURE_IMPORT_ALPHA : 0);
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 

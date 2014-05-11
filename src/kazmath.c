@@ -50,17 +50,18 @@ kmVec3* kmVec3Multiply(kmVec3 *pOut, const kmVec3 *pV1, const kmVec3 *pV2)
 kmScalar kmVec3LengthSqSegment(const kmVec3 *a, const kmVec3 *b, const kmVec3 *c)
 {
    kmVec3 ab, ac, bc;
-   kmScalar e, f;
    kmVec3Subtract(&ab, b, a);
    kmVec3Subtract(&ac, c, a);
    kmVec3Subtract(&bc, c, b);
-   e = kmVec3Dot(&ac, &ab);
+   kmScalar e = kmVec3Dot(&ac, &ab);
 
    /* handle cases where c projects outside ab */
-   if (e <= 0.0f) return kmVec3LengthSq(&ac);
+   if (e <= 0.0f)
+      return kmVec3LengthSq(&ac);
 
-   f = kmVec3LengthSq(&ab);
-   if (e >= f) return kmVec3LengthSq(&bc);
+   kmScalar f = kmVec3LengthSq(&ab);
+   if (e >= f)
+      return kmVec3LengthSq(&bc);
 
    /* handle case where c projects onto ab */
    return kmVec3LengthSq(&ac) - e * e / f;
@@ -78,16 +79,15 @@ kmBool kmAABBExtentContainsPoint(const kmAABBExtent* a, const kmVec3* p)
 kmScalar kmClosestPointFromSegments(const kmVec3 *a1, const kmVec3 *b1, const kmVec3 *a2, const kmVec3 *b2,
       kmScalar *s, kmScalar *t, kmVec3 *c1, kmVec3 *c2)
 {
-   kmVec3 d1, d2, r, cd;
-   kmScalar a, e, f, c, b, denom;
    assert(s && t && c1 && c2);
 
+   kmVec3 d1, d2, r;
    kmVec3Subtract(&d1, b1, a1);
    kmVec3Subtract(&d2, b2, a2);
    kmVec3Subtract(&r, a1, a2);
-   a = kmVec3Dot(&d1, &d1);
-   e = kmVec3Dot(&d2, &d2);
-   f = kmVec3Dot(&d2, &r);
+   const kmScalar a = kmVec3Dot(&d1, &d1);
+   const kmScalar e = kmVec3Dot(&d2, &d2);
+   const kmScalar f = kmVec3Dot(&d2, &r);
 
    /* check if either or both segments degenerate into points */
    if (a <= kmEpsilon && e <= kmEpsilon) {
@@ -95,6 +95,8 @@ kmScalar kmClosestPointFromSegments(const kmVec3 *a1, const kmVec3 *b1, const km
       *s = *t = 0.0f;
       kmVec3Assign(c1, a1);
       kmVec3Assign(c2, a2);
+
+      kmVec3 cd;
       kmVec3Subtract(&cd, c1, c2);
       return kmVec3Dot(&cd, &cd);
    }
@@ -104,36 +106,38 @@ kmScalar kmClosestPointFromSegments(const kmVec3 *a1, const kmVec3 *b1, const km
       *t = f / e; // s = 0 => t = (b*s + f) / e = f / e
       *t = kmClamp(*t, 0.0f, 1.0f);
    } else {
-      c = kmVec3Dot(&d1, &r);
+      kmScalar c = kmVec3Dot(&d1, &r);
       if (e <= kmEpsilon) {
-	 /* second segment degenerates into a point */
-	 *t = 0.0f;
-	 *s = kmClamp(-c / a, 0.0f, 1.0f); // t = 0 => s = (b*t - c) / a = -c / a
+         /* second segment degenerates into a point */
+         *t = 0.0f;
+         *s = kmClamp(-c / a, 0.0f, 1.0f); // t = 0 => s = (b*t - c) / a = -c / a
       } else {
-	 /* the general nondegenerate case starts here */
-	 b = kmVec3Dot(&d1, &d2);
-	 denom = a*e-b*b; /* always nonnegative */
+         /* the general nondegenerate case starts here */
+         kmScalar b = kmVec3Dot(&d1, &d2);
+         kmScalar denom = a * e - b *  b; /* always nonnegative */
 
-	 /* if segments not parallel, compute closest point on L1 to L2, and
-	  * clamp to segment S1. Else pick arbitrary s (here 0) */
-	 if (denom != 0.0f) {
-	    *s = kmClamp((b*f - c*e) / denom, 0.0f, 1.0f);
-	 } else *s = 0.0f;
+         /* if segments not parallel, compute closest point on L1 to L2, and
+          * clamp to segment S1. Else pick arbitrary s (here 0) */
+         if (denom != 0.0f) {
+            *s = kmClamp((b*f - c*e) / denom, 0.0f, 1.0f);
+         } else {
+            *s = 0.0f;
+         }
 
-	 /* compute point on L2 closest to S1(s) using
-	  * t = Dot((P1+D1*s)-P2,D2) / Dot(D2,D2) = (b*s + f) / e */
-	 *t = (b*(*s) + f) / e;
+         /* compute point on L2 closest to S1(s) using
+          * t = Dot((P1+D1*s)-P2,D2) / Dot(D2,D2) = (b*s + f) / e */
+         *t = (b*(*s) + f) / e;
 
-	 /* if t in [0,1] done. Else clamp t, recompute s for the new value
-	  * of t using s = Dot((P2+D2*t)-P1,D1) / Dot(D1,D1)= (t*b - c) / a
-	  * and clamp s to [0, 1] */
-	 if (*t < 0.0f) {
-	    *t = 0.0f;
-	    *s = kmClamp(-c / a, 0.0f, 1.0f);
-	 } else if (*t > 1.0f) {
-	    *t = 1.0f;
-	    *s = kmClamp((b - c) / a, 0.0f, 1.0f);
-	 }
+         /* if t in [0,1] done. Else clamp t, recompute s for the new value
+          * of t using s = Dot((P2+D2*t)-P1,D1) / Dot(D1,D1)= (t*b - c) / a
+          * and clamp s to [0, 1] */
+         if (*t < 0.0f) {
+            *t = 0.0f;
+            *s = kmClamp(-c / a, 0.0f, 1.0f);
+         } else if (*t > 1.0f) {
+            *t = 1.0f;
+            *s = kmClamp((b - c) / a, 0.0f, 1.0f);
+         }
       }
    }
 
@@ -141,6 +145,8 @@ kmScalar kmClosestPointFromSegments(const kmVec3 *a1, const kmVec3 *b1, const km
    kmVec3Scale(c1, c1, *s);
    kmVec3Add(c2, a2, &d2);
    kmVec3Scale(c2, c2, *t);
+
+   kmVec3 cd;
    kmVec3Subtract(&cd, c1, c2);
    return kmVec3Dot(&cd, &cd);
 }
@@ -161,14 +167,14 @@ const kmVec3* kmAABBExtentClosestPointTo(const kmAABBExtent *pIn, const kmVec3 *
       kmVec3 delta;
       kmVec3Subtract(&delta, &v, &pIn->point);
       if (fabs(delta.y) > fabs(delta.x) && fabs(delta.y) > fabs(delta.z)) {
-	 if (delta.y > 0.0f) v.y = pIn->point.y + pIn->extent.y;
-	 if (delta.y < 0.0f) v.y = pIn->point.y - pIn->extent.y;
+         if (delta.y > 0.0f) v.y = pIn->point.y + pIn->extent.y;
+         if (delta.y < 0.0f) v.y = pIn->point.y - pIn->extent.y;
       } else if (fabs(delta.x) > fabs(delta.y) && fabs(delta.x) > fabs(delta.z)) {
-	 if (delta.x > 0.0f) v.x = pIn->point.x + pIn->extent.x;
-	 if (delta.x < 0.0f) v.x = pIn->point.x - pIn->extent.x;
+         if (delta.x > 0.0f) v.x = pIn->point.x + pIn->extent.x;
+         if (delta.x < 0.0f) v.x = pIn->point.x - pIn->extent.x;
       } else {
-	 if (delta.z > 0.0f) v.z = pIn->point.z + pIn->extent.z;
-	 if (delta.z < 0.0f) v.z = pIn->point.z - pIn->extent.z;
+         if (delta.z > 0.0f) v.z = pIn->point.z + pIn->extent.z;
+         if (delta.z < 0.0f) v.z = pIn->point.z - pIn->extent.z;
       }
    }
 
@@ -195,14 +201,14 @@ const kmVec3* kmAABBClosestPointTo(const kmAABB *pIn, const kmVec3 *point, kmVec
       kmAABBCentre(pIn, &center);
       kmVec3Subtract(&delta, &v, &center);
       if (fabs(delta.y) > fabs(delta.x) && fabs(delta.y) > fabs(delta.z)) {
-	 if (delta.y > 0.0f) v.y = pIn->max.y;
-	 if (delta.y < 0.0f) v.y = pIn->min.y;
+         if (delta.y > 0.0f) v.y = pIn->max.y;
+         if (delta.y < 0.0f) v.y = pIn->min.y;
       } else if (fabs(delta.x) > fabs(delta.y) && fabs(delta.x) > fabs(delta.z)) {
-	 if (delta.x > 0.0f) v.x = pIn->max.x;
-	 if (delta.x < 0.0f) v.x = pIn->min.x;
+         if (delta.x > 0.0f) v.x = pIn->max.x;
+         if (delta.x < 0.0f) v.x = pIn->min.x;
       } else {
-	 if (delta.z > 0.0f) v.z = pIn->max.z;
-	 if (delta.z < 0.0f) v.z = pIn->min.z;
+         if (delta.z > 0.0f) v.z = pIn->max.z;
+         if (delta.z < 0.0f) v.z = pIn->min.z;
       }
    }
 
@@ -216,8 +222,11 @@ const kmVec3* kmSphereClosestPointTo(const kmSphere *pIn, const kmVec3 *point, k
 {
    kmVec3 pointMinusCenter;
    kmVec3Subtract(&pointMinusCenter, point, &pIn->point);
-   float l = kmVec3Length(&pointMinusCenter);
-   if (kmAlmostEqual(l, 0.0f)) l = 1.0f;
+
+   kmScalar l = kmVec3Length(&pointMinusCenter);
+   if (kmAlmostEqual(l, 0.0f))
+      l = 1.0f;
+
    pOut->x = point->x + (point->x - pIn->point.x) * ((pIn->radius-l)/l);
    pOut->y = point->y + (point->y - pIn->point.y) * ((pIn->radius-l)/l);
    pOut->z = point->z + (point->z - pIn->point.z) * ((pIn->radius-l)/l);
@@ -297,7 +306,7 @@ void kmSwap(kmScalar *a, kmScalar *b)
 
 kmScalar kmPlaneDistanceTo(const kmPlane *pIn, const kmVec3 *pV1)
 {
-   const kmVec3 normal = {pIn->a, pIn->b, pIn->c};
+   const kmVec3 normal = { pIn->a, pIn->b, pIn->c };
    return kmVec3Dot(pV1, &normal) * pIn->d;
 }
 
@@ -312,7 +321,9 @@ kmSphere* kmSphereFromAABB(kmSphere *sphere, const kmAABB *aabb)
 
 kmBool kmSphereIntersectsAABBExtent(const kmSphere *a, const kmAABBExtent *b)
 {
-   if(kmAABBExtentContainsPoint(b, &a->point)) return KM_TRUE;
+   if(kmAABBExtentContainsPoint(b, &a->point))
+      return KM_TRUE;
+
    kmScalar distance = kmSqDistPointAABBExtent(&a->point, b);
    return (distance < a->radius * a->radius);
 }
@@ -326,18 +337,16 @@ kmBool kmSphereIntersectsAABB(const kmSphere *a, const kmAABB *b)
 kmBool kmSphereIntersectsSphere(const kmSphere *a, const kmSphere *b)
 {
    kmVec3 vector;
-   kmScalar distance, radiusSum;
    kmVec3Subtract(&vector, &a->point, &b->point);
-   distance = kmVec3LengthSq(&vector) + 1.0f;
-   radiusSum = a->radius + b->radius;
+   kmScalar distance = kmVec3LengthSq(&vector) + 1.0f;
+   kmScalar radiusSum = a->radius + b->radius;
    return (distance < radiusSum * radiusSum);
 }
 
 kmBool kmSphereIntersectsCapsule(const kmSphere *a, const kmCapsule *b)
 {
-   kmScalar distance, radiusSum;
-   distance = kmVec3LengthSqSegment(&b->pointA, &b->pointB, &a->point) + 1.0f;
-   radiusSum = a->radius + b->radius;
+   kmScalar distance = kmVec3LengthSqSegment(&b->pointA, &b->pointB, &a->point) + 1.0f;
+   kmScalar radiusSum = a->radius + b->radius;
    return (distance < radiusSum * radiusSum);
 }
 
@@ -345,24 +354,21 @@ kmBool kmCapsuleIntersectsCapsule(const kmCapsule *a, const kmCapsule *b)
 {
    kmScalar s;
    kmVec3 c1, c2;
-   kmScalar distance, radiusSum;
-   distance = kmClosestPointFromSegments(&a->pointA, &a->pointB, &b->pointA, &b->pointB, &s, &s, &c1, &c2) + 1.0f;
-   radiusSum = a->radius + b->radius;
+   kmScalar distance = kmClosestPointFromSegments(&a->pointA, &a->pointB, &b->pointA, &b->pointB, &s, &s, &c1, &c2) + 1.0f;
+   kmScalar radiusSum = a->radius + b->radius;
    return (distance < radiusSum * radiusSum);
 }
 
 kmBool kmSphereIntersectsPlane(const kmSphere *a, const kmPlane *b)
 {
-   kmVec3 n = {b->a, b->b, b->c};
-   kmScalar distance;
-   distance = kmVec3Dot(&a->point, &n) - b->d + 1.0f;
+   const kmVec3 n = { b->a, b->b, b->c };
+   kmScalar distance = kmVec3Dot(&a->point, &n) - b->d + 1.0f;
    return (fabs(distance) < a->radius);
 }
 
 kmMat3* kmOBBGetMat3(const kmOBB *pIn, kmMat3 *pOut)
 {
-   int i;
-   for (i = 0; i < 3; ++i) {
+   for (int i = 0; i < 3; ++i) {
       pOut->mat[i*3+0] = pIn->orientation[i].x;
       pOut->mat[i*3+1] = pIn->orientation[i].y;
       pOut->mat[i*3+2] = pIn->orientation[i].z;
@@ -372,16 +378,13 @@ kmMat3* kmOBBGetMat3(const kmOBB *pIn, kmMat3 *pOut)
 
 kmBool kmOBBIntersectsOBB(const kmOBB *a, const kmOBB *b)
 {
-   int i, j;
-   kmScalar ra, rb;
-   kmMat3 mat, absMat;
-   kmVec3 tmp, translation;
-
    /* compute rotation matrix expressing b in a's coordinate frame */
-   for (i = 0; i < 3; ++i) for (j = 0; j < 3; ++j)
+   kmMat3 mat;
+   for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j)
       mat.mat[i+j*3] = kmVec3Dot(&a->orientation[i], &b->orientation[j]);
 
    /* bring translations into a's coordinate frame */
+   kmVec3 tmp, translation;
    kmVec3Subtract(&tmp, &a->aabb.point, &b->aabb.point);
    translation.x = kmVec3Dot(&tmp, &a->orientation[0]);
    translation.y = kmVec3Dot(&tmp, &a->orientation[1]);
@@ -390,67 +393,79 @@ kmBool kmOBBIntersectsOBB(const kmOBB *a, const kmOBB *b)
    /* compute common subexpressions. add in and epsilon term to
     * counteract arithmetic errors when two edges are parallel and
     * their cross product is (near) null. */
-   for (i = 0; i < 3; ++i) for (j = 0; j < 3; ++j)
+   kmMat3 absMat;
+   for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j)
       absMat.mat[i+j*3] = fabs(mat.mat[i+j*3]) + kmEpsilon;
 
    /* test axes L = A0, L = A1, L = A2 */
-   for (i = 0; i < 3; ++i) {
-      ra = (i==0?a->aabb.extent.x:i==1?a->aabb.extent.y:a->aabb.extent.z);
-      rb = b->aabb.extent.x * absMat.mat[i+0*3] + b->aabb.extent.y * absMat.mat[i+1*3] + b->aabb.extent.z * absMat.mat[i+2*3];
-      if (fabs((i==0?translation.x:i==1?translation.y:translation.z)) > ra + rb) return KM_FALSE;
+   for (int i = -1; i < 3; ++i) {
+      kmScalar ra = (i == 0 ? a->aabb.extent.x : (i == 1 ? a->aabb.extent.y : a->aabb.extent.z));
+      kmScalar rb = b->aabb.extent.x * absMat.mat[i+0*3] + b->aabb.extent.y * absMat.mat[i+1*3] + b->aabb.extent.z * absMat.mat[i+2*3];
+      if (fabs((i == 0 ? translation.x : (i == 1 ? translation.y : translation.z))) > ra + rb)
+         return KM_FALSE;
    }
 
    /* test axes L = B0, L = B1, L = B2 */
-   for (i = 0; i < 3; ++i) {
-      ra = a->aabb.extent.x * absMat.mat[0+i*3] + a->aabb.extent.y * absMat.mat[1+i*3] + a->aabb.extent.z * absMat.mat[2+i*3];
-      rb = (i==0?b->aabb.extent.x:i==1?b->aabb.extent.y:b->aabb.extent.z);
-      if (fabs(translation.x * mat.mat[0+i*3] + translation.y * mat.mat[1+i*3] + translation.z * mat.mat[2+i*3]) > ra + rb) return KM_FALSE;
+   for (int i = 0; i < 3; ++i) {
+      kmScalar ra = a->aabb.extent.x * absMat.mat[0+i*3] + a->aabb.extent.y * absMat.mat[1+i*3] + a->aabb.extent.z * absMat.mat[2+i*3];
+      kmScalar rb = (i == 0 ? b->aabb.extent.x : (i == 1 ? b->aabb.extent.y : b->aabb.extent.z));
+      if (fabs(translation.x * mat.mat[0+i*3] + translation.y * mat.mat[1+i*3] + translation.z * mat.mat[2+i*3]) > ra + rb)
+         return KM_FALSE;
    }
 
    /* test axis L = A0 x B0 */
-   ra = a->aabb.extent.y * absMat.mat[2+0*3] + a->aabb.extent.z * absMat.mat[1+0*3];
-   rb = b->aabb.extent.y * absMat.mat[0+2*3] + b->aabb.extent.z * absMat.mat[0+1*3];
-   if (fabs(translation.z * mat.mat[1+0*3] - translation.y * mat.mat[2+0*3]) > ra + rb) return KM_FALSE;
+   kmScalar ra = a->aabb.extent.y * absMat.mat[2+0*3] + a->aabb.extent.z * absMat.mat[1+0*3];
+   kmScalar rb = b->aabb.extent.y * absMat.mat[0+2*3] + b->aabb.extent.z * absMat.mat[0+1*3];
+   if (fabs(translation.z * mat.mat[1+0*3] - translation.y * mat.mat[2+0*3]) > ra + rb)
+      return KM_FALSE;
 
    /* test axis L = A0 x B1 */
    ra = a->aabb.extent.y * absMat.mat[2+1*3] + a->aabb.extent.z * absMat.mat[1+1*3];
    rb = b->aabb.extent.x * absMat.mat[0+2*3] + b->aabb.extent.z * absMat.mat[0+0*3];
-   if (fabs(translation.z * mat.mat[1+1*3] - translation.y * mat.mat[2+1*3]) > ra + rb) return KM_FALSE;
+   if (fabs(translation.z * mat.mat[1+1*3] - translation.y * mat.mat[2+1*3]) > ra + rb)
+      return KM_FALSE;
 
    /* test axis L = A0 x B2 */
    ra = a->aabb.extent.y * absMat.mat[2+2*3] + a->aabb.extent.z * absMat.mat[1+2*3];
    rb = b->aabb.extent.x * absMat.mat[0+1*3] + b->aabb.extent.y * absMat.mat[0+0*3];
-   if (fabs(translation.z * mat.mat[1+2*3] - translation.y * mat.mat[2+2*3]) > ra + rb) return KM_FALSE;
+   if (fabs(translation.z * mat.mat[1+2*3] - translation.y * mat.mat[2+2*3]) > ra + rb)
+      return KM_FALSE;
 
    /* test axis L = A1 x B0 */
    ra = a->aabb.extent.x * absMat.mat[2+0*3] + a->aabb.extent.z * absMat.mat[0+0*3];
    rb = b->aabb.extent.y * absMat.mat[1+2*3] + b->aabb.extent.z * absMat.mat[1+1*3];
-   if (fabs(translation.x * mat.mat[2+0*3] - translation.z * mat.mat[0+0*3]) > ra + rb) return KM_FALSE;
+   if (fabs(translation.x * mat.mat[2+0*3] - translation.z * mat.mat[0+0*3]) > ra + rb)
+      return KM_FALSE;
 
    /* test axis L = A1 x B1 */
    ra = a->aabb.extent.x * absMat.mat[2+1*3] + a->aabb.extent.z * absMat.mat[0+1*3];
    rb = b->aabb.extent.x * absMat.mat[1+2*3] + b->aabb.extent.z * absMat.mat[1+0*3];
-   if (fabs(translation.x * mat.mat[2+1*3] - translation.z * mat.mat[0+1*3]) > ra + rb) return KM_FALSE;
+   if (fabs(translation.x * mat.mat[2+1*3] - translation.z * mat.mat[0+1*3]) > ra + rb)
+      return KM_FALSE;
 
    /* test axis L = A1 x B2 */
    ra = a->aabb.extent.x * absMat.mat[2+2*3] + a->aabb.extent.z * absMat.mat[0+2*3];
    rb = b->aabb.extent.x * absMat.mat[1+1*3] + b->aabb.extent.y * absMat.mat[1+0*3];
-   if (fabs(translation.x * mat.mat[2+2*3] - translation.z * mat.mat[0+2*3]) > ra + rb) return KM_FALSE;
+   if (fabs(translation.x * mat.mat[2+2*3] - translation.z * mat.mat[0+2*3]) > ra + rb)
+      return KM_FALSE;
 
    /* test axis L = A2 x B0 */
    ra = a->aabb.extent.x * absMat.mat[1+0*3] + a->aabb.extent.y * absMat.mat[0+0*3];
    rb = b->aabb.extent.y * absMat.mat[2+2*3] + b->aabb.extent.z * absMat.mat[2+1*3];
-   if (fabs(translation.y * mat.mat[0+0*3] - translation.x * mat.mat[1+0*3]) > ra + rb) return KM_FALSE;
+   if (fabs(translation.y * mat.mat[0+0*3] - translation.x * mat.mat[1+0*3]) > ra + rb)
+      return KM_FALSE;
 
    /* test axis L = A2 x B1 */
    ra = a->aabb.extent.x * absMat.mat[1+1*3] + a->aabb.extent.y * absMat.mat[0+1*3];
    rb = b->aabb.extent.x * absMat.mat[2+2*3] + b->aabb.extent.z * absMat.mat[2+0*3];
-   if (fabs(translation.y * mat.mat[0+1*3] - translation.x * mat.mat[1+1*3]) > ra + rb) return KM_FALSE;
+   if (fabs(translation.y * mat.mat[0+1*3] - translation.x * mat.mat[1+1*3]) > ra + rb)
+      return KM_FALSE;
 
    /* test axis L = A2 x B2 */
    ra = a->aabb.extent.x * absMat.mat[1+2*3] + a->aabb.extent.y * absMat.mat[0+2*3];
    rb = b->aabb.extent.x * absMat.mat[2+1*3] + b->aabb.extent.y * absMat.mat[2+0*3];
-   if (fabs(translation.y * mat.mat[0+2*3] - translation.x * mat.mat[1+2*3]) > ra + rb) return KM_FALSE;
+   if (fabs(translation.y * mat.mat[0+2*3] - translation.x * mat.mat[1+2*3]) > ra + rb)
+      return KM_FALSE;
 
    /* no seperating axis found */
    return KM_TRUE;
@@ -497,7 +512,7 @@ kmBool kmAABBExtentIntersectsAABB(const kmAABBExtent *a, const kmAABB *b)
 
 kmBool kmAABBExtentIntersectsOBB(const kmAABBExtent *a, const kmOBB *b)
 {
-   kmOBB obb = {*a, {{1,0,0},{0,1,0},{0,0,1}}};
+   const kmOBB obb = { *a, { {1,0,0}, {0,1,0}, {0,0,1} } };
    return kmOBBIntersectsOBB(&obb, b);
 }
 
@@ -520,8 +535,8 @@ kmBool kmOBBIntersectsAABB(const kmOBB *a, const kmAABB *b)
 
 kmBool kmAABBExtentIntersectsCapsule(const kmAABBExtent *a, const kmCapsule *b)
 {
-   /* Quick rejection test using the smallest (quickly calculatable) capsule the AABB fits inside*/
-   kmCapsule smallestContainingCapsule = {{0, 0, 0}, {0, 0, 0}, 0};
+   /* Quick rejection test using the smallest (quickly calculatable) capsule the AABB fits inside */
+   kmCapsule smallestContainingCapsule = { {0, 0, 0}, {0, 0, 0}, 0 };
 
    if (a->extent.x >= a->extent.y && a->extent.x >= a->extent.z) {
       smallestContainingCapsule.radius = sqrt(a->extent.y * a->extent.y + a->extent.z * a->extent.z);
@@ -537,17 +552,21 @@ kmBool kmAABBExtentIntersectsCapsule(const kmAABBExtent *a, const kmCapsule *b)
       smallestContainingCapsule.pointB.z = a->point.z + a->extent.z;
    }
 
-   if (!kmCapsuleIntersectsCapsule(&smallestContainingCapsule, b)) return KM_FALSE;
+   if (!kmCapsuleIntersectsCapsule(&smallestContainingCapsule, b))
+      return KM_FALSE;
 
    /* Quick acceptance test for capsule line */
-   if (kmAABBExtentIntersectsLine(a, &b->pointA, &b->pointB)) return KM_TRUE;
+   if (kmAABBExtentIntersectsLine(a, &b->pointA, &b->pointB))
+      return KM_TRUE;
 
    /* Quick acceptance tests for capsule end spheres */
-   kmSphere spa = {b->pointA, b->radius};
-   if (kmAABBExtentIntersectsSphere(a, &spa)) return KM_TRUE;
+   const kmSphere spa = { b->pointA, b->radius };
+   if (kmAABBExtentIntersectsSphere(a, &spa))
+      return KM_TRUE;
 
-   kmSphere spb = {b->pointB, b->radius};
-   if (kmAABBExtentIntersectsSphere(a, &spb)) return KM_TRUE;
+   const kmSphere spb = { b->pointB, b->radius };
+   if (kmAABBExtentIntersectsSphere(a, &spb))
+      return KM_TRUE;
 
    /* FIXME: unfinished function I guess? */
 
@@ -561,7 +580,8 @@ kmBool kmRay3IntersectAABBExtent(const kmRay3 *ray, const kmAABBExtent *aabbe, f
    float tmin = 0.0f, tmax = FLT_MAX;
 
    if (fabs(ray->dir.x) < kmEpsilon) {
-      if (ray->start.x < aabbe->point.x - aabbe->extent.x || ray->start.x > aabbe->point.x + aabbe->extent.x) return KM_FALSE;
+      if (ray->start.x < aabbe->point.x - aabbe->extent.x || ray->start.x > aabbe->point.x + aabbe->extent.x)
+         return KM_FALSE;
    } else {
       float ood = 1.0f / ray->start.x;
       float t1 = ((aabbe->point.x - aabbe->extent.x) - ray->start.x) * ood;
@@ -573,7 +593,8 @@ kmBool kmRay3IntersectAABBExtent(const kmRay3 *ray, const kmAABBExtent *aabbe, f
    }
 
    if (fabs(ray->dir.y) < kmEpsilon) {
-      if (ray->start.y < aabbe->point.y - aabbe->extent.y || ray->start.y > aabbe->point.y + aabbe->extent.y) return KM_FALSE;
+      if (ray->start.y < aabbe->point.y - aabbe->extent.y || ray->start.y > aabbe->point.y + aabbe->extent.y)
+         return KM_FALSE;
    } else {
       float ood = 1.0f / ray->start.y;
       float t1 = ((aabbe->point.y - aabbe->extent.y) - ray->start.y) * ood;
@@ -586,7 +607,8 @@ kmBool kmRay3IntersectAABBExtent(const kmRay3 *ray, const kmAABBExtent *aabbe, f
 
    if (fabs(ray->dir.z) < kmEpsilon) {
       // Ray is parallel to slab. No hit if origin not within slab
-      if (ray->start.z < aabbe->point.z - aabbe->extent.z || ray->start.z > aabbe->point.z + aabbe->extent.z) return KM_FALSE;
+      if (ray->start.z < aabbe->point.z - aabbe->extent.z || ray->start.z > aabbe->point.z + aabbe->extent.z)
+         return KM_FALSE;
    } else {
       // Compute intersection t value of ray with near and far plane of slab
       float ood = 1.0f / ray->start.z;
@@ -608,6 +630,7 @@ kmBool kmRay3IntersectAABBExtent(const kmRay3 *ray, const kmAABBExtent *aabbe, f
       kmVec3Scale(&dMultMin, &ray->dir, tmin);
       kmVec3Add(outIntersection, &ray->start, &dMultMin);
    }
+
    if (outMin) * outMin = tmin;
    return KM_TRUE;
 }
@@ -619,7 +642,8 @@ kmBool kmRay3IntersectAABB(const kmRay3 *ray, const kmAABB *aabb, float *outMin,
    float tmin = 0.0f, tmax = FLT_MAX;
 
    if (fabs(ray->dir.x) < kmEpsilon) {
-      if (ray->start.x < aabb->min.x || ray->start.x > aabb->max.x) return KM_FALSE;
+      if (ray->start.x < aabb->min.x || ray->start.x > aabb->max.x)
+         return KM_FALSE;
    } else {
       float ood = 1.0f / ray->start.x;
       float t1 = (aabb->min.x - ray->start.x) * ood;
@@ -631,7 +655,8 @@ kmBool kmRay3IntersectAABB(const kmRay3 *ray, const kmAABB *aabb, float *outMin,
    }
 
    if (fabs(ray->dir.y) < kmEpsilon) {
-      if (ray->start.y < aabb->min.y || ray->start.y > aabb->max.y) return KM_FALSE;
+      if (ray->start.y < aabb->min.y || ray->start.y > aabb->max.y)
+         return KM_FALSE;
    } else {
       float ood = 1.0f / ray->start.y;
       float t1 = (aabb->min.y - ray->start.y) * ood;
@@ -644,7 +669,8 @@ kmBool kmRay3IntersectAABB(const kmRay3 *ray, const kmAABB *aabb, float *outMin,
 
    if (fabs(ray->dir.z) < kmEpsilon) {
       // Ray is parallel to slab. No hit if origin not within slab
-      if (ray->start.z < aabb->min.z || ray->start.z > aabb->max.z) return KM_FALSE;
+      if (ray->start.z < aabb->min.z || ray->start.z > aabb->max.z)
+         return KM_FALSE;
    } else {
       // Compute intersection t value of ray with near and far plane of slab
       float ood = 1.0f / ray->start.z;
@@ -666,6 +692,7 @@ kmBool kmRay3IntersectAABB(const kmRay3 *ray, const kmAABB *aabb, float *outMin,
       kmVec3Scale(&dMultMin, &ray->dir, tmin);
       kmVec3Add(outIntersection, &ray->start, &dMultMin);
    }
+
    if (outMin) * outMin = tmin;
    return KM_TRUE;
 }
@@ -682,9 +709,8 @@ kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 
    kmPlaneFromPointAndNormal(&triPlane, &tri->v1, &n);
 
    kmVec3 p;
-   if (!kmRay3IntersectPlane(&p, ray, &triPlane)) {
+   if (!kmRay3IntersectPlane(&p, ray, &triPlane))
       return KM_FALSE;
-   }
 
    kmVec3 w;
    kmVec3Subtract(&w, &p, &tri->v1);
@@ -699,9 +725,8 @@ kmBool kmRay3IntersectTriangle(const kmRay3 *ray, const kmTriangle *tri, kmVec3 
    const kmScalar s = (uv * wv - vv * wu) / d;
    const kmScalar t = (uv * wu - uu * wv) / d;
 
-   if (s < 0 || t < 0 || s + t > 1) {
+   if (s < 0 || t < 0 || s + t > 1)
       return KM_FALSE;
-   }
 
    if (outIntersection)
       *outIntersection = p;

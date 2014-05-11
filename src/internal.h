@@ -114,10 +114,10 @@
 
 /* return variables used throughout library */
 typedef enum _glhckReturnValue {
-   RETURN_FAIL    =  0,
-   RETURN_OK      =  1,
-   RETURN_TRUE    =  1,
-   RETURN_FALSE   =  !RETURN_TRUE
+   RETURN_FAIL  = 0,
+   RETURN_OK    = 1,
+   RETURN_TRUE  = 1,
+   RETURN_FALSE = !RETURN_TRUE
 } _glhckReturnValue;
 
 /* internal texture flags */
@@ -292,7 +292,6 @@ typedef struct _glhckAtlasArea {
 
 /* representation of packed texture */
 typedef struct _glhckAtlasRect {
-   struct _glhckAtlasRect *next;
    struct _glhckTexture *texture;
    struct _glhckAtlasArea packed;
    unsigned short index;
@@ -300,7 +299,7 @@ typedef struct _glhckAtlasRect {
 
 /* atlas container */
 typedef struct _glhckAtlas {
-   struct _glhckAtlasRect *rect;
+   chckIterPool *rects;
    struct _glhckTexture *texture;
    REFERENCE_COUNTED();
 } _glhckAtlas;

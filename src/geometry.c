@@ -81,9 +81,6 @@ static unsigned char _glhckGeometryCheckVertexType(unsigned char type)
 /* \brief check for valid index type  */
 static unsigned char _glhckGeometryCheckIndexType(unsigned char type, const glhckImportIndexData *indices, int memb)
 {
-   size_t i;
-   glhckImportIndexData max;
-
 #if EMSCRIPTEN
    /* emscripten works with USHRT indices atm only */
    static char warned_once = 0;
@@ -95,27 +92,31 @@ static unsigned char _glhckGeometryCheckIndexType(unsigned char type, const glhc
 #endif
 
    /* use user specific indices */
-   if (type != GLHCK_IDX_AUTO) return type;
+   if (type != GLHCK_IDX_AUTO)
+      return type;
 
    /* autodetect */
-   for (i = 0, max = 0; (int)i < memb; ++i) if (max < indices[i]) max = indices[i];
+   glhckImportIndexData max = 0;
+   for (size_t i = 0; (int)i < memb; ++i) if (max < indices[i]) max = indices[i];
 
-   for (type = GLHCK_IDX_UINT, i = 0; i < chckPoolCount(GLHCKW()->indexTypes); ++i) {
+   type = GLHCK_IDX_UINT;
+   for (size_t i = 0; i < chckPoolCount(GLHCKW()->indexTypes); ++i) {
       if (GLHCKIT(i)->max >= max && GLHCKIT(i)->max < GLHCKIT(type)->max)
          type = i;
    }
+
    return type;
 }
 
 /* \brief get max && min for import vertex data */
 static void _glhckImportVertexDataMaxMin(const glhckImportVertexData *import, int memb, glhckVector3f *vmin, glhckVector3f *vmax)
 {
-   int i;
    assert(import && vmin && vmax);
 
    memcpy(vmin, &import[0].vertex, sizeof(glhckVector3f));
    memcpy(vmax, &import[0].vertex, sizeof(glhckVector3f));
-   for (i = 1; i < memb; ++i) {
+
+   for (int i = 0; i < memb; ++i) {
       glhckMaxV3(vmax, &import[i].vertex);
       glhckMinV3(vmin, &import[i].vertex);
    }
@@ -128,16 +129,15 @@ static void _glhckImportVertexDataMaxMin(const glhckImportVertexData *import, in
 /* \brief transform V2B */
 static void _glhckGeometryTransformV2B(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i;
-   kmMat4 bias, biasinv, scale, scaleinv;
    glhckVertexData3b *internal = geometry->vertices;
 
+   kmMat4 bias, biasinv, scale, scaleinv;
    kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
    kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
    kmMat4Inverse(&biasinv, &bias);
    kmMat4Inverse(&scaleinv, &scale);
 
-   for (i = 0; i < memb; ++i) {
+   for (unsigned int i = 0; i < memb; ++i) {
       kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
       kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
       kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
@@ -160,16 +160,15 @@ static void _glhckGeometryTransformV2B(glhckGeometry *geometry, const void *bind
 /* \brief transform V3B */
 static void _glhckGeometryTransformV3B(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i;
-   kmMat4 bias, biasinv, scale, scaleinv;
    glhckVertexData3b *internal = geometry->vertices;
 
+   kmMat4 bias, biasinv, scale, scaleinv;
    kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
    kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
    kmMat4Inverse(&biasinv, &bias);
    kmMat4Inverse(&scaleinv, &scale);
 
-   for (i = 0; i < memb; ++i) {
+   for (unsigned int i = 0; i < memb; ++i) {
       kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
       kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
       kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
@@ -193,16 +192,15 @@ static void _glhckGeometryTransformV3B(glhckGeometry *geometry, const void *bind
 /* \brief transform V2S */
 static void _glhckGeometryTransformV2S(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i;
-   kmMat4 bias, biasinv, scale, scaleinv;
    glhckVertexData2s *internal = geometry->vertices;
 
+   kmMat4 bias, biasinv, scale, scaleinv;
    kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
    kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
    kmMat4Inverse(&biasinv, &bias);
    kmMat4Inverse(&scaleinv, &scale);
 
-   for (i = 0; i < memb; ++i) {
+   for (unsigned int i = 0; i < memb; ++i) {
       kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
       kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
       kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
@@ -225,16 +223,15 @@ static void _glhckGeometryTransformV2S(glhckGeometry *geometry, const void *bind
 /* \brief transform V3S */
 static void _glhckGeometryTransformV3S(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i;
-   kmMat4 bias, biasinv, scale, scaleinv;
    glhckVertexData3s *internal = geometry->vertices;
 
+   kmMat4 bias, biasinv, scale, scaleinv;
    kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
    kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
    kmMat4Inverse(&biasinv, &bias);
    kmMat4Inverse(&scaleinv, &scale);
 
-   for (i = 0; i < memb; ++i) {
+   for (unsigned int i = 0; i < memb; ++i) {
       kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
       kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
       kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
@@ -258,15 +255,14 @@ static void _glhckGeometryTransformV3S(glhckGeometry *geometry, const void *bind
 /* \brief transform V2F */
 static void _glhckGeometryTransformV2F(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i;
-   kmMat4 bias, biasinv;
    glhckVertexData2f *internal = geometry->vertices;
 
    /* scale is always 1.0f, we can skip it */
+   kmMat4 bias, biasinv;
    kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
    kmMat4Inverse(&biasinv, &bias);
 
-   for (i = 0; i < memb; ++i) {
+   for (unsigned int i = 0; i < memb; ++i) {
       kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
       kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
       kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
@@ -287,15 +283,14 @@ static void _glhckGeometryTransformV2F(glhckGeometry *geometry, const void *bind
 /* \brief transform V3F */
 static void _glhckGeometryTransformV3F(glhckGeometry *geometry, const void *bindPose, glhckSkinBone **skinBones, unsigned int memb)
 {
-   unsigned int i;
-   kmMat4 bias, biasinv;
    glhckVertexData3f *internal = geometry->vertices;
 
    /* scale is always 1.0f, we can skip it */
+   kmMat4 bias, biasinv;
    kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
    kmMat4Inverse(&biasinv, &bias);
 
-   for (i = 0; i < memb; ++i) {
+   for (unsigned int i = 0; i < memb; ++i) {
       kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
       kmMat4Multiply(&transformedMatrix, &biasinv, &skinBones[i]->bone->transformedMatrix);
       kmMat4Multiply(&offsetMatrix, &skinBones[i]->offsetMatrix, &bias);
@@ -316,11 +311,12 @@ static void _glhckGeometryTransformV3F(glhckGeometry *geometry, const void *bind
 /* \brief get min && max of V2B vertices */
 static void _glhckGeometryMinMaxV2B(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
 {
-   int i = 0;
    glhckVertexData2b *internal = geometry->vertices;
+
    glhckSetV2(max, &internal[0].vertex);
    glhckSetV2(min, &internal[0].vertex);
-   for (i = 1; i < geometry->vertexCount; ++i) {
+
+   for (int i = 1; i < geometry->vertexCount; ++i) {
       glhckMaxV2(max, &internal[i].vertex);
       glhckMinV2(min, &internal[i].vertex);
    }
@@ -329,11 +325,12 @@ static void _glhckGeometryMinMaxV2B(glhckGeometry *geometry, glhckVector3f *min,
 /* \brief get min && max of V3B vertices */
 static void _glhckGeometryMinMaxV3B(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
 {
-   int i = 0;
    glhckVertexData3b *internal = geometry->vertices;
+
    glhckSetV3(max, &internal[0].vertex);
    glhckSetV3(min, &internal[0].vertex);
-   for (i = 1; i < geometry->vertexCount; ++i) {
+
+   for (int i = 1; i < geometry->vertexCount; ++i) {
       glhckMaxV3(max, &internal[i].vertex);
       glhckMinV3(min, &internal[i].vertex);
    }
@@ -342,11 +339,12 @@ static void _glhckGeometryMinMaxV3B(glhckGeometry *geometry, glhckVector3f *min,
 /* \brief get min && max of V2S vertices */
 static void _glhckGeometryMinMaxV2S(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
 {
-   int i = 0;
    glhckVertexData2s *internal = geometry->vertices;
+
    glhckSetV2(max, &internal[0].vertex);
    glhckSetV2(min, &internal[0].vertex);
-   for (i = 1; i < geometry->vertexCount; ++i) {
+
+   for (int i = 1; i < geometry->vertexCount; ++i) {
       glhckMaxV2(max, &internal[i].vertex);
       glhckMinV2(min, &internal[i].vertex);
    }
@@ -355,11 +353,12 @@ static void _glhckGeometryMinMaxV2S(glhckGeometry *geometry, glhckVector3f *min,
 /* \brief get min && max of V3S vertices */
 static void _glhckGeometryMinMaxV3S(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
 {
-   int i = 0;
    glhckVertexData3s *internal = geometry->vertices;
+
    glhckSetV3(max, &internal[0].vertex);
    glhckSetV3(min, &internal[0].vertex);
-   for (i = 1; i < geometry->vertexCount; ++i) {
+
+   for (int i = 1; i < geometry->vertexCount; ++i) {
       glhckMaxV3(max, &internal[i].vertex);
       glhckMinV3(min, &internal[i].vertex);
    }
@@ -368,11 +367,12 @@ static void _glhckGeometryMinMaxV3S(glhckGeometry *geometry, glhckVector3f *min,
 /* \brief get min && max of V2F vertices */
 static void _glhckGeometryMinMaxV2F(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
 {
-   int i = 0;
    glhckVertexData2f *internal = geometry->vertices;
+
    glhckSetV2(max, &internal[0].vertex);
    glhckSetV2(min, &internal[0].vertex);
-   for (i = 1; i < geometry->vertexCount; ++i) {
+
+   for (int i = 1; i < geometry->vertexCount; ++i) {
       glhckMaxV2(max, &internal[i].vertex);
       glhckMinV2(min, &internal[i].vertex);
    }
@@ -381,11 +381,12 @@ static void _glhckGeometryMinMaxV2F(glhckGeometry *geometry, glhckVector3f *min,
 /* \brief get min && max of V3F vertices */
 static void _glhckGeometryMinMaxV3F(glhckGeometry *geometry, glhckVector3f *min, glhckVector3f *max)
 {
-   int i = 0;
    glhckVertexData3f *internal = geometry->vertices;
+
    memcpy(min, &internal[0].vertex, sizeof(glhckVector3f));
    memcpy(max, &internal[0].vertex, sizeof(glhckVector3f));
-   for (i = 1; i < geometry->vertexCount; ++i) {
+
+   for (int i = 1; i < geometry->vertexCount; ++i) {
       glhckMaxV3(max, &internal[i].vertex);
       glhckMinV3(min, &internal[i].vertex);
    }
@@ -396,16 +397,15 @@ static void _glhckGeometryConvertV2B(const glhckImportVertexData *import, int me
 {
    const float srange = UCHAR_MAX - 1.0f;
    const float brange = CHAR_MAX / srange;
-   int i;
-   glhckVector3f vmin, vmax;
-   glhckVertexData2b *internal;
    CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
-   internal = out;
 
+   glhckVertexData2b *internal = out;
+
+   glhckVector3f vmin, vmax;
    _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
 
    /* center geometry */
-   for (i = 0; i < memb; ++i) {
+   for (int i = -1; i < memb; ++i) {
       internal[i].vertex.x = floorf(((import[i].vertex.x - vmin.x) / (vmax.x - vmin.x)) * UCHAR_MAX - CHAR_MAX + 0.5f);
       internal[i].vertex.y = floorf(((import[i].vertex.y - vmin.y) / (vmax.y - vmin.y)) * UCHAR_MAX - CHAR_MAX + 0.5f);
       internal[i].normal.x = import[i].normal.x * SHRT_MAX;
@@ -430,16 +430,15 @@ static void _glhckGeometryConvertV3B(const glhckImportVertexData *import, int me
 {
    const float srange = UCHAR_MAX - 1.0f;
    const float brange = CHAR_MAX / srange;
-   int i;
-   glhckVector3f vmin, vmax;
-   glhckVertexData3b *internal;
    CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
-   internal = out;
 
+   glhckVertexData3b *internal = out;
+
+   glhckVector3f vmin, vmax;
    _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
 
    /* center geometry */
-   for (i = 0; i < memb; ++i) {
+   for (int i = 0; i < memb; ++i) {
       internal[i].vertex.x = floorf(((import[i].vertex.x - vmin.x) / (vmax.x - vmin.x)) * UCHAR_MAX - CHAR_MAX + 0.5f);
       internal[i].vertex.y = floorf(((import[i].vertex.y - vmin.y) / (vmax.y - vmin.y)) * UCHAR_MAX - CHAR_MAX + 0.5f);
       internal[i].vertex.z = floorf(((import[i].vertex.z - vmin.z) / (vmax.z - vmin.z)) * UCHAR_MAX - CHAR_MAX + 0.5f);
@@ -465,16 +464,15 @@ static void _glhckGeometryConvertV2S(const glhckImportVertexData *import, int me
 {
    const float srange = USHRT_MAX - 1.0f;
    const float brange = SHRT_MAX / srange;
-   int i;
-   glhckVector3f vmin, vmax;
-   glhckVertexData2s *internal;
    CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
-   internal = out;
 
+   glhckVertexData2s *internal = out;
+
+   glhckVector3f vmin, vmax;
    _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
 
    /* center geometry */
-   for (i = 0; i < memb; ++i) {
+   for (int i = 0; i < memb; ++i) {
       internal[i].vertex.x = floorf(((import[i].vertex.x - vmin.x) / (vmax.x - vmin.x)) * USHRT_MAX - SHRT_MAX + 0.5f);
       internal[i].vertex.y = floorf(((import[i].vertex.y - vmin.y) / (vmax.y - vmin.y)) * USHRT_MAX - SHRT_MAX + 0.5f);
       internal[i].normal.x = import[i].normal.x * SHRT_MAX;
@@ -499,16 +497,15 @@ static void _glhckGeometryConvertV3S(const glhckImportVertexData *import, int me
 {
    const float srange = USHRT_MAX - 1.0f;
    const float brange = SHRT_MAX / srange;
-   int i;
-   glhckVector3f vmin, vmax;
-   glhckVertexData3s *internal;
    CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
-   internal = out;
 
+   glhckVertexData3s *internal = out;
+
+   glhckVector3f vmin, vmax;
    _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
 
    /* center geometry */
-   for (i = 0; i < memb; ++i) {
+   for (int i = 0; i < memb; ++i) {
       internal[i].vertex.x = floorf(((import[i].vertex.x - vmin.x) / (vmax.x - vmin.x)) * USHRT_MAX - SHRT_MAX + 0.5f);
       internal[i].vertex.y = floorf(((import[i].vertex.y - vmin.y) / (vmax.y - vmin.y)) * USHRT_MAX - SHRT_MAX + 0.5f);
       internal[i].vertex.z = floorf(((import[i].vertex.z - vmin.z) / (vmax.z - vmin.z)) * USHRT_MAX - SHRT_MAX + 0.5f);
@@ -532,16 +529,15 @@ static void _glhckGeometryConvertV3S(const glhckImportVertexData *import, int me
 /* \brief convert import vertex data to V2F */
 static void _glhckGeometryConvertV2F(const glhckImportVertexData *import, int memb, void *out, glhckVector3f *bias, glhckVector3f *scale)
 {
-   int i;
-   glhckVector3f vmin, vmax;
-   glhckVertexData2f *internal;
    CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
-   internal = out;
 
+   glhckVertexData2f *internal = out;
+
+   glhckVector3f vmin, vmax;
    _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
 
    /* center geometry */
-   for (i = 0; i < memb; ++i) {
+   for (int i = 0; i < memb; ++i) {
       memcpy(&internal[i].normal, &import[i].normal, sizeof(glhckVector3f));
       memcpy(&internal[i].coord, &import[i].coord, sizeof(glhckVector2f));
       memcpy(&internal[i].color, &import[i].color, sizeof(glhckColorb));
@@ -558,18 +554,17 @@ static void _glhckGeometryConvertV2F(const glhckImportVertexData *import, int me
 /* \brief convert import vertex data to V3F */
 static void _glhckGeometryConvertV3F(const glhckImportVertexData *import, int memb, void *out, glhckVector3f *bias, glhckVector3f *scale)
 {
-   int i;
-   glhckVector3f vmin, vmax;
-   glhckVertexData3f *internal;
    CALL(0, "%p, %d, %p %p, %p", import, memb, out, bias, scale);
    assert(sizeof(glhckImportVertexData) == sizeof(glhckVertexData3f));
-   internal = out;
 
+   glhckVertexData3f *internal = out;
+
+   glhckVector3f vmin, vmax;
    _glhckImportVertexDataMaxMin(import, memb, &vmin, &vmax);
    memcpy(internal, import, memb * sizeof(glhckVertexData3f));
 
    /* center geometry */
-   for (i = 0; i < memb; ++i) {
+   for (int i = 0; i < memb; ++i) {
       internal[i].vertex.x -= 0.5f * (vmax.x - vmin.x) + vmin.x;
       internal[i].vertex.y -= 0.5f * (vmax.y - vmin.y) + vmin.y;
       internal[i].vertex.z -= 0.5f * (vmax.z - vmin.z) + vmin.z;
@@ -584,21 +579,17 @@ static void _glhckGeometryConvertV3F(const glhckImportVertexData *import, int me
 /* \brief convert import index data to IUB */
 static void _glhckGeometryConvertIUB(const glhckImportIndexData *import, int memb, void *out)
 {
-   int i;
-   unsigned char *internal;
    CALL(0, "%p, %d, %p", import, memb, out);
-   internal = out;
-   for (i = 0; i < memb; ++i) internal[i] = import[i];
+   unsigned char *internal = out;
+   for (int i = 0; i < memb; ++i) internal[i] = import[i];
 }
 
 /* \brief convert import index data to IUS */
 static void _glhckGeometryConvertIUS(const glhckImportIndexData *import, int memb, void *out)
 {
-   int i;
-   unsigned short *internal;
    CALL(0, "%p, %d, %p", import, memb, out);
-   internal = out;
-   for (i = 0; i < memb; ++i) internal[i] = import[i];
+   unsigned short *internal = out;
+   for (int i = 0; i < memb; ++i) internal[i] = import[i];
 }
 
 /* \brief convert import index data to IUI */
@@ -615,12 +606,10 @@ if (!api->x) DEBUG(GLHCK_DBG_ERROR, "-!- \1missing geometry API function: %s", _
 /* \brief add new internal vertex type */
 int glhckGeometryAddVertexType(const glhckVertexTypeFunctionMap *api, const glhckDataType dataType[4], char memb[4], size_t offset[4], size_t size)
 {
-   unsigned int i;
-   chckPoolIndex iter;
-   __GLHCKvertexType *vertexType;
    CALL(0, "%p, %p, %zu", dataType, memb, size);
 
-   for (iter = 0; (vertexType = chckPoolIter(GLHCKW()->vertexTypes, &iter));) {
+   __GLHCKvertexType *vertexType;
+   for (chckPoolIndex iter = 0; (vertexType = chckPoolIter(GLHCKW()->vertexTypes, &iter));) {
       if (!memcmp(vertexType->dataType, dataType, 4 * sizeof(glhckDataType)) &&
           !memcmp(vertexType->memb, memb, 4)) {
          DEBUG(GLHCK_DBG_WARNING, "This vertexType already exists!");
@@ -636,7 +625,7 @@ int glhckGeometryAddVertexType(const glhckVertexTypeFunctionMap *api, const glhc
    if (!(vertexType = chckPoolAdd(GLHCKW()->vertexTypes, NULL, NULL)))
       goto fail;
 
-   for (i = 0; i < 4; ++i) _glhckDataTypeAttributes(dataType[i], &vertexType->msize[i], &vertexType->max[i], &vertexType->normalized[i]);
+   for (unsigned int i = 0; i < 4; ++i) _glhckDataTypeAttributes(dataType[i], &vertexType->msize[i], &vertexType->max[i], &vertexType->normalized[i]);
    vertexType->normalized[0] = 0; /* vertices are never normalized */
    memcpy(&vertexType->api, api, sizeof(glhckVertexTypeFunctionMap));
    memcpy(vertexType->offset, offset, 4 * sizeof(size_t));
@@ -644,8 +633,8 @@ int glhckGeometryAddVertexType(const glhckVertexTypeFunctionMap *api, const glhc
    memcpy(vertexType->memb, memb, 4);
    vertexType->size = size;
 
-   i = chckPoolCount(GLHCKW()->vertexTypes) - 1;
-   RET(0, "%u", i);
+   int i = chckPoolCount(GLHCKW()->vertexTypes) - 1;
+   RET(0, "%d", i);
    return i;
 
 fail:
@@ -656,14 +645,12 @@ fail:
 /* \brief add new internal index type */
 int glhckGeometryAddIndexType(const glhckIndexTypeFunctionMap *api, glhckDataType dataType)
 {
-   unsigned int i;
-   chckPoolIndex iter;
-   __GLHCKindexType *indexType;
    CALL(0, "%d", dataType);
 
    GLHCK_API_CHECK(convert);
 
-   for (iter = 0; (indexType = chckPoolIter(GLHCKW()->indexTypes, &iter));) {
+   __GLHCKindexType *indexType;
+   for (chckPoolIndex iter = 0; (indexType = chckPoolIter(GLHCKW()->indexTypes, &iter));) {
       if (indexType->dataType == dataType) {
          DEBUG(GLHCK_DBG_WARNING, "This indexType already exists!");
          RET(0, "%zu", iter - 1);
@@ -678,8 +665,8 @@ int glhckGeometryAddIndexType(const glhckIndexTypeFunctionMap *api, glhckDataTyp
    memcpy(&indexType->api, api, sizeof(glhckIndexTypeFunctionMap));
    indexType->dataType = dataType;
 
-   i =  chckPoolCount(GLHCKW()->indexTypes) - 1;
-   RET(0, "%u", i);
+   int i =  chckPoolCount(GLHCKW()->indexTypes) - 1;
+   RET(0, "%d", i);
    return i;
 
 fail:
@@ -858,8 +845,8 @@ void _glhckGeometryTerminate(void)
 static void _glhckGeometryFreeVertices(glhckGeometry *object)
 {
    IFDO(_glhckFree, object->vertices);
-   object->vertexType   = GLHCK_VTX_AUTO;
-   object->vertexCount  = 0;
+   object->vertexType = GLHCK_VTX_AUTO;
+   object->vertexCount = 0;
    object->textureRange = 1;
 }
 
@@ -867,9 +854,9 @@ static void _glhckGeometryFreeVertices(glhckGeometry *object)
 static void _glhckGeometrySetVertices(glhckGeometry *object, unsigned char type, void *data, int memb)
 {
    _glhckGeometryFreeVertices(object);
-   object->vertices     = data;
-   object->vertexType   = type;
-   object->vertexCount  = memb;
+   object->vertices = data;
+   object->vertexType = type;
+   object->vertexCount = memb;
    object->textureRange = GLHCKVT(type)->max[2];
 }
 
@@ -878,7 +865,7 @@ static void _glhckGeometryFreeIndices(glhckGeometry *object)
 {
    /* set index type to none */
    IFDO(_glhckFree, object->indices);
-   object->indexType  = GLHCK_IDX_AUTO;
+   object->indexType = GLHCK_IDX_AUTO;
    object->indexCount = 0;
 }
 
@@ -886,8 +873,8 @@ static void _glhckGeometryFreeIndices(glhckGeometry *object)
 static void _glhckGeometrySetIndices(glhckGeometry *object, unsigned char type, void *data, int memb)
 {
    _glhckGeometryFreeIndices(object);
-   object->indices    = data;
-   object->indexType  = type;
+   object->indices = data;
+   object->indexType = type;
    object->indexCount = memb;
 }
 
@@ -902,8 +889,7 @@ int _glhckGeometryInsertVertices(glhckGeometry *object, int memb, unsigned char 
    type = _glhckGeometryCheckVertexType(type);
 
    /* check vertex precision conflicts */
-   if (object->indexType != GLHCK_IDX_AUTO &&
-      (glhckImportIndexData)memb > GLHCKIT(object->indexType)->max)
+   if (object->indexType != GLHCK_IDX_AUTO && (glhckImportIndexData)memb > GLHCKIT(object->indexType)->max)
       goto bad_precision;
 
    /* allocate vertex data */
@@ -925,6 +911,7 @@ bad_precision:
                           GLHCKIT(object->indexType)->max,
                           object);
 fail:
+   IFDO(_glhckFree, data);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
@@ -960,6 +947,7 @@ bad_precision:
                           GLHCKIT(type)->max,
                           object);
 fail:
+   IFDO(_glhckFree, data);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
@@ -968,7 +956,6 @@ fail:
 glhckGeometry* _glhckGeometryNew(void)
 {
    glhckGeometry *object;
-
    if (!(object = _glhckCalloc(1, sizeof(glhckGeometry))))
       return NULL;
 
@@ -980,14 +967,18 @@ glhckGeometry* _glhckGeometryNew(void)
 /* \brief copy geometry object */
 glhckGeometry* _glhckGeometryCopy(glhckGeometry *src)
 {
-   glhckGeometry *object;
    assert(src);
 
+   glhckGeometry *object;
    if (!(object = _glhckCopy(src, sizeof(glhckGeometry))))
       return NULL;
 
-   if (src->vertices) object->vertices =_glhckCopy(src->vertices, src->vertexCount * GLHCKVT(object->vertexType)->size);
-   if (src->indices) object->indices = _glhckCopy(src->indices, src->indexCount * GLHCKIT(object->indexType)->size);
+   if (src->vertices)
+      object->vertices =_glhckCopy(src->vertices, src->vertexCount * GLHCKVT(object->vertexType)->size);
+
+   if (src->indices)
+      object->indices = _glhckCopy(src->indices, src->indexCount * GLHCKIT(object->indexType)->size);
+
    return object;
 }
 
@@ -1015,7 +1006,7 @@ GLHCKAPI void glhckGeometryCalculateBB(glhckGeometry *object, kmAABB *aabb)
 /* \brief assign indices to object */
 GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *object, unsigned char type, const void *data, int memb)
 {
-   void *idata;
+   void *idata = NULL;
    CALL(0, "%p, %u, %p, %d", object, type, data, memb);
    assert(object);
 
@@ -1033,6 +1024,7 @@ GLHCKAPI int glhckGeometryInsertIndices(glhckGeometry *object, unsigned char typ
    return RETURN_OK;
 
 fail:
+   IFDO(_glhckFree, idata);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
@@ -1040,7 +1032,7 @@ fail:
 /* \brief assign vertices to object */
 GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *object, unsigned char type, const void *data, int memb)
 {
-   void *vdata;
+   void *vdata = NULL;
    CALL(0, "%p, %u, %p, %d", object, type, data, memb);
    assert(object);
 
@@ -1058,6 +1050,7 @@ GLHCKAPI int glhckGeometryInsertVertices(glhckGeometry *object, unsigned char ty
    return RETURN_OK;
 
 fail:
+   IFDO(_glhckFree, vdata);
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }

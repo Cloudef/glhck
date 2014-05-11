@@ -12,7 +12,7 @@
 /* \brief read BMP header */
 int _readBMPHeader(FILE *f, int *w, int *h, unsigned short *bpp, size_t *dataSize)
 {
-   chckBuffer *buf;
+   chckBuffer *buf = NULL;
    static const size_t headerSize = 2 + 16 + sizeof(int32_t) + sizeof(int32_t) + sizeof(uint16_t) + sizeof(uint16_t);
    assert(f && w && h && bpp && dataSize);
 
@@ -50,16 +50,16 @@ fail:
 /* \brief check if file is BMP */
 int _glhckFormatBMP(const char *file)
 {
-   FILE *f;
-   int w, h;
-   unsigned short bpp;
-   size_t dataSize;
+   FILE *f = NULL;
    CALL(0, "%s", file);
 
    /* open BMP */
    if (!(f = fopen(file, "rb")))
       goto read_fail;
 
+   int w, h;
+   unsigned short bpp;
+   size_t dataSize;
    if (_readBMPHeader(f, &w, &h, &bpp, &dataSize) != RETURN_OK)
       goto fail;
 
@@ -86,10 +86,7 @@ fail:
 /* \brief import BMP images */
 int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
 {
-   FILE *f;
-   size_t dataSize, i;
-   int w, h;
-   unsigned short bpp;
+   FILE *f = NULL;
    unsigned char *importData = NULL;
    CALL(0, "%s, %p", file, import);
 
@@ -97,6 +94,9 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
    if (!(f = fopen(file, "rb")))
       goto read_fail;
 
+   int w, h;
+   size_t dataSize;
+   unsigned short bpp;
    if (_readBMPHeader(f, &w, &h, &bpp, &dataSize) != RETURN_OK)
       goto fail;
 
@@ -116,7 +116,7 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
       goto not_possible;
 
    /* read 24 bpp BMP data */
-   for (i = 0; i < dataSize; i+=3) {
+   for (unsigned int i = 0; i < dataSize; i+=3) {
       unsigned char bgr[] = { importData[i+0], importData[i+1], importData[i+2] };
       importData[i+0] = bgr[2];
       importData[i+1] = bgr[1];
@@ -126,11 +126,11 @@ int _glhckImportBMP(const char *file, _glhckImportImageStruct *import)
    /* close file */
    NULLDO(fclose, f);
 
-   import->width  = w;
+   import->width = w;
    import->height = h;
-   import->data   = importData;
+   import->data = importData;
    import->format = GLHCK_RGB;
-   import->type   = GLHCK_UNSIGNED_BYTE;
+   import->type = GLHCK_UNSIGNED_BYTE;
    RET(0, "%d", RETURN_OK);
    return RETURN_OK;
 

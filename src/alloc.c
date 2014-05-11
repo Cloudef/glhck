@@ -15,8 +15,6 @@
 /* \brief add new data to tracking */
 static void trackAlloc(const char *channel, void *ptr, size_t size)
 {
-   __GLHCKalloc *data;
-
    /* real alloc failed */
    if (!ptr)
       return;
@@ -28,6 +26,7 @@ static void trackAlloc(const char *channel, void *ptr, size_t size)
    }
 
    /* track */
+   __GLHCKalloc *data;
    if (!(data = chckIterPoolAdd(glhckContextGet()->allocs, NULL, NULL)))
       return;
 
@@ -40,10 +39,8 @@ static void trackAlloc(const char *channel, void *ptr, size_t size)
 /* \brief internal realloc hook */
 static void trackRealloc(const char *channel, const void *ptr, void *ptr2, size_t size)
 {
-   chckPoolIndex iter;
    __GLHCKalloc *data;
-
-   for (iter = 0; (data = chckIterPoolIter(glhckContextGet()->allocs, &iter)) && data->ptr != ptr;);
+   for (chckPoolIndex iter = 0; (data = chckIterPoolIter(glhckContextGet()->allocs, &iter)) && data->ptr != ptr;);
 
    if (!data)
       return trackAlloc(channel, ptr2, size);
@@ -55,9 +52,8 @@ static void trackRealloc(const char *channel, const void *ptr, void *ptr2, size_
 /* \brief internal free hook */
 static void trackFree(const void *ptr)
 {
-   chckPoolIndex iter;
    __GLHCKalloc *data;
-
+   chckPoolIndex iter;
    for (iter = 0; (data = chckIterPoolIter(glhckContextGet()->allocs, &iter)) && data->ptr != ptr;);
 
    if (data)
@@ -80,10 +76,8 @@ void __glhckTrackFake(const char *channel, void *ptr, size_t size)
 void __glhckTrackSteal(const char *channel, void *ptr)
 {
 #ifndef NDEBUG
-   chckPoolIndex iter;
    __GLHCKalloc *data;
-
-   for (iter = 0; (data = chckIterPoolIter(glhckContextGet()->allocs, &iter)) && data->ptr != ptr;);
+   for (chckPoolIndex iter = 0; (data = chckIterPoolIter(glhckContextGet()->allocs, &iter)) && data->ptr != ptr;);
 
    if (data)
       data->channel = channel;
@@ -106,9 +100,9 @@ void _glhckTrackTerminate(void)
  * \brief internal malloc function. */
 void* __glhckMalloc(const char *channel, size_t size)
 {
-   void *ptr;
    CALL(3, "%s, %zu", channel, size);
 
+   void *ptr;
    if (!(ptr = malloc(size)))
       goto fail;
 
@@ -128,9 +122,9 @@ fail:
 /* \brief internal calloc function. */
 void* __glhckCalloc(const char *channel, size_t nmemb, size_t size)
 {
-   void *ptr;
    CALL(3, "%s, %zu, %zu", channel, nmemb, size);
 
+   void *ptr;
    if (!(ptr = calloc(nmemb, size)))
       goto fail;
 
@@ -150,9 +144,9 @@ fail:
 /* \brief internal strdup function. */
 char* __glhckStrdup(const char *channel, const char *s)
 {
-   char *s2;
    CALL(3, "%s, %s", channel, s);
 
+   char *s2;
    if (!(s2 = _glhckStrdupNoTrack(s)))
       goto fail;
 
@@ -172,10 +166,10 @@ fail:
 /* \brief internal memcpy function. */
 void* __glhckCopy(const char *channel, const void *ptr, size_t nmemb)
 {
-   void *ptr2;
    CALL(3, "%p, %zu", ptr, nmemb);
    assert(ptr);
 
+   void *ptr2;
    if (!(ptr2 = __glhckMalloc(channel, nmemb)))
       goto fail;
 
@@ -191,9 +185,9 @@ fail:
 /* \brief internal realloc function. */
 void* __glhckRealloc(const char *channel, void *ptr, size_t omemb, size_t nmemb, size_t size)
 {
-   void *ptr2;
    CALL(3, "%p, %zu, %zu, %zu", ptr, omemb, nmemb, size);
 
+   void *ptr2;
    if (!(ptr2 = realloc(ptr, nmemb * size))) {
       if (!(ptr2 = malloc(nmemb * size)))
          goto fail;
@@ -240,24 +234,21 @@ GLHCKAPI void glhckMemoryGraph(void)
 {
    TRACE(0);
 #if !defined(NDEBUG) && !GLHCK_DISABLE_TRACE
-   __GLHCKalloc *data;
-   __GLHCKtraceChannel *trace;
-   unsigned int i;
-   chckPoolIndex iter, allocChannel, allocTotal;
-   trace = GLHCKT()->channel;
 
    puts("");
    puts("--- Memory Graph ---");
 
-   allocTotal = 0;
-   for (i = 0; trace[i].name; ++i) {
-      allocChannel = 0;
+   size_t allocTotal = 0;
+   __GLHCKtraceChannel *trace = GLHCKT()->channel;
+   for (unsigned int i = 0; trace[i].name; ++i) {
+      size_t allocChannel = 0;
 
       if (!glhckContextGet()->allocs)
          break;
 
       if (trace[i].name) {
-         for (iter = 0; (data = chckIterPoolIter(glhckContextGet()->allocs, &iter));) {
+         __GLHCKalloc *data;
+         for (chckPoolIndex iter = 0; (data = chckIterPoolIter(glhckContextGet()->allocs, &iter));) {
             if (!strcmp(data->channel, trace[i].name))
                allocChannel += data->size;
          }
@@ -278,16 +269,16 @@ GLHCKAPI void glhckMemoryGraph(void)
 
       printf("%-13s : ", trace[i].name?trace[i].name:"Total");
 
-      if (allocChannel / 1048576 != 0)
+      if (allocChannel / 1048576 != 0) {
          printf("%-4.2f MiB\n", (float)allocChannel / 1048576);
-      else if (allocChannel / 1024 != 0)
+      } else if (allocChannel / 1024 != 0) {
          printf("%-4.2f KiB\n", (float)allocChannel / 1024);
-      else
+      } else {
          printf("%-4zu B\n", allocChannel);
+      }
 
       /* reset color */
       _glhckNormal();
-
       allocTotal += allocChannel;
    }
 

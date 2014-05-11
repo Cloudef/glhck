@@ -112,8 +112,8 @@ GLHCKAPI unsigned int glhckSkinBoneFree(glhckSkinBone *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief set pointer to real bone from skinned bone */
@@ -144,10 +144,10 @@ GLHCKAPI const char* glhckSkinBoneGetName(glhckSkinBone *object)
 /* \brief set weights to skin bone */
 GLHCKAPI int glhckSkinBoneInsertWeights(glhckSkinBone *object, const glhckVertexWeight *weights, unsigned int memb)
 {
-   chckIterPool *pool = NULL;
    CALL(0, "%p, %p, %u", object, weights, memb);
    assert(object);
 
+   chckIterPool *pool = NULL;
    if (weights && memb > 0 && !(pool = chckIterPoolNewFromCArray(weights, memb, 32, sizeof(glhckVertexWeight))))
       goto fail;
 

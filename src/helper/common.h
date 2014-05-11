@@ -3,8 +3,8 @@
 
 /* call prioritory for free calls on reference counted objects.
  * use these on CALL() and RET(), function calls on reference counted object's free function. */
-#define FREE_CALL_PRIO(o) (o?o->refCounter==1?0:3:0)
-#define FREE_RET_PRIO(o)  (o?3:0)
+#define FREE_CALL_PRIO(o) (o ? o->refCounter==1 ? 0 : 3 : 0)
+#define FREE_RET_PRIO(o) (o ? 3 : 0)
 
 /* if exists then perform function and set NULL
  * used mainly to shorten if (x) free(x); x = NULL; */
@@ -30,8 +30,7 @@
 /*** image macros ***/
 
 #define IMAGE_DIMENSIONS_OK(w, h) \
-   (((w) > 0) && ((h) > 0) &&     \
-    ((unsigned long long)(w) * (unsigned long long)(h) <= (1ULL << 29) - 1))
+   (((w) > 0) && ((h) > 0) && ((unsigned long long)(w) * (unsigned long long)(h) <= (1ULL << 29) - 1))
 
 /*** vector macros ***/
 

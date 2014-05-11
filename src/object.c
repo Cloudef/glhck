@@ -8,12 +8,12 @@
 /* update target from rotation */
 static void _glhckObjectUpdateTargetFromRotation(glhckObject *object)
 {
-   kmVec3 rotToDir;
-   const kmVec3 forwards = { 0, 0, 1 };
    CALL(2, "%p", object);
    assert(object);
 
    /* update target */
+   kmVec3 rotToDir;
+   const kmVec3 forwards = { 0, 0, 1 };
    kmVec3RotationToDirection(&rotToDir, &object->view.rotation, &forwards);
    kmVec3Add(&object->view.target, &object->view.translation, &rotToDir);
 }
@@ -21,11 +21,11 @@ static void _glhckObjectUpdateTargetFromRotation(glhckObject *object)
 /* update rotation from target */
 static void _glhckObjectUpdateRotationFromTarget(glhckObject *object)
 {
-   kmVec3 toTarget;
    CALL(2, "%p", object);
    assert(object);
 
    /* update rotation */
+   kmVec3 toTarget;
    kmVec3Subtract(&toTarget, &object->view.target, &object->view.translation);
    kmVec3GetHorizontalAngle(&object->view.rotation, &toTarget);
 }
@@ -42,8 +42,7 @@ static void _glhckObjectStubDraw(const glhckObject *object)
 /* \brief build translation matrix for object */
 static void _glhckObjectBuildTranslation(glhckObject *object, kmMat4 *translation)
 {
-   kmVec3 bias;
-   bias.x = bias.y = bias.z = 0.0f;
+   kmVec3 bias  = { 0, 0, 0 };
 
    if (object->geometry) {
       bias.x = object->geometry->bias.x;
@@ -62,8 +61,6 @@ static void _glhckObjectBuildTranslation(glhckObject *object, kmMat4 *translatio
 static void _glhckObjectBuildRotation(glhckObject *object, kmMat4 *rotation)
 {
    kmMat4 tmp;
-
-   /* rotation */
    kmMat4RotationAxisAngle(rotation, &(kmVec3){0,0,1},
          kmDegreesToRadians(object->view.rotation.z));
    kmMat4RotationAxisAngle(&tmp, &(kmVec3){0,1,0},
@@ -77,8 +74,7 @@ static void _glhckObjectBuildRotation(glhckObject *object, kmMat4 *rotation)
 /* \brief build scaling matrix for object */
 static void _glhckObjectBuildScaling(glhckObject *object, kmMat4 *scaling)
 {
-   kmVec3 scale;
-   scale.x = scale.y = scale.z = 1.0f;
+   kmVec3 scale = { 1.0f, 1.0f, 1.0f };
 
    if (object->geometry) {
       scale.x = object->geometry->scale.x;
@@ -96,11 +92,8 @@ static void _glhckObjectBuildScaling(glhckObject *object, kmMat4 *scaling)
 /* \brief build parent affection matrix for object */
 static void _glhckObjectBuildParent(glhckObject *object, kmMat4 *parentMatrix)
 {
-   glhckObject *parent, *child;
-
    kmMat4Identity(parentMatrix);
-   for (parent = object->parent, child = object; parent;
-        parent = parent->parent, child = child->parent) {
+   for (glhckObject *parent = object->parent, *child = object; parent; parent = parent->parent, child = child->parent) {
       kmMat4 matrix, tmp;
       kmMat4Identity(&matrix);
 
@@ -195,13 +188,12 @@ void _glhckObjectUpdateBoxes(glhckObject *object)
 
    /* update full aabb && obb */
    if (object->childs && chckArrayCount(object->childs)) {
-      glhckObject *child;
-      const kmAABB *caabb, *cobb;
       kmAABB *aabb = &object->view.aabbFull, *obb = &object->view.obbFull;
 
+      glhckObject *child;
       for (chckPoolIndex iter = 0; (child = chckArrayIter(object->childs, &iter));) {
-         caabb = glhckObjectGetAABBWithChildren(child);
-         cobb = glhckObjectGetOBBWithChildren(child);
+         const kmAABB *caabb = glhckObjectGetAABBWithChildren(child);
+         const kmAABB *cobb = glhckObjectGetOBBWithChildren(child);
          glhckMinV3(&aabb->min, &caabb->min);
          glhckMaxV3(&aabb->max, &caabb->max);
          glhckMinV3(&obb->min, &cobb->min);
@@ -405,8 +397,8 @@ GLHCKAPI unsigned int glhckObjectFree(glhckObject *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief is object treated as root? */
@@ -423,8 +415,7 @@ GLHCKAPI void glhckObjectMakeRoot(glhckObject *object, int root)
 {
    CALL(2, "%p", object);
    assert(object);
-   if (root) object->flags |= GLHCK_OBJECT_ROOT;
-   else object->flags &= ~GLHCK_OBJECT_ROOT;
+   object->flags = (root ? object->flags | GLHCK_OBJECT_ROOT : object->flags & ~GLHCK_OBJECT_ROOT);
 }
 
 /* \brief get object's affection flags */
@@ -564,8 +555,9 @@ GLHCKAPI void glhckObjectMaterial(glhckObject *object, glhckMaterial *material)
 {
    CALL(2, "%p, %p", object, material);
    assert(object);
+
    IFDO(glhckMaterialFree, object->material);
-   object->material = (material?glhckMaterialRef(material):NULL);
+   object->material = (material ? glhckMaterialRef(material) : NULL);
 
    /* sanity warning */
    if (material && material->texture && object->geometry && object->geometry->textureRange > 1) {
@@ -615,12 +607,11 @@ GLHCKAPI void glhckObjectDraw(glhckObject *object)
 /* \brief render object */
 GLHCKAPI void glhckObjectRender(glhckObject *object)
 {
-   glhckObject *parent;
    CALL(2, "%p", object);
    assert(object);
 
    /* does parents view matrices need updating? */
-   for (parent = object->parent; parent; parent = parent->parent) {
+   for (glhckObject *parent = object->parent; parent; parent = parent->parent) {
       if (parent->view.update || parent->view.wasFlipped != GLHCKRD()->view.flippedProjection) {
          _glhckObjectUpdateMatrix(parent);
          parent->view.wasFlipped = GLHCKRD()->view.flippedProjection;
@@ -655,8 +646,8 @@ GLHCKAPI void glhckObjectVertexColors(glhckObject *object, int vertexColors)
 {
    CALL(2, "%p, %d", object, vertexColors);
    assert(object);
-   if (vertexColors) object->flags |= GLHCK_OBJECT_VERTEX_COLOR;
-   else object->flags &= ~GLHCK_OBJECT_VERTEX_COLOR;
+
+   object->flags = (vertexColors ? object->flags | GLHCK_OBJECT_VERTEX_COLOR : object->flags & ~GLHCK_OBJECT_VERTEX_COLOR);
 
    /* perform on childs as well */
    if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
@@ -677,8 +668,8 @@ GLHCKAPI void glhckObjectCull(glhckObject *object, int cull)
 {
    CALL(2, "%p, %d", object, cull);
    assert(object);
-   if (cull) object->flags |= GLHCK_OBJECT_CULL;
-   else object->flags &= ~GLHCK_OBJECT_CULL;
+
+   object->flags = (cull ? object->flags | GLHCK_OBJECT_CULL : object->flags & ~GLHCK_OBJECT_CULL);
 
    /* perform on childs as well */
    if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
@@ -699,8 +690,8 @@ GLHCKAPI void glhckObjectDepth(glhckObject *object, int depth)
 {
    CALL(2, "%p, %d", object, depth);
    assert(object);
-   if (depth) object->flags |= GLHCK_OBJECT_DEPTH;
-   else object->flags &= ~GLHCK_OBJECT_DEPTH;
+
+   object->flags = (depth ? object->flags | GLHCK_OBJECT_DEPTH : object->flags & ~GLHCK_OBJECT_DEPTH);
 
    /* perform on childs as well */
    if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
@@ -721,8 +712,8 @@ GLHCKAPI void glhckObjectDrawAABB(glhckObject *object, int drawAABB)
 {
    CALL(2, "%p, %d", object, drawAABB);
    assert(object);
-   if (drawAABB) object->flags |= GLHCK_OBJECT_DRAW_AABB;
-   else object->flags &= ~GLHCK_OBJECT_DRAW_AABB;
+
+   object->flags = (drawAABB ? object->flags | GLHCK_OBJECT_DRAW_AABB : object->flags & ~GLHCK_OBJECT_DRAW_AABB);
 
    /* perform on childs as well */
    if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
@@ -743,8 +734,8 @@ GLHCKAPI void glhckObjectDrawOBB(glhckObject *object, int drawOBB)
 {
    CALL(2, "%p, %d", object, drawOBB);
    assert(object);
-   if (drawOBB) object->flags |= GLHCK_OBJECT_DRAW_OBB;
-   else object->flags &= ~GLHCK_OBJECT_DRAW_OBB;
+
+   object->flags = (drawOBB ? object->flags | GLHCK_OBJECT_DRAW_OBB : object->flags & ~GLHCK_OBJECT_DRAW_OBB);
 
    /* perform on childs as well */
    if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
@@ -765,8 +756,8 @@ GLHCKAPI void glhckObjectDrawSkeleton(glhckObject *object, int drawSkeleton)
 {
    CALL(2, "%p, %d", object, drawSkeleton);
    assert(object);
-   if (drawSkeleton) object->flags |= GLHCK_OBJECT_DRAW_SKELETON;
-   else object->flags &= ~GLHCK_OBJECT_DRAW_SKELETON;
+
+   object->flags = (drawSkeleton ? object->flags | GLHCK_OBJECT_DRAW_SKELETON : object->flags & ~GLHCK_OBJECT_DRAW_SKELETON);
 
    /* perform on childs as well */
    if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
@@ -787,8 +778,8 @@ GLHCKAPI void glhckObjectDrawWireframe(glhckObject *object, int drawWireframe)
 {
    CALL(2, "%p, %d", object, drawWireframe);
    assert(object);
-   if (drawWireframe) object->flags |= GLHCK_OBJECT_DRAW_WIREFRAME;
-   else object->flags &= ~GLHCK_OBJECT_DRAW_WIREFRAME;
+
+   object->flags = (drawWireframe ? object->flags | GLHCK_OBJECT_DRAW_WIREFRAME : object->flags & ~GLHCK_OBJECT_DRAW_WIREFRAME);
 
    /* perform on childs as well */
    if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
@@ -811,7 +802,8 @@ GLHCKAPI const kmAABB* glhckObjectGetOBBWithChildren(glhckObject *object)
    assert(object);
 
    /* update matrix first, if needed */
-   if (object->view.update) _glhckObjectUpdateMatrix(object);
+   if (object->view.update)
+      _glhckObjectUpdateMatrix(object);
 
    RET(2, "%p", &object->view.obbFull);
    return &object->view.obbFull;
@@ -828,7 +820,8 @@ GLHCKAPI const kmAABB* glhckObjectGetOBB(glhckObject *object)
       return glhckObjectGetOBBWithChildren(object);
 
    /* update matrix first, if needed */
-   if (object->view.update) _glhckObjectUpdateMatrix(object);
+   if (object->view.update)
+      _glhckObjectUpdateMatrix(object);
 
    RET(1, "%p", &object->view.obb);
    return &object->view.obb;
@@ -841,7 +834,8 @@ GLHCKAPI const kmAABB* glhckObjectGetAABBWithChildren(glhckObject *object)
    assert(object);
 
    /* update matrix first, if needed */
-   if (object->view.update) _glhckObjectUpdateMatrix(object);
+   if (object->view.update)
+      _glhckObjectUpdateMatrix(object);
 
    RET(2, "%p", &object->view.aabbFull);
    return &object->view.aabbFull;
@@ -858,7 +852,8 @@ GLHCKAPI const kmAABB* glhckObjectGetAABB(glhckObject *object)
       return glhckObjectGetAABBWithChildren(object);
 
    /* update matrix first, if needed */
-   if (object->view.update) _glhckObjectUpdateMatrix(object);
+   if (object->view.update)
+      _glhckObjectUpdateMatrix(object);
 
    RET(2, "%p", &object->view.aabb);
    return &object->view.aabb;
@@ -1336,6 +1331,7 @@ GLHCKAPI int glhckObjectPickTextureCoordinatesWithRay(const glhckObject *object,
    kmRay3 r;
    kmVec3Transform(&r.start, &ray->start, &inverseView);
    kmVec3Transform(&r.dir, &ray->dir, &inverseView);
+
    kmVec3 origin = {0, 0, 0};
    kmVec3Transform(&origin, &origin, &inverseView);
    kmVec3Subtract(&r.dir, &r.dir, &origin);
@@ -1344,10 +1340,10 @@ GLHCKAPI int glhckObjectPickTextureCoordinatesWithRay(const glhckObject *object,
    int intersectionIndex, intersectionFound = 0;
    kmScalar closestDistanceSq, s, t;
 
-   int i, fix[3];
+   int fix[3];
    int skipCount = (object->geometry->type == GLHCK_TRIANGLES ? 3 : 1);
    glhckVertexData3f *vertices = (glhckVertexData3f*) object->geometry->vertices;
-   for (i = 0; i + 2 < object->geometry->vertexCount; i += skipCount) {
+   for (int i = 0; i + 2 < object->geometry->vertexCount; i += skipCount) {
       int ix[3] = {0, 1, 2};
       if (skipCount == 1 && (i % 2)) {
          ix[0] = 1;

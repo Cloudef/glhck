@@ -11,7 +11,7 @@
 /* \brief check if file is a MikuMikuDance PMD file */
 int _glhckFormatPMD(const char *file)
 {
-   FILE *f;
+   FILE *f = NULL;
    mmd_data *mmd = NULL;
    CALL(0, "%s", file);
 
@@ -41,16 +41,13 @@ fail:
 int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportModelParameters *params,
       unsigned char itype, unsigned char vtype)
 {
-   FILE *f;
-   char *texturePath;
+   FILE *f = NULL;
    mmd_data *mmd = NULL;
    glhckAtlas *atlas = NULL;
    glhckMaterial *material = NULL;
    glhckTexture *texture = NULL, **textureList = NULL;
    glhckImportVertexData *vertexData = NULL;
    glhckImportIndexData *indices = NULL, *stripIndices = NULL;
-   unsigned int geometryType = GLHCK_TRIANGLE_STRIP;
-   unsigned int i, i2, ix, start, numFaces, numIndices = 0;
    CALL(0, "%p, %s, %p", object, file, params);
 
    if (!(f = fopen(file, "rb")))
@@ -74,9 +71,9 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
    /* close file */
    NULLDO(fclose, f);
 
-   if (mmd->header.name) {
+   if (mmd->header.name)
       DEBUG(GLHCK_DBG_CRAP, "%s\n", mmd->header.name);
-   }
+
    if (mmd->header.comment) printf("%s\n\n", mmd->header.comment);
 
    if (!(vertexData = _glhckCalloc(mmd->num_vertices, sizeof(glhckImportVertexData))))
@@ -92,9 +89,11 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
       goto mmd_no_memory;
 
    /* add all textures to atlas packer */
-   for (i = 0; i < mmd->num_materials; ++i) {
-      if (!mmd->materials[i].texture) continue;
+   for (unsigned int i = 0; i < mmd->num_materials; ++i) {
+      if (!mmd->materials[i].texture)
+         continue;
 
+      char *texturePath;
       if (!(texturePath = _glhckImportTexturePath(mmd->materials[i].texture, file)))
          continue;
 
@@ -107,8 +106,9 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
       _glhckFree(texturePath);
    }
 
-   for (i = 0; i < mmd->num_materials && !textureList[i]; ++i);
-   if (i >= mmd->num_materials) {
+   unsigned int c;
+   for (c = 0; c < mmd->num_materials && !textureList[c]; ++c);
+   if (c >= mmd->num_materials) {
       /* no textures found */
       NULLDO(glhckAtlasFree, atlas);
       NULLDO(_glhckFree, textureList);
@@ -119,10 +119,11 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
    }
 
    /* assign data */
-   for (i = 0, start = 0; i < mmd->num_materials; ++i, start += numFaces) {
-      numFaces = mmd->materials[i].face;
-      for (i2 = start; i2 < start + numFaces; ++i2) {
-         ix = mmd->indices[i2];
+   unsigned int numFaces = 0;
+   for (unsigned int i = 0, start = 0; i < mmd->num_materials; ++i, start += numFaces) {
+      unsigned int numFaces = mmd->materials[i].face;
+      for (unsigned int i2 = start; i2 < start + numFaces; ++i2) {
+         unsigned int ix = mmd->indices[i2];
 
          /* vertices */
          vertexData[ix].vertex.x = mmd->vertices[ix*3+0];
@@ -169,12 +170,15 @@ int _glhckImportPMD(_glhckObject *object, const char *file, const glhckImportMod
    }
 
    /* triangle strip geometry */
+   unsigned int geometryType = GLHCK_TRIANGLE_STRIP, numIndices = 0;
    if (!(stripIndices = _glhckTriStrip(indices, mmd->num_indices, &numIndices))) {
       /* failed, use non stripped geometry */
-      geometryType   = GLHCK_TRIANGLES;
-      numIndices    = mmd->num_indices;
-      stripIndices  = indices;
-   } else NULLDO(_glhckFree, indices);
+      geometryType = GLHCK_TRIANGLES;
+      numIndices = mmd->num_indices;
+      stripIndices = indices;
+   } else {
+      NULLDO(_glhckFree, indices);
+   }
 
    /* set geometry */
    glhckObjectInsertIndices(object, itype, stripIndices, numIndices);

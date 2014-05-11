@@ -187,8 +187,6 @@ GLHCKAPI void glhckContextSet(glhckContext *ctx)
 /* \brief initialize */
 GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
 {
-   glhckContext *ctx, *oldCtx;
-
 #ifndef _GLHCK_TLS_FOUND
    fprintf(stderr, "-!- Thread-local storage support in compiler was not detected.\n");
    fprintf(stderr, "-!- Using multiple glhck contextes in different threads may cause unexpected behaviour.\n");
@@ -196,11 +194,12 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
 #endif
 
    /* allocate glhck context */
+   glhckContext *ctx;
    if (!(ctx = calloc(1, sizeof(glhckContext))))
       return NULL;
 
    /* swap current context until init done */
-   oldCtx = glhckContextGet();
+   glhckContext *oldCtx = glhckContextGet();
    glhckContextSet(ctx);
 
    /* enable color by default */
@@ -233,14 +232,18 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
    GLHCKRD()->textures = chckArrayNew(32, 32);
 
    /* switch back to old context, if there was one */
-   if (oldCtx) glhckContextSet(oldCtx);
+   if (oldCtx)
+      glhckContextSet(oldCtx);
+
    return ctx;
 }
 
 /* \brief destroys the current glhck context */
 GLHCKAPI void glhckContextTerminate(void)
 {
-   if (!glhckInitialized()) return;
+   if (!glhckInitialized())
+      return;
+
    TRACE(0);
 
    /* destroy queues */
@@ -277,11 +280,14 @@ GLHCKAPI void glhckContextTerminate(void)
 GLHCKAPI void glhckLogColor(char color)
 {
    GLHCK_INITIALIZED();
+
 #if EMSCRIPTEN
    color = 0;
 #endif
+
    if (color != GLHCKM()->coloredLog && !color)
       _glhckNormal();
+
    GLHCKM()->coloredLog = color;
 }
 
@@ -295,19 +301,24 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
       goto fail;
 
    /* close display if created already */
-   if (GLHCKR()->type == renderType && renderType != GLHCK_RENDER_AUTO) goto success;
-   else glhckDisplayClose();
+   if (GLHCKR()->type == renderType && renderType != GLHCK_RENDER_AUTO) {
+      goto success;
+   } else {
+      glhckDisplayClose();
+   }
 
    /* init renderer */
    switch (renderType) {
       case GLHCK_RENDER_AUTO:
 #ifdef GLHCK_HAS_OPENGL
          _glhckRenderOpenGL();
-         if (_glhckRenderInitialized()) break;
+         if (_glhckRenderInitialized())
+            break;
 #endif
 #ifdef GLHCK_HAS_OPENGL_FIXED_PIPELINE
          _glhckRenderOpenGLFixedPipeline();
-         if (_glhckRenderInitialized()) break;
+         if (_glhckRenderInitialized())
+            break;
 #endif
          _glhckRenderStub();
          break;
@@ -335,7 +346,8 @@ GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderTyp
    }
 
    /* check that initialization was success */
-   if (!_glhckRenderInitialized()) goto fail;
+   if (!_glhckRenderInitialized())
+      goto fail;
 
    /* check render api and output warnings,
     * if any function is missing */
@@ -368,7 +380,10 @@ GLHCKAPI void glhckDisplayClose(void)
 {
    GLHCK_INITIALIZED();
    TRACE(0);
-   if (!_glhckRenderInitialized()) return;
+
+   if (!_glhckRenderInitialized())
+      return;
+
    memset(&GLHCKR()->features, 0, sizeof(glhckRenderFeatures));
    GLHCKRA()->terminate();
    GLHCKR()->type = GLHCK_RENDER_AUTO;

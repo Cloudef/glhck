@@ -7,10 +7,10 @@
 GLHCKAPI glhckRenderbuffer* glhckRenderbufferNew(int width, int height, glhckTextureFormat format)
 {
    glhckRenderbuffer *object = NULL;
-   unsigned int obj;
    TRACE(0);
 
    /* generate renderbuffer */
+   unsigned int obj;
    GLHCKRA()->renderbufferGenerate(1, &obj);
    if (!obj)
       goto fail;
@@ -74,8 +74,8 @@ GLHCKAPI unsigned int glhckRenderbufferFree(glhckRenderbuffer *object)
    NULLDO(_glhckFree, object);
 
 success:
-   RET(FREE_RET_PRIO(object), "%u", object?object->refCounter:0);
-   return object?object->refCounter:0;
+   RET(FREE_RET_PRIO(object), "%u", (object ? object->refCounter : 0));
+   return (object ? object->refCounter : 0);
 }
 
 /* \brief bind/unbind renderbuffer */
@@ -85,3 +85,4 @@ GLHCKAPI void glhckRenderbufferBind(glhckRenderbuffer *object)
    GLHCKRA()->renderbufferBind((object?object->object:0));
 }
 
+/* vim: set ts=8 sw=3 tw=0 :*/
