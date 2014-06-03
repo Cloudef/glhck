@@ -1,15 +1,17 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(glhck)
 SET(GLHCK_NAME "GLhck")
-SET(GLHCK_DESCRIPTION "A dead simple OpenGL(ES) framework")
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${glhck_SOURCE_DIR}/CMake/modules)
+SET(GLHCK_DESCRIPTION "Entity manager and rendering engine framework")
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${glhck_SOURCE_DIR}/CMake)
+
+# Includes
+INCLUDE(CTest)
+INCLUDE(subproject)
 
 # OpenPandora hacks
 IF (PANDORA)
    MESSAGE("Building GLhck with Pandora support")
    ADD_DEFINITIONS(-DPANDORA)
-   SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
-   SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
 ENDIF ()
 
 # Emscripten build
@@ -18,43 +20,18 @@ IF (EMSCRIPTEN)
    MESSAGE("NOTE: For examples you need glfw3 emulation in Emscripten.")
    MESSAGE("      This is not yet pushed to upstream so, query for more details about this.")
    ADD_DEFINITIONS(-DEMSCRIPTEN)
-   SET(GLHCK_IMPORT_BMP OFF CACHE BOOL "Emscripten uses its own image importer")
-   SET(GLHCK_IMPORT_PNG OFF CACHE BOOL "Emscripten uses its own image importer")
-   SET(GLHCK_IMPORT_TGA OFF CACHE BOOL "Emscripten uses its own image importer")
-   SET(GLHCK_IMPORT_JPEG OFF CACHE BOOL "Emscripten uses its own image importer")
-   SET(GLHCK_USE_GLES1 ON CACHE BOOL "Build for OpenGL ES 1.x")
-   SET(GLHCK_USE_GLES2 OFF CACHE BOOL "Don't build for OpenGL ES 2.x")
 ENDIF ()
 
 # General build options
+OPTION(GLHCK_BUILD_TESTS "Build tests" ON)
 OPTION(GLHCK_BUILD_EXAMPLES "Build examples" ON)
 OPTION(GLHCK_BUILD_TOOLS "Build tools" OFF)
-OPTION(GLHCK_USE_GLES1 "Build for OpenGL ES 1.x" OFF)
-OPTION(GLHCK_USE_GLES2 "Build for OpenGL ES 2.x" OFF)
-OPTION(GLHCK_TRISTRIP "Build GLhck with ACTC triangle stripping support" OFF)
-OPTION(GLHCK_KAZMATH_DOUBLE "Define kmScalar as double (UNSUPPORTED)" OFF)
+OPTION(GLHCK_TRISTRIP "Build GLhck with ACTC triangle stripping support (BUGS)" OFF)
 OPTION(GLHCK_DISABLE_TRACE "Disable GLhck's tracing functionality (EXPERIMENTAL)" OFF)
-
-# Build importers dynamically?
-# FIXME: Not implemented
-OPTION(GLHCK_IMPORT_DYNAMIC "Build importers dynamically" OFF)
+OPTION(GLHCK_FLOAT_TEXT "Use floating point vertex data for text" OFF)
 
 # Model importers
-OPTION(GLHCK_IMPORT_ASSIMP "Enable assimp importer" OFF)
-OPTION(GLHCK_IMPORT_OPENCTM "Enable OpenCTM importer" OFF)
 OPTION(GLHCK_IMPORT_MMD "Enable MikuMikuDance importer" OFF)
-
-# Image importers
-OPTION(GLHCK_IMPORT_BMP "Enable BMP importer" ON)
-OPTION(GLHCK_IMPORT_PNG "Enable PNG importer" ON)
-OPTION(GLHCK_IMPORT_TGA "Enable TGA importer" ON)
-OPTION(GLHCK_IMPORT_JPEG "Enable JPEG importer" ON)
-
-# Use double-precision floating point math on kazmath and glhck
-IF (GLHCK_KAZMATH_DOUBLE)
-   MESSAGE("Building GLhck with double precision")
-   ADD_DEFINITIONS(-DUSE_DOUBLE_PRECISION=1)
-ENDIF ()
 
 # Disable tracing functionality
 IF (GLHCK_DISABLE_TRACE)
@@ -62,46 +39,31 @@ IF (GLHCK_DISABLE_TRACE)
    ADD_DEFINITIONS(-DGLHCK_DISABLE_TRACE=1)
 ENDIF ()
 
-# Other unimplemented features
-# -DGLHCK_IMPORT_DYNAMIC
-# -DGLHCK_TEXT_FLOAT_PRECISION
-
-# These are propably temporary
-# In the end make renderers load this stuff dynamically(?)
-
-IF (EMSCRIPTEN)
-   # no-op
-ELSEIF (GLHCK_USE_GLES1)
-   # GLES 1.x
-   MESSAGE("Building GLhck for GLES 1.x")
-   FIND_PACKAGE(EGL REQUIRED)
-   LIST(APPEND GLHCK_INCL ${EGL_INCLUDE_DIR})
-   LIST(APPEND GLHCK_LINK ${EGL_LIBRARY})
-   FIND_PACKAGE(GLESv1 REQUIRED)
-   LIST(APPEND GLHCK_INCL ${GLESv1_INCLUDE_DIR})
-   LIST(APPEND GLHCK_LINK ${GLESv1_LIBRARY})
-ELSEIF (GLHCK_USE_GLES2)
-   # GLES 2.x
-   MESSAGE(FATAL_ERROR "GLES 2.x support not yet implemented")
-   FIND_PACKAGE(EGL REQUIRED)
-   LIST(APPEND GLHCK_INCL ${EGL_INCLUDE_DIR})
-   LIST(APPEND GLHCK_LINK ${EGL_LIBRARY})
-   FIND_PACKAGE(GLESv2 REQUIRED)
-   LIST(APPEND GLHCK_INCL ${GLESv2_INCLUDE_DIR})
-   LIST(APPEND GLHCK_LINK ${GLESv2_LIBRARY})
-ELSE ()
-   # OPENGL
-   MESSAGE("Building GLhck for OpenGL")
-   FIND_PACKAGE(OpenGL REQUIRED)
-   LIST(APPEND GLHCK_INCL ${OPENGL_INCLUDE_DIR})
-   LIST(APPEND GLHCK_LINK ${OPENGL_gl_LIBRARY})
+# Use floating point text
+IF (GLHCK_FLOAT_TEXT)
+   MESSAGE("Building GLhck with floating point text precision")
+   ADD_DEFINITIONS(-DGLHCK_TEXT_FLOAT_PRECISION=1)
 ENDIF ()
 
+# Math library is needed
 FIND_LIBRARY(MATH_LIBRARY m)
 MARK_AS_ADVANCED(MATH_LIBRARY)
 IF (MATH_LIBRARY)
-   LIST(APPEND GLHCK_LIBRARIES ${MATH_LIBRARY})
+   LIST(APPEND GLHCK_LINK ${MATH_LIBRARY})
+ELSE ()
+   MESSAGE(FATAL_ERROR "Math library was not found")
 ENDIF ()
+
+# Unix dynamic links
+IF (UNIX)
+   FIND_LIBRARY(DL_LIBRARY dl)
+   MARK_AS_ADVANCED(DL_LIBRARY)
+   IF (DL_LIBRARY)
+      LIST(APPEND GLHCK_LINK ${DL_LIBRARY})
+   ELSE ()
+      MESSAGE(FATAL_ERROR "On unix systems dl library is needed")
+   ENDIF ()
+ENDIF (UNIX)
 
 # Export GLHCK library dependencies
 SET(GLHCK_LIBRARIES ${GLHCK_LINK} CACHE STRING "Dependencies of GLHCK")
@@ -110,10 +72,6 @@ SET(GLHCK_LIBRARIES ${GLHCK_LINK} CACHE STRING "Dependencies of GLHCK")
 # Abort git submodule init && git submodule update has not been ran.
 SET(SUBMODULE_ERROR "Run 'git submodule update --init --recursive' update first.")
 IF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/kazmath/src/.git)
-   SET(SUBMODULE_ERROR_THROW 1)
-ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glfw/src/.git AND NOT EMSCRIPTEN)
-   SET(SUBMODULE_ERROR_THROW 1)
-ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/glew-glhck/src/.git AND NOT EMSCRIPTEN)
    SET(SUBMODULE_ERROR_THROW 1)
 ELSEIF (NOT EXISTS ${glhck_SOURCE_DIR}/lib/chck/src/.git)
    SET(SUBMODULE_ERROR_THROW 1)
@@ -151,23 +109,11 @@ ENDIF ()
 # Build glhck
 ADD_SUBDIRECTORY(src)
 
-# Build tools etc
+# Build 3rdparty tools
 ADD_SUBDIRECTORY(3rdparty)
 
-# Build examples
-IF (GLHCK_BUILD_EXAMPLES)
-   MESSAGE("Building GLhck with examples")
-   ADD_SUBDIRECTORY(example)
-ENDIF ()
+# Build binaries
+ADD_SUBDIRECTORY(bin)
 
-#
-# FIXME: add real tests
-#
-
-# Install
+# Install header
 FILE(COPY include/glhck/glhck.h DESTINATION include/glhck)
-
-# Copy media?
-IF (GLHCK_BUILD_EXAMPLES)
-   FILE(COPY example/media DESTINATION ./example)
-ENDIF ()

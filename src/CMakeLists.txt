@@ -1,59 +1,36 @@
 SET(GLHCK_SRC
-   glhck.c
-   alloc.c
-   trace.c
-   util.c
-   geometry.c
-   object.c
-   text.c
-   frustum.c
-   camera.c
-   material.c
-   texture.c
-   atlas.c
-   light.c
-   renderbuffer.c
-   framebuffer.c
-   hwbuffer.c
-   shader.c
-   texture_packer.c
-   collision.c
-   kazmath.c
    geometry/cube.c
-   geometry/sphere.c
    geometry/plane.c
+   geometry/sphere.c
    geometry/model.c
-   skeletal/bone.c
-   skeletal/skinbone.c
-   skeletal/animation.c
-   skeletal/animator.c
-   render/render.c
-   render/helper_stub.c
-   render/stub.c
-   import/import.c
-   import/import_glhck.c)
-
-IF (GLHCK_USE_GLES1)
-   MESSAGE("Building GLhck with the OpenGL fixed pipeline renderer")
-   ADD_DEFINITIONS(-DGLHCK_USE_GLES1)
-   ADD_DEFINITIONS(-DGLHCK_HAS_OPENGL_FIXED_PIPELINE)
-   LIST(APPEND GLHCK_SRC render/helper_opengl.c)
-   LIST(APPEND GLHCK_SRC render/opengl_fixpipe.c)
-ELSEIF (GLHCK_USE_GLES2)
-   MESSAGE("Building GLhck with the OpenGL renderer")
-   ADD_DEFINITIONS(-DGLHCK_USE_GLES2)
-   ADD_DEFINITIONS(-DGLHCK_HAS_OPENGL)
-   LIST(APPEND GLHCK_SRC render/helper_opengl.c)
-   LIST(APPEND GLHCK_SRC render/opengl.c)
-ELSE ()
-   MESSAGE("Building GLhck with the OpenGL renderer")
-   MESSAGE("Building GLhck with the OpenGL fixed pipeline renderer")
-   ADD_DEFINITIONS(-DGLHCK_HAS_OPENGL)
-   ADD_DEFINITIONS(-DGLHCK_HAS_OPENGL_FIXED_PIPELINE)
-   LIST(APPEND GLHCK_SRC render/helper_opengl.c)
-   LIST(APPEND GLHCK_SRC render/opengl.c)
-   LIST(APPEND GLHCK_SRC render/opengl_fixpipe.c)
-ENDIF ()
+   glhck.c
+   handle.c
+   importers/import.c
+   importers/importer.c
+   renderers/render.c
+   renderers/renderer.c
+   trace.c
+   types/atlas.c
+   types/camera.c
+   types/framebuffer.c
+   types/frustum.c
+   types/geometry.c
+   types/hwbuffer.c
+   types/list.c
+   types/material.c
+   types/object.c
+   types/renderbuffer.c
+   types/shader.c
+   types/skeletal/animation.c
+   types/skeletal/animator.c
+   types/skeletal/bone.c
+   types/skeletal/node.c
+   types/skeletal/skinbone.c
+   types/string.c
+   types/text/text.c
+   types/texture.c
+   types/view.c
+)
 
 # Use ACTC for triangle stripping
 IF (GLHCK_TRISTRIP)
@@ -63,63 +40,11 @@ IF (GLHCK_TRISTRIP)
    ADD_DEFINITIONS(-DGLHCK_TRISTRIP=1)
 ENDIF ()
 
-# Setup importers
-IF (GLHCK_IMPORT_OPENCTM)
-   MESSAGE("Building GLhck with OpenCTM support")
-   ADD_DEFINITIONS(-DGLHCK_IMPORT_OPENCTM)
-   LIST(APPEND GLHCK_SRC import/import_octm.c)
-   LIST(APPEND OPT_LIBS openctm)
-   LIST(APPEND OPT_INCL ${OpenCTM_SOURCE_DIR}/src/lib)
-ENDIF ()
-IF (GLHCK_IMPORT_MMD)
-   MESSAGE("Building GLhck with MikuMikuDance support")
-   ADD_DEFINITIONS(-DGLHCK_IMPORT_MMD)
-   LIST(APPEND GLHCK_SRC import/import_mmd.c)
-   LIST(APPEND OPT_LIBS mmd)
-   LIST(APPEND OPT_INCL ${mmd_SOURCE_DIR})
-ENDIF ()
-IF (GLHCK_IMPORT_ASSIMP)
-   MESSAGE("Building GLhck with Assimp support")
-   ADD_DEFINITIONS(-DGLHCK_IMPORT_ASSIMP)
-   LIST(APPEND GLHCK_SRC import/import_assimp.c)
-   LIST(APPEND OPT_LIBS assimp)
-   LIST(APPEND OPT_INCL ${Assimp_SOURCE_DIR}/include)
-ENDIF ()
-
-IF (GLHCK_IMPORT_PNG)
-   MESSAGE("Building GLhck with PNG support")
-   FIND_PACKAGE(PNG REQUIRED)
-   FIND_PACKAGE(ZLIB REQUIRED)
-   ADD_DEFINITIONS(-DGLHCK_IMPORT_PNG)
-   LIST(APPEND GLHCK_SRC import/import_png.c)
-   LIST(APPEND OPT_LIBS ${PNG_LIBRARY} ${ZLIB_LIBRARIES})
-   LIST(APPEND OPT_INCL ${PNG_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
-ENDIF ()
-IF (GLHCK_IMPORT_JPEG)
-   MESSAGE("Building GLhck with JPEG support")
-   FIND_PACKAGE(JPEG REQUIRED)
-   ADD_DEFINITIONS(-DGLHCK_IMPORT_JPEG)
-   LIST(APPEND GLHCK_SRC import/import_jpeg.c)
-   LIST(APPEND OPT_LIBS ${JPEG_LIBRARY})
-   LIST(APPEND OPT_INCL ${JPEG_INCLUDE_DIR})
-ENDIF ()
-IF (GLHCK_IMPORT_TGA)
-   MESSAGE("Building GLhck with TGA support")
-   ADD_DEFINITIONS(-DGLHCK_IMPORT_TGA)
-   LIST(APPEND GLHCK_SRC import/import_tga.c)
-ENDIF ()
-IF (GLHCK_IMPORT_BMP)
-   MESSAGE("Building GLhck with BMP support")
-   ADD_DEFINITIONS(-DGLHCK_IMPORT_BMP)
-   LIST(APPEND GLHCK_SRC import/import_bmp.c)
-ENDIF ()
-
 # include directories
 INCLUDE_DIRECTORIES(
    ${glhck_SOURCE_DIR}/include
-   ${glew-glhck_SOURCE_DIR}/include
+   ${glhck_SOURCE_DIR}/src
    ${kazmath_SOURCE_DIR}/src
-   ${GLSW_SOURCE_DIR}/src
    ${chckGlhck_SOURCE_DIR}/src
    ${texhck_SOURCE_DIR}
    ${GLHCK_INCL}
@@ -133,7 +58,16 @@ IF (UNIX AND (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX))
    ENDIF ()
 ENDIF ()
 
-ADD_DEFINITIONS(-std=c99 -DGLEW_STATIC)
+ADD_DEFINITIONS(-std=c99)
+
+# compile renderers
+ADD_SUBDIRECTORY(renderers)
+
+# compile importers
+ADD_SUBDIRECTORY(importers)
+
+# compile glhck
 ADD_LIBRARY(glhck ${GLHCK_SRC})
-TARGET_LINK_LIBRARIES(glhck chckGlhck texhck kazmath glsw glew ${GLHCK_LINK} ${OPT_LIBS} ${MATH_LIBRARY})
+SET_TARGET_PROPERTIES(glhck PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${glhck_BINARY_DIR})
+TARGET_LINK_LIBRARIES(glhck chckGlhck texhck kazmath ${GLHCK_LINK} ${OPT_LIBS})
 INSTALL(TARGETS glhck DESTINATION lib)

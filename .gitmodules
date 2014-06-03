@@ -1,26 +1,17 @@
-[submodule "lib/glfw/src"]
-	path = lib/glfw/src
-        url = git://github.com/glfw/glfw.git
-        ignore = dirty
 [submodule "lib/kazmath/src"]
 	path = lib/kazmath/src
         url = git://github.com/Cloudef/kazmath.git
         ignore = dirty
-[submodule "lib/openctm/src"]
-	path = lib/openctm/src
-	url = git://github.com/Danny02/OpenCTM.git
-[submodule "lib/glew-glhck/src"]
-	path = lib/glew-glhck/src
-	url = git://github.com/Cloudef/glew-glhck.git
-[submodule "lib/assimp/src"]
-	path = lib/assimp/src
-	url = git://github.com/assimp/assimp.git
-[submodule "lib/mmd/src"]
-	path = lib/mmd/src
-	url = git://github.com/Cloudef/libmmd.git
 [submodule "lib/texhck/src"]
 	path = lib/texhck/src
 	url = git://github.com/Cloudef/texhck.git
 [submodule "lib/chck/src"]
 	path = lib/chck/src
 	url = git://github.com/Cloudef/chck.git
+[submodule "bin/lib/glfw/src"]
+	path = lib/glfw/src
+        url = git://github.com/glfw/glfw.git
+        ignore = dirty
+[submodule "src/importers/model/mmd/mmd"]
+	path = src/importers/model/mmd/mmd/src
+	url = git://github.com/Cloudef/libmmd.git

@@ -1,45 +1,62 @@
-#include "../internal.h"
-#include "../import/import.h"
+#include <glhck/glhck.h>
+#include <glhck/import.h>
+
+#include <stdlib.h>
+
+#include "trace.h"
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
 
 /* \brief create new object from supported model files */
-GLHCKAPI glhckObject* glhckModelNew(const char *file, kmScalar size, const glhckImportModelParameters *importParams)
+GLHCKAPI glhckHandle glhckModelNew(const char *file, const kmScalar size, const glhckPostProcessModelParameters *postParams)
 {
-   unsigned char itype, vtype;
-   glhckGetGlobalPrecision(&itype, &vtype);
-   return glhckModelNewEx(file, size, importParams, itype, vtype);
+   glhckIndexType itype = GLHCK_IDX_AUTO;
+   glhckVertexType vtype = GLHCK_VTX_AUTO;
+   // glhckGetGlobalPrecision(&itype, &vtype);
+   return glhckModelNewEx(file, size, postParams, itype, vtype);
 }
 
-/* \brief create new object from supported model files
- * you can specify the index and vertex precision here */
-GLHCKAPI glhckObject* glhckModelNewEx(const char *file, kmScalar size, const glhckImportModelParameters *importParams, unsigned char itype, unsigned char vtype)
+/* \brief create new object from supported model files you can specify the index and vertex precision here */
+GLHCKAPI glhckHandle glhckModelNewEx(const char *file, const kmScalar size, const glhckPostProcessModelParameters *postParams, const glhckIndexType itype, const glhckVertexType vtype)
 {
-   glhckObject *object = NULL;
-   CALL(0, "%s, %f, %p, %u, %u", file, size, importParams, itype, vtype);
+   CALL(0, "%s, %f, %p, %u, %u", file, size, postParams, itype, vtype);
 
-   /* create new object */
-   if (!(object = glhckObjectNew()))
+   glhckHandle handle = 0, current = 0;
+   glhckImportModelStruct *import = NULL;
+   if (!(import = glhckImportModelFile(file)))
       goto fail;
 
-   /* import model */
-   if (_glhckImportModel(object, file, importParams, itype, vtype) != RETURN_OK)
-      goto fail;
+   for (size_t i = 0; i < import->meshCount; ++i) {
+      if (!(current = glhckObjectNew()))
+         goto fail;
 
-   /* scale the object */
-   glhckObjectScalef(object, size, size, size);
+      glhckObjectInsertVertices(current, vtype, import->meshes[i].vertexData, import->meshes[i].vertexCount);
+      glhckObjectInsertIndices(current, itype, import->meshes[i].indexData, import->meshes[i].indexCount);
 
-   /* set object's filename */
-   _glhckObjectFile(object, file);
+      const glhckHandle geometry = glhckObjectGetGeometry(current);
+      glhckGeometry *data = glhckGeometryGetStruct(geometry);
+      data->type = import->meshes[i].geometryType;
 
-   RET(0, "%p", object);
-   return object;
+      glhckObjectScalef(current, size, size, size);
+
+      if (!handle) {
+         handle = current;
+         current = 0;
+      } else {
+         glhckObjectAddChild(handle, current);
+      }
+   }
+
+   RET(0, "%s", glhckHandleRepr(handle));
+   return handle;
 
 fail:
-   IFDO(glhckObjectFree, object);
-   RET(0, "%p", NULL);
-   return NULL;
+   IFDO(glhckHandleRelease, handle);
+   IFDO(glhckHandleRelease, current);
+   IFDO(free, import);
+   RET(0, "%s", glhckHandleRepr(0));
+   return 0;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

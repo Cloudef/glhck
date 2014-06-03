@@ -1,21 +1,21 @@
-#include "internal.h"
-#include "render/render.h"
+#include <glhck/glhck.h>
+
+#include <stdio.h>  /* for snprintf */
+#include <string.h> /* for memset */
 #include <stdlib.h> /* for abort */
-#include <stdio.h>  /* for sprintf */
 #include <assert.h> /* for assert */
 #include <signal.h> /* for signal */
 #include <unistd.h> /* for fork   */
 
-#if defined(__linux__) && defined(__GNUC__)
-#  define _GNU_SOURCE
-#  include <fenv.h>
-int feenableexcept(int excepts);
-#endif
+#include "trace.h"
 
-#if (defined(__APPLE__) && (defined(__i386__) || defined(__x86_64__)))
-#  define OSX_SSE_FPE
-#  include <xmmintrin.h>
-#endif
+#include "renderers/renderer.h"
+#include "renderers/render.h"
+
+#include "importers/importer.h"
+
+#include "system/tls.h"
+#include "system/fpe.h"
 
 #if defined(__linux__) || defined(__APPLE__)
 #  include <sys/types.h>
@@ -33,16 +33,14 @@ int feenableexcept(int excepts);
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GLHCK
 
-/* thread-local storage glhck context, allows in theory to use opengl on different threads.
- * (as long as each thread has own gl context as well) */
-static _GLHCK_TLS struct __GLHCKcontext *_glhckContext = NULL;
+static int initialized = 0;
 
 /* dirty debug build stuff */
 #ifndef NDEBUG
 
 /* floating point exception handler */
 #if defined(__linux__) || defined(_WIN32) || defined(OSX_SSE_FPE)
-static void _glhckFpeHandler(int signal)
+static void fpehandler(int signal)
 {
    (void)signal;
    _glhckPuts("\n\4SIGFPE \1signal received!");
@@ -54,12 +52,12 @@ static void _glhckFpeHandler(int signal)
 
 /* set floating point exception stuff
  * this stuff is from blender project. */
-static void _glhckSetupFPE(void)
+static void setupFPE(void)
 {
 #if defined(__linux__) || defined(_WIN32) || defined(OSX_SSE_FPE)
    /* zealous but makes float issues a heck of a lot easier to find!
     * set breakpoints on fpe_handler */
-   signal(SIGFPE, _glhckFpeHandler);
+   signal(SIGFPE, fpehandler);
 
 #  if defined(__linux__) && defined(__GNUC__)
    feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
@@ -68,8 +66,7 @@ static void _glhckSetupFPE(void)
    return; /* causes issues */
    /* OSX uses SSE for floating point by default, so here
     * use SSE instructions to throw floating point exceptions */
-   _MM_SET_EXCEPTION_MASK(_MM_MASK_MASK & ~
-         (_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO));
+   _MM_SET_EXCEPTION_MASK(_MM_MASK_MASK & ~(_MM_MASK_OVERFLOW | _MM_MASK_INVALID | _MM_MASK_DIV_ZERO));
 #  endif /* OSX_SSE_FPE */
 #  if defined(_WIN32) && defined(_MSC_VER)
    _controlfp_s(NULL, 0, _MCW_EM); /* enables all fp exceptions */
@@ -79,7 +76,7 @@ static void _glhckSetupFPE(void)
 }
 
 /* \brief backtrace handler of glhck */
-static void _glhckBacktrace(int signal)
+static void backtrace(int signal)
 {
    (void)signal;
 
@@ -98,7 +95,7 @@ static void _glhckBacktrace(int signal)
       _glhckPuts("\1fork failed for gdb backtrace.");
    } else if (child_pid == 0) {
       /* sed -n '/bar/h;/bar/!H;$!b;x;p' (another way, if problems) */
-      printf("\n---- gdb ----\n");
+      _glhckPuts("\n---- gdb ----");
       snprintf(buf, sizeof(buf)-1, "gdb -p %d -batch -ex bt 2>/dev/null | sed -n '/<signal handler/{n;x;b};H;${x;p}'", dying_pid);
       const char* argv[] = { "sh", "-c", buf, NULL };
       execve("/bin/sh", (char**)argv, NULL);
@@ -114,35 +111,13 @@ static void _glhckBacktrace(int signal)
 }
 
 /* set backtrace stuff */
-static void _glhckSetBacktrace(void)
+static void setupBacktrace(void)
 {
-   signal(SIGABRT, _glhckBacktrace);
-   signal(SIGSEGV, _glhckBacktrace);
+   signal(SIGABRT, backtrace);
+   signal(SIGSEGV, backtrace);
 }
 
 #endif /* NDEBUG */
-
-void _glhckWorldAdd(chckArray **pArray, void *object)
-{
-   assert(pArray && object);
-
-   if (!*pArray)
-      *pArray = chckArrayNew(32, 32);
-
-   chckArrayAdd(*pArray, object);
-}
-
-void _glhckWorldRemove(chckArray **pArray, void *object)
-{
-   assert(pArray && object);
-
-   chckArrayRemove(*pArray, object);
-
-   if (chckArrayCount(*pArray) <= 0) {
-      chckArrayFree(*pArray);
-      *pArray = NULL;
-   }
-}
 
 /***
  * public api
@@ -153,39 +128,16 @@ GLHCKAPI void glhckGetCompileFeatures(glhckCompileFeatures *features)
 {
    assert(features);
    memset(features, 0, sizeof(glhckGetCompileFeatures));
-   features->render.opengl = (!GLHCK_USE_GLES1 && !GLHCK_USE_GLES2);
-   features->render.glesv1 = GLHCK_USE_GLES1;
-   features->render.glesv2 = GLHCK_USE_GLES2;
-   features->import.assimp = GLHCK_IMPORT_ASSIMP;
-   features->import.openctm = GLHCK_IMPORT_OPENCTM;
-   features->import.mmd = GLHCK_IMPORT_MMD;
-   features->import.bmp = GLHCK_IMPORT_BMP;
-   features->import.png = GLHCK_IMPORT_PNG;
-   features->import.tga = GLHCK_IMPORT_TGA;
-   features->import.jpeg = GLHCK_IMPORT_JPEG;
-   features->math.useDoublePrecision = USE_DOUBLE_PRECISION;
 }
 
 /* \brief is glhck initialized? */
 GLHCKAPI int glhckInitialized(void)
 {
-   return (_glhckContext ? 1 : 0);
-}
-
-/* \brief get current glhck context */
-GLHCKAPI glhckContext* glhckContextGet(void)
-{
-   return _glhckContext;
-}
-
-/* \brief set new glhck context */
-GLHCKAPI void glhckContextSet(glhckContext *ctx)
-{
-   _glhckContext = ctx;
+   return initialized;
 }
 
 /* \brief initialize */
-GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
+GLHCKAPI int glhckInit(const int argc, char **argv)
 {
 #ifndef _GLHCK_TLS_FOUND
    fprintf(stderr, "-!- Thread-local storage support in compiler was not detected.\n");
@@ -193,182 +145,90 @@ GLHCKAPI glhckContext* glhckContextCreate(int argc, char **argv)
    fprintf(stderr, "-!- If your compiler supports TLS, file a bug report!\n");
 #endif
 
-   /* allocate glhck context */
-   glhckContext *ctx;
-   if (!(ctx = calloc(1, sizeof(glhckContext))))
-      return NULL;
-
-   /* swap current context until init done */
-   glhckContext *oldCtx = glhckContextGet();
-   glhckContextSet(ctx);
-
-   /* enable color by default */
-   glhckLogColor(1);
-
    /* FIXME: change the signal calls in these functions to sigaction's */
 #ifndef NDEBUG
-   /* set FPE handler */
-   _glhckSetupFPE();
-
-   /* setup backtrace handler
-    * make this optional.. */
-   _glhckSetBacktrace();
+   setupBacktrace();
+   setupFPE();
 #endif
 
-#if !GLHCK_DISABLE_TRACE
-   /* init trace system */
-   _glhckTraceInit(argc, (const char**)argv);
-#endif
+   if (_glhckTraceInit(argc, (const char**)argv) != RETURN_OK)
+      goto fail;
 
-   /* setup internal vertex/index types */
+   if (_glhckRendererInit() != RETURN_OK)
+      goto fail;
+
+   if (_glhckImporterInit() != RETURN_OK)
+      goto fail;
+
    _glhckGeometryInit();
 
+#if 0
    /* set default global precision for glhck to use with geometry
     * NOTE: _NONE means that glhck and importers choose the best precision. */
    glhckSetGlobalPrecision(GLHCK_IDX_AUTO, GLHCK_IDX_AUTO);
+#endif
 
-   /* pre-allocate render queues */
-   GLHCKRD()->objects = chckArrayNew(32, 32);
-   GLHCKRD()->textures = chckArrayNew(32, 32);
+   initialized = 1;
+   return RETURN_OK;
 
-   /* switch back to old context, if there was one */
-   if (oldCtx)
-      glhckContextSet(oldCtx);
-
-   return ctx;
+fail:
+   initialized = 0;
+   return RETURN_FAIL;
 }
 
 /* \brief destroys the current glhck context */
-GLHCKAPI void glhckContextTerminate(void)
+GLHCKAPI void glhckTerminate(void)
 {
    if (!glhckInitialized())
       return;
 
    TRACE(0);
 
-   /* destroy queues */
-   chckArrayFree(GLHCKRD()->objects);
-   chckArrayFree(GLHCKRD()->textures);
-
-   /* destroy world */
-   glhckMassacreWorld();
-
-   /* terminate internal vertex/index types */
    _glhckGeometryTerminate();
 
-   /* close display */
+   _glhckHandleTerminate();
+
    glhckDisplayClose();
 
-   /* terminate allocation tracking */
 #ifndef NDEBUG
    puts("\nExit graph, this should be empty.");
-   glhckMemoryGraph();
-   _glhckTrackTerminate();
+   // glhckMemoryGraph();
 #endif
 
-#if !GLHCK_DISABLE_TRACE
-   /* terminate trace system */
-   _glhckTraceTerminate();
-#endif
-
-   /* finally remove the context */
-   free(_glhckContext);
-   glhckContextSet(NULL);
+   initialized = 0;
 }
 
-/* \brief colored log? */
-GLHCKAPI void glhckLogColor(char color)
+GLHCKAPI int glhckDisplayCreated(void)
 {
-   GLHCK_INITIALIZED();
-
-#if EMSCRIPTEN
-   color = 0;
-#endif
-
-   if (color != GLHCKM()->coloredLog && !color)
-      _glhckNormal();
-
-   GLHCKM()->coloredLog = color;
+   return (initialized && _glhckRendererGetActive() != INVALID_RENDERER);
 }
 
-/* \brief creates virtual display and inits renderer */
-GLHCKAPI int glhckDisplayCreate(int width, int height, glhckRenderType renderType)
+GLHCKAPI int glhckDisplayCreate(const int width, const int height, const size_t renderer)
 {
-   GLHCK_INITIALIZED();
-   CALL(0, "%d, %d, %d", width, height, renderType);
+   CALL(0, "%d, %d, %zu", width, height, renderer);
 
    if (width <= 0 && height <= 0)
       goto fail;
 
-   /* close display if created already */
-   if (GLHCKR()->type == renderType && renderType != GLHCK_RENDER_AUTO) {
-      goto success;
-   } else {
-      glhckDisplayClose();
+   if (_glhckRendererGetActive() == renderer) {
+      RET(0, "%d", RETURN_OK);
+      return RETURN_OK;
    }
 
-   /* init renderer */
-   switch (renderType) {
-      case GLHCK_RENDER_AUTO:
-#ifdef GLHCK_HAS_OPENGL
-         _glhckRenderOpenGL();
-         if (_glhckRenderInitialized())
-            break;
-#endif
-#ifdef GLHCK_HAS_OPENGL_FIXED_PIPELINE
-         _glhckRenderOpenGLFixedPipeline();
-         if (_glhckRenderInitialized())
-            break;
-#endif
-         _glhckRenderStub();
-         break;
+   _glhckRendererDeactivate();
 
-      case GLHCK_RENDER_OPENGL:
-      case GLHCK_RENDER_GLES2:
-#ifdef GLHCK_HAS_OPENGL
-         _glhckRenderOpenGL();
-#else
-         DEBUG(GLHCK_DBG_ERROR, "OpenGL support was not compiled in!");
-#endif
-         break;
-      case GLHCK_RENDER_OPENGL_FIXED_PIPELINE:
-      case GLHCK_RENDER_GLES1:
-#ifdef GLHCK_HAS_OPENGL_FIXED_PIPELINE
-         _glhckRenderOpenGLFixedPipeline();
-#else
-         DEBUG(GLHCK_DBG_ERROR, "OpenGL Fixed Pipeline support was not compiled in!");
-#endif
-         break;
-      case GLHCK_RENDER_STUB:
-      default:
-         _glhckRenderStub();
-         break;
+   int ret = _glhckRendererActivate(renderer);
+
+   if (ret == RETURN_OK) {
+      glhckRenderPass(glhckRenderPassDefaults());
+      glhckRenderCullFace(GLHCK_BACK);
+      glhckRenderFrontFace(GLHCK_CCW);
+      glhckDisplayResize(width, height);
+      glhckRenderViewporti(0, 0, width, height);
    }
 
-   /* check that initialization was success */
-   if (!_glhckRenderInitialized())
-      goto fail;
-
-   /* check render api and output warnings,
-    * if any function is missing */
-   _glhckRenderCheckApi();
-   GLHCKR()->type = renderType;
-
-   /* default render pass bits */
-   glhckRenderPass(glhckRenderPassDefaults());
-
-   /* default cull face */
-   glhckRenderCullFace(GLHCK_BACK);
-
-   /* counter-clockwise are front face by default */
-   glhckRenderFrontFace(GLHCK_CCW);
-
-   /* resize display */
-   glhckDisplayResize(width, height);
-
-success:
-   RET(0, "%d", RETURN_OK);
-   return RETURN_OK;
+   RET(0, "%d", ret);
+   return ret;
 
 fail:
    RET(0, "%d", RETURN_FAIL);
@@ -378,32 +238,26 @@ fail:
 /* \brief close the virutal display */
 GLHCKAPI void glhckDisplayClose(void)
 {
-   GLHCK_INITIALIZED();
    TRACE(0);
 
-   if (!_glhckRenderInitialized())
+   if (!glhckDisplayCreated())
       return;
 
-   memset(&GLHCKR()->features, 0, sizeof(glhckRenderFeatures));
-   GLHCKRA()->terminate();
-   GLHCKR()->type = GLHCK_RENDER_AUTO;
+   _glhckRendererDeactivate();
 }
 
 /* \brief resize virtual display */
 GLHCKAPI void glhckDisplayResize(int width, int height)
 {
-   GLHCK_INITIALIZED();
    CALL(1, "%d, %d", width, height);
    assert(width > 0 && height > 0);
-
-   /* pass resize event to render interface */
    glhckRenderResize(width, height);
 }
 
+#if 0
 /* \brief set global geometry vertexdata precision to glhck */
 GLHCKAPI void glhckSetGlobalPrecision(unsigned char itype, unsigned char vtype)
 {
-   GLHCK_INITIALIZED();
    CALL(0, "%u, %u", itype, vtype);
    GLHCKM()->globalIndexType  = itype;
    GLHCKM()->globalVertexType = vtype;
@@ -417,38 +271,6 @@ GLHCKAPI void glhckGetGlobalPrecision(unsigned char *itype, unsigned char *vtype
    if (itype) *itype = GLHCKM()->globalIndexType;
    if (vtype) *vtype = GLHCKM()->globalVertexType;
 }
-
-/* \brief frees all objects that are handled by glhck */
-GLHCKAPI void glhckMassacreWorld(void)
-{
-   GLHCK_INITIALIZED();
-   TRACE(0);
-
-#define _massacre(list, func) {                                                          \
-   void *c;                                                                              \
-   while (GLHCKW()->list && (c = chckArrayGet(GLHCKW()->list, 0))) { while (func(c)); }  \
-   IFDO(chckArrayFree, GLHCKW()->list);                                                  \
-}
-
-   /* destroy the world */
-   _massacre(atlases, glhckAtlasFree);
-   _massacre(cameras, glhckCameraFree);
-   _massacre(framebuffers, glhckFramebufferFree);
-   _massacre(hwbuffers, glhckHwBufferFree);
-   _massacre(lights, glhckLightFree);
-   _massacre(objects, glhckObjectFree);
-   _massacre(skinBones, glhckSkinBoneFree);
-   _massacre(bones, glhckBoneFree);
-   _massacre(animations, glhckAnimationFree);
-   _massacre(animationNodes, glhckAnimationNodeFree);
-   _massacre(animators, glhckAnimatorFree);
-   _massacre(renderbuffers, glhckRenderbufferFree);
-   _massacre(shaders,  glhckShaderFree);
-   _massacre(texts, glhckTextFree);
-   _massacre(materials, glhckMaterialFree);
-   _massacre(textures, glhckTextureFree);
-
-#undef _massacre
-}
+#endif
 
 /* vim: set ts=8 sw=3 tw=0 :*/

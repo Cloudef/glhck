@@ -1,4 +1,5 @@
-#include "../internal.h"
+#include <glhck/glhck.h>
+#include "trace.h"
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
@@ -7,10 +8,10 @@
 #define LENGTH(X) (sizeof X / sizeof X[0])
 
 /* \brief create new plane object */
-GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height)
+GLHCKAPI glhckHandle glhckPlaneNew(const kmScalar width, const kmScalar height)
 {
-   unsigned char vtype;
-   glhckGetGlobalPrecision(NULL, &vtype);
+   glhckVertexType vtype = GLHCK_VTX_AUTO;
+   // glhckGetGlobalPrecision(NULL, &vtype);
 
    if (vtype == GLHCK_VTX_AUTO)
       vtype = GLHCK_VTX_V2B;
@@ -19,132 +20,122 @@ GLHCKAPI glhckObject* glhckPlaneNew(kmScalar width, kmScalar height)
 }
 
 /* \brief create new plane object (precision specify) */
-GLHCKAPI glhckObject* glhckPlaneNewEx(kmScalar width, kmScalar height, unsigned char itype, unsigned char vtype)
+GLHCKAPI glhckHandle glhckPlaneNewEx(const kmScalar width, const kmScalar height, const glhckIndexType itype, const glhckVertexType vtype)
 {
-   glhckObject *object = NULL;
    CALL(0, "%f, %f, %u, %u", width, height, itype, vtype);
 
    static const glhckImportVertexData vertices[] = {
       {
          {  1,  1,  0 },     /* vertices */
-         {  0,  0, -1 },     /* normals */
+         {  0,  0, -1 },     /* normals  */
          {  1,  1 },         /* uv coord */
-         { 0, 0, 0, 0 }      /* color */
+         0                   /* colors   */
       },{
          { -1,  1,  0 },
          {  0,  0, -1 },
          {  0,  1 },
-         { 0, 0, 0, 0 }
+         0
       },{
          {  1, -1,  0 },
          {  0,  0, -1 },
          {  1,  0 },
-         { 0, 0, 0, 0 }
+         0
       },{
          { -1, -1,  0 },
          {  0,  0, -1 },
          {  0,  0 },
-         { 0, 0, 0, 0 }
+         0
       }
    };
 
-   /* create new object */
-   if (!(object = glhckObjectNew()))
+   glhckHandle handle;
+   if (!(handle = glhckObjectNew()))
       goto fail;
 
-   /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertices(object, vtype, &vertices[0], LENGTH(vertices)) != RETURN_OK)
+   if (glhckObjectInsertVertices(handle, vtype, vertices, LENGTH(vertices)) != RETURN_OK)
       goto fail;
 
-   /* assigning indices would be waste
-    * on the plane geometry */
+   glhckObjectScalef(handle, width * 0.5f, height * 0.5f, 1.0f);
 
-   /* scale the cube */
-   glhckObjectScalef(object, width/2.0f, height/2.0f, 1.0f);
-
-   RET(0, "%p", object);
-   return object;
+   RET(0, "%s", glhckHandleRepr(handle));
+   return handle;
 
 fail:
-   IFDO(glhckObjectFree, object);
-   RET(0, "%p", NULL);
-   return NULL;
+   IFDO(glhckHandleRelease, handle);
+   RET(0, "%s", glhckHandleRepr(handle));
+   return handle;
 }
 
 /* \brief create new sprite */
-GLHCKAPI glhckObject* glhckSpriteNewFromFile(const char *file, kmScalar width, kmScalar height,
-      const glhckImportImageParameters *importParams, const glhckTextureParameters *params)
+GLHCKAPI glhckHandle glhckSpriteNewFromFile(const char *file, const kmScalar width, const kmScalar height, const glhckPostProcessImageParameters *postParams, const glhckTextureParameters *params)
 {
-   glhckTexture *texture = NULL;
-   CALL(0, "%s, %f, %f, %p, %p", file, width, height, importParams, params);
+   CALL(0, "%s, %f, %f, %p, %p", file, width, height, postParams, params);
 
-   /* load texture */
-   if (!(texture = glhckTextureNewFromFile(file, importParams, (params?params:glhckTextureDefaultSpriteParameters()))))
+   glhckHandle texture;
+   if (!(texture = glhckTextureNewFromFile(file, postParams, (params ? params : glhckTextureDefaultSpriteParameters()))))
       goto fail;
 
-   /* create the sprite object with the texture */
-   glhckObject *object = glhckSpriteNew(texture, width, height);
+   glhckHandle sprite = glhckSpriteNew(texture, width, height);
+   glhckHandleRelease(texture);
 
-   /* object owns texture now, free this */
-   glhckTextureFree(texture);
-
-   RET(0, "%p", object);
-   return object;
+   RET(0, "%s", glhckHandleRepr(sprite));
+   return sprite;
 
 fail:
-   IFDO(glhckTextureFree, texture);
-   RET(0, "%p", NULL);
-   return NULL;
+   IFDO(glhckHandleRelease, texture);
+   RET(0, "%s", glhckHandleRepr(texture));
+   return 0;
 }
 
 /* \brief create new sprite */
-GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmScalar height)
+GLHCKAPI glhckHandle glhckSpriteNew(const glhckHandle texture, const kmScalar width, const kmScalar height)
 {
-   glhckObject *object = NULL;
-   glhckMaterial *material = NULL;
-   CALL(0, "%p, %f, %f", texture, width, height);
+   CALL(0, "%s, %f, %f", glhckHandleRepr(texture), width, height);
+   assert(texture > 0);
 
-   float w = (float)(width>0.0f ? width : texture->width) * 0.5f;
-   float h = (float)(height>0.0f ? height : texture->height) * 0.5f;
+   const int tw = (glhckTextureGetWidth(texture) > 0 ? glhckTextureGetWidth(texture) : 1);
+   const int th = (glhckTextureGetHeight(texture) > 0 ? glhckTextureGetHeight(texture) : 1);
+   const float w = (float)(width > 0.0f ? width : tw) * 0.5f;
+   const float h = (float)(height > 0.0f ? height : th) * 0.5f;
    const glhckImportVertexData vertices[] = {
       {
-         {  w,  h,  0 },
-         {  0,  0, -1 },     /* normals */
+         {  w,  h,  0 },     /* vertices */
+         {  0,  0, -1 },     /* normals  */
          {  1,  1 },         /* uv coord */
-         { 0, 0, 0, 0 }      /* color */
+         0                   /* color    */
       },{
          { -w,  h,  0 },
          {  0,  0, -1 },
          {  0,  1 },
-         { 0, 0, 0, 0 }
+         0
       },{
          {  w, -h,  0 },
          {  0,  0, -1 },
          {  1,  0 },
-         { 0, 0, 0, 0 }
+         0
       },{
          { -w, -h,  0 },
          {  0,  0, -1 },
          {  0,  0 },
-         { 0, 0, 0, 0 }
+         0
       }
    };
 
-   /* create new object */
-   if (!(object = glhckObjectNew()))
+   glhckHandle handle, material = 0;
+   if (!(handle = glhckObjectNew()))
       goto fail;
 
-   /* create new material */
    if (!(material = glhckMaterialNew(texture)))
       goto fail;
 
-   /* choose optimal precision */
-   unsigned char vtype;
-   glhckGetGlobalPrecision(NULL, &vtype);
+   glhckVertexType vtype = GLHCK_VTX_AUTO;
+   // glhckGetGlobalPrecision(NULL, &vtype);
 
+#if 0
+   /* choose optimal precision */
    if (vtype == GLHCK_VTX_AUTO) {
-      kmScalar max = (texture->width > texture->height ? texture->width : texture->height);
-      for (unsigned int vtype = GLHCK_VTX_V2F, i = 0; i < chckPoolCount(GLHCKW()->vertexTypes); ++i) {
+      kmScalar max = (tw > th ? tw : th);
+      for (glhckVertexType vtype = GLHCK_VTX_V2F, i = 0; i < glhckGeometryVertexTypeCount(); ++i) {
          if (i == vtype || GLHCKVT(i)->memb[0] != 2)
             continue;
 
@@ -152,32 +143,34 @@ GLHCKAPI glhckObject* glhckSpriteNew(glhckTexture *texture, kmScalar width, kmSc
             vtype = i;
       }
    }
+#endif
 
-   /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertices(object, vtype, &vertices[0], LENGTH(vertices)) != RETURN_OK)
+   if (glhckObjectInsertVertices(handle, vtype, vertices, LENGTH(vertices)) != RETURN_OK)
       goto fail;
 
    /* don't make things humongous */
-   w = 1.0f - (1.0f/(texture->width > texture->height ? texture->width : texture->height));
+   const float s = 1.0f - (1.0f / (tw > th ? tw : th));
 
    /* scale keeping aspect ratio */
-   glhckObjectScalef(object, w, w, w);
+   glhckObjectScalef(handle, s, s, s);
 
    /* set material to object */
-   glhckObjectMaterial(object, material);
-   glhckMaterialFree(material);
+   glhckObjectMaterial(handle, material);
+   glhckHandleRelease(material);
 
+#if 0
    /* set filename of object */
-   _glhckObjectFile(object, texture->file);
+   glhckObjectFile(object, texture->file);
+#endif
 
-   RET(0, "%p", object);
-   return object;
+   RET(0, "%s", glhckHandleRepr(handle));
+   return handle;
 
 fail:
-   IFDO(glhckObjectFree, object);
-   IFDO(glhckMaterialFree, material);
-   RET(0, "%p", NULL);
-   return NULL;
+   IFDO(glhckHandleRelease, handle);
+   IFDO(glhckHandleRelease, material);
+   RET(0, "%s", glhckHandleRepr(0));
+   return 0;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

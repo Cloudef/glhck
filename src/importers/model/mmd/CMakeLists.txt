@@ -1,0 +1,5 @@
+ADD_SUBDIRECTORY(mmd)
+INCLUDE_DIRECTORIES(${mmd_SOURCE_DIR})
+ADD_LIBRARY(glhck-importer-mmd SHARED mmd.c)
+SET_TARGET_PROPERTIES(glhck-importer-mmd PROPERTIES PREFIX "")
+TARGET_LINK_LIBRARIES(glhck-importer-mmd mmd)

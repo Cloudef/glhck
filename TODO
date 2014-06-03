@@ -2,13 +2,6 @@ TODO
 ====
 
 ---
-Make loaders load from memory.
-(implement transparent FILE* support to chckBuffer so we have both)
----
-Remove all linked lists and provide standard datatypes (array, etc) in chck
----
-Replace add_subdirectory in cmakelists with b-zar's macro
----
 We need some sort of assest library with hashed tables
 This way we can reuse assets and not already load new ones..
 That's not the only saving, we can remove some pointers from glhckObject
@@ -21,7 +14,7 @@ Fix internal vertextype system use tables, and remove all branches related to ve
 ---
 Scale down textures bigger than GL_MAX_TEXTURE_SIZE by rendering parts to target size FBO
 ---
-Have multiple draw queues, and but the object on specific queue depending on it's state.
+Have multiple draw queues, and put the object on specific queue depending on it's state.
 Generate key from state so the queue can be sorted easily with qsort.
 Thus simplifying the current horrifying glhckRender() a lot
 ---
@@ -29,18 +22,12 @@ GPU bone transformation
 ---
 Make animations work with different vertex formats
 ---
-Fix key interpolations
----
-Fix shader lighting on ATI (wrong usage of UBO?)
----
 Use 2_10_10_10_REV for color && normals
 Better precision, same size
 ---
 Write more examples.
 ---
 Write unit tests
----
-Fix fixed pipeline lighting
 ---
 
 Reason for this file is that I keep forgetting things \o/

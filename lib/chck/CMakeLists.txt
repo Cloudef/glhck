@@ -4,9 +4,11 @@
 PROJECT(chckGlhck)
 SET(CHCK_SRC
    src/buffer/buffer.c
+   src/atlas/atlas.c
    src/array/array.c
    src/pool/pool.c
    src/lut/lut.c
+   src/cdl/cdl.c
    )
 
 IF (UNIX AND CMAKE_COMPILER_IS_GNUCC)

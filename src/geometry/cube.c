@@ -1,4 +1,5 @@
-#include "../internal.h"
+#include <glhck/glhck.h>
+#include "trace.h"
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY
@@ -7,10 +8,10 @@
 #define LENGTH(X) (sizeof X / sizeof X[0])
 
 /* \brief create new cube object */
-GLHCKAPI glhckObject* glhckCubeNew(kmScalar size)
+GLHCKAPI glhckHandle glhckCubeNew(const kmScalar size)
 {
-   unsigned char vtype;
-   glhckGetGlobalPrecision(NULL, &vtype);
+   glhckVertexType vtype = GLHCK_VTX_AUTO;
+   // glhckGetGlobalPrecision(NULL, &vtype);
 
    if (vtype == GLHCK_VTX_AUTO)
       vtype = GLHCK_VTX_V3B;
@@ -19,173 +20,167 @@ GLHCKAPI glhckObject* glhckCubeNew(kmScalar size)
 }
 
 /* \brief create new cube object (specify precision) */
-GLHCKAPI glhckObject* glhckCubeNewEx(kmScalar size, unsigned char itype, unsigned char vtype)
+GLHCKAPI glhckHandle glhckCubeNewEx(const kmScalar size, const glhckIndexType itype, const glhckVertexType vtype)
 {
-   glhckObject *object = NULL;
    CALL(0, "%f, %u, %u", size, itype, vtype);
 
-   const glhckImportVertexData vertices[] = {
+   static const glhckImportVertexData vertices[] = {
       {
        /* FRONT */
          { -1, -1,  1 },       /* vertices */
          {  0,  0,  1 },       /* normals  */
          {  0,  0     },       /* uv coord */
-         { 0,  0,  0,  0 }     /* color    */
+         0,                    /* color    */
       },{
          {  1, -1,  1 },
          {  0,  0,  1 },
          {  1,  0     },
-         { 0,  0,  0,  0 }
+         0
       },{
          { -1,  1,  1 },
          {  0,  0,  1 },
          {  0,  1     },
-         { 0,  0,  0,  0 }
+         0
       },{
          {  1,  1,  1 },
          {  0,  0,  1 },
          {  1,  1     },
-         { 0,  0,  0,  0 }
+         0
        /* RIGHT */
       },{
          {  1,  1,  1 },
          {  1,  0,  0 },
          {  0,  1     },
-         { 0,  0,  0,  0 }
+         0
       },{
          {  1, -1,  1 },
          {  1,  0,  0 },
          {  0,  0     },
-         { 0,  0,  0,  0 }
+         0
       },{
          {  1,  1, -1 },
          {  1,  0,  0 },
          {  1,  1     },
-         { 0,  0,  0,  0 }
+         0
       },{
          {  1, -1, -1 },
          {  1,  0,  0 },
          {  1,  0     },
-         { 0,  0,  0,  0 }
+         0
        /* BACK */
       },{
          {  1, -1, -1 },
          {  0,  0, -1 },
          {  0,  0     },
-         { 0,  0,  0,  0 }
+         0
       },{
          { -1, -1, -1 },
          {  0,  0, -1 },
          {  1,  0     },
-         { 0,  0,  0,  0 }
+         0
       },{
          {  1,  1, -1 },
          {  0,  0, -1 },
          {  0,  1     },
-         { 0,  0,  0,  0 }
+         0
       },{
          { -1,  1, -1 },
          {  0,  0, -1 },
          {  1,  1     },
-         { 0,  0,  0,  0 }
+         0
        /* LEFT */
       },{
          { -1,  1, -1 },
          { -1,  0,  0 },
          {  0,  1     },
-         { 0,  0,  0,  0 }
+         0
       },{
          { -1, -1, -1 },
          { -1,  0,  0 },
          {  0,  0     },
-         { 0,  0,  0,  0 }
+         0
       },{
          { -1,  1,  1 },
          { -1,  0,  0 },
          {  1,  1     },
-         { 0,  0,  0,  0 }
+         0
       },{
          { -1, -1,  1 },
          { -1,  0,  0 },
          {  1,  0     },
-         { 0,  0,  0,  0 }
+         0
        /* BOTTOM */
       },{
          { -1, -1,  1 },
          {  0, -1,  0 },
          {  0,  1     },
-         { 0,  0,  0,  0 }
+         0
       },{
          { -1, -1, -1 },
          {  0, -1,  0 },
          {  0,  0     },
-         { 0,  0,  0,  0 }
+         0
       },{
          {  1, -1,  1 },
          {  0, -1,  0 },
          {  1,  1     },
-         { 0,  0,  0,  0 }
+         0
       },{
          {  1, -1, -1 },
          {  0, -1,  0 },
          {  1,  0     },
-         { 0,  0,  0,  0 }
+         0
       /* DEGENERATE */
       },{
          {  1, -1, -1 },
          {  0, -1,  0 },
          {  1,  0     },
-         { 0,  0,  0,  0 }
+         0
       },{
          { -1,  1,  1 },
          {  0,  1,  0 },
          {  0,  0     },
-         { 0,  0,  0,  0 }
+         0
       /* TOP */
       },{
          { -1,  1,  1 },
          {  0,  1,  0 },
          {  0,  0     },
-         { 0,  0,  0,  0 }
+         0
       },{
          {  1,  1,  1 },
          {  0,  1,  0 },
          {  1,  0     },
-         { 0,  0,  0,  0 }
+         0
       },{
          { -1,  1, -1 },
          {  0,  1,  0 },
          {  0,  1     },
-         { 0,  0,  0,  0 }
+         0
       },{
          {  1,  1, -1 },
          {  0,  1,  0 },
          {  1,  1     },
-         { 0,  0,  0,  0 }
+         0
       }
    };
 
-   /* create new object */
-   if (!(object = glhckObjectNew()))
+   glhckHandle handle;
+   if (!(handle = glhckObjectNew()))
       goto fail;
 
-   /* insert vertices to object's geometry */
-   if (glhckObjectInsertVertices(object, vtype, &vertices[0], LENGTH(vertices)) != RETURN_OK)
+   if (glhckObjectInsertVertices(handle, vtype, vertices, LENGTH(vertices)) != RETURN_OK)
       goto fail;
 
-   /* assigning indices would be waste
-    * on the cube geometry */
+   glhckObjectScalef(handle, size, size, size);
 
-   /* scale the cube */
-   glhckObjectScalef(object, size, size, size);
-
-   RET(0, "%p", object);
-   return object;
+   RET(0, "%s", glhckHandleRepr(handle));
+   return handle;
 
 fail:
-   IFDO(glhckObjectFree, object);
-   RET(0, "%p", NULL);
-   return NULL;
+   IFDO(glhckHandleRelease, handle);
+   RET(0, "%s", glhckHandleRepr(handle));
+   return 0;
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/
