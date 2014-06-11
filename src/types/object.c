@@ -180,28 +180,37 @@ GLHCKAPI glhckHandle glhckObjectCopy(const glhckHandle src)
 {
    CALL(0, "%s", glhckHandleRepr(src));
 
-   glhckHandle handle = 0;
-   if (!(handle = glhckObjectNew()))
-      goto fail;
+   static int copy[] = {
+      $flags,
+      -1
+   };
 
-   glhckObjectPosition(handle, glhckObjectGetPosition(src));
-   glhckObjectRotation(handle, glhckObjectGetRotation(src));
-   glhckObjectScale(handle, glhckObjectGetScale(src));
-   return handle;
+   static int ref[] = {
+      $file,
+      $name,
+      $material,
+      $geometry,
+      -1
+   };
 
-fail:
+   const glhckHandle handle = copyHandle(src, glhckObjectNew, copy, ref);
+
+   if (handle) {
+      setView(handle, glhckViewCopy(glhckObjectGetView(src)));
+   }
+
    RET(0, "%s", glhckHandleRepr(handle));
-   return 0;
+   return handle;
 }
 
 /* \brief is object treated as root? */
-GLHCKAPI int glhckObjectIsRoot(const glhckHandle handle)
+GLHCKAPI int glhckObjectGetRoot(const glhckHandle handle)
 {
    return getFlag(handle, GLHCK_OBJECT_ROOT);
 }
 
 /* \brief make object as root, or demote it */
-GLHCKAPI void glhckObjectMakeRoot(const glhckHandle handle, const int root)
+GLHCKAPI void glhckObjectRoot(const glhckHandle handle, const int root)
 {
    setFlag(handle, GLHCK_OBJECT_ROOT, root);
 }

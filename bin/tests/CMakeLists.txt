@@ -1,4 +1,6 @@
 SET(TESTS
+   "init"
+   "object"
    )
 
 SET(EXT "")
@@ -18,5 +20,5 @@ FOREACH (test ${TESTS})
    )
    TARGET_LINK_LIBRARIES(${test}${EXT} glfw glhck ${GLHCK_LIBRARIES} ${GLFW_LIBRARIES})
    INSTALL(TARGETS ${test}${EXT} DESTINATION bin/tests)
-   ADD_TEST(${test}${EXT} ${TEST_PRG} bin/tests/${test}${EXT})
+   ADD_TEST(NAME ${test}${EXT} WORKING_DIRECTORY ${glhck_BINARY_DIR} COMMAND ${TEST_PRG} ${test}${EXT})
 ENDFOREACH (test)

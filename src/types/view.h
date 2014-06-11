@@ -4,6 +4,7 @@
 #include <glhck/glhck.h>
 
 GLHCKAPI glhckHandle glhckViewNew(void);
+GLHCKAPI glhckHandle glhckViewCopy(const glhckHandle src);
 GLHCKAPI int glhckViewGetDirty(const glhckHandle handle);
 GLHCKAPI void glhckViewParentAffection(const glhckHandle handle, const unsigned char affectionFlags);
 GLHCKAPI unsigned char glhckViewGetParentAffection(const glhckHandle handle);

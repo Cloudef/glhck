@@ -295,6 +295,34 @@ fail:
    return 0;
 }
 
+GLHCKAPI glhckHandle glhckViewCopy(const glhckHandle src)
+{
+   CALL(0, "%s", glhckHandleRepr(src));
+
+   static int copy[] = {
+      $offset,
+      $matrix,
+      $affectionMatrix,
+      $bounding,
+      $aabb,
+      $aabbFull,
+      $obb,
+      $obbFull,
+      $translation,
+      $target,
+      $rotation,
+      $scaling,
+      $parentAffection,
+      $dirty,
+      $wasFlipped,
+      -1
+   };
+
+   const glhckHandle handle = copyHandle(src, glhckObjectNew, copy, NULL);
+   RET(0, "%s", glhckHandleRepr(handle));
+   return handle;
+}
+
 GLHCKAPI int glhckViewGetDirty(const glhckHandle handle)
 {
    return *(unsigned char*)get($dirty, handle);

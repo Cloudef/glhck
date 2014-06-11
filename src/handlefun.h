@@ -37,6 +37,24 @@ static void releaseHandle(const enum pool var, const glhckHandle handle)
 }
 
 __attribute__((used))
+static glhckHandle copyHandle(const glhckHandle src, glhckHandle (constructor)(void), const int *copy, const int *ref)
+{
+   assert(constructor);
+
+   glhckHandle handle = 0;
+   if (!(handle = constructor()))
+      return 0;
+
+   for (int i = 0; copy && copy[i] != -1; ++i)
+      memcpy(GET(copy[i], handle), GET(copy[i], src), pool_sizes[i]);
+
+   for (int i = 0; ref && ref[i] != -1; ++i)
+      setHandle(ref[i], handle, *(glhckHandle*)GET(ref[i], src));
+
+   return handle;
+}
+
+__attribute__((used))
 static void set(const enum pool var, const glhckHandle handle, const void *data)
 {
    assert(handle > 0);

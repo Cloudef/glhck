@@ -182,12 +182,14 @@ void _glhckHandleTerminate(void)
 {
    TRACE(0);
 
-   for (chckPoolIndex iter = 0; chckPoolIter(pools[$handles], &iter);)
+   for (chckPoolIndex iter = 0; pools[$handles] && chckPoolIter(pools[$handles], &iter);)
       while (glhckHandleRelease(iter) > 0);
 
    for (size_t i = 0; i < POOL_LAST; ++i) {
-      assert(chckPoolCount(pools[i]) == 0);
-      NULLDO(chckPoolFree, pools[i]);
+      if (pools[i]) {
+         assert(chckPoolCount(pools[i]) == 0);
+         NULLDO(chckPoolFree, pools[i]);
+      }
    }
 }
 

@@ -446,7 +446,7 @@ GLHCKAPI void glhckObjectScalef(const glhckHandle object, const kmScalar x, cons
 GLHCKAPI int glhckObjectInsertVertices(const glhckHandle object, const glhckVertexType type, const glhckImportVertexData *vertices, const int memb);
 GLHCKAPI int glhckObjectInsertIndices(const glhckHandle object, const glhckIndexType type, const glhckImportIndexData *indices, const int memb);
 GLHCKAPI void glhckObjectUpdate(const glhckHandle object);
-GLHCKAPI glhckHandle glhckObjectNewGeometry(const glhckHandle object);
+GLHCKAPI void glhckObjectGeometry(const glhckHandle object, const glhckHandle geometry);
 GLHCKAPI glhckHandle glhckObjectGetGeometry(const glhckHandle object);
 GLHCKAPI int glhckObjectPickTextureCoordinatesWithRay(const glhckHandle object, const kmRay3 *ray, kmVec2 *outCoords);
 
