@@ -1,0 +1,226 @@
+#ifndef __glhck_glmap_h__
+#define __glhck_glmap_h__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* helper for python script */
+#define PYGLMAP typedef
+
+/* clear bits */
+PYGLMAP enum glhckClearBufferBits {
+   GLHCK_COLOR_BUFFER_BIT = 1<<0,
+   GLHCK_DEPTH_BUFFER_BIT = 1<<1,
+} glhckClearBufferBits;
+
+/* cull side face */
+PYGLMAP enum glhckCullFaceType {
+   GLHCK_BACK,
+   GLHCK_FRONT,
+} glhckCullFaceType;
+
+/* face orientations */
+PYGLMAP enum glhckFaceOrientation {
+   GLHCK_CW,
+   GLHCK_CCW,
+} glhckFaceOrientation;
+
+/* geometry type */
+PYGLMAP enum glhckGeometryType {
+   GLHCK_POINTS,
+   GLHCK_LINES,
+   GLHCK_LINE_LOOP,
+   GLHCK_LINE_STRIP,
+   GLHCK_TRIANGLES,
+   GLHCK_TRIANGLE_STRIP,
+} glhckGeometryType;
+
+/* framebuffer types */
+PYGLMAP enum glhckFramebufferTarget {
+   GLHCK_FRAMEBUFFER,
+   GLHCK_FRAMEBUFFER_READ,
+   GLHCK_FRAMEBUFFER_DRAW,
+   GLHCK_FRAMEBUFFER_TYPE_LAST,
+} glhckFramebufferTarget;
+
+/* framebuffer attachment types */
+PYGLMAP enum glhckFramebufferAttachmentType {
+   GLHCK_COLOR_ATTACHMENT0,
+   GLHCK_COLOR_ATTACHMENT1,
+   GLHCK_COLOR_ATTACHMENT2,
+   GLHCK_COLOR_ATTACHMENT3,
+   GLHCK_COLOR_ATTACHMENT4,
+   GLHCK_COLOR_ATTACHMENT5,
+   GLHCK_COLOR_ATTACHMENT6,
+   GLHCK_COLOR_ATTACHMENT7,
+   GLHCK_COLOR_ATTACHMENT8,
+   GLHCK_COLOR_ATTACHMENT9,
+   GLHCK_COLOR_ATTACHMENT10,
+   GLHCK_COLOR_ATTACHMENT11,
+   GLHCK_COLOR_ATTACHMENT12,
+   GLHCK_COLOR_ATTACHMENT13,
+   GLHCK_COLOR_ATTACHMENT14,
+   GLHCK_COLOR_ATTACHMENT15,
+   GLHCK_DEPTH_ATTACHMENT,
+   GLHCK_STENCIL_ATTACHMENT,
+} glhckFramebufferAttachmentType;
+
+/* hardware buffer type */
+PYGLMAP enum glhckHwBufferTarget {
+   GLHCK_ARRAY_BUFFER,
+   GLHCK_COPY_READ_BUFFER,
+   GLHCK_COPY_WRITE_BUFFER,
+   GLHCK_ELEMENT_ARRAY_BUFFER,
+   GLHCK_PIXEL_PACK_BUFFER,
+   GLHCK_PIXEL_UNPACK_BUFFER,
+   GLHCK_TEXTURE_BUFFER,
+   GLHCK_TRANSFORM_FEEDBACK_BUFFER,
+   GLHCK_UNIFORM_BUFFER,
+   GLHCK_SHADER_STORAGE_BUFFER,
+   GLHCK_ATOMIC_COUNTER_BUFFER,
+   GLHCK_HWBUFFER_TYPE_LAST,
+} glhckHwBufferTarget;
+
+/* hardware buffer storage type */
+PYGLMAP enum glhckHwBufferStoreType {
+   GLHCK_BUFFER_STREAM_DRAW,
+   GLHCK_BUFFER_STREAM_READ,
+   GLHCK_BUFFER_STREAM_COPY,
+   GLHCK_BUFFER_STATIC_DRAW,
+   GLHCK_BUFFER_STATIC_READ,
+   GLHCK_BUFFER_STATIC_COPY,
+   GLHCK_BUFFER_DYNAMIC_DRAW,
+   GLHCK_BUFFER_DYNAMIC_READ,
+   GLHCK_BUFFER_DYNAMIC_COPY,
+} glhckHwBufferStoreType;
+
+/* hardware buffer access type */
+PYGLMAP enum glhckHwBufferAccessType {
+   GLHCK_BUFFER_READ_ONLY,
+   GLHCK_BUFFER_WRITE_ONLY,
+   GLHCK_BUFFER_READ_WRITE,
+} glhckHwBufferAccessType;
+
+/* shader type */
+PYGLMAP enum glhckShaderType {
+   GLHCK_VERTEX_SHADER,
+   GLHCK_FRAGMENT_SHADER,
+} glhckShaderType;
+
+/* texture wrap modes */
+PYGLMAP enum glhckTextureWrap {
+   GLHCK_REPEAT,
+   GLHCK_MIRRORED_REPEAT,
+   GLHCK_CLAMP_TO_EDGE,
+   GLHCK_CLAMP_TO_BORDER,
+} glhckTextureWrap;
+
+/* texture filter modes */
+PYGLMAP enum glhckTextureFilter {
+   GLHCK_NEAREST,
+   GLHCK_LINEAR,
+   GLHCK_NEAREST_MIPMAP_NEAREST,
+   GLHCK_LINEAR_MIPMAP_NEAREST,
+   GLHCK_NEAREST_MIPMAP_LINEAR,
+   GLHCK_LINEAR_MIPMAP_LINEAR,
+} glhckTextureFilter;
+
+/* texture compare mode */
+PYGLMAP enum glhckTextureCompareMode {
+   GLHCK_COMPARE_NONE,
+   GLHCK_COMPARE_REF_TO_TEXTURE,
+} glhckTextureCompareMode;
+
+/* compare func */
+PYGLMAP enum glhckCompareFunc {
+   GLHCK_LEQUAL,
+   GLHCK_GEQUAL,
+   GLHCK_LESS,
+   GLHCK_GREATER,
+   GLHCK_EQUAL,
+   GLHCK_NOTEQUAL,
+   GLHCK_ALWAYS,
+   GLHCK_NEVER,
+} glhckCompareFunc;
+
+/* texture types */
+PYGLMAP enum glhckTextureTarget {
+   GLHCK_TEXTURE_1D,
+   GLHCK_TEXTURE_2D,
+   GLHCK_TEXTURE_3D,
+   GLHCK_TEXTURE_CUBE_MAP,
+   GLHCK_TEXTURE_TYPE_LAST,
+} glhckTextureTarget;
+
+/* texture formats */
+PYGLMAP enum glhckTextureFormat {
+   GLHCK_RED,
+   GLHCK_RG,
+   GLHCK_ALPHA,
+   GLHCK_LUMINANCE,
+   GLHCK_LUMINANCE_ALPHA,
+   GLHCK_RGB,
+   GLHCK_BGR,
+   GLHCK_RGBA,
+   GLHCK_BGRA,
+   GLHCK_DEPTH_COMPONENT,
+   GLHCK_DEPTH_COMPONENT16,
+   GLHCK_DEPTH_COMPONENT24,
+   GLHCK_DEPTH_COMPONENT32,
+   GLHCK_DEPTH_STENCIL,
+   GLHCK_COMPRESSED_RGB_DXT1,
+   GLHCK_COMPRESSED_RGBA_DXT5,
+} glhckTextureFormat;
+
+/* data formats */
+PYGLMAP enum glhckDataType {
+   GLHCK_COMPRESSED,
+   GLHCK_UNSIGNED_BYTE,
+   GLHCK_BYTE,
+   GLHCK_UNSIGNED_SHORT,
+   GLHCK_SHORT,
+   GLHCK_UNSIGNED_INT,
+   GLHCK_INT,
+   GLHCK_FLOAT,
+   GLHCK_UNSIGNED_BYTE_3_3_2,
+   GLHCK_UNSIGNED_BYTE_2_3_3_REV,
+   GLHCK_UNSIGNED_SHORT_5_6_5,
+   GLHCK_UNSIGNED_SHORT_5_6_5_REV,
+   GLHCK_UNSIGNED_SHORT_4_4_4_4,
+   GLHCK_UNSIGNED_SHORT_4_4_4_4_REV,
+   GLHCK_UNSIGNED_SHORT_5_5_5_1,
+   GLHCK_UNSIGNED_SHORT_1_5_5_5_REV,
+   GLHCK_UNSIGNED_INT_8_8_8_8,
+   GLHCK_UNSIGNED_INT_8_8_8_8_REV,
+   GLHCK_UNSIGNED_INT_10_10_10_2,
+   GLHCK_UNSIGNED_INT_2_10_10_10_REV,
+} glhckDataType;
+
+/* blending modes */
+PYGLMAP enum glhckBlendingMode {
+   GLHCK_ZERO,
+   GLHCK_ONE,
+   GLHCK_SRC_COLOR,
+   GLHCK_ONE_MINUS_SRC_COLOR,
+   GLHCK_SRC_ALPHA,
+   GLHCK_ONE_MINUS_SRC_ALPHA,
+   GLHCK_DST_ALPHA,
+   GLHCK_ONE_MINUS_DST_ALPHA,
+   GLHCK_DST_COLOR,
+   GLHCK_ONE_MINUS_DST_COLOR,
+   GLHCK_SRC_ALPHA_SATURATE,
+   GLHCK_CONSTANT_COLOR,
+   GLHCK_CONSTANT_ALPHA,
+   GLHCK_ONE_MINUS_CONSTANT_ALPHA,
+} glhckBlendingMode;
+
+#undef PYGLMAP
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __glhck_glmap_h__ */
+
+/* vim: set ts=8 sw=3 tw=0 :*/

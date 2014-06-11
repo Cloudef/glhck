@@ -7,6 +7,7 @@ SET(GLHCK_SRC
    handle.c
    importers/import.c
    importers/importer.c
+   importers/postprocess.c
    renderers/render.c
    renderers/renderer.c
    trace.c

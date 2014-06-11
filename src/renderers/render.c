@@ -450,20 +450,39 @@ GLHCKAPI void glhckRenderObjectMany(const glhckHandle *handles, const size_t mem
 {
    _glhckObjectUpdateMatrixMany(handles, memb);
 
+   rapi->depthTest(1);
    rapi->blendFunc(GLHCK_ONE, GLHCK_ZERO);
    rapi->projectionMatrix(&rview.projection);
 
    for (size_t i = 0; i < memb; ++i) {
-      const glhckHandle view = glhckObjectGetView(handles[i]);
       const glhckHandle geometry = glhckObjectGetGeometry(handles[i]);
       const glhckGeometry *data = glhckGeometryGetStruct(geometry);
-      const struct glhckVertexType *vt = _glhckGeometryGetVertexType(data->vertexType);
 
+      const glhckHandle material = glhckObjectGetMaterial(handles[i]);
+      if (material) {
+         const glhckHandle texture = glhckMaterialGetTexture(material);
+         if (texture) {
+            glhckTextureBind(texture);
+
+            kmMat4 textureMatrix;
+            const kmVec3 *internal = _glhckTextureGetInternalScale(texture);
+            kmMat4Scaling(&textureMatrix, internal->x / (kmScalar)data->textureRange, internal->y / (kmScalar)data->textureRange, 1.0f);
+            rapi->textureMatrix(&textureMatrix);
+         }
+
+         rapi->color(glhckMaterialGetDiffuse(material));
+      }
+
+      if (!material || !glhckMaterialGetTexture(material)) {
+         glhckTextureUnbind(GLHCK_TEXTURE_2D);
+      }
+
+      const glhckHandle view = glhckObjectGetView(handles[i]);
       kmMat4 mv;
       kmMat4Multiply(&mv, &rview.view, glhckViewGetMatrix(view));
-      // kmMat4Multiply(&mv, glhckViewGetMatrix(view), &rview.view);
       rapi->modelMatrix(&mv);
 
+      const struct glhckVertexType *vt = _glhckGeometryGetVertexType(data->vertexType);
       rapi->vertexPointer(vt->memb[0], vt->dataType[0], vt->size, data->vertices + vt->offset[0]);
       // rapi->normalPointer(vt->dataType[1], vt->size, data->vertices + vt->offset[1]);
       rapi->coordPointer(vt->memb[2], vt->dataType[2], vt->size, data->vertices + vt->offset[2]);
@@ -485,6 +504,7 @@ GLHCKAPI void glhckRenderObject(const glhckHandle handle)
 
 GLHCKAPI void glhckRenderText(const glhckHandle handle)
 {
+   rapi->depthTest(0);
    rapi->blendFunc(GLHCK_SRC_ALPHA, GLHCK_ONE_MINUS_SRC_ALPHA);
    rapi->projectionMatrix(&rview.orthographic);
    rapi->modelMatrix(&identity);

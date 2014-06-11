@@ -216,7 +216,8 @@ static void defaultDebugHook(const char *file, int line, const char *func, glhck
    (void)func, (void)level;
 
    /* by default, we assume debug prints are useless if tracing. */
-   if (traceEnabled || (!allChannels && (!channels || !*(int*)chckHashTableStrGet(channels, channel))))
+   int *enabled;
+   if (traceEnabled || (!allChannels && (!channels || ((enabled = chckHashTableStrGet(channels, channel)) && *enabled))))
       return;
 
    printfFun(_glhckPuts, DBG_FMT, line, file, message);
@@ -336,7 +337,8 @@ void _glhckTrace(int level, const char *channel, const char *function, const cha
    if (!channels || !traceEnabled || level > traceLevel)
       return;
 
-   if (!allChannels && (!channels || !*(int*)chckHashTableStrGet(channels, channel)))
+   int *enabled;
+   if (!allChannels && (!channels || ((enabled = chckHashTableStrGet(channels, channel)) && *enabled)))
       return;
 
    va_list args;

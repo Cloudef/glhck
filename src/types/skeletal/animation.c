@@ -41,7 +41,7 @@ GLHCKAPI glhckHandle glhckAnimationNew(void)
    TRACE(0);
 
    glhckHandle handle = 0;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_ANIMATION, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_ANIMATION, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    glhckAnimationTicksPerSecond(handle, 1.0f);

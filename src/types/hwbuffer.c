@@ -79,7 +79,7 @@ GLHCKAPI glhckHandle glhckHwBufferNew(void)
       goto fail;
 
    glhckHandle handle;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_HWBUFFER, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_HWBUFFER, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    set($object, handle, &object);

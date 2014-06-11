@@ -41,11 +41,13 @@
 
 enum pool {
    $geometry, // glhckGeometry
+   $pose, // struct glhckPose
    POOL_LAST
 };
 
 static unsigned int pool_sizes[POOL_LAST] = {
    sizeof(glhckGeometry),
+   sizeof(struct glhckPose)
 };
 
 static _GLHCK_TLS chckPool *pools[POOL_LAST];
@@ -197,9 +199,9 @@ static void transformV2B(glhckGeometry *geometry, const void *bindPose, const gl
       kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      size_t num;
-      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &num);
-      for (size_t w = 0; w < num; ++w) {
+      size_t numWeightsWeights;
+      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &numWeightsWeights);
+      for (size_t w = 0; w < numWeightsWeights; ++w) {
          kmVec3 v1;
          const glhckVertexData2b *bdata = bindPose + weights[w].vertexIndex * sizeof(glhckVertexData2b);
          glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
@@ -229,9 +231,9 @@ static void transformV3B(glhckGeometry *geometry, const void *bindPose, const gl
       kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      size_t num;
-      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &num);
-      for (size_t w = 0; w < num; ++w) {
+      size_t numWeightsWeights;
+      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &numWeightsWeights);
+      for (size_t w = 0; w < numWeightsWeights; ++w) {
          kmVec3 v1;
          const glhckVertexData3b *bdata = bindPose + weights[w].vertexIndex * sizeof(glhckVertexData3b);
          glhckSetV3(&v1, &bdata->vertex);
@@ -262,9 +264,9 @@ static void transformV2S(glhckGeometry *geometry, const void *bindPose, const gl
       kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      size_t num;
-      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &num);
-      for (size_t w = 0; w < num; ++w) {
+      size_t numWeightsWeights;
+      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &numWeightsWeights);
+      for (size_t w = 0; w < numWeightsWeights; ++w) {
          kmVec3 v1;
          const glhckVertexData2s *bdata = bindPose + weights[w].vertexIndex * sizeof(glhckVertexData2s);
          glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
@@ -294,16 +296,16 @@ static void transformV3S(glhckGeometry *geometry, const void *bindPose, const gl
       kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      size_t num;
-      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &num);
-      for (size_t w = 0; w < num; ++w) {
+      size_t numWeightsWeights;
+      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &numWeightsWeights);
+      for (size_t w = 0; w < numWeightsWeights; ++w) {
          kmVec3 v1;
-         const glhckVertexData3s *bdata = bindPose + weights[i].vertexIndex * sizeof(glhckVertexData3s);
+         const glhckVertexData3s *bdata = bindPose + weights[w].vertexIndex * sizeof(glhckVertexData3s);
          glhckSetV3(&v1, &bdata->vertex);
          kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
-         internal[weights[i].vertexIndex].vertex.x += v1.x * weights[i].weight;
-         internal[weights[i].vertexIndex].vertex.y += v1.y * weights[i].weight;
-         internal[weights[i].vertexIndex].vertex.z += v1.z * weights[i].weight;
+         internal[weights[w].vertexIndex].vertex.x += v1.x * weights[w].weight;
+         internal[weights[w].vertexIndex].vertex.y += v1.y * weights[w].weight;
+         internal[weights[w].vertexIndex].vertex.z += v1.z * weights[w].weight;
       }
    }
 }
@@ -324,15 +326,15 @@ static void transformV2F(glhckGeometry *geometry, const void *bindPose, const gl
       kmMat4Multiply(&offsetMatrix, glhckSkinBoneGetOffsetMatrix(skinBones[i]), &bias);
       kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
 
-      size_t num;
-      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &num);
-      for (size_t w = 0; w < num; ++w) {
+      size_t numWeights;
+      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &numWeights);
+      for (size_t w = 0; w < numWeights; ++w) {
          kmVec3 v1;
-         const glhckVertexData2f *bdata = bindPose + weights[i].vertexIndex * sizeof(glhckVertexData2f);
+         const glhckVertexData2f *bdata = bindPose + weights[w].vertexIndex * sizeof(glhckVertexData2f);
          glhckSetV2(&v1, &bdata->vertex); v1.z = 0.0f;
          kmVec3MultiplyMat4(&v1, &v1, &poseMatrix);
-         internal[weights[i].vertexIndex].vertex.x += v1.x * weights[i].weight;
-         internal[weights[i].vertexIndex].vertex.y += v1.y * weights[i].weight;
+         internal[weights[w].vertexIndex].vertex.x += v1.x * weights[w].weight;
+         internal[weights[w].vertexIndex].vertex.y += v1.y * weights[w].weight;
       }
    }
 }
@@ -340,28 +342,21 @@ static void transformV2F(glhckGeometry *geometry, const void *bindPose, const gl
 static void transformV3F(glhckGeometry *geometry, const void *bindPose, const glhckHandle *skinBones, const size_t memb)
 {
    glhckVertexData3f *internal = geometry->vertices;
-
-   /* scale is always 1.0f, we can skip it */
-   kmMat4 bias, biasinv;
-   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
-   kmMat4Inverse(&biasinv, &bias);
+   const glhckVertexData3f *bind = bindPose;
 
    for (size_t i = 0; i < memb; ++i) {
-      const glhckHandle bone = glhckSkinBoneGetBone(skinBones[i]);
-      kmMat4 poseMatrix, transformedMatrix, offsetMatrix;
-      kmMat4Multiply(&transformedMatrix, &biasinv, glhckBoneGetTransformedMatrix(bone));
-      kmMat4Multiply(&offsetMatrix, glhckSkinBoneGetOffsetMatrix(skinBones[i]), &bias);
-      kmMat4Multiply(&poseMatrix, &transformedMatrix, &offsetMatrix);
-
-      size_t num;
-      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &num);
-      for (size_t w = 0; w < num; ++w) {
+      size_t numWeights;
+      const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &numWeights);
+      const kmMat4 *poseMatrix = glhckBoneGetPoseMatrix(glhckSkinBoneGetBone(skinBones[i]));
+      int a;
+      for (size_t w = 0; w < numWeights; ++w) {
+         a = w;
          kmVec3 v1;
-         const glhckVertexData3f *bdata = bindPose + weights[i].vertexIndex * sizeof(glhckVertexData3f);
-         kmVec3MultiplyMat4(&v1, (kmVec3*)&bdata->vertex, &poseMatrix);
-         internal[weights[i].vertexIndex].vertex.x += v1.x * weights[i].weight;
-         internal[weights[i].vertexIndex].vertex.y += v1.y * weights[i].weight;
-         internal[weights[i].vertexIndex].vertex.z += v1.z * weights[i].weight;
+         const glhckVertexData3f *bdata = bindPose + weights[w].vertexIndex * sizeof(glhckVertexData3f);
+         kmVec3MultiplyMat4(&v1, (kmVec3*)&bdata->vertex, poseMatrix);
+         internal[weights[w].vertexIndex].vertex.x += v1.x * weights[w].weight;
+         internal[weights[w].vertexIndex].vertex.y += v1.y * weights[w].weight;
+         internal[weights[w].vertexIndex].vertex.z += v1.z * weights[w].weight;
       }
    }
 }
@@ -1011,6 +1006,11 @@ GLHCKAPI glhckGeometry* glhckGeometryGetStruct(const glhckHandle handle)
    return (glhckGeometry*)get($geometry, handle);
 }
 
+GLHCKAPI struct glhckPose* glhckGeometryGetPose(const glhckHandle handle)
+{
+   return (struct glhckPose*)get($pose, handle);
+}
+
 const struct glhckVertexType* geometryVertexType(const glhckHandle handle)
 {
    const glhckGeometry *geometry = glhckGeometryGetStruct(handle);
@@ -1032,7 +1032,7 @@ GLHCKAPI glhckHandle glhckGeometryNew(void)
    TRACE(0);
 
    glhckHandle handle = 0;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_GEOMETRY, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_GEOMETRY, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    glhckGeometry *geometry = glhckGeometryGetStruct(handle);
@@ -1088,6 +1088,18 @@ GLHCKAPI int glhckGeometryInsertVertices(const glhckHandle handle, const glhckVe
    if (data) {
       if (geometryInsertVertices(geometry, type, data, memb) != RETURN_OK)
          goto fail;
+
+      struct glhckPose *pose = glhckGeometryGetPose(handle);
+      const struct glhckVertexType *vt = geometryVertexType(handle);
+      if (pose->bind) free(pose->bind);
+      pose->bind = malloc(geometry->vertexCount * vt->size);
+      memcpy(pose->bind, geometry->vertices, geometry->vertexCount * vt->size);
+      if (pose->zero) free(pose->zero);
+      pose->zero = malloc(geometry->vertexCount * vt->size);
+      memcpy(pose->zero, geometry->vertices, geometry->vertexCount * vt->size);
+      for (int v = 0; v < geometry->vertexCount; ++v)
+         memset(pose->zero + vt->size * v + vt->offset[0], 0, vt->msize[0] * vt->memb[0]);
+
    } else {
       geometryFreeVertices(geometry);
    }

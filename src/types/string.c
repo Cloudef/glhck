@@ -47,7 +47,7 @@ static void destructor(const glhckHandle handle)
 GLHCKAPI glhckHandle glhckStringNew(void)
 {
    TRACE(0);
-   const glhckHandle handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_STRING, pools, pool_sizes, POOL_LAST, destructor, NULL);
+   const glhckHandle handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_STRING, pools, pool_sizes, POOL_LAST, destructor);
    RET(0, "%s", glhckHandleRepr(handle));
    return handle;
 }

@@ -548,7 +548,7 @@ GLHCKAPI glhckHandle glhckTextNew(int cacheWidth, int cacheHeight)
    glhckHandle handle = 0;
    chckPool *fonts = NULL, *textures = NULL;
 
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_TEXT, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_TEXT, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    if (!(fonts = chckPoolNew(32, 0, sizeof(struct font))))

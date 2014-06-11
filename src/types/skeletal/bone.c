@@ -20,6 +20,8 @@ static const kmMat4 identity = {
 enum pool {
    $transformationMatrix, // kmMat4
    $transformedMatrix, // kmMat4
+   $offsetMatrix, // kmMat4
+   $poseMatrix, // kmMat4
    $parent, // bone handle
    $name, // string handle
    POOL_LAST
@@ -28,6 +30,8 @@ enum pool {
 static unsigned int pool_sizes[POOL_LAST] = {
    sizeof(kmMat4), // transformationMatrix
    sizeof(kmMat4), // transformedMatrix
+   sizeof(kmMat4), // offsetMatrix
+   sizeof(kmMat4), // poseMatrix
    sizeof(glhckHandle), // parent
    sizeof(glhckHandle), // name
 };
@@ -51,7 +55,7 @@ GLHCKAPI glhckHandle glhckBoneNew(void)
    TRACE(0);
 
    glhckHandle handle = 0;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_BONE, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_BONE, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    set($transformedMatrix, handle, &identity);
@@ -93,7 +97,7 @@ GLHCKAPI glhckHandle glhckBoneGetParentBone(const glhckHandle handle)
 /* \brief set transformation matrix to bone */
 GLHCKAPI void glhckBoneTransformationMatrix(const glhckHandle handle, const kmMat4 *transformationMatrix)
 {
-   set($transformedMatrix, handle, transformationMatrix);
+   set($transformationMatrix, handle, transformationMatrix);
 }
 
 /* \brief get transformation matrix from bone */
@@ -102,10 +106,25 @@ GLHCKAPI const kmMat4* glhckBoneGetTransformationMatrix(const glhckHandle handle
    return get($transformationMatrix, handle);
 }
 
+GLHCKAPI void glhckBoneOffsetMatrix(const glhckHandle handle, const kmMat4 *offsetMatrix)
+{
+   set($offsetMatrix, handle, offsetMatrix);
+}
+
+GLHCKAPI const kmMat4* glhckBoneGetOffsetMatrix(const glhckHandle handle)
+{
+   return get($offsetMatrix, handle);
+}
+
 /* \brief get transformed matrix from bone */
 GLHCKAPI const kmMat4* glhckBoneGetTransformedMatrix(const glhckHandle handle)
 {
    return get($transformedMatrix, handle);
+}
+
+GLHCKAPI const kmMat4* glhckBoneGetPoseMatrix(const glhckHandle handle)
+{
+   return get($poseMatrix, handle);
 }
 
 /* \brief get relative position of transformed bone in object */
@@ -113,11 +132,12 @@ GLHCKAPI void glhckBoneGetPositionRelativeOnObject(const glhckHandle handle, con
 {
    CALL(2, "%s, %s, %p", glhckHandleRepr(handle), glhckHandleRepr(object), outPosition);
    assert(handle > 0 && object > 0 && outPosition);
-#if 0
-   outPosition->x = object->transformedMatrix.mat[12] * gobject->view.scaling.x;
-   outPosition->y = object->transformedMatrix.mat[13] * gobject->view.scaling.y;
-   outPosition->z = object->transformedMatrix.mat[14] * gobject->view.scaling.z;
-#endif
+
+   const kmMat4 *transformed = glhckBoneGetTransformedMatrix(handle);
+   const kmVec3 *scaling = glhckObjectGetScale(object);
+   outPosition->x = transformed->mat[12] * scaling->x;
+   outPosition->y = transformed->mat[13] * scaling->y;
+   outPosition->z = transformed->mat[14] * scaling->z;
 }
 
 /* \brief get absolute position of transformed bone in object */
@@ -126,13 +146,12 @@ GLHCKAPI void glhckBoneGetPositionAbsoluteOnObject(const glhckHandle handle, con
    CALL(2, "%s, %s, %p", glhckHandleRepr(handle), glhckHandleRepr(object), outPosition);
    assert(handle > 0 && object > 0 && outPosition);
 
-#if 0
    kmMat4 matrix;
-   kmMat4Multiply(&matrix, &gobject->view.matrix, &object->transformedMatrix);
+   const kmMat4 *modelMatrix = glhckObjectGetMatrix(object);
+   kmMat4Multiply(&matrix, modelMatrix, glhckBoneGetTransformedMatrix(handle));
    outPosition->x = matrix.mat[12];
    outPosition->y = matrix.mat[13];
    outPosition->z = matrix.mat[14];
-#endif
 }
 
 /* vim: set ts=8 sw=3 tw=0 :*/

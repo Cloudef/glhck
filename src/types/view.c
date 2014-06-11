@@ -9,7 +9,12 @@
 
 #define GLHCK_CHANNEL GLHCK_CHANNEL_OBJECT
 
+struct offset {
+   kmVec3 bias, scale;
+};
+
 enum pool {
+   $offset, // struct offset
    $matrix, // kmMat4
    $affectionMatrix, // kmMat4
    $bounding, // kmAABB
@@ -28,6 +33,7 @@ enum pool {
 };
 
 static unsigned int pool_sizes[POOL_LAST] = {
+   sizeof(struct offset), // offset
    sizeof(kmMat4), // matrix
    sizeof(kmMat4), // affectionMatrix
    sizeof(kmAABB), // bounding
@@ -67,7 +73,7 @@ static void buildRotation(const glhckHandle handle, kmMat4 *outRotation)
    kmMat4RotationAxisAngle(outRotation, &(kmVec3){0,0,1}, kmDegreesToRadians(rotation->z));
    kmMat4RotationAxisAngle(&tmp, &(kmVec3){0,1,0}, kmDegreesToRadians(rotation->y));
    kmMat4Multiply(outRotation, outRotation, &tmp);
-   kmMat4RotationAxisAngle(&tmp, &(kmVec3){1,0,0}, kmDegreesToRadians(rotation->z));
+   kmMat4RotationAxisAngle(&tmp, &(kmVec3){1,0,0}, kmDegreesToRadians(rotation->x));
    kmMat4Multiply(outRotation, outRotation, &tmp);
 }
 
@@ -76,7 +82,7 @@ static void buildScaling(const glhckHandle handle, const kmVec3 *scale, kmMat4 *
    assert(handle > 0 && outScaling);
 
    kmVec3 scaled;
-   kmVec3Add(&scaled, glhckViewGetScale(handle), (scale ? scale : &(kmVec3){1,1,1}));
+   kmVec3Mul(&scaled, glhckViewGetScale(handle), (scale ? scale : &(kmVec3){1,1,1}));
    kmMat4Scaling(outScaling, scaled.x, scaled.y, scaled.z);
 }
 
@@ -84,29 +90,29 @@ static void buildAffectionMatrix(const glhckHandle handle, const unsigned char f
 {
    assert(outAffectionMatrix);
 
-   kmMat4 matrix, tmp;
-   kmMat4Identity(&matrix);
+   kmMat4 tmp;
+   kmMat4Identity(outAffectionMatrix);
 
    if (flags & GLHCK_AFFECT_SCALING) {
       /* don't use _glhckObjectBuildScaling, as we don't want parent->geometry->scale affection
        * XXX: Should we do same for the translation below? */
       const kmVec3 *scaling = glhckViewGetScale(handle);
       kmMat4Scaling(&tmp, scaling->x, scaling->y, scaling->z);
-      kmMat4Multiply(&matrix, &tmp, &matrix);
+      kmMat4Multiply(outAffectionMatrix, &tmp, outAffectionMatrix);
    }
 
    if (flags & GLHCK_AFFECT_ROTATION) {
       buildRotation(handle, &tmp);
-      kmMat4Multiply(&matrix, &tmp, &matrix);
+      kmMat4Multiply(outAffectionMatrix, &tmp, outAffectionMatrix);
    }
 
-   if (flags& GLHCK_AFFECT_TRANSLATION) {
-      buildTranslation(handle, NULL, &tmp);
-      kmMat4Multiply(&matrix, &tmp, &matrix);
+   if (flags & GLHCK_AFFECT_TRANSLATION) {
+      const struct offset *offset = get($offset, handle);
+      buildTranslation(handle, &offset->bias, &tmp);
+      kmMat4Multiply(outAffectionMatrix, &tmp, outAffectionMatrix);
    }
 
-   kmMat4Multiply(&matrix, get($affectionMatrix, handle), &matrix);
-   memcpy(outAffectionMatrix, &matrix, sizeof(matrix));
+   kmMat4Multiply(outAffectionMatrix, get($affectionMatrix, handle), outAffectionMatrix);
 }
 
 static const kmVec3* kmVec3Max(kmVec3 *out, const kmVec3 *a, const kmVec3 *b)
@@ -210,13 +216,14 @@ void buildBoundingBoxes(const glhckHandle handle, const kmAABB *childAABBs, cons
 }
 
 /* \brief update view matrix of object */
-static void updateMatrixMany(const glhckHandle *handles, const glhckHandle *parentHandles, const size_t memb, const kmVec3 *bias, const kmVec3 *scale)
+static void updateMatrixMany(const glhckHandle *handles, const glhckHandle *parentHandles, const size_t memb)
 {
    for (size_t i = 0; i < memb; ++i) {
+      const struct offset *offset = get($offset, handles[i]);
       kmMat4 translation, rotation, scaling;
-      buildTranslation(handles[i], bias, &translation);
+      buildTranslation(handles[i], &offset->bias, &translation);
       buildRotation(handles[i], &rotation);
-      buildScaling(handles[i], scale, &scaling);
+      buildScaling(handles[i], &offset->scale, &scaling);
 
       /* affection of parent matrix */
       if (parentHandles[i]) {
@@ -273,9 +280,10 @@ GLHCKAPI glhckHandle glhckViewNew(void)
    TRACE(0);
 
    glhckHandle handle;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_VIEW, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_VIEW, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
+   glhckViewOffsetScale(handle, &(kmVec3){1,1,1});
    kmMat4Identity((kmMat4*)glhckViewGetMatrix(handle)),
    kmMat4Identity((kmMat4*)get($affectionMatrix, handle)),
 
@@ -305,7 +313,7 @@ GLHCKAPI unsigned char glhckViewGetParentAffection(const glhckHandle handle)
 GLHCKAPI void glhckViewUpdateMany(const glhckHandle *handles, const glhckHandle *parents, const size_t memb)
 {
    CALL(2, "%s, %s, %zu", glhckHandleReprArray(handles, memb), glhckHandleReprArray(parents, memb), memb);
-   updateMatrixMany(handles, parents, memb, NULL, NULL);
+   updateMatrixMany(handles, parents, memb);
 }
 
 GLHCKAPI const kmVec3* glhckViewGetPosition(const glhckHandle handle)
@@ -437,6 +445,20 @@ GLHCKAPI void glhckViewUpdateFromGeometry(const glhckHandle handle, const glhckH
    kmAABB bounding;
    glhckGeometryCalculateBB(geometry, &bounding);
    set($bounding, handle, &bounding);
+}
+
+GLHCKAPI void glhckViewOffsetBias(const glhckHandle handle, const kmVec3 *bias)
+{
+   assert(bias);
+   struct offset *offset = (struct offset*)get($offset, handle);
+   memcpy(&offset->bias, bias, sizeof(kmVec3));
+}
+
+GLHCKAPI void glhckViewOffsetScale(const glhckHandle handle, const kmVec3 *scale)
+{
+   assert(scale);
+   struct offset *offset = (struct offset*)get($offset, handle);
+   memcpy(&offset->scale, scale, sizeof(kmVec3));
 }
 
 /* vim: set ts=6 sw=3 tw=0 :*/

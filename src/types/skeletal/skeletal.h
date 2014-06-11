@@ -8,7 +8,7 @@
 struct glhckObject;
 
 
-void _glhckSkinBoneTransformObject(struct glhckObject *object, int updateBones);
+void _glhckSkinBoneTransformObject(struct glhckObject *object, int dirty);
 
 #endif /* __glhck_skeletal_h__ */
 

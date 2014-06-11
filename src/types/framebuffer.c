@@ -56,7 +56,7 @@ GLHCKAPI glhckHandle glhckFramebufferNew(const glhckFramebufferTarget target)
       goto fail;
 
    glhckHandle handle = 0;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_FRAMEBUFFER, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_FRAMEBUFFER, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
 #if 0

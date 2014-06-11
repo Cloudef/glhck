@@ -44,7 +44,7 @@ GLHCKAPI glhckHandle glhckListNew(const size_t items, const size_t member)
       goto fail;
 
    glhckHandle handle;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_LIST, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_LIST, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    struct list *list = (struct list*)get($list, handle);

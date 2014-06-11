@@ -13,6 +13,8 @@
 #include "system/tls.h"
 #include "pool/pool.h"
 
+#include "lut/lut.h"
+
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_TEXTURE
 
@@ -255,7 +257,7 @@ GLHCKAPI glhckHandle glhckTextureNew(void)
 {
    glhckHandle handle = 0;
 
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_TEXTURE, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_TEXTURE, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    set($target, handle, (glhckTextureTarget[]){GLHCK_TEXTURE_2D});
@@ -282,17 +284,27 @@ GLHCKAPI glhckHandle glhckTextureNewFromFile(const char *file, const glhckPostPr
       goto success;
 #endif
 
-#if 0
+   static chckHashTable *cache = NULL;
+   if (!cache) {
+      cache = chckHashTableNew(256);
+   }
+
+   const glhckHandle *cached = chckHashTableStrGet(cache, file);
+   if (cached)
+      return *cached;
+
    glhckImportImageStruct *import;
    if (!(import = glhckImportImageFile(file)))
       goto fail;
-#endif
 
    if (!(handle = glhckTextureNew()))
       goto fail;
 
    setCStr($file, handle, file);
+   glhckTextureCreate(handle, GLHCK_TEXTURE_2D, 0, import->width, import->height, 0, 0, import->format, import->type, 0, import->data);
    glhckTextureParameter(handle, params);
+
+   chckHashTableStrSet(cache, file, &handle, sizeof(glhckHandle));
 
 success:
    RET(0, "%s", glhckHandleRepr(handle));
@@ -644,13 +656,12 @@ GLHCKAPI void glhckTextureBind(const glhckHandle handle)
    CALL(2, "%s", glhckHandleRepr(handle));
 
    const glhckTextureTarget target = glhckTextureGetTarget(handle);
-
    if (rstate.texture[rstate.active][target] == handle)
       return;
 
    const unsigned int object = _glhckTextureGetObject(handle);
    _glhckRenderGetAPI()->textureBind(target, object);
-   rstate.texture[rstate.active][target] = object;
+   rstate.texture[rstate.active][target] = handle;
 }
 
 /* \brief unbind texture */

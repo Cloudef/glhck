@@ -17,17 +17,20 @@ struct info {
    glhckType type;
 };
 
+struct handle {
+   glhckHandle id;
+   unsigned int reference;
+};
+
 enum {
-   $ids, // glhckHandle
+   $handles, // struct handle
    $infos, // struct info
-   $references, // unsigned int
    POOL_LAST
 };
 
 static unsigned int pool_sizes[POOL_LAST] = {
-   sizeof(glhckHandle), // ids
+   sizeof(struct handle), // handles
    sizeof(struct info), // infos
-   sizeof(unsigned int), // references
 };
 
 static _GLHCK_TLS chckPool *pools[POOL_LAST];
@@ -75,14 +78,13 @@ static const char* handleReprLen(const void *data, size_t *outLen)
    assert(data);
 
    glhckHandle handle = *(glhckHandle*)data;
-   int garbage = _unlikely_(handle <= 0 || handle - 1 >= chckPoolCount(pools[$ids]));
+   int garbage = _unlikely_(handle <= 0);
 
    const struct info *info = (garbage ? NULL : GET($infos, handle));
-   const glhckHandle internalHandle = (garbage ? 0 : *(glhckHandle*)GET($ids, handle));
-   unsigned int *references = (garbage ? (unsigned int[]){0} : GET($references, handle));
+   const struct handle *internal = (garbage ? 0 : GET($handles, handle));
    const char *name = (garbage ? "garbage" : names[info->type]);
 
-   return _glhckSprintf(outLen, "(%s %zu:%zu, %u)", name, handle, internalHandle, *references);
+   return _glhckSprintf(outLen, "(%s %zu:%zu, %u)", name, handle, (internal ? internal->id : 0), (internal ? internal->reference : 0));
 }
 
 const char* _glhckHandleReprArray(const glhckType type, const glhckHandle *internalHandles, const size_t memb)
@@ -97,7 +99,7 @@ const char* _glhckHandleRepr(const glhckType type, const glhckHandle internalHan
    return internalHandleRepr(&internalHandle, NULL);
 }
 
-static glhckHandle handleAdd(const struct info *info, const glhckHandle internalHandle)
+static glhckHandle handleAdd(const struct info *info, const struct handle *internal)
 {
    glhckHandle outHandle = -1;
 
@@ -108,13 +110,10 @@ static glhckHandle handleAdd(const struct info *info, const glhckHandle internal
       }
    }
 
-   if (!(chckPoolAdd(pools[$ids], &internalHandle, &outHandle)))
+   if (!(chckPoolAdd(pools[$handles], internal, &outHandle)))
       goto fail;
 
    if (!(chckPoolAdd(pools[$infos], info, NULL)))
-      goto fail;
-
-   if (!(chckPoolAdd(pools[$references], &(int){1}, NULL)))
       goto fail;
 
    return outHandle + 1;
@@ -127,7 +126,7 @@ fail:
    return 0;
 }
 
-glhckHandle _glhckInternalHandleCreateFrom(const glhckType type, chckPool **pools, const unsigned int *sizes, const size_t last, _glhckHandleDestructor destructor, glhckHandle *outInternalHandle)
+glhckHandle _glhckInternalHandleCreateFrom(const glhckType type, chckPool **pools, const unsigned int *sizes, const size_t last, _glhckHandleDestructor destructor)
 {
    assert(pools && sizes && destructor);
 
@@ -150,11 +149,13 @@ glhckHandle _glhckInternalHandleCreateFrom(const glhckType type, chckPool **pool
       .type = type,
    };
 
-   if (!(handle = handleAdd(&info, internalHandle + 1)))
-      goto fail;
+   struct handle internal = {
+      .id = internalHandle + 1,
+      .reference = 1,
+   };
 
-   if (outInternalHandle)
-      *outInternalHandle = internalHandle + 1;
+   if (!(handle = handleAdd(&info, &internal)))
+      goto fail;
 
    return handle;
 
@@ -170,32 +171,35 @@ glhckHandle _glhckHandleGetInternalHandle(const glhckHandle handle)
 {
    assert(handle > 0);
 
-   if (_unlikely_(handle <= 0 || handle - 1 >= chckPoolCount(pools[$ids])))
+   if (_unlikely_(handle <= 0))
       return 0;
 
-   return *(glhckHandle*)GET($ids, handle);
+   const struct handle *internal = GET($handles, handle);
+   return (internal ? internal->id : 0);
 }
 
 void _glhckHandleTerminate(void)
 {
    TRACE(0);
 
-   const glhckHandle *id;
-   for (chckPoolIndex iter = 0; (id = chckPoolIter(pools[$ids], &iter));)
-      while (glhckHandleRelease(*id) > 0);
+   for (chckPoolIndex iter = 0; chckPoolIter(pools[$handles], &iter);)
+      while (glhckHandleRelease(iter) > 0);
 
-   for (size_t i = 0; i < POOL_LAST; ++i)
+   for (size_t i = 0; i < POOL_LAST; ++i) {
+      assert(chckPoolCount(pools[i]) == 0);
       NULLDO(chckPoolFree, pools[i]);
+   }
 }
 
 GLHCKAPI unsigned int glhckHandleRef(const glhckHandle handle)
 {
    assert(handle > 0);
 
-   if (_unlikely_(handle <= 0 || handle - 1 >= chckPoolCount(pools[$ids])))
+   if (_unlikely_(handle <= 0))
       return 0;
 
-   return ++(*(unsigned int*)GET($references, handle));
+   struct handle *internal = GET($handles, handle);
+   return (internal ? ++internal->reference : 0);
 }
 
 GLHCKAPI unsigned int glhckHandleRefPtr(const glhckHandle *handle)
@@ -208,25 +212,24 @@ GLHCKAPI unsigned int glhckHandleRelease(const glhckHandle handle)
 {
    assert(handle > 0);
 
-   if (_unlikely_(handle <= 0 || handle - 1 >= chckPoolCount(pools[$ids])))
+   if (_unlikely_(handle <= 0))
       return 0;
 
-   unsigned int *refs = GET($references, handle);
+   struct handle *internal = GET($handles, handle);
 
-   if (*refs > 0 && --(*refs) > 0)
-      return *refs;
+   if (internal->reference <= 0 || --internal->reference > 0)
+      return internal->reference;
 
    const struct info *info = GET($infos, handle);
    info->destructor(handle);
 
-   glhckHandle internal = *(glhckHandle*)GET($ids, handle);
    for (size_t i = 0; i < info->last; ++i)
-      chckPoolRemove(info->pools[i], internal);
+      chckPoolRemove(info->pools[i], internal->id - 1);
 
    for (size_t i = 0; i < POOL_LAST; ++i)
       chckPoolRemove(pools[i], handle - 1);
 
-   return *refs;
+   return 0;
 }
 
 GLHCKAPI unsigned int glhckHandleReleasePtr(const glhckHandle *handle)
@@ -239,11 +242,11 @@ GLHCKAPI glhckType glhckHandleGetType(const glhckHandle handle)
 {
    assert(handle > 0);
 
-   if (_unlikely_(handle <= 0 || handle - 1 >= chckPoolCount(pools[$ids])))
+   if (_unlikely_(handle <= 0))
       return GLHCK_TYPE_LAST;
 
    const struct info *info = GET($infos, handle);
-   return info->type;
+   return (info ? info->type : GLHCK_TYPE_LAST);
 }
 
 GLHCKAPI const char* glhckHandleReprArray(const glhckHandle *handles, const size_t memb)

@@ -264,10 +264,8 @@ static GameActor* gameActorNew(GameWindow *window)
    if (!(actor->object = glhckModelNew("bin/media/area/test.glhckm", 5.0f, NULL)))
       goto fail;
 
-#if 0
    if (!(actor->muzzleBone = glhckObjectGetBone(actor->object, "Armature_Bone.002_R.006")))
       goto fail;
-#endif
 
    if (!(actor->muzzle = glhckModelNew("bin/media/area/muzzle.glhckm", 1.0f, NULL)))
       goto fail;
@@ -294,12 +292,10 @@ static GameActor* gameActorNew(GameWindow *window)
    glhckCollisionWorldAddAABBRef(window->collisionWorld, &actor->aabb, actor);
 #endif
 
-#if 0
    size_t numChilds;
    const glhckHandle *childs = glhckObjectChildren(actor->muzzle, &numChilds);
    for (size_t i = 0; i < numChilds; ++i)
       glhckMaterialBlendFunc(glhckObjectGetMaterial(childs[i]), GLHCK_ONE, GLHCK_ONE);
-#endif
 
    const glhckHandle *bones, *animations;
    size_t numBones, numAnimations;
@@ -475,7 +471,7 @@ static GameWindow* gameWindowNew(int argc, char **argv)
       glhckCollisionWorldAddAABB(window->collisionWorld, glhckObjectGetAABB(childs[i]), NULL);
 #endif
 
-   for (size_t i = 0; i < 1; ++i) gameActorNew(window);
+   for (size_t i = 0; i < 10; ++i) gameActorNew(window);
 
    window->running = 1;
    glfwSetWindowUserPointer(window->handle, window);
@@ -615,9 +611,7 @@ static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *play
 
    if (flags & ST && actor->shootTimer <= 0.0f) {
       GameBullet *bullet = gameBulletNew(window);
-#if 0
       glhckBoneGetPositionAbsoluteOnObject(actor->muzzleBone, actor->object, &bullet->position);
-#endif
       bullet->angle = rotation;
       bullet->position.y += 1.5f;
       bullet->position.x -= cos((bullet->angle + 90) * kmPIOver180) * 3.0f;
@@ -653,8 +647,8 @@ static void gameActorLogic(GameWindow *window, GameActor *actor, GameActor *play
 
    if (actor == player && glfwGetKey(window->handle, GLFW_KEY_SPACE) == GLFW_PRESS) {
       actor->position.y += 0.6f * 3.8f;
-   } else {
-      // actor->position.y -= 0.6f * 3.8f;
+   } else if (actor->position.y > 25.0f) {
+      actor->position.y -= 0.6f * 3.8f;
    }
 
 #if 0
@@ -745,41 +739,40 @@ static void gameWindowRender(GameWindow *window, float interpolation)
       }
 #endif
 
-#if 0
       if (a->animator) {
          glhckAnimatorUpdate(a->animator, a->intrpAnimTime);
          glhckAnimatorTransform(a->animator, a->object);
       }
-#endif
+
       glhckRenderObject(a->object);
    }
 
-#if 0
    for (GameBullet *b = window->bullet; b; b = b->next) {
       kmVec3Intrp(&b->rendered, &b->rendered, &b->position, interpolation);
 
+#if 0
       if (!glhckFrustumContainsAABB(frustum, &b->aabb)) {
          ++culled;
          continue;
       }
+#endif
 
       glhckObjectPosition(window->bulletObject, &b->rendered);
       glhckObjectRotationf(window->bulletObject, 0.0f, b->angle, 0.0f);
       glhckRenderObject(window->bulletObject);
    }
-#endif
 
    for (GameActor *a = window->actor; a; a = a->next) {
+#if 0
       if (!glhckFrustumContainsAABB(frustum, &a->aabb)) {
          ++culled;
          continue;
       }
+#endif
 
       if (a->shootTimer >= 0.0f) {
          kmVec3 bpos;
-#if 0
          glhckBoneGetPositionRelativeOnObject(a->muzzleBone, a->object, &bpos);
-#endif
          bpos.y += 1.5f; bpos.z += 2.0f;
          glhckObjectPosition(a->muzzle, &bpos);
          glhckObjectScalef(a->muzzle, a->shootTimer/1.0f, 1.0f, a->shootTimer/1.0f);
@@ -789,7 +782,7 @@ static void gameWindowRender(GameWindow *window, float interpolation)
       {
          kmVec3 spos;
          memcpy(&spos, glhckObjectGetPosition(a->object), sizeof(kmVec3));
-         spos.y = 5.0f;
+         spos.y = 18.0f;
          glhckObjectPosition(window->shadowObject, &spos);
          glhckRenderObject(window->shadowObject);
       }

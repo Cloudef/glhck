@@ -444,7 +444,19 @@ static int readOBD(uint8_t *version, chckBuffer *buffer, struct OBD *obd, const 
    mesh.vertexData = vertexData;
    mesh.indexCount = indexCount;
    mesh.vertexCount = vertexCount;
+
+   size_t *mats = calloc(materialCount, sizeof(size_t));
+   for (size_t i = 0; i < materialCount; ++i)
+      mats[i] = i + chckIterPoolCount(obd->materials) - materialCount;
+
+   mesh.materials = mats;
    mesh.materialCount = materialCount;
+
+   size_t *skns = calloc(skinBoneCount, sizeof(size_t));
+   for (size_t i = 0; i < skinBoneCount; ++i)
+      skns[i] = i + chckIterPoolCount(obd->skins) - skinBoneCount;
+
+   mesh.skins = skns;
    mesh.skinCount = skinBoneCount;
 
    size_t index = 0;
@@ -590,6 +602,12 @@ static int readAND(uint8_t *version, chckBuffer *buffer, struct AND *and)
       nodes[i].translationCount = translationCount;
       nname = NULL;
    }
+
+   animation.nodes = nodes;
+   animation.nodeCount = nodeCount;
+
+   if (!chckIterPoolAdd(and->animations, &animation, NULL))
+      goto fail;
 
    return RETURN_OK;
 

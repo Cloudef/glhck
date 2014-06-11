@@ -88,6 +88,9 @@ static void setupAnimation(const glhckHandle handle)
    size_t numNodes = 0;
    const glhckHandle *nodes = glhckAnimationNodes(animation, &numNodes);
 
+   if (!nodes)
+      return;
+
    if (!states) {
       if (!(states = glhckListNew(numNodes, sizeof(struct state))))
          return;
@@ -96,7 +99,7 @@ static void setupAnimation(const glhckHandle handle)
    }
 
    for (size_t i = 0; i < numNodes; ++i) {
-      struct state *state = glhckListFetch(states, i);
+      struct state *state = glhckListAdd(states, NULL);
       state->bone = lookupBone(handle, glhckAnimationNodeGetBoneName(nodes[i]));
    }
 
@@ -116,7 +119,7 @@ static void destructor(const glhckHandle handle)
 GLHCKAPI glhckHandle glhckAnimatorNew(void)
 {
    TRACE(0);
-   const glhckHandle handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_ANIMATOR, pools, pool_sizes, POOL_LAST, destructor, NULL);
+   const glhckHandle handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_ANIMATOR, pools, pool_sizes, POOL_LAST, destructor);
    RET(0, "%s", glhckHandleRepr(handle));
    return handle;
 }
@@ -137,7 +140,12 @@ GLHCKAPI glhckHandle glhckAnimatorGetAnimation(const glhckHandle handle)
 /* \brief set bones to animator */
 GLHCKAPI int glhckAnimatorInsertBones(const glhckHandle handle, const glhckHandle *bones, const size_t memb)
 {
-   return setListHandles($bones, handle, bones, memb);
+   const int ret = setListHandles($bones, handle, bones, memb);
+
+   if (ret)
+      setupAnimation(handle);
+
+   return ret;
 }
 
 /* \brief get bones assigned to this animator */
@@ -152,6 +160,9 @@ GLHCKAPI void glhckAnimatorTransform(const glhckHandle handle, const glhckHandle
    CALL(2, "%s, %s", glhckHandleRepr(handle), glhckHandleRepr(object));
    assert(handle > 0 && object > 0);
 
+   unsigned char *dirty = (unsigned char*)get($dirty, handle);
+   _glhckSkinBoneTransformObject(object, *dirty);
+
 #if 0
    /* we don't have to anything! */
    if (gobject->transformedGeometryTime == object->lastTime)
@@ -162,8 +173,9 @@ GLHCKAPI void glhckAnimatorTransform(const glhckHandle handle, const glhckHandle
 
    /* store the time for transformation */
    gobject->transformedGeometryTime = object->lastTime;
-   object->dirty = 0;
 #endif
+
+   *dirty = 0;
 }
 
 /* \brief update the skeletal animation to next tick */

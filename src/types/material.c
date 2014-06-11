@@ -62,7 +62,7 @@ GLHCKAPI glhckHandle glhckMaterialNew(const glhckHandle texture)
    TRACE(0);
 
    glhckHandle handle = 0;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_MATERIAL, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_MATERIAL, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    glhckMaterialTextureScalef(handle, 1.0f, 1.0f);

@@ -5,6 +5,8 @@
 #include "handle.h"
 #include "pool/pool.h"
 
+#include "types/geometry.h"
+
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_SKINBONE
 
@@ -35,54 +37,76 @@ static _GLHCK_TLS chckPool *pools[POOL_LAST];
 #include "handlefun.h"
 
 /* \brief update bone structure's transformed matrices */
-static void _glhckSkinBoneUpdateBones(const glhckHandle *skinBones, const size_t memb)
+static void updateBones(const glhckGeometry *geometry, const glhckHandle *bones, const size_t memb)
 {
    /* 1. Transform bone to 0,0,0 using offset matrix so we can transform it locally
     * 2. Apply all transformations from parent bones
     * 3. We'll end up back to bone space with the transformed matrix */
 
-   for (size_t i = 0; i < memb; ++i) {
-      glhckHandle bone;
-      if (!(bone = glhckSkinBoneGetBone(skinBones[i])))
-         continue;
+   kmMat4 bias, biasinv, scale, scaleinv;
+   kmMat4Translation(&bias, geometry->bias.x, geometry->bias.y, geometry->bias.z);
+   kmMat4Scaling(&scale, geometry->scale.x, geometry->scale.y, geometry->scale.z);
+   kmMat4Inverse(&biasinv, &bias);
+   kmMat4Inverse(&scaleinv, &scale);
 
-      kmMat4 transformed;
-      memcpy(&transformed, glhckBoneGetTransformationMatrix(bone), sizeof(kmMat4));
-      for (glhckHandle parent = glhckBoneGetParentBone(bone); parent; parent = glhckBoneGetParentBone(parent))
-         kmMat4Multiply(&transformed, glhckBoneGetTransformationMatrix(parent), &transformed);
+   for (size_t i = 0; i < memb; ++i) {
+      kmMat4 *transformed = (kmMat4*)glhckBoneGetTransformedMatrix(bones[i]);
+      memcpy(transformed, glhckBoneGetTransformationMatrix(bones[i]), sizeof(kmMat4));
+
+      const glhckHandle parent = glhckBoneGetParentBone(bones[i]);
+      if (parent)
+         kmMat4Multiply(transformed, glhckBoneGetTransformedMatrix(parent), transformed);
+
+      kmMat4 transformedMatrix, offsetMatrix;
+      kmMat4 *poseMatrix = (kmMat4*)glhckBoneGetPoseMatrix(bones[i]);
+      kmMat4Multiply(&transformedMatrix, &biasinv, transformed);
+      kmMat4Multiply(&transformedMatrix, &scaleinv, &transformedMatrix);
+      kmMat4Multiply(&offsetMatrix, glhckBoneGetOffsetMatrix(bones[i]), &bias);
+      kmMat4Multiply(&offsetMatrix, &offsetMatrix, &scale);
+      kmMat4Multiply(poseMatrix, &transformedMatrix, &offsetMatrix);
    }
 }
 
-#if 0
 /* \brief transform object with its skin bones */
-void _glhckSkinBoneTransformObject(glhckHandle object, int updateBones)
+void _glhckSkinBoneTransformObject(glhckHandle object, int dirty)
 {
+#if 0
    /* we are root, perform this transform on childs as well */
    if (object->flags & GLHCK_OBJECT_ROOT && object->childs)
       chckArrayIterCall(object->childs, _glhckSkinBoneTransformObject, updateBones);
+#endif
 
-   /* ah, we can't do this ;_; */
-   if (!object->geometry || !object->skinBones)
+   const glhckHandle geometry = glhckObjectGetGeometry(object);
+   if (!geometry)
       return;
 
-   /* update bones, if requested */
-   if (updateBones)
-      _glhckSkinBoneUpdateBones(object->skinBones);
+   size_t numBones = 0;
+   const glhckHandle *bones = glhckObjectBones(object, &numBones);
+   glhckGeometry *data = (glhckGeometry*)glhckGeometryGetStruct(geometry);
 
-   assert(object->zero && object->bind);
-   __GLHCKvertexType *type = GLHCKVT(object->geometry->vertexType);
-   memcpy(object->geometry->vertices, object->zero, object->geometry->vertexCount * type->size);
+   if (dirty)
+      updateBones(data, bones, numBones);
+
+   size_t numSkinBones = 0;
+   const glhckHandle *skinBones = glhckObjectSkinBones(object, &numSkinBones);
+
+   if (!skinBones)
+      return;
+
+   const struct glhckPose *pose = glhckGeometryGetPose(geometry);
+   assert(pose->zero && pose->bind);
+   const struct glhckVertexType *type = _glhckGeometryGetVertexType(data->vertexType);
+   memcpy(data->vertices, pose->zero, data->vertexCount * type->size);
 
    /* type api is public, so convert to C Array */
-   size_t memb;
-   glhckSkinBone **skinBones = chckArrayToCArray(object->skinBones, &memb);
-   type->api.transform(object->geometry, object->bind, skinBones, memb);
+   type->api.transform(data, pose->bind, skinBones, numSkinBones);
 
+#if 0
    /* update bounding box for object */
    glhckGeometryCalculateBB(object->geometry, &object->view.bounding);
    _glhckObjectUpdateBoxes(object);
-}
 #endif
+}
 
 /* \brief free skin bone object */
 static void destructor(const glhckHandle handle)
@@ -100,7 +124,7 @@ GLHCKAPI glhckHandle glhckSkinBoneNew(void)
    TRACE(0);
 
    glhckHandle handle = 0;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_BONE, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_BONE, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    set($offsetMatrix, handle, &identity);

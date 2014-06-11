@@ -150,7 +150,7 @@ GLHCKAPI glhckHandle glhckShaderNewWithShaderObjects(const unsigned int vertexSh
    }
 
    glhckHandle handle;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_SHADER, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_SHADER, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    set($program, handle, &program);

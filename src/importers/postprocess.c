@@ -1,4 +1,5 @@
 #include <glhck/glhck.h>
+#include <glhck/import.h>
 
 #include <libgen.h> /* for dirname */
 #include <unistd.h> /* for access */
@@ -27,7 +28,7 @@ static const char* gnubasename(const char *path)
 /* \brief helper function for importers.
  * helps finding texture files.
  * maybe we could have a _default_ texture for missing files? */
-static char* findTexturePath(const char* oddTexturePath, const char* modelPath)
+char* findTexturePath(const char* oddTexturePath, const char* modelPath)
 {
    char *textureInModelFolder = NULL, *modelPathCpy = NULL;
    CALL(0, "%s, %s", oddTexturePath, modelPath);
@@ -259,11 +260,11 @@ fail:
 #undef ACTC_CALL
 #undef ACTC_CALL
 
-static int _glhckPostProcessImage(const glhckImportImageParameters *params, glhckImportImageData *import)
+#if 0
+static int _glhckPostProcessImage(const glhckPostProcessImageParameters *params, glhckImportImageStruct *import)
 {
    void *data = NULL, *compressed = NULL;
-   CALL(0, "%p, %p, %p", texture, params, import);
-   assert(texture);
+   CALL(0, "%p, %p", params, import);
    assert(import);
 
    /* use default parameters */
@@ -302,3 +303,4 @@ fail:
    RET(0, "%d", RETURN_FAIL);
    return RETURN_FAIL;
 }
+#endif

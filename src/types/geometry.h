@@ -20,8 +20,14 @@ struct glhckIndexType {
    unsigned char size;
 };
 
+struct glhckPose {
+   void *bind, *zero;
+};
+
 int _glhckGeometryInit(void);
 void _glhckGeometryTerminate(void);
+
+GLHCKAPI struct glhckPose* glhckGeometryGetPose(const glhckHandle handle);
 
 const struct glhckVertexType* _glhckGeometryGetVertexType(size_t index);
 const struct glhckIndexType* _glhckGeometryGetIndexType(size_t index);

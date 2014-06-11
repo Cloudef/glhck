@@ -30,5 +30,7 @@ GLHCKAPI const kmAABB* glhckViewGetAABBWithChildren(const glhckHandle handle);
 GLHCKAPI const kmAABB* glhckViewGetAABB(const glhckHandle handle);
 GLHCKAPI const kmMat4* glhckViewGetMatrix(const glhckHandle handle);
 GLHCKAPI void glhckViewUpdateFromGeometry(const glhckHandle handle, const glhckHandle geometry);
+GLHCKAPI void glhckViewOffsetBias(const glhckHandle handle, const kmVec3 *bias);
+GLHCKAPI void glhckViewOffsetScale(const glhckHandle handle, const kmVec3 *scale);
 
 #endif /* __glhck_view_h__ */

@@ -82,7 +82,7 @@ GLHCKAPI glhckHandle glhckAtlasNew(void)
    TRACE(0);
 
    glhckHandle handle;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_FRAMEBUFFER, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_FRAMEBUFFER, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    RET(0, "%s", glhckHandleRepr(handle));

@@ -93,6 +93,20 @@ static void updateMatrix(const glhckHandle handle)
    _glhckObjectUpdateMatrixMany(&handle, 1);
 }
 
+static void updateViewOffsets(const glhckHandle handle)
+{
+   const glhckHandle geometry = glhckObjectGetGeometry(handle);
+
+   if (geometry) {
+      const glhckGeometry *data = glhckGeometryGetStruct(geometry);
+      glhckViewOffsetBias(glhckObjectGetView(handle), (kmVec3*)&data->bias);
+      glhckViewOffsetScale(glhckObjectGetView(handle), (kmVec3*)&data->scale);
+   } else {
+      glhckViewOffsetBias(glhckObjectGetView(handle), &(kmVec3){0,0,0});
+      glhckViewOffsetScale(glhckObjectGetView(handle), &(kmVec3){1,1,1});
+   }
+}
+
 void _glhckObjectUpdateMatrixMany(const glhckHandle *handles, const size_t memb)
 {
    for (size_t i = 0; i < memb; ++i) {
@@ -131,7 +145,7 @@ GLHCKAPI glhckHandle glhckObjectNew(void)
    TRACE(0);
 
    glhckHandle handle = 0, view = 0;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_OBJECT, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_OBJECT, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    if (!(view = glhckViewNew()))
@@ -659,7 +673,7 @@ GLHCKAPI glhckHandle glhckObjectGetBone(const glhckHandle handle, const char *na
 /* \brief insert skin bones to object */
 GLHCKAPI int glhckObjectInsertSkinBones(const glhckHandle handle, const glhckHandle *skinBones, size_t memb)
 {
-   if (!setListHandles($bones, handle, skinBones, memb))
+   if (!setListHandles($skinBones, handle, skinBones, memb))
       return RETURN_FAIL;
 
 #if 0
@@ -723,7 +737,10 @@ GLHCKAPI const glhckHandle* glhckObjectAnimations(const glhckHandle handle, size
 /* \brief create new geometry for object, replacing existing one. */
 GLHCKAPI void glhckObjectGeometry(const glhckHandle handle, const glhckHandle geometry)
 {
-   setHandle($geometry, handle, geometry);
+   if (!setHandle($geometry, handle, geometry))
+      return;
+
+   updateViewOffsets(handle);
 }
 
 /* \brief get geometry from object */
@@ -807,6 +824,7 @@ GLHCKAPI void glhckObjectUpdate(const glhckHandle handle)
       return;
 
    glhckViewUpdateFromGeometry(handle, geometry);
+   updateViewOffsets(handle);
 
 #if 0
    if (object->flags & GLHCK_OBJECT_ROOT && object->childs)

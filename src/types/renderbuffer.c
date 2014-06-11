@@ -57,7 +57,7 @@ GLHCKAPI glhckHandle glhckRenderbufferNew(const int width, const int height, con
       goto fail;
 
    glhckHandle handle;
-   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_RENDERBUFFER, pools, pool_sizes, POOL_LAST, destructor, NULL)))
+   if (!(handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_RENDERBUFFER, pools, pool_sizes, POOL_LAST, destructor)))
       goto fail;
 
    const glhckHandle old = active;

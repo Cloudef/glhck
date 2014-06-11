@@ -23,6 +23,7 @@ struct glhckRendererAPI {
    void (*clear) (unsigned int bufferBits);
    void (*color) (const glhckColor color);
    void (*blendFunc) (glhckBlendingMode blenda, glhckBlendingMode blendb);
+   void (*depthTest) (int);
 
    /* geometry */
    void (*vertexPointer) (int size, glhckDataType type, int stride, const void *pointer);

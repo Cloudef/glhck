@@ -86,7 +86,8 @@ static int setList(const enum pool var, const glhckHandle handle, const void *it
    glhckHandle list = *(glhckHandle*)GET(var, handle);
 
    if (!items || memb <= 0) {
-      glhckListFlush(list);
+      if (list)
+         glhckListFlush(list);
       return RETURN_OK;
    }
 

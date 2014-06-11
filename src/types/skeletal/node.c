@@ -42,7 +42,7 @@ static void destructor(const glhckHandle handle)
 GLHCKAPI glhckHandle glhckAnimationNodeNew(void)
 {
    TRACE(0);
-   const glhckHandle handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_ANIMATION_NODE, pools, pool_sizes, POOL_LAST, destructor, NULL);
+   const glhckHandle handle = _glhckInternalHandleCreateFrom(GLHCK_TYPE_ANIMATION_NODE, pools, pool_sizes, POOL_LAST, destructor);
    RET(0, "%s", glhckHandleRepr(handle));
    return handle;
 }

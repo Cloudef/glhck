@@ -857,6 +857,15 @@ static void blendFunc(glhckBlendingMode blenda, glhckBlendingMode blendb)
    GL_CALL(glBlendFunc(glhckBlendingModeToGL[blenda], glhckBlendingModeToGL[blendb]));
 }
 
+static void depthTest(GLint depth)
+{
+   if (depth) {
+      GL_CALL(glEnable(GL_DEPTH_TEST));
+   } else {
+      GL_CALL(glDisable(GL_DEPTH_TEST));
+   }
+}
+
 static void color(const glhckColor color)
 {
    unsigned char fr = (color & 0xFF000000) >> 24;
@@ -876,6 +885,7 @@ static int constructor(struct glhckRendererInfo *info)
    GL_CALL(glDisable(GL_LIGHTING));
    GL_CALL(glEnable(GL_TEXTURE_2D));
    GL_CALL(glEnable(GL_BLEND));
+   GL_CALL(glEnable(GL_CULL_FACE));
    GL_CALL(glEnableClientState(GL_VERTEX_ARRAY));
    GL_CALL(glEnableClientState(GL_TEXTURE_COORD_ARRAY));
 
@@ -896,6 +906,7 @@ static int constructor(struct glhckRendererInfo *info)
       .clear = glhClear,
       .color = color,
       .blendFunc = blendFunc,
+      .depthTest = depthTest,
       .bufferGetPixels = glhBufferGetPixels,
       .textureGenerate = glhTextureGenerate,
       .textureDelete = glhTextureDelete,
