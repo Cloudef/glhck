@@ -224,7 +224,6 @@ GLHCKAPI int glhckDisplayCreate(const int width, const int height, const size_t 
       glhckRenderCullFace(GLHCK_BACK);
       glhckRenderFrontFace(GLHCK_CCW);
       glhckDisplayResize(width, height);
-      glhckRenderViewporti(0, 0, width, height);
    }
 
    RET(0, "%d", ret);

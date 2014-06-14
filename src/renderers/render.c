@@ -132,7 +132,7 @@ GLHCKAPI void glhckRenderResize(int width, int height)
       return;
 
    /* update all cameras */
-   // _glhckCameraWorldUpdate(width, height);
+   _glhckCameraWorldUpdate(width, height);
 
    /* update on library last, so functions know the old values */
    rdisplay.width  = width;
@@ -478,8 +478,15 @@ GLHCKAPI void glhckRenderObjectMany(const glhckHandle *handles, const size_t mem
       }
 
       const glhckHandle view = glhckObjectGetView(handles[i]);
+
       kmMat4 mv;
-      kmMat4Multiply(&mv, &rview.view, glhckViewGetMatrix(view));
+      if (rview.flippedProjection) {
+         kmMat4 flipped;
+         kmMat4Multiply(&flipped, glhckViewGetMatrix(view), &flipMatrix);
+         kmMat4Multiply(&mv, &rview.view, &flipped);
+      } else {
+         kmMat4Multiply(&mv, &rview.view, glhckViewGetMatrix(view));
+      }
       rapi->modelMatrix(&mv);
 
       const struct glhckVertexType *vt = _glhckGeometryGetVertexType(data->vertexType);

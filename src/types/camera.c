@@ -116,8 +116,8 @@ void _glhckCameraWorldUpdate(const int width, const int height, const int oldWid
    const int diffw = width - oldWidth;
    const int diffh = height - oldHeight;
 
-   glhckRect *v;
-   for (chckPoolIndex iter = 0; (v = chckPoolIter(pools[$viewport], &iter));) {
+   glhckRect *v = NULL;
+   for (chckPoolIndex iter = 0; pools[$viewport] && (v = chckPoolIter(pools[$viewport], &iter));) {
       v->w += diffw;
       v->h += diffh;
       set($dirtyViewport, iter - 1, (unsigned char[]){1});
