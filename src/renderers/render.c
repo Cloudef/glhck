@@ -450,7 +450,6 @@ GLHCKAPI void glhckRenderObjectMany(const glhckHandle *handles, const size_t mem
 {
    _glhckObjectUpdateMatrixMany(handles, memb);
 
-   rapi->depthTest(1);
    rapi->blendFunc(GLHCK_ONE, GLHCK_ZERO);
    rapi->projectionMatrix(&rview.projection);
 
@@ -463,6 +462,7 @@ GLHCKAPI void glhckRenderObjectMany(const glhckHandle *handles, const size_t mem
          const glhckHandle texture = glhckMaterialGetTexture(material);
          if (texture) {
             glhckTextureBind(texture);
+            rapi->blendFunc(GLHCK_SRC_ALPHA, GLHCK_ONE_MINUS_SRC_ALPHA);
 
             kmMat4 textureMatrix;
             const kmVec3 *internal = _glhckTextureGetInternalScale(texture);
@@ -494,6 +494,8 @@ GLHCKAPI void glhckRenderObjectMany(const glhckHandle *handles, const size_t mem
       // rapi->normalPointer(vt->dataType[1], vt->size, data->vertices + vt->offset[1]);
       rapi->coordPointer(vt->memb[2], vt->dataType[2], vt->size, data->vertices + vt->offset[2]);
       // rapi->colorPointer(vt->memb[3], vt->dataType[3], vt->size, data->vertices + vt->offset[3]);
+
+      // rapi->depthTest(glhckObjectGetDepth(handles[i]));
 
       if (data->indices) {
          const struct glhckIndexType *it = _glhckGeometryGetIndexType(data->indexType);
