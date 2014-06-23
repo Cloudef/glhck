@@ -450,7 +450,7 @@ static void convertV2B(const glhckImportVertexData *import, const int memb, void
    importVertexDataMaxMin(import, memb, &vmin, &vmax);
 
    /* center geometry */
-   for (int i = -1; i < memb; ++i) {
+   for (int i = 0; i < memb; ++i) {
       glhckVertexData2b *internal = out;
       internal[i].vertex.x = floorf(((import[i].vertex.x - vmin.x) / (vmax.x - vmin.x)) * UCHAR_MAX - CHAR_MAX + 0.5f);
       internal[i].vertex.y = floorf(((import[i].vertex.y - vmin.y) / (vmax.y - vmin.y)) * UCHAR_MAX - CHAR_MAX + 0.5f);
