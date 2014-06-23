@@ -39,7 +39,7 @@ static int chckBufferReadStringFloat(chckBuffer *buf, float *flt)
    assert(flt);
 
    char *str;
-   if (chckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
+   if (chckBufferReadStringOfType(buf, CHCK_BUFFER_STRING_UINT8, &str) != RETURN_OK || !str)
       return RETURN_FAIL;
 
    sscanf(str, "%f", flt);
@@ -53,7 +53,7 @@ static int chckBufferReadStringVector2(chckBuffer *buf, glhckVector2f *vec)
    assert(vec);
 
    char *str;
-   if (chckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
+   if (chckBufferReadStringOfType(buf, CHCK_BUFFER_STRING_UINT8, &str) != RETURN_OK || !str)
       return RETURN_FAIL;
 
    sscanf(str, "%f,%f", &vec->x, &vec->y);
@@ -67,7 +67,7 @@ static int chckBufferReadStringVector3(chckBuffer *buf, glhckVector3f *vec)
    assert(vec);
 
    char *str;
-   if (chckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
+   if (chckBufferReadStringOfType(buf, CHCK_BUFFER_STRING_UINT8, &str) != RETURN_OK || !str)
       return RETURN_FAIL;
 
    sscanf(str, "%f,%f,%f", &vec->x, &vec->y, &vec->z);
@@ -81,7 +81,7 @@ static int chckBufferReadStringQuaternion(chckBuffer *buf, kmQuaternion *quat)
    assert(quat);
 
    char *str;
-   if (chckBufferReadString(buf, 1, &str) != RETURN_OK || !str)
+   if (chckBufferReadStringOfType(buf, CHCK_BUFFER_STRING_UINT8, &str) != RETURN_OK || !str)
       return RETURN_FAIL;
 
    sscanf(str, "%f,%f,%f,%f", &quat->x, &quat->y, &quat->z, &quat->w);
@@ -95,7 +95,7 @@ static int chckBufferReadStringMatrix4(chckBuffer *buf, kmMat4 *matrix)
    assert(matrix);
 
    char *str;
-   if (chckBufferReadString(buf, sizeof(uint16_t), &str) != RETURN_OK || !str)
+   if (chckBufferReadStringOfType(buf, CHCK_BUFFER_STRING_UINT16, &str) != RETURN_OK || !str)
       return RETURN_FAIL;
 
    sscanf(str, "%f,%f,%f,%f %f,%f,%f,%f %f,%f,%f,%f %f,%f,%f,%f",
@@ -177,7 +177,7 @@ static int readBND(uint8_t *version, chckBuffer *buffer, struct BND *bnd)
       glhckImportModelBone bone;
 
       /* STRING: name */
-      if (chckBufferReadString(buffer, 1, &name) != RETURN_OK || !name)
+      if (chckBufferReadStringOfType(buffer, CHCK_BUFFER_STRING_UINT8, &name) != RETURN_OK || !name)
          goto fail;
 
       bone.name = name;
@@ -225,7 +225,7 @@ static int readOBD(uint8_t *version, chckBuffer *buffer, struct OBD *obd, const 
       return RETURN_OK;
 
    /* STRING: name */
-   if (chckBufferReadString(buffer, 1, &name) != RETURN_OK)
+   if (chckBufferReadStringOfType(buffer, CHCK_BUFFER_STRING_UINT8, &name) != RETURN_OK)
       goto fail;
 
    if (!obd->meshes && !(obd->meshes = chckIterPoolNew(32, 1, sizeof(glhckImportModelMesh))))
@@ -348,7 +348,7 @@ static int readOBD(uint8_t *version, chckBuffer *buffer, struct OBD *obd, const 
       };
 
       /* STRING: name */
-      if (chckBufferReadString(buffer, 1, &mname) != RETURN_OK)
+      if (chckBufferReadStringOfType(buffer, CHCK_BUFFER_STRING_UINT8, &name) != RETURN_OK)
          goto fail;
 
       material.name = mname;
@@ -380,7 +380,7 @@ static int readOBD(uint8_t *version, chckBuffer *buffer, struct OBD *obd, const 
       material.hasLighting = (materialFlags & LIGHTING);
 
       /* LONGSTRING: diffuseTexture */
-      if (chckBufferReadString(buffer, sizeof(uint16_t), &texture) != RETURN_OK)
+      if (chckBufferReadStringOfType(buffer, CHCK_BUFFER_STRING_UINT16, &texture) != RETURN_OK)
          goto fail;
 
       material.diffuseTexture = texture;
@@ -402,7 +402,7 @@ static int readOBD(uint8_t *version, chckBuffer *buffer, struct OBD *obd, const 
       glhckImportModelSkin skin;
 
       /* STRING: name */
-      if (chckBufferReadString(buffer, 1, &sname) != RETURN_OK)
+      if (chckBufferReadStringOfType(buffer, CHCK_BUFFER_STRING_UINT8, &sname) != RETURN_OK)
          goto fail;
 
       skin.name = sname;
@@ -510,7 +510,7 @@ static int readAND(uint8_t *version, chckBuffer *buffer, struct AND *and)
       return RETURN_OK;
 
    /* STRING: name */
-   if (chckBufferReadString(buffer, 1, &name) != RETURN_OK)
+   if (chckBufferReadStringOfType(buffer, CHCK_BUFFER_STRING_UINT8, &name) != RETURN_OK)
       goto fail;
 
    if (!and->animations && !(and->animations = chckIterPoolNew(32, 1, sizeof(glhckImportAnimationStruct))))
@@ -530,7 +530,7 @@ static int readAND(uint8_t *version, chckBuffer *buffer, struct AND *and)
    /* NODE: nodes[nodeCount] */
    for (unsigned int i = 0; i < nodeCount; ++i) {
       /* STRING: name */
-      if (chckBufferReadString(buffer, 1, &nname) != RETURN_OK || !nname)
+      if (chckBufferReadStringOfType(buffer, CHCK_BUFFER_STRING_UINT8, &nname) != RETURN_OK || !nname)
          goto fail;
 
       nodes[i].name = nname;
