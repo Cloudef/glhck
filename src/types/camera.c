@@ -117,18 +117,22 @@ void _glhckCameraWorldUpdate(const int width, const int height, const int oldWid
    const int diffh = height - oldHeight;
 
    glhckRect *v = NULL;
-   for (chckPoolIndex iter = 0; pools[$viewport] && (v = chckPoolIter(pools[$viewport], &iter));) {
-      v->w += diffw;
-      v->h += diffh;
-      set($dirtyViewport, iter - 1, (unsigned char[]){1});
-      set($dirty, iter - 1, (unsigned char[]){1});
+   if (pools[$viewport]) {
+      unsigned char *dirties = chckPoolToCArray(pools[$dirty], NULL);
+      unsigned char *dirtyViewports = chckPoolToCArray(pools[$dirtyViewport], NULL);
+      for (chckPoolIndex iter = 0; (v = chckPoolIter(pools[$viewport], &iter));) {
+	 v->w += diffw;
+	 v->h += diffh;
+	 dirties[iter - 1] = 1;
+	 dirtyViewports[iter - 1] = 1;
+      }
    }
 
    /* no camera binded, upload default projection */
    if (!v) {
       _glhckRenderDefaultProjection(width, height);
       glhckRenderViewporti(0, 0, width, height);
-   } else {
+   } else if (active) {
       glhckCameraUpdate(active);
    }
 }

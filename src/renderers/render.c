@@ -132,7 +132,7 @@ GLHCKAPI void glhckRenderResize(int width, int height)
       return;
 
    /* update all cameras */
-   _glhckCameraWorldUpdate(width, height);
+   _glhckCameraWorldUpdate(width, height, rdisplay.width, rdisplay.height);
 
    /* update on library last, so functions know the old values */
    rdisplay.width  = width;
