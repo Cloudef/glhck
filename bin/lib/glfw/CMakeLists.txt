@@ -12,4 +12,8 @@ ELSE ()
    SET(GLFW_USE_EGL 0 CACHE BOOL "Don't use EGL with GLFW")
 ENDIF ()
 
+IF (WAYLAND)
+   SET(GLFW_USE_WAYLAND 1 CACHE BOOL "Use Wayland for context creation (implies EGL as well)")
+ENDIF ()
+
 ADD_SUBDIRECTORY(src)
