@@ -142,6 +142,7 @@ int _glhckRendererInit(void)
    size_t registered = 0;
    while (dir.has_next) {
       tinydir_file file;
+      memset(&file, 0, sizeof(file));
       tinydir_readfile(&dir, &file);
 
       if (!file.is_dir && !strncmp(file.name, "glhck-renderer-", strlen("glhck-renderer-"))) {
