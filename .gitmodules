@@ -9,7 +9,7 @@
 	path = lib/chck/src
 	url = git://github.com/Cloudef/chck.git
 [submodule "bin/lib/glfw/src"]
-	path = lib/glfw/src
+	path = bin/lib/glfw/src
         url = git://github.com/glfw/glfw.git
         ignore = dirty
 [submodule "src/importers/model/mmd/mmd"]
