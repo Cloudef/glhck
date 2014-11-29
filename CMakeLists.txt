@@ -12,6 +12,11 @@ INCLUDE(subproject)
 IF (PANDORA)
    MESSAGE("Building GLhck with Pandora support")
    ADD_DEFINITIONS(-DPANDORA)
+   SET(GLHCK_USE_GLES1 ON) # XXX: temporary
+ENDIF ()
+
+IF (WAYLAND)
+   SET(GLHCK_USE_GLES1 ON) # XXX: temporary
 ENDIF ()
 
 # Emscripten build
