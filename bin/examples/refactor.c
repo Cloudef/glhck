@@ -68,11 +68,9 @@ int main(int argc, char **argv)
    while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS) {
       glfwPollEvents();
       glhckRenderObject(cube);
-#if 0
       glhckTextClear(text);
       glhckTextStash(text, kakwafont, 12, 0, 12, "TESTI TEXT", NULL);
       glhckRenderText(text);
-#endif
       glfwSwapBuffers(window);
    }
 
