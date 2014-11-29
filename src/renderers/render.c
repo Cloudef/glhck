@@ -495,7 +495,7 @@ GLHCKAPI void glhckRenderObjectMany(const glhckHandle *handles, const size_t mem
       rapi->coordPointer(vt->memb[2], vt->dataType[2], vt->size, data->vertices + vt->offset[2]);
       // rapi->colorPointer(vt->memb[3], vt->dataType[3], vt->size, data->vertices + vt->offset[3]);
 
-      // rapi->depthTest(glhckObjectGetDepth(handles[i]));
+      rapi->depthTest(glhckObjectGetDepth(handles[i]));
 
       if (data->indices) {
          const struct glhckIndexType *it = _glhckGeometryGetIndexType(data->indexType);

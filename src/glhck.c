@@ -223,6 +223,7 @@ GLHCKAPI int glhckDisplayCreate(const int width, const int height, const size_t 
       glhckRenderPass(glhckRenderPassDefaults());
       glhckRenderCullFace(GLHCK_BACK);
       glhckRenderFrontFace(GLHCK_CCW);
+      glhckRenderClearColoru(0, 0, 0, 255);
       glhckDisplayResize(width, height);
    }
 

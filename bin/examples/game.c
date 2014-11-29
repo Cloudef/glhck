@@ -412,6 +412,8 @@ static GameWindow* gameWindowNew(int argc, char **argv)
          glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, info->minor);
          glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, (info->forwardCompatible ? GL_TRUE : GL_FALSE));
          glfwWindowHint(GLFW_OPENGL_PROFILE, (info->coreProfile ? GLFW_OPENGL_CORE_PROFILE : GLFW_OPENGL_ANY_PROFILE));
+         glfwWindowHint(GLFW_SAMPLES, 4);
+         glfwWindowHint(GLFW_DEPTH_BITS, 16);
       }
 
       if (!(window->handle = glfwCreateWindow(window->width, window->height, "game", NULL, NULL)))
@@ -876,9 +878,6 @@ int main(int argc, char **argv)
    glfwSetErrorCallback(glfwErrorCallback);
    if (!glfwInit()) goto fail;
    if (!glhckInit(argc, argv)) goto fail;
-
-   glfwDefaultWindowHints();
-   glfwWindowHint(GLFW_SAMPLES, 4);
 
    if (argc > 1) {
       windows = strtol(argv[1], NULL, 10);

@@ -37,6 +37,7 @@ int main(int argc, char **argv)
          glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, info->minor);
          glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, (info->forwardCompatible ? GL_TRUE : GL_FALSE));
          glfwWindowHint(GLFW_OPENGL_PROFILE, (info->coreProfile ? GLFW_OPENGL_CORE_PROFILE : GLFW_OPENGL_ANY_PROFILE));
+         glfwWindowHint(GLFW_DEPTH_BITS, 16);
       }
 
       if (!(window = glfwCreateWindow(800, 480, "display test", NULL, NULL)))
@@ -72,6 +73,7 @@ int main(int argc, char **argv)
       glhckTextStash(text, kakwafont, 12, 0, 12, "TESTI TEXT", NULL);
       glhckRenderText(text);
       glfwSwapBuffers(window);
+      glhckRenderClear(GLHCK_COLOR_BUFFER_BIT | GLHCK_DEPTH_BUFFER_BIT);
    }
 
    glhckTerminate();
