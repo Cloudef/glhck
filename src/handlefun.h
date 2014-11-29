@@ -8,8 +8,7 @@
 
 #define GET(x, y) chckPoolGet(pools[x], _glhckHandleGetInternalHandle(y) - 1)
 
-__attribute__((used))
-static int setHandle(const enum pool var, const glhckHandle handle, const glhckHandle data)
+static inline int setHandle(const enum pool var, const glhckHandle handle, const glhckHandle data)
 {
    const glhckHandle current = *(glhckHandle*)GET(var, handle);
 
@@ -26,7 +25,7 @@ static int setHandle(const enum pool var, const glhckHandle handle, const glhckH
    return 1;
 }
 
-static void releaseHandle(const enum pool var, const glhckHandle handle)
+static inline void releaseHandle(const enum pool var, const glhckHandle handle)
 {
    glhckHandle *h = GET(var, handle);
 
@@ -36,8 +35,7 @@ static void releaseHandle(const enum pool var, const glhckHandle handle)
    *h = 0;
 }
 
-__attribute__((used))
-static glhckHandle copyHandle(const glhckHandle src, glhckHandle (constructor)(void), const int *copy, const int *ref)
+static inline glhckHandle copyHandle(const glhckHandle src, glhckHandle (constructor)(void), const int *copy, const int *ref)
 {
    assert(constructor);
 
@@ -54,22 +52,19 @@ static glhckHandle copyHandle(const glhckHandle src, glhckHandle (constructor)(v
    return handle;
 }
 
-__attribute__((used))
-static void set(const enum pool var, const glhckHandle handle, const void *data)
+static inline void set(const enum pool var, const glhckHandle handle, const void *data)
 {
    assert(handle > 0);
    memcpy(GET(var, handle), data, pool_sizes[var]);
 }
 
-__attribute__((used))
-static const void* get(const enum pool var, const glhckHandle handle)
+static inline const void* get(const enum pool var, const glhckHandle handle)
 {
    assert(handle > 0);
    return GET(var, handle);
 }
 
-__attribute__((used))
-static int setCStr(const enum pool var, const glhckHandle handle, const char *cstr)
+static inline int setCStr(const enum pool var, const glhckHandle handle, const char *cstr)
 {
    assert(handle > 0);
 
@@ -88,16 +83,14 @@ static int setCStr(const enum pool var, const glhckHandle handle, const char *cs
    return glhckStringCStr(string, cstr);
 }
 
-__attribute__((used))
-static const char* getCStr(const enum pool var, const glhckHandle handle)
+static inline const char* getCStr(const enum pool var, const glhckHandle handle)
 {
    assert(handle > 0);
    const glhckHandle string = *(glhckHandle*)GET(var, handle);
    return (string > 0 ? glhckStringGetCStr(string) : NULL);
 }
 
-__attribute__((used))
-static int setList(const enum pool var, const glhckHandle handle, const void *items, const size_t memb, const size_t member)
+static inline int setList(const enum pool var, const glhckHandle handle, const void *items, const size_t memb, const size_t member)
 {
    assert(handle > 0);
 
@@ -118,8 +111,7 @@ static int setList(const enum pool var, const glhckHandle handle, const void *it
    return glhckListSet(list, items, memb);
 }
 
-__attribute__((used))
-static int setListFromPool(const enum pool var, const glhckHandle handle, chckIterPool *pool, const size_t member)
+static inline int setListFromPool(const enum pool var, const glhckHandle handle, chckIterPool *pool, const size_t member)
 {
    assert(handle > 0 && pool);
 
@@ -128,8 +120,7 @@ static int setListFromPool(const enum pool var, const glhckHandle handle, chckIt
    return setList(var, handle, items, memb, member);
 }
 
-__attribute__((used))
-static const void* getList(const enum pool var, const glhckHandle handle, size_t *outMemb)
+static inline const void* getList(const enum pool var, const glhckHandle handle, size_t *outMemb)
 {
    assert(handle > 0);
 
@@ -140,16 +131,14 @@ static const void* getList(const enum pool var, const glhckHandle handle, size_t
    return (list ? glhckListGet(list, outMemb) : NULL);
 }
 
-__attribute__((used))
-static size_t getListCount(const enum pool var, const glhckHandle handle)
+static inline size_t getListCount(const enum pool var, const glhckHandle handle)
 {
    assert(handle > 0);
    const glhckHandle list = *(glhckHandle*)GET(var, handle);
    return (list ? glhckListCount(list) : 0);
 }
 
-__attribute__((used))
-static int setListHandles(const enum pool var, const glhckHandle handle, const glhckHandle *handles, const size_t memb)
+static inline int setListHandles(const enum pool var, const glhckHandle handle, const glhckHandle *handles, const size_t memb)
 {
    assert(handle > 0);
 

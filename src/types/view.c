@@ -32,7 +32,7 @@ enum pool {
    POOL_LAST
 };
 
-static unsigned int pool_sizes[POOL_LAST] = {
+static size_t pool_sizes[POOL_LAST] = {
    sizeof(struct offset), // offset
    sizeof(kmMat4), // matrix
    sizeof(kmMat4), // affectionMatrix

@@ -684,7 +684,7 @@ static void gameWindowLogic(GameWindow *window)
    kmVec3Assign(&window->camera->target, &target);
 }
 
-static void renderAllCulled(glhckHandle object, glhckFrustum *frustum, unsigned int *culled)
+static void renderAllCulled(glhckHandle object, const glhckFrustum *frustum, unsigned int *culled)
 {
    size_t numChilds;
    const glhckHandle *childs = glhckObjectChildren(object, &numChilds);
@@ -723,7 +723,7 @@ static void gameWindowRender(GameWindow *window, float interpolation)
    glhckCameraUpdate(window->camera->handle);
 
    unsigned int culled = 0;
-   glhckFrustum *frustum = glhckCameraGetFrustum(window->camera->handle);
+   const glhckFrustum *frustum = glhckCameraGetFrustum(window->camera->handle);
    renderAllCulled(window->world, frustum, &culled);
 
    for (GameActor *a = window->actor; a; a = a->next) {

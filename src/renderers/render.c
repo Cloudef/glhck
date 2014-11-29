@@ -11,6 +11,10 @@
 #include "trace.h"
 #include "system/tls.h"
 #include "pool/pool.h"
+
+#include "types/object.h"
+#include "types/camera.h"
+#include "types/texture.h"
 #include "types/text/text.h"
 
 /* tracing channel for this file */

@@ -1381,23 +1381,6 @@ static void glhProgramUniform(GLuint obj, const struct glhckShaderUniform *unifo
    }
 }
 
-/* \brief draw interleaved geometry (arrays) */
-__attribute__((used))
-static void glhDrawArrays(const glhckGeometry *geometry, glhckGeometryType gtype)
-{
-   GL_CALL(glDrawArrays(glhckGeometryTypeToGL[gtype], 0, geometry->vertexCount));
-}
-
-/* \brief draw interleaved geometry (elements) */
-__attribute__((used))
-static void glhDrawElements(const glhckGeometry *geometry, glhckGeometryType gtype)
-{
-#if 0
-   __GLHCKindexType *type = GLHCKIT(geometry->indexType);
-   GL_CALL(glDrawElements(glhckGeometryTypeToGL[gtype], geometry->indexCount, glhckDataTypeToGL[type->dataType], geometry->indices));
-#endif
-}
-
 /*
  * misc
  */

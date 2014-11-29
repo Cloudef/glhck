@@ -45,7 +45,7 @@ enum pool {
    POOL_LAST
 };
 
-static unsigned int pool_sizes[POOL_LAST] = {
+static size_t pool_sizes[POOL_LAST] = {
    sizeof(glhckGeometry),
    sizeof(struct glhckPose)
 };
@@ -342,15 +342,12 @@ static void transformV2F(glhckGeometry *geometry, const void *bindPose, const gl
 static void transformV3F(glhckGeometry *geometry, const void *bindPose, const glhckHandle *skinBones, const size_t memb)
 {
    glhckVertexData3f *internal = geometry->vertices;
-   const glhckVertexData3f *bind = bindPose;
 
    for (size_t i = 0; i < memb; ++i) {
       size_t numWeights;
       const glhckVertexWeight *weights = glhckSkinBoneWeights(skinBones[i], &numWeights);
       const kmMat4 *poseMatrix = glhckBoneGetPoseMatrix(glhckSkinBoneGetBone(skinBones[i]));
-      int a;
       for (size_t w = 0; w < numWeights; ++w) {
-         a = w;
          kmVec3 v1;
          const glhckVertexData3f *bdata = bindPose + weights[w].vertexIndex * sizeof(glhckVertexData3f);
          kmVec3MultiplyMat4(&v1, (kmVec3*)&bdata->vertex, poseMatrix);

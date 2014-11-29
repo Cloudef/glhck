@@ -303,6 +303,8 @@ GLHCKAPI const glhckRendererFeatures* glhckRendererGetFeatures(void);
 GLHCKAPI void glhckRenderResize(const int width, const int height);
 GLHCKAPI void glhckRenderViewport(const glhckRect *viewport);
 GLHCKAPI void glhckRenderViewporti(const int x, const int y, const int width, const int height);
+GLHCKAPI int glhckRenderGetWidth(void);
+GLHCKAPI int glhckRenderGetHeight(void);
 GLHCKAPI void glhckRenderStatePush(void);
 GLHCKAPI void glhckRenderStatePush2D(const int width, const int height, const kmScalar near, const kmScalar far);
 GLHCKAPI void glhckRenderStatePop(void);
@@ -332,6 +334,10 @@ GLHCKAPI void glhckRenderView(const kmMat4 *mat);
 GLHCKAPI const kmMat4* glhckRenderGetView(void);
 GLHCKAPI void glhckRenderWorldPosition(const kmVec3 *position);
 GLHCKAPI void glhckRender(void);
+
+/** XXX: fix with glhckRenderHandle? */
+GLHCKAPI void glhckRenderObject(const glhckHandle object);
+GLHCKAPI void glhckRenderText(const glhckHandle text);
 
 /* frustum */
 GLHCKAPI void glhckFrustumBuild(glhckFrustum *frustum, const kmMat4 *mvp);
@@ -471,8 +477,11 @@ GLHCKAPI const char* glhckBoneGetName(const glhckHandle bone);
 GLHCKAPI void glhckBoneParentBone(const glhckHandle bone, const glhckHandle parent);
 GLHCKAPI glhckHandle glhckBoneGetParentBone(const glhckHandle bone);
 GLHCKAPI void glhckBoneTransformationMatrix(const glhckHandle bone, const kmMat4 *transformationMatrix);
+GLHCKAPI void glhckBoneOffsetMatrix(const glhckHandle bone, const kmMat4 *offsetMatrix);
+GLHCKAPI const kmMat4* glhckBoneGetOffsetMatrix(const glhckHandle bone);
 GLHCKAPI const kmMat4* glhckBoneGetTransformationMatrix(const glhckHandle bone);
 GLHCKAPI const kmMat4* glhckBoneGetTransformedMatrix(const glhckHandle bone);
+GLHCKAPI const kmMat4* glhckBoneGetPoseMatrix(const glhckHandle bone);
 GLHCKAPI void glhckBoneGetPositionRelativeOnObject(const glhckHandle bone, const glhckHandle object, kmVec3 *outPosition);
 GLHCKAPI void glhckBoneGetPositionAbsoluteOnObject(const glhckHandle bone, const glhckHandle object, kmVec3 *outPosition);
 
@@ -627,6 +636,8 @@ GLHCKAPI int glhckFramebufferAttachRenderbuffer(const glhckHandle framebuffer, c
 
 /* hardware buffer objects */
 GLHCKAPI glhckHandle glhckHwBufferNew(void);
+GLHCKAPI const char* glhckHwBufferGetName(const glhckHandle hwbufer);
+GLHCKAPI int glhckHwBufferGetSize(const glhckHandle handle);
 GLHCKAPI glhckHandle glhckHwBufferCurrentForTarget(const glhckHwBufferTarget target);
 GLHCKAPI glhckHwBufferTarget glhckHwBufferGetTarget(const glhckHandle hwbuffer);
 GLHCKAPI void glhckHwBufferBind(const glhckHandle hwbuffer);

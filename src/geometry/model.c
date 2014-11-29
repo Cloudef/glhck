@@ -5,8 +5,8 @@
 
 #include "trace.h"
 #include "pool/pool.h"
-
 #include "lut/lut.h"
+#include "importers/postprocess.h"
 
 /* tracing channel for this file */
 #define GLHCK_CHANNEL GLHCK_CHANNEL_GEOMETRY

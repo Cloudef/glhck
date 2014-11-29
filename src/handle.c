@@ -12,7 +12,7 @@
 struct info {
    size_t last;
    chckPool **pools;
-   const unsigned int *sizes;
+   const size_t *sizes;
    _glhckHandleDestructor destructor;
    glhckType type;
 };
@@ -28,7 +28,7 @@ enum {
    POOL_LAST
 };
 
-static unsigned int pool_sizes[POOL_LAST] = {
+static size_t pool_sizes[POOL_LAST] = {
    sizeof(struct handle), // handles
    sizeof(struct info), // infos
 };
@@ -126,7 +126,7 @@ fail:
    return 0;
 }
 
-glhckHandle _glhckInternalHandleCreateFrom(const glhckType type, chckPool **pools, const unsigned int *sizes, const size_t last, _glhckHandleDestructor destructor)
+glhckHandle _glhckInternalHandleCreateFrom(const glhckType type, chckPool **pools, const size_t *sizes, const size_t last, _glhckHandleDestructor destructor)
 {
    assert(pools && sizes && destructor);
 

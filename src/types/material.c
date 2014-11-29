@@ -28,7 +28,7 @@ enum pool {
    POOL_LAST
 };
 
-static unsigned int pool_sizes[POOL_LAST] = {
+static size_t pool_sizes[POOL_LAST] = {
    sizeof(kmVec2), // textureScale
    sizeof(kmVec2), // textureOffset
    sizeof(kmScalar), // textureRotation

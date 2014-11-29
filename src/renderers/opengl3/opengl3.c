@@ -1095,6 +1095,9 @@ static int constructor(struct glhckRendererInfo *info)
 {
    CALL(0, "%p", info);
 
+   // XXX: not implemented yet
+   goto fail;
+
    if (!gladLoadGL())
       goto fail;
 

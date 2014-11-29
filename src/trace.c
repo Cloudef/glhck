@@ -138,6 +138,7 @@ static int strupcmp(const char *hay, const char *needle)
    return strnupcmp(hay, needle, strlen(hay));
 }
 
+#if EMSCRIPTEN
 static char* strupstr(const char *hay, const char *needle)
 {
    size_t len, len2;
@@ -164,6 +165,7 @@ static char* strupstr(const char *hay, const char *needle)
 
    return (p == len2 ? (char*)hay + r : NULL);
 }
+#endif
 
 static void outColor(enum glhckLogColor color)
 {

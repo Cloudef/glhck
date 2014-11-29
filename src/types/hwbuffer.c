@@ -22,7 +22,7 @@ enum pool {
    POOL_LAST
 };
 
-static unsigned int pool_sizes[POOL_LAST] = {
+static size_t pool_sizes[POOL_LAST] = {
    sizeof(glhckHandle), // uniforms
    sizeof(glhckHandle), // name
    sizeof(unsigned int), // object
@@ -347,7 +347,7 @@ GLHCKAPI const void* glhckHwBufferGetUniform(const glhckHandle handle, const cha
 /* \brief fill single uniform in uniform buffer */
 GLHCKAPI void glhckHwBufferFillUniform(const glhckHandle handle, const void *uniform, const int size, const void *data)
 {
-   CALL(2, "%s, %s, %d, %p", glhckHandleRepr(handle), uniform, size, data);
+   CALL(2, "%s, %p, %d, %p", glhckHandleRepr(handle), uniform, size, data);
    assert(handle > 0 && glhckHwBufferGetTarget(handle) == GLHCK_UNIFORM_BUFFER);
 
    const struct glhckHwBufferShaderUniform *u = uniform;

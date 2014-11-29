@@ -1,6 +1,8 @@
 #ifndef __glhck_shader_h__
 #define __glhck_shader_h__
 
+#include "handle.h"
+
 /* shader attrib locations */
 enum glhckShaderAttrib {
    GLHCK_ATTRIB_VERTEX,
@@ -138,6 +140,8 @@ struct glhckShaderUniform {
    int size;
    enum glhckShaderVariableType type;
 };
+
+unsigned int _glhckShaderGetProgram(const glhckHandle handle);
 
 #endif /* __glhck_shader_h__ */
 

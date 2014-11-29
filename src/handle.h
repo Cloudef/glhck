@@ -6,7 +6,7 @@
 #include "pool/pool.h"
 
 typedef void (*_glhckHandleDestructor)(const glhckHandle);
-glhckHandle _glhckInternalHandleCreateFrom(const glhckType type, chckPool **pools, const unsigned int *sizes, const size_t last, _glhckHandleDestructor destructor);
+glhckHandle _glhckInternalHandleCreateFrom(const glhckType type, chckPool **pools, const size_t *sizes, const size_t last, _glhckHandleDestructor destructor);
 glhckHandle _glhckHandleGetInternalHandle(const glhckHandle handle);
 void _glhckHandleTerminate(void);
 const char* _glhckHandleRepr(const glhckType type, const glhckHandle internalHandle);

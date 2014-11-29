@@ -324,7 +324,7 @@ static chckIterPool* stubProgramUniformPool(unsigned int obj)
 
 /* \brief set shader uniform */
 __attribute__((used))
-static void stubProgramUniform(unsigned int obj, struct glhckShaderUniform *uniform, int count, const void *value)
+static void stubProgramUniform(unsigned int obj, const struct glhckShaderUniform *uniform, int count, const void *value)
 {
    CALL(2, "%u, %p, %d, %p", obj, uniform, count, value);
 }

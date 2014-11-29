@@ -16,6 +16,7 @@ enum glhckObjectFlags {
 };
 
 void _glhckObjectUpdateMatrixMany(const glhckHandle *handles, const size_t memb);
+glhckHandle glhckObjectGetView(const glhckHandle handle);
 
 #endif /* __glhck_object_h__ */
 

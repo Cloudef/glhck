@@ -29,7 +29,7 @@ static const struct glhckImporterInfo* modelImporter(chckBuffer *buffer)
       chckBufferSeek(buffer, 0L, SEEK_SET);
    }
 
-   RET(0, "%s", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 
@@ -50,7 +50,7 @@ static const struct glhckImporterInfo* imageImporter(chckBuffer *buffer)
       chckBufferSeek(buffer, 0L, SEEK_SET);
    }
 
-   RET(0, "%s", NULL);
+   RET(0, "%p", NULL);
    return NULL;
 }
 

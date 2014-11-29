@@ -29,7 +29,7 @@ enum pool {
    POOL_LAST
 };
 
-static unsigned int pool_sizes[POOL_LAST] = {
+static size_t pool_sizes[POOL_LAST] = {
    sizeof(glhckHandle), // file
    sizeof(glhckHandle), // name
    sizeof(glhckHandle), // view
@@ -73,7 +73,7 @@ static int getFlag(const glhckHandle handle, const enum glhckObjectFlags flag)
    return enabled;
 }
 
-GLHCKAPI glhckHandle glhckObjectGetView(const glhckHandle handle)
+glhckHandle glhckObjectGetView(const glhckHandle handle)
 {
    return *(glhckHandle*)get($view, handle);
 }

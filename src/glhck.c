@@ -8,6 +8,9 @@
 #include <unistd.h> /* for fork   */
 
 #include "trace.h"
+#include "handle.h"
+
+#include "types/geometry.h"
 
 #include "renderers/renderer.h"
 #include "renderers/render.h"
